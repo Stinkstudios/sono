@@ -1,0 +1,7 @@
+{
+    "name": "sono-js",
+    "version": "0.0.0",
+    "dependencies": {
+        "js-lib": "latest"
+    }
+}
