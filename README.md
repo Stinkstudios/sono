@@ -10,58 +10,98 @@ var Sono = require('Sono');
 
 #### main api
 
+Sono.context // the WebAudio context
+
+[static] Sono.VERSION // current version
+
+##### add / get sounds:
 
 Sono.add(key, data, loop)
 
-Sono.get(key)
+Sono.get(key) // returns a WebAudioPlayer or HTMLSound
 
-Sono.mute()
+* var sound = Sono.get('someKey');
+* sound.play()
+* Sono.get('someKey').play()
 
-Sono.unMute()
+##### controls:
 
-Sono.pauseAll()
+Sono.mute() // master
 
-Sono.resumeAll()
+Sono.unMute() // master
 
-Sono.stopAll()
+Sono.pauseAll() // all currently playing
 
-Sono.play(key)
+Sono.resumeAll() // all currently paused
 
-Sono.pause(key)
+Sono.stopAll() // all
 
-Sono.stop(key)
+Sono.play(key) // individual sound
 
-Sono.initLoader()
+Sono.pause(key) // individual sound
+
+Sono.stop(key) // individual sound
+
+##### loading:
+
+[internal] Sono.initLoader()
 
 Sono.load(key, url, loop, callback, callbackContext, asBuffer)
 
-Sono.loadBuffer(key, url, loop, callback, callbackContext)
+* Sono.load('someKey', 'audio/foo.ogg', false, onSoundLoaded, this, true); // loads this file
+* Sono.load('someKey', ['audio/foo.ogg', 'audio/foo.mp3']); // loads first one that works
+* Sono.load('someKey', ['audio/foo.ogg', 'audio/foo.mp3']).play(); // plays sound when loaded
 
-Sono.loadAudioTag(key, url, loop, callback, callbackContext)
+Sono.loadBuffer(key, url, loop, callback, callbackContext) // load as array buffer
 
-Sono.createAudioContext()
+Sono.loadAudioTag(key, url, loop, callback, callbackContext) // load as html audio el
 
-Sono.getSupportedFile(fileNames)
+##### set up / detection:
 
-Sono.getExtension(fileName)
+[internal]?? Sono.createAudioContext()
 
-Sono.getSupportedExtensions()
+[internal]?? Sono.getSupportedFile(fileNames) // accepts single string, array or object and attempts to return best supported file
 
-Sono.handleTouchlock()
+* Sono.getSupportedFile(['audio/foo.ogg', 'audio/foo.mp3'])
+* Sono.getSupportedFile({ foo: 'audio/foo.ogg', bar: 'audio/foo.mp3'})
+* Sono.getSupportedFile('audio/foo') // adds first detected extension (.ogg, .mp3, etc)
+* Sono.getSupportedFile('audio/foo.ogg')
 
-Sono.handlePageVisibility()
+[internal]?? Sono.getExtension(fileName)
+
+[internal]?? Sono.getSupportedExtensions()
+
+##### handle mobile device touch lock:
+
+[internal]?? Sono.handleTouchlock()
+
+##### pause/resume on page visibility change:
+
+[internal]?? Sono.handlePageVisibility()
+
+##### logs info about Sono version and current browser:
 
 Sono.log()
 
-get Sono.isSupported
+##### get support info:
 
-get Sono.hasWebAudio
+get Sono.isSupported // is audio supported at all?
+
+get Sono.hasWebAudio // is WebAudio supported?
+
+##### volume:
 
 get/set Sono.volume
 
+##### getter to access node factory:
+
 get Sono.create
 
+##### getter to access loader:
+
 get Sono.loader
+
+##### getter to access utils:
 
 get Sono.utils
 
@@ -108,6 +148,8 @@ Sono.create.scriptProcessor(bufferSize, inputChannels, outputChannels, callback,
 
 Sono.utils.fade(gainNode, value, duration)
 
+NOTE: should pan stuff be moed into pan module? (i.e. Sono.utils.pan() returns pan module?)
+
 Sono.utils.panX(panner, value)
 
 Sono.utils.pan(panner, x, y, z)
@@ -124,9 +166,9 @@ Sono.utils.doppler(panner, x, y, z, deltaX, deltaY, deltaZ, deltaTime)
 
 Sono.utils.filter(filterNode, value, quality, gain)
 
-Sono.utils.getFrequency(value)
+Sono.utils.getFrequency(value) // return a freq value by passing 0-1
 
-Sono.utils.createMicrophoneSource(stream, connectTo)
+Sono.utils.createMicrophoneSource(stream, connectTo) // should prob go into .create
 
 Sono.utils.distort(value)
 
