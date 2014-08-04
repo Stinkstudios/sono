@@ -24,7 +24,7 @@ function Sono() {
     this.handlePageVisibility();
     this.initLoader();
 
-    this.log();
+    this.log(false);
 }
 
 Sono.VERSION = '0.0.0';
@@ -35,6 +35,10 @@ Sono.VERSION = '0.0.0';
 
 Sono.prototype.add = function(key, data, loop) {
     // TODO: handle dupe key
+    if(this._sounds[key]) {
+        return this._sounds[key];
+    }
+
     var sound;
     if(this.hasWebAudio) {
         sound = new WebAudioPlayer(this.context, data, this._masterGain);
@@ -113,6 +117,9 @@ Sono.prototype.initLoader = function() {
 
 Sono.prototype.load = function(key, url, loop, callback, callbackContext, asBuffer) {
   // TODO: handle dupe key
+    if(this._sounds[key]) {
+        return this._sounds[key];
+    }
     var sound = this.add(key, null, loop);
     url = this.getSupportedFile(url);
     //console.log('url:', url);
@@ -265,14 +272,14 @@ Sono.prototype.handlePageVisibility = function() {
  * Log device support info
  */
 
-Sono.prototype.log = function() {
+Sono.prototype.log = function(colorFull) {
     var title = 'Sono ' + Sono.VERSION,
         support = 'Supported:' + this.isSupported +
                   ' WebAudioAPI:' + this.hasWebAudio +
                   ' TouchLocked:' + this._isTouchLocked +
                   ' Extensions:' + this.getSupportedExtensions();
 
-    if(navigator.userAgent.indexOf('Chrome') > -1) {
+    if(colorFull && navigator.userAgent.indexOf('Chrome') > -1) {
         var args = [
             '%c %c ' + title +
             ' %c %c ' +
@@ -287,7 +294,7 @@ Sono.prototype.log = function() {
         console.log.apply(console, args);
     }
     else if (window.console) {
-        console.log(title + support);
+        console.log(title + ' ' + support);
     }
 };
 
