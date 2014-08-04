@@ -3,10 +3,11 @@
 var AssetLoader = require('./lib/asset-loader.js'),
     HTMLSound = require('./lib/html-sound.js'),
     PageVisibility = require('./lib/page-visibility.js'),
+    WebAudioHelpers = require('./lib/webaudio-helpers.js'),
     WebAudioNodeFactory = require('./lib/webaudio-nodefactory.js'),
     WebAudioPlayer = require('./lib/webaudio-player.js');
 
-function SONO() {
+function Sono() {
     this._sounds = {};
     this.context = this.createAudioContext();
 
@@ -26,13 +27,13 @@ function SONO() {
     this.log();
 }
 
-SONO.VERSION = '0.0.0';
+Sono.VERSION = '0.0.0';
 
 /*
  * add - data can be element, arraybuffer or null/undefined
  */
 
-SONO.prototype.add = function(key, data, loop) {
+Sono.prototype.add = function(key, data, loop) {
     // TODO: handle dupe key
     var sound;
     if(this.hasWebAudio) {
@@ -48,7 +49,7 @@ SONO.prototype.add = function(key, data, loop) {
     return sound;
 };
 
-SONO.prototype.get = function(key) {
+Sono.prototype.get = function(key) {
     return this._sounds[key];
 };
 
@@ -56,16 +57,16 @@ SONO.prototype.get = function(key) {
  * Controls
  */
 
-SONO.prototype.mute = function() {
+Sono.prototype.mute = function() {
     this._preMuteVolume = this.volume;
     this.volume = 0;
 };
 
-SONO.prototype.unMute = function() {
+Sono.prototype.unMute = function() {
     this.volume = this._preMuteVolume || 1;
 };
 
-SONO.prototype.pauseAll = function() {
+Sono.prototype.pauseAll = function() {
     for(var i in this._sounds) {
         if(this._sounds[i].playing) {
             this._sounds[i].pause();
@@ -73,7 +74,7 @@ SONO.prototype.pauseAll = function() {
     }
 };
 
-SONO.prototype.resumeAll = function() {
+Sono.prototype.resumeAll = function() {
     for(var i in this._sounds) {
         if(this._sounds[i].paused) {
             this._sounds[i].play();
@@ -81,21 +82,21 @@ SONO.prototype.resumeAll = function() {
     }
 };
 
-SONO.prototype.stopAll = function() {
+Sono.prototype.stopAll = function() {
     for(var key in this._sounds) {
         this._sounds[key].stop();
     }
 };
 
-SONO.prototype.play = function(key) {
+Sono.prototype.play = function(key) {
     this._sounds[key].play();
 };
 
-SONO.prototype.pause = function(key) {
+Sono.prototype.pause = function(key) {
     this._sounds[key].pause();
 };
 
-SONO.prototype.stop = function(key) {
+Sono.prototype.stop = function(key) {
     this._sounds[key].stop();
 };
 
@@ -103,14 +104,14 @@ SONO.prototype.stop = function(key) {
  * Loading
  */
 
-SONO.prototype.initLoader = function() {
+Sono.prototype.initLoader = function() {
     this._loader = new AssetLoader();
     this._loader.touchLocked = this._isTouchLocked;
     this._loader.webAudioContext = this.context;
     this._loader.crossOrigin = true;
 };
 
-SONO.prototype.load = function(key, url, loop, callback, callbackContext, asBuffer) {
+Sono.prototype.load = function(key, url, loop, callback, callbackContext, asBuffer) {
   // TODO: handle dupe key
     var sound = this.add(key, null, loop);
     url = this.getSupportedFile(url);
@@ -136,11 +137,11 @@ SONO.prototype.load = function(key, url, loop, callback, callbackContext, asBuff
     return sound;
 };
 
-SONO.prototype.loadBuffer = function(key, url, loop, callback, callbackContext) {
+Sono.prototype.loadBuffer = function(key, url, loop, callback, callbackContext) {
     return this.load(key, url, loop, callback, callbackContext, true);
 };
 
-SONO.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext) {
+Sono.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext) {
     return this.load(key, url, loop, callback, callbackContext, false);
 };
 
@@ -148,7 +149,7 @@ SONO.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext
  * Support
  */
 
-SONO.prototype.createAudioContext = function() {
+Sono.prototype.createAudioContext = function() {
     var context = null;
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     if(window.AudioContext) {
@@ -157,7 +158,7 @@ SONO.prototype.createAudioContext = function() {
     return context;
 };
 
-SONO.prototype.getSupportedFile = function(fileNames) {
+Sono.prototype.getSupportedFile = function(fileNames) {
     var supportedExtensions = this.getSupportedExtensions();
     // if array get the first one that works
     if(fileNames instanceof Array) {
@@ -190,14 +191,14 @@ SONO.prototype.getSupportedFile = function(fileNames) {
     return fileNames;
 };
 
-SONO.prototype.getExtension = function(fileName) {
+Sono.prototype.getExtension = function(fileName) {
     fileName = fileName.split('?')[0];
     var extension = fileName.split('.').pop();
     if(extension === fileName) { extension = ''; }
     return extension.toLowerCase();
 };
 
-SONO.prototype.getSupportedExtensions = function() {
+Sono.prototype.getSupportedExtensions = function() {
     if(this._supportedExtensions) {
         return this._supportedExtensions;
     }
@@ -227,7 +228,7 @@ SONO.prototype.getSupportedExtensions = function() {
  * Mobile touch lock
  */
 
-SONO.prototype.handleTouchlock = function() {
+Sono.prototype.handleTouchlock = function() {
     var ua = navigator.userAgent,
         locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i),
         self = this;
@@ -255,7 +256,7 @@ SONO.prototype.handleTouchlock = function() {
  * Page visibility events
  */
 
-SONO.prototype.handlePageVisibility = function() {
+Sono.prototype.handlePageVisibility = function() {
     PageVisibility.onPageHidden.add(this.pauseAll, this);
     PageVisibility.onPageShown.add(this.resumeAll, this);
 };
@@ -264,8 +265,8 @@ SONO.prototype.handlePageVisibility = function() {
  * Log device support info
  */
 
-SONO.prototype.log = function() {
-    var title = 'SONO ' + SONO.VERSION,
+Sono.prototype.log = function() {
+    var title = 'Sono ' + Sono.VERSION,
         support = 'Supported:' + this.isSupported +
                   ' WebAudioAPI:' + this.hasWebAudio +
                   ' TouchLocked:' + this._isTouchLocked +
@@ -294,19 +295,19 @@ SONO.prototype.log = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(SONO.prototype, 'isSupported', {
+Object.defineProperty(Sono.prototype, 'isSupported', {
     get: function() {
         return this.getSupportedExtensions().length > 0;
     }
 });
 
-Object.defineProperty(SONO.prototype, 'hasWebAudio', {
+Object.defineProperty(Sono.prototype, 'hasWebAudio', {
     get: function() {
         return !!this.context;
     }
 });
 
-Object.defineProperty(SONO.prototype, 'volume', {
+Object.defineProperty(Sono.prototype, 'volume', {
     get: function() {
         return this.hasWebAudio ? this._masterGain.gain.value : this._masterGain;
     },
@@ -325,7 +326,7 @@ Object.defineProperty(SONO.prototype, 'volume', {
     }
 });
 
-Object.defineProperty(SONO.prototype, 'create', {
+Object.defineProperty(Sono.prototype, 'create', {
     get: function() {
         if(!this._webAudioNodeFactory) {
             this._webAudioNodeFactory = new WebAudioNodeFactory(this.context);
@@ -334,7 +335,16 @@ Object.defineProperty(SONO.prototype, 'create', {
     }
 });
 
-Object.defineProperty(SONO.prototype, 'loader', {
+Object.defineProperty(Sono.prototype, 'utils', {
+    get: function() {
+        if(!this._webAudioHelpers) {
+            this._webAudioHelpers = new WebAudioHelpers(this.context);
+        }
+        return this._webAudioHelpers;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'loader', {
     get: function() {
         return this._loader;
     }
@@ -345,5 +355,5 @@ Object.defineProperty(SONO.prototype, 'loader', {
  */
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = new SONO();
+    module.exports = new Sono();
 }

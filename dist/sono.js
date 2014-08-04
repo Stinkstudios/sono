@@ -1,4 +1,4 @@
-!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.SONO=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self),o.Sono=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /*jslint onevar:true, undef:true, newcap:true, regexp:true, bitwise:true, maxerr:50, indent:4, white:false, nomen:false, plusplus:false */
 /*global define:false, require:false, exports:false, module:false, signals:false */
 
@@ -903,6 +903,123 @@ module.exports = {
 },{"signals":1}],5:[function(_dereq_,module,exports){
 'use strict';
 
+ function WebAudioHelpers(context) {
+    function parseNum(x) {
+        return isNaN(x) ? 0 : parseFloat(x, 10);
+    }
+
+    return {
+        fade: function(gainNode, value, duration) {
+            gainNode.gain.linearRampToValueAtTime(value, context.currentTime + duration);
+        },
+        panX: function(panner, value) {
+            // x from -Math.PI/4 to Math.PI/4 (-45 to 45 deg)
+            var x = parseFloat(value, 10) * Math.PI / 4;
+            var z = x + Math.PI / 2;
+            if (z > Math.PI / 2) {
+                z = Math.PI - z;
+            }
+            x = Math.sin(x);
+            z = Math.sin(z);
+            panner.setPosition(x, 0, z);
+        },
+        pan: function(panner, x, y, z) {
+            x = parseNum(x);
+            y = parseNum(y);
+            z = parseNum(z);
+            panner.setPosition(x, y, z);
+        },
+        setSourcePosition: function(panner, positionVec) {
+            // set the position of the source (where the audio is coming from)
+            panner.setPosition(positionVec.x, positionVec.y, positionVec.z);
+        },
+        setSourceOrientation: function(panner, forwardVec) { // forwardVec = THREE.Vector3
+            // set the orientation of the source (where the audio is coming from)
+            var fw = forwardVec.clone().normalize();
+            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+            var globalUp = { x: 0, y: 1, z: 0 };
+            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
+            // set the audio context's listener position to match the camera position
+            panner.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+        },
+        setListenerPosition: function(positionVec) {
+            // set the position of the listener (who is hearing the audio)
+            context.listener.setPosition(positionVec.x, positionVec.y, positionVec.z);
+        },
+        setListenerOrientation: function(forwardVec) { // forwardVec = THREE.Vector3
+            // set the orientation of the listener (who is hearing the audio)
+            var fw = forwardVec.clone().normalize();
+            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+            var globalUp = { x: 0, y: 1, z: 0 };
+            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
+            // set the audio context's listener position to match the camera position
+            context.listener.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+        },
+        doppler: function(panner, x, y, z, deltaX, deltaY, deltaZ, deltaTime) {
+            // Tracking the velocity can be done by getting the object's previous position, subtracting
+            // it from the current position and dividing the result by the time elapsed since last frame
+            panner.setPosition(x, y, z);
+            panner.setVelocity(deltaX/deltaTime, deltaY/deltaTime, deltaZ/deltaTime);
+        },
+        filter: function(filterNode, value, quality, gain) {
+            // set filter frequency based on value from 0 to 1
+            value = parseFloat(value, 10);
+            quality = parseFloat(quality, 10);
+            gain = parseFloat(gain, 10);
+            // Get back to the frequency value between min and max.
+            filterNode.frequency.value = this.getFrequency(value);
+
+            //filterNode.Q.value = quality;
+            //filterNode.gain.value = gain;
+        },
+        getFrequency: function(value) {
+            // get frequency by passing number from 0 to 1
+            // Clamp the frequency between the minimum value (40 Hz) and half of the
+            // sampling rate.
+            var minValue = 40;
+            var maxValue = context.sampleRate / 2;
+            // Logarithm (base 2) to compute how many octaves fall in the range.
+            var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+            // Compute a multiplier from 0 to 1 based on an exponential scale.
+            var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+            // Get back to the frequency value between min and max.
+            return maxValue * multiplier;
+        },
+        createMicrophoneSource: function(stream, connectTo) {
+            var mediaStreamSource = context.createMediaStreamSource( stream );
+            if(connectTo) {
+                mediaStreamSource.connect(connectTo);
+            }
+            // HACK: stops moz garbage collection killing the stream
+            // see https://support.mozilla.org/en-US/questions/984179
+            if(navigator.mozGetUserMedia) {
+                window.horrible_hack_for_mozilla = mediaStreamSource;
+            }
+            return mediaStreamSource;
+        },
+        distort: function(value) {
+            // create waveShaper distortion curve from 0 to 1
+            var k = value * 100,
+                n = 22050,
+                curve = new Float32Array(n),
+                deg = Math.PI / 180;
+
+            for (var i = 0; i < n; i++) {
+                var x = i * 2 / n - 1;
+                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+    };
+}
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = WebAudioHelpers;
+}
+
+},{}],6:[function(_dereq_,module,exports){
+'use strict';
+
 function WebAudioNodeFactory(context) {
 
     function createFilter(type, frequency) {
@@ -1184,7 +1301,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = WebAudioNodeFactory;
 }
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 'use strict';
 
 var WebAudioSound = _dereq_('./webaudio-sound.js'),
@@ -1461,7 +1578,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = WebAudioPlayer;
 }
 
-},{"./html-sound.js":3,"./webaudio-sound.js":7}],7:[function(_dereq_,module,exports){
+},{"./html-sound.js":3,"./webaudio-sound.js":8}],8:[function(_dereq_,module,exports){
 'use strict';
 
 function WebAudioSound(buffer, context) {
@@ -1599,16 +1716,17 @@ if (typeof module === 'object' && module.exports) {
     module.exports = WebAudioSound;
 }
 
-},{}],8:[function(_dereq_,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 'use strict';
 
 var AssetLoader = _dereq_('./lib/asset-loader.js'),
     HTMLSound = _dereq_('./lib/html-sound.js'),
     PageVisibility = _dereq_('./lib/page-visibility.js'),
+    WebAudioHelpers = _dereq_('./lib/webaudio-helpers.js'),
     WebAudioNodeFactory = _dereq_('./lib/webaudio-nodefactory.js'),
     WebAudioPlayer = _dereq_('./lib/webaudio-player.js');
 
-function SONO() {
+function Sono() {
     this._sounds = {};
     this.context = this.createAudioContext();
 
@@ -1628,13 +1746,13 @@ function SONO() {
     this.log();
 }
 
-SONO.VERSION = '0.0.0';
+Sono.VERSION = '0.0.0';
 
 /*
  * add - data can be element, arraybuffer or null/undefined
  */
 
-SONO.prototype.add = function(key, data, loop) {
+Sono.prototype.add = function(key, data, loop) {
     // TODO: handle dupe key
     var sound;
     if(this.hasWebAudio) {
@@ -1650,7 +1768,7 @@ SONO.prototype.add = function(key, data, loop) {
     return sound;
 };
 
-SONO.prototype.get = function(key) {
+Sono.prototype.get = function(key) {
     return this._sounds[key];
 };
 
@@ -1658,16 +1776,16 @@ SONO.prototype.get = function(key) {
  * Controls
  */
 
-SONO.prototype.mute = function() {
+Sono.prototype.mute = function() {
     this._preMuteVolume = this.volume;
     this.volume = 0;
 };
 
-SONO.prototype.unMute = function() {
+Sono.prototype.unMute = function() {
     this.volume = this._preMuteVolume || 1;
 };
 
-SONO.prototype.pauseAll = function() {
+Sono.prototype.pauseAll = function() {
     for(var i in this._sounds) {
         if(this._sounds[i].playing) {
             this._sounds[i].pause();
@@ -1675,7 +1793,7 @@ SONO.prototype.pauseAll = function() {
     }
 };
 
-SONO.prototype.resumeAll = function() {
+Sono.prototype.resumeAll = function() {
     for(var i in this._sounds) {
         if(this._sounds[i].paused) {
             this._sounds[i].play();
@@ -1683,21 +1801,21 @@ SONO.prototype.resumeAll = function() {
     }
 };
 
-SONO.prototype.stopAll = function() {
+Sono.prototype.stopAll = function() {
     for(var key in this._sounds) {
         this._sounds[key].stop();
     }
 };
 
-SONO.prototype.play = function(key) {
+Sono.prototype.play = function(key) {
     this._sounds[key].play();
 };
 
-SONO.prototype.pause = function(key) {
+Sono.prototype.pause = function(key) {
     this._sounds[key].pause();
 };
 
-SONO.prototype.stop = function(key) {
+Sono.prototype.stop = function(key) {
     this._sounds[key].stop();
 };
 
@@ -1705,14 +1823,14 @@ SONO.prototype.stop = function(key) {
  * Loading
  */
 
-SONO.prototype.initLoader = function() {
+Sono.prototype.initLoader = function() {
     this._loader = new AssetLoader();
     this._loader.touchLocked = this._isTouchLocked;
     this._loader.webAudioContext = this.context;
     this._loader.crossOrigin = true;
 };
 
-SONO.prototype.load = function(key, url, loop, callback, callbackContext, asBuffer) {
+Sono.prototype.load = function(key, url, loop, callback, callbackContext, asBuffer) {
   // TODO: handle dupe key
     var sound = this.add(key, null, loop);
     url = this.getSupportedFile(url);
@@ -1738,11 +1856,11 @@ SONO.prototype.load = function(key, url, loop, callback, callbackContext, asBuff
     return sound;
 };
 
-SONO.prototype.loadBuffer = function(key, url, loop, callback, callbackContext) {
+Sono.prototype.loadBuffer = function(key, url, loop, callback, callbackContext) {
     return this.load(key, url, loop, callback, callbackContext, true);
 };
 
-SONO.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext) {
+Sono.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext) {
     return this.load(key, url, loop, callback, callbackContext, false);
 };
 
@@ -1750,7 +1868,7 @@ SONO.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext
  * Support
  */
 
-SONO.prototype.createAudioContext = function() {
+Sono.prototype.createAudioContext = function() {
     var context = null;
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     if(window.AudioContext) {
@@ -1759,7 +1877,7 @@ SONO.prototype.createAudioContext = function() {
     return context;
 };
 
-SONO.prototype.getSupportedFile = function(fileNames) {
+Sono.prototype.getSupportedFile = function(fileNames) {
     var supportedExtensions = this.getSupportedExtensions();
     // if array get the first one that works
     if(fileNames instanceof Array) {
@@ -1792,14 +1910,14 @@ SONO.prototype.getSupportedFile = function(fileNames) {
     return fileNames;
 };
 
-SONO.prototype.getExtension = function(fileName) {
+Sono.prototype.getExtension = function(fileName) {
     fileName = fileName.split('?')[0];
     var extension = fileName.split('.').pop();
     if(extension === fileName) { extension = ''; }
     return extension.toLowerCase();
 };
 
-SONO.prototype.getSupportedExtensions = function() {
+Sono.prototype.getSupportedExtensions = function() {
     if(this._supportedExtensions) {
         return this._supportedExtensions;
     }
@@ -1829,7 +1947,7 @@ SONO.prototype.getSupportedExtensions = function() {
  * Mobile touch lock
  */
 
-SONO.prototype.handleTouchlock = function() {
+Sono.prototype.handleTouchlock = function() {
     var ua = navigator.userAgent,
         locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i),
         self = this;
@@ -1857,7 +1975,7 @@ SONO.prototype.handleTouchlock = function() {
  * Page visibility events
  */
 
-SONO.prototype.handlePageVisibility = function() {
+Sono.prototype.handlePageVisibility = function() {
     PageVisibility.onPageHidden.add(this.pauseAll, this);
     PageVisibility.onPageShown.add(this.resumeAll, this);
 };
@@ -1866,8 +1984,8 @@ SONO.prototype.handlePageVisibility = function() {
  * Log device support info
  */
 
-SONO.prototype.log = function() {
-    var title = 'SONO ' + SONO.VERSION,
+Sono.prototype.log = function() {
+    var title = 'Sono ' + Sono.VERSION,
         support = 'Supported:' + this.isSupported +
                   ' WebAudioAPI:' + this.hasWebAudio +
                   ' TouchLocked:' + this._isTouchLocked +
@@ -1896,19 +2014,19 @@ SONO.prototype.log = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(SONO.prototype, 'isSupported', {
+Object.defineProperty(Sono.prototype, 'isSupported', {
     get: function() {
         return this.getSupportedExtensions().length > 0;
     }
 });
 
-Object.defineProperty(SONO.prototype, 'hasWebAudio', {
+Object.defineProperty(Sono.prototype, 'hasWebAudio', {
     get: function() {
         return !!this.context;
     }
 });
 
-Object.defineProperty(SONO.prototype, 'volume', {
+Object.defineProperty(Sono.prototype, 'volume', {
     get: function() {
         return this.hasWebAudio ? this._masterGain.gain.value : this._masterGain;
     },
@@ -1927,7 +2045,7 @@ Object.defineProperty(SONO.prototype, 'volume', {
     }
 });
 
-Object.defineProperty(SONO.prototype, 'create', {
+Object.defineProperty(Sono.prototype, 'create', {
     get: function() {
         if(!this._webAudioNodeFactory) {
             this._webAudioNodeFactory = new WebAudioNodeFactory(this.context);
@@ -1936,7 +2054,16 @@ Object.defineProperty(SONO.prototype, 'create', {
     }
 });
 
-Object.defineProperty(SONO.prototype, 'loader', {
+Object.defineProperty(Sono.prototype, 'utils', {
+    get: function() {
+        if(!this._webAudioHelpers) {
+            this._webAudioHelpers = new WebAudioHelpers(this.context);
+        }
+        return this._webAudioHelpers;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'loader', {
     get: function() {
         return this._loader;
     }
@@ -1947,9 +2074,9 @@ Object.defineProperty(SONO.prototype, 'loader', {
  */
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = new SONO();
+    module.exports = new Sono();
 }
 
-},{"./lib/asset-loader.js":2,"./lib/html-sound.js":3,"./lib/page-visibility.js":4,"./lib/webaudio-nodefactory.js":5,"./lib/webaudio-player.js":6}]},{},[8])
-(8)
+},{"./lib/asset-loader.js":2,"./lib/html-sound.js":3,"./lib/page-visibility.js":4,"./lib/webaudio-helpers.js":5,"./lib/webaudio-nodefactory.js":6,"./lib/webaudio-player.js":7}]},{},[9])
+(9)
 });

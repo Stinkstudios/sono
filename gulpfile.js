@@ -33,7 +33,7 @@ function buildJS(debug, minify) {
   var bundleName = minify ? bundleMin : bundle;
 
   var bundler = browserify(src + index);
-  return bundler.bundle({debug: debug, standalone: 'SONO'})
+  return bundler.bundle({debug: debug, standalone: 'Sono'})
     .on('error', logError)
     .pipe(source(bundleName))
     .pipe(gulpIf(minify, streamify(strip())))
