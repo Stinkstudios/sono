@@ -28,6 +28,7 @@ WebAudioSound.prototype.play = function(delay, offset) {
     this.source.start(delay, offset);
 
     this._startedAt = Date.now() - this._pausedAt;
+    this._pausedAt = 0;
 
     this._playing = true;
     this._paused = false;
@@ -105,6 +106,9 @@ Object.defineProperty(WebAudioSound.prototype, 'duration', {
 
 Object.defineProperty(WebAudioSound.prototype, 'currentTime', {
     get: function() {
+        if(this._pausedAt) {
+          return this._pausedAt * 0.001;
+        }
         return this._startedAt ? (Date.now() - this._startedAt) * 0.001 : 0;
     }
 });
