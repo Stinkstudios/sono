@@ -44,6 +44,7 @@ WebAudioSound.prototype.pause = function() {
 
 WebAudioSound.prototype.stop = function() {
     if(this._source) {
+        this._source.onended = null;
         this._source.stop(0);
         this._source = null;
     }
