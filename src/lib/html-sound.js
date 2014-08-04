@@ -51,6 +51,8 @@ HTMLSound.prototype.pause = function() {
 HTMLSound.prototype.stop = function() {
     this._el.pause();
     this._el.currentTime = 0;
+    // fixes bug where server doesn't support seek:
+    if(this._el.currentTime > 0) { this._el.load(); }
     this._playing = false;
     this._paused = false;
 };
@@ -61,6 +63,8 @@ HTMLSound.prototype.onEnded = function() {
     this._paused = false;
     if(this._loop) {
         this._el.currentTime = 0;
+        // fixes bug where server doesn't support seek:
+        if(this._el.currentTime > 0) { this._el.load(); }
         this.play();
     } else if(typeof this._onEnded === 'function') {
         this._onEnded();
