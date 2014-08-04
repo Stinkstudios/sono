@@ -52,11 +52,13 @@ WebAudioPlayer.prototype.play = function(delay, offset) {
 };
 
 WebAudioPlayer.prototype.pause = function() {
+    if(!this._sound) { return; }
     this._sound.pause();
 };
 
 WebAudioPlayer.prototype.stop = function() {
-  this._sound.stop();
+    if(!this._sound) { return; }
+    this._sound.stop();
 };
 
 WebAudioPlayer.prototype.addNode = function(node) {
@@ -228,19 +230,19 @@ Object.defineProperty(WebAudioPlayer.prototype, 'loop', {
 
 Object.defineProperty(WebAudioPlayer.prototype, 'duration', {
     get: function() {
-        return this._sound.duration;
+        return this._sound ? this._sound.duration : 0;
     }
 });
 
 Object.defineProperty(WebAudioPlayer.prototype, 'currentTime', {
     get: function() {
-        return this._sound.currentTime;
+        return this._sound ? this._sound.currentTime : 0;
     }
 });
 
 Object.defineProperty(WebAudioPlayer.prototype, 'progress', {
   get: function() {
-    return this._sound.progress;
+    return this._sound ? this._sound.progress : 0;
   }
 });
 
@@ -256,13 +258,13 @@ Object.defineProperty(WebAudioPlayer.prototype, 'volume', {
 
 Object.defineProperty(WebAudioPlayer.prototype, 'playing', {
     get: function() {
-        return this._sound.playing;
+        return this._sound ? this._sound.playing : false;
     }
 });
 
 Object.defineProperty(WebAudioPlayer.prototype, 'paused', {
     get: function() {
-        return this._sound.paused;
+        return this._sound ? this._sound.paused : false;
     }
 });
 

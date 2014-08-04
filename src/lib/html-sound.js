@@ -43,16 +43,20 @@ HTMLSound.prototype.play = function(delay, offset) {
 
 HTMLSound.prototype.pause = function() {
     clearTimeout(this._delayTimeout);
+    if(!this._el) { return; }
     this._el.pause();
     this._playing = false;
     this._paused = true;
 };
 
 HTMLSound.prototype.stop = function() {
+    if(!this._el) { return; }
     this._el.pause();
-    this._el.currentTime = 0;
-    // fixes bug where server doesn't support seek:
-    if(this._el.currentTime > 0) { this._el.load(); }
+    try {
+        this._el.currentTime = 0;
+        // fixes bug where server doesn't support seek:
+        if(this._el.currentTime > 0) { this._el.load(); }    
+    } catch(e) {}
     this._playing = false;
     this._paused = false;
 };
@@ -117,21 +121,21 @@ Object.defineProperty(HTMLSound.prototype, 'paused', {
     }
 });
 
-Object.defineProperty(HTMLSound.prototype, 'sound', {
+/*Object.defineProperty(HTMLSound.prototype, 'sound', {
     get: function() {
         return this._el;
     }
-});
+});*/
 
 Object.defineProperty(HTMLSound.prototype, 'duration', {
     get: function() {
-        return this._el.duration;
+        return this._el ? this._el.duration : 0;
     }
 });
 
 Object.defineProperty(HTMLSound.prototype, 'currentTime', {
     get: function() {
-        return this._el.currentTime;
+        return this._el ? this._el.currentTime : 0;
     }
 });
 
