@@ -157,9 +157,6 @@ AssetLoader.Loader.prototype = {
         request.name = this.url;
         request.preload = 'auto';
         var self = this;
-        request.onerror = function() {
-            self.onError.dispatch();
-        };
         request.src = this.url;
         if (!!touchLocked) {
             this.onProgress.dispatch(1);
@@ -169,13 +166,18 @@ AssetLoader.Loader.prototype = {
             var ready = function(){
                 request.removeEventListener('canplaythrough', ready);
                 clearTimeout(timeout);
-                console.log('audio canplaythrough');
+                //console.log('audio canplaythrough');
                 self.onProgress.dispatch(1);
                 self.onComplete.dispatch(self.data);
             };
+
             // timeout because sometimes canplaythrough doesn't fire
             var timeout = setTimeout(ready, 2000);
             request.addEventListener('canplaythrough', ready, false);
+            request.onerror = function() {
+                clearTimeout(timeout);
+                self.onError.dispatch();
+            };
             request.load();
         }
     },
