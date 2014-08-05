@@ -22,29 +22,24 @@ function WebAudioNodeFactory(context) {
         pan: function() {
             var node = context.createPanner();
             // Default for stereo is HRTF
-            node.panningModel = 'HRTF';
-            //node.panningModel = 'equalpower';
+            node.panningModel = 'HRTF'; // 'equalpower'
 
-            /*
+            // Distance model and attributes
+            node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
+            node.refDistance = 1;
+            node.maxDistance = 1000;
+            node.rolloffFactor = 1;
 
             // Uses a 3D cartesian coordinate system
-            node.setPosition(object.position.x/290, object.position.y/290, object.position.z/290);
             // node.setPosition(0, 0, 0);
             // node.setOrientation(1, 0, 0);
             // node.setVelocity(0, 0, 0);
-
-            // Distance model and attributes
-            node.distanceModel = 'inverse'; // 'linear' 'inverse' 'exponential'
-            node.refDistance = 1;
-            node.maxDistance = 10000;
-            node.rolloffFactor = 1;
 
             // Directional sound cone - The cone angles are in degrees and run from 0 to 360
             // node.coneInnerAngle = 360;
             // node.coneOuterAngle = 360;
             // node.coneOuterGain = 0;
 
-            */
             // normalised vec
             // node.setOrientation(vec.x, vec.y, vec.z);
             return node;

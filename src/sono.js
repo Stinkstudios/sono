@@ -199,6 +199,7 @@ Sono.prototype.getSupportedFile = function(fileNames) {
         }
     }
     // if no extension add the fits good one
+    // FIXME this currently fails with urls like: './audio/foo.mp3'
     else if(typeof fileNames === 'string' && !this.getExtension(fileNames)) {
         if(fileNames.lastIndexOf('.') !== fileNames.length - 1) {
             fileNames = fileNames + '.';
@@ -284,7 +285,7 @@ Sono.prototype.handlePageVisibility = function() {
  */
 
 Sono.prototype.log = function(colorFull) {
-    var title = 'Sono ' + Sono.VERSION,
+    var title = 'Sono ' + this.VERSION,
         support = 'Supported:' + this.isSupported +
                   ' WebAudioAPI:' + this.hasWebAudio +
                   ' TouchLocked:' + this._isTouchLocked +

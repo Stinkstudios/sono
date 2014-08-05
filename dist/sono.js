@@ -581,8 +581,6 @@ AssetLoader.Loader.prototype = {
             if (event.lengthComputable) {
                 var percentComplete = event.loaded / event.total;
                 self.onProgress.dispatch(percentComplete);
-            } else {
-                //console.log('Unable to compute progress information since the total size is unknown');
             }
         };
         request.onload = function() {
@@ -598,6 +596,7 @@ AssetLoader.Loader.prototype = {
             self.onError.dispatch(e);
         };
         request.send();
+        this.request = request;
     },
     loadHTML5Audio: function(touchLocked) {
         var request = new Audio();
@@ -687,37 +686,16 @@ AssetLoader.Loader.prototype = {
         }
 
         request.send();
+        this.request = request;
     },
     cancel: function() {
-      // if loaded return
-      // if this.request and it's xhr
-      // if(request && request.readystate != 4){
-      //    request.abort();
-      //}
-      // if request is img
-      // if request is audio
-      //
-      // dispatch complete or error
+      if(this.request && this.request.readyState !== 4) {
+          this.request.abort();
+      }
     }
 };
 
 module.exports = AssetLoader;
-
-/*if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AssetLoader;
-}*/
-
-/*var root = this;
-if (typeof exports !== 'undefined') {
-    if (typeof module !== 'undefined' && module.exports) {
-        exports = module.exports = AssetLoader;
-    }
-    exports.AssetLoader = AssetLoader;
-} else if (typeof define !== 'undefined' && define.amd) {
-    define('PIXI', (function() { return root.AssetLoader = AssetLoader; })() );
-} else {
-    root.PIXI = PIXI;
-}*/
 
 },{"signals":1}],3:[function(_dereq_,module,exports){
 'use strict';
@@ -913,123 +891,6 @@ module.exports = {
 },{"signals":1}],5:[function(_dereq_,module,exports){
 'use strict';
 
- function WebAudioHelpers(context) {
-    function parseNum(x) {
-        return isNaN(x) ? 0 : parseFloat(x, 10);
-    }
-
-    return {
-        fade: function(gainNode, value, duration) {
-            gainNode.gain.linearRampToValueAtTime(value, context.currentTime + duration);
-        },
-        panX: function(panner, value) {
-            // x from -Math.PI/4 to Math.PI/4 (-45 to 45 deg)
-            var x = parseFloat(value, 10) * Math.PI / 4;
-            var z = x + Math.PI / 2;
-            if (z > Math.PI / 2) {
-                z = Math.PI - z;
-            }
-            x = Math.sin(x);
-            z = Math.sin(z);
-            panner.setPosition(x, 0, z);
-        },
-        pan: function(panner, x, y, z) {
-            x = parseNum(x);
-            y = parseNum(y);
-            z = parseNum(z);
-            panner.setPosition(x, y, z);
-        },
-        setSourcePosition: function(panner, positionVec) {
-            // set the position of the source (where the audio is coming from)
-            panner.setPosition(positionVec.x, positionVec.y, positionVec.z);
-        },
-        setSourceOrientation: function(panner, forwardVec) { // forwardVec = THREE.Vector3
-            // set the orientation of the source (where the audio is coming from)
-            var fw = forwardVec.clone().normalize();
-            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-            var globalUp = { x: 0, y: 1, z: 0 };
-            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
-            // set the audio context's listener position to match the camera position
-            panner.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-        },
-        setListenerPosition: function(positionVec) {
-            // set the position of the listener (who is hearing the audio)
-            context.listener.setPosition(positionVec.x, positionVec.y, positionVec.z);
-        },
-        setListenerOrientation: function(forwardVec) { // forwardVec = THREE.Vector3
-            // set the orientation of the listener (who is hearing the audio)
-            var fw = forwardVec.clone().normalize();
-            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-            var globalUp = { x: 0, y: 1, z: 0 };
-            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
-            // set the audio context's listener position to match the camera position
-            context.listener.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-        },
-        doppler: function(panner, x, y, z, deltaX, deltaY, deltaZ, deltaTime) {
-            // Tracking the velocity can be done by getting the object's previous position, subtracting
-            // it from the current position and dividing the result by the time elapsed since last frame
-            panner.setPosition(x, y, z);
-            panner.setVelocity(deltaX/deltaTime, deltaY/deltaTime, deltaZ/deltaTime);
-        },
-        filter: function(filterNode, value, quality, gain) {
-            // set filter frequency based on value from 0 to 1
-            value = parseFloat(value, 10);
-            quality = parseFloat(quality, 10);
-            gain = parseFloat(gain, 10);
-            // Get back to the frequency value between min and max.
-            filterNode.frequency.value = this.getFrequency(value);
-
-            //filterNode.Q.value = quality;
-            //filterNode.gain.value = gain;
-        },
-        getFrequency: function(value) {
-            // get frequency by passing number from 0 to 1
-            // Clamp the frequency between the minimum value (40 Hz) and half of the
-            // sampling rate.
-            var minValue = 40;
-            var maxValue = context.sampleRate / 2;
-            // Logarithm (base 2) to compute how many octaves fall in the range.
-            var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-            // Compute a multiplier from 0 to 1 based on an exponential scale.
-            var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-            // Get back to the frequency value between min and max.
-            return maxValue * multiplier;
-        },
-        createMicrophoneSource: function(stream, connectTo) {
-            var mediaStreamSource = context.createMediaStreamSource( stream );
-            if(connectTo) {
-                mediaStreamSource.connect(connectTo);
-            }
-            // HACK: stops moz garbage collection killing the stream
-            // see https://support.mozilla.org/en-US/questions/984179
-            if(navigator.mozGetUserMedia) {
-                window.horrible_hack_for_mozilla = mediaStreamSource;
-            }
-            return mediaStreamSource;
-        },
-        distort: function(value) {
-            // create waveShaper distortion curve from 0 to 1
-            var k = value * 100,
-                n = 22050,
-                curve = new Float32Array(n),
-                deg = Math.PI / 180;
-
-            for (var i = 0; i < n; i++) {
-                var x = i * 2 / n - 1;
-                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
-            }
-            return curve;
-        }
-    };
-}
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioHelpers;
-}
-
-},{}],6:[function(_dereq_,module,exports){
-'use strict';
-
 function WebAudioNodeFactory(context) {
 
     function createFilter(type, frequency) {
@@ -1052,29 +913,24 @@ function WebAudioNodeFactory(context) {
         pan: function() {
             var node = context.createPanner();
             // Default for stereo is HRTF
-            node.panningModel = 'HRTF';
-            //node.panningModel = 'equalpower';
+            node.panningModel = 'HRTF'; // 'equalpower'
 
-            /*
+            // Distance model and attributes
+            node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
+            node.refDistance = 1;
+            node.maxDistance = 1000;
+            node.rolloffFactor = 1;
 
             // Uses a 3D cartesian coordinate system
-            node.setPosition(object.position.x/290, object.position.y/290, object.position.z/290);
             // node.setPosition(0, 0, 0);
             // node.setOrientation(1, 0, 0);
             // node.setVelocity(0, 0, 0);
-
-            // Distance model and attributes
-            node.distanceModel = 'inverse'; // 'linear' 'inverse' 'exponential'
-            node.refDistance = 1;
-            node.maxDistance = 10000;
-            node.rolloffFactor = 1;
 
             // Directional sound cone - The cone angles are in degrees and run from 0 to 360
             // node.coneInnerAngle = 360;
             // node.coneOuterAngle = 360;
             // node.coneOuterGain = 0;
 
-            */
             // normalised vec
             // node.setOrientation(vec.x, vec.y, vec.z);
             return node;
@@ -1130,6 +986,7 @@ function WebAudioNodeFactory(context) {
         reverb: function(seconds, decay, reverse) {
            return this.convolver(this.createImpulseResponse(seconds, decay, reverse));
         },
+        // TODO: should prob be moved to utils:
         createImpulseResponse: function(seconds, decay, reverse) {
             // generate a reverb effect
             seconds = seconds || 1;
@@ -1194,7 +1051,7 @@ function WebAudioNodeFactory(context) {
             inputChannels = inputChannels === undefined ? 0 : inputChannels;
             outputChannels = outputChannels === undefined ? 1 : outputChannels;
             var node = context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
-            //node.onaudioprocess = callback.bind(callbackContext);
+            //node.onaudioprocess = callback.bind(callbackContext|| node);
             node.onaudioprocess = function (event) {
                 // available props:
                 /*
@@ -1213,6 +1070,19 @@ function WebAudioNodeFactory(context) {
                 callback.call(callbackContext || this, event);
             };
             return node;
+        },
+        // creates MediaStreamAudioSourceNode
+        microphoneSource: function(stream, connectTo) {
+            var mediaStreamSource = context.createMediaStreamSource( stream );
+            if(connectTo) {
+                mediaStreamSource.connect(connectTo);
+            }
+            // HACK: stops moz garbage collection killing the stream
+            // see https://support.mozilla.org/en-US/questions/984179
+            if(navigator.mozGetUserMedia) {
+                window.mozHack = mediaStreamSource;
+            }
+            return mediaStreamSource;
         }
     };
 
@@ -1298,9 +1168,10 @@ function WebAudioNodeFactory(context) {
             };
         },
         scriptProcessor: function() {
-            return {
-
-            };
+            return {};
+        },
+        microphoneSource: function() {
+            return {};
         }
     };
 
@@ -1311,7 +1182,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = WebAudioNodeFactory;
 }
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],6:[function(_dereq_,module,exports){
 'use strict';
 
 var WebAudioSound = _dereq_('./webaudio-sound.js'),
@@ -1590,7 +1461,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = WebAudioPlayer;
 }
 
-},{"./html-sound.js":3,"./webaudio-sound.js":8}],8:[function(_dereq_,module,exports){
+},{"./html-sound.js":3,"./webaudio-sound.js":7}],7:[function(_dereq_,module,exports){
 'use strict';
 
 function WebAudioSound(buffer, context) {
@@ -1602,6 +1473,8 @@ function WebAudioSound(buffer, context) {
     this._startedAt = 0;
     this._pausedAt = 0;
     this._onEnded = null;
+    this._playing = false;
+    this._paused = false;
 }
 
 WebAudioSound.prototype.add = function(buffer) {
@@ -1733,17 +1606,178 @@ if (typeof module === 'object' && module.exports) {
     module.exports = WebAudioSound;
 }
 
+},{}],8:[function(_dereq_,module,exports){
+'use strict';
+
+ function WebAudioUtils(context) {
+    function parseNum(x) {
+        return isNaN(x) ? 0 : parseFloat(x, 10);
+    }
+
+    return {
+        fade: function(gainNode, value, duration) {
+            gainNode.gain.linearRampToValueAtTime(value, context.currentTime + duration);
+        },
+        panHandler: function(panner) {
+            return {
+                // pan left to right with value from -1 to 1
+                x: function(value) {
+                    // x from -Math.PI/4 to Math.PI/4 (-45 to 45 deg)
+                    var x = parseFloat(value, 10) * Math.PI / 4;
+                    var z = x + Math.PI / 2;
+                    if (z > Math.PI / 2) {
+                        z = Math.PI - z;
+                    }
+                    x = Math.sin(x);
+                    z = Math.sin(z);
+                    panner.setPosition(x, 0, z);
+                },
+                xyz: function(x, y, z) {
+                    x = parseNum(x);
+                    y = parseNum(y);
+                    z = parseNum(z);
+                    panner.setPosition(x, y, z);
+                },
+                setSourcePosition: function(positionVec) {
+                    // set the position of the source (where the audio is coming from)
+                    panner.setPosition(positionVec.x, positionVec.y, positionVec.z);
+                },
+                setSourceOrientation: function(forwardVec) { // forwardVec = THREE.Vector3
+                    // set the orientation of the source (where the audio is coming from)
+                    var fw = forwardVec.clone().normalize();
+                    // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+                    var globalUp = { x: 0, y: 1, z: 0 };
+                    var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
+                    // set the audio context's listener position to match the camera position
+                    panner.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+                },
+                setListenerPosition: function(positionVec) {
+                    // set the position of the listener (who is hearing the audio)
+                    context.listener.setPosition(positionVec.x, positionVec.y, positionVec.z);
+                },
+                setListenerOrientation: function(forwardVec) { // forwardVec = THREE.Vector3
+                    // set the orientation of the listener (who is hearing the audio)
+                    var fw = forwardVec.clone().normalize();
+                    // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+                    var globalUp = { x: 0, y: 1, z: 0 };
+                    var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
+                    // set the audio context's listener position to match the camera position
+                    context.listener.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+                },
+                doppler: function(x, y, z, deltaX, deltaY, deltaZ, deltaTime) {
+                    // Tracking the velocity can be done by getting the object's previous position, subtracting
+                    // it from the current position and dividing the result by the time elapsed since last frame
+                    panner.setPosition(x, y, z);
+                    panner.setVelocity(deltaX/deltaTime, deltaY/deltaTime, deltaZ/deltaTime);
+                }
+            };
+        },
+        /*panX: function(panner, value) {
+            // x from -Math.PI/4 to Math.PI/4 (-45 to 45 deg)
+            var x = parseFloat(value, 10) * Math.PI / 4;
+            var z = x + Math.PI / 2;
+            if (z > Math.PI / 2) {
+                z = Math.PI - z;
+            }
+            x = Math.sin(x);
+            z = Math.sin(z);
+            panner.setPosition(x, 0, z);
+        },
+        pan: function(panner, x, y, z) {
+            x = parseNum(x);
+            y = parseNum(y);
+            z = parseNum(z);
+            panner.setPosition(x, y, z);
+        },
+        setSourcePosition: function(panner, positionVec) {
+            // set the position of the source (where the audio is coming from)
+            panner.setPosition(positionVec.x, positionVec.y, positionVec.z);
+        },
+        setSourceOrientation: function(panner, forwardVec) { // forwardVec = THREE.Vector3
+            // set the orientation of the source (where the audio is coming from)
+            var fw = forwardVec.clone().normalize();
+            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+            var globalUp = { x: 0, y: 1, z: 0 };
+            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
+            // set the audio context's listener position to match the camera position
+            panner.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+        },
+        setListenerPosition: function(positionVec) {
+            // set the position of the listener (who is hearing the audio)
+            context.listener.setPosition(positionVec.x, positionVec.y, positionVec.z);
+        },
+        setListenerOrientation: function(forwardVec) { // forwardVec = THREE.Vector3
+            // set the orientation of the listener (who is hearing the audio)
+            var fw = forwardVec.clone().normalize();
+            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+            var globalUp = { x: 0, y: 1, z: 0 };
+            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
+            // set the audio context's listener position to match the camera position
+            context.listener.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+        },
+        doppler: function(panner, x, y, z, deltaX, deltaY, deltaZ, deltaTime) {
+            // Tracking the velocity can be done by getting the object's previous position, subtracting
+            // it from the current position and dividing the result by the time elapsed since last frame
+            panner.setPosition(x, y, z);
+            panner.setVelocity(deltaX/deltaTime, deltaY/deltaTime, deltaZ/deltaTime);
+        },*/
+        filter: function(filterNode, value, quality, gain) {
+            // set filter frequency based on value from 0 to 1
+            value = parseFloat(value, 10);
+            quality = parseFloat(quality, 10);
+            gain = parseFloat(gain, 10);
+            // Get back to the frequency value between min and max.
+            filterNode.frequency.value = this.getFrequency(value);
+
+            //filterNode.Q.value = quality;
+            //filterNode.gain.value = gain;
+        },
+        getFrequency: function(value) {
+            // get frequency by passing number from 0 to 1
+            // Clamp the frequency between the minimum value (40 Hz) and half of the
+            // sampling rate.
+            var minValue = 40;
+            var maxValue = context.sampleRate / 2;
+            // Logarithm (base 2) to compute how many octaves fall in the range.
+            var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+            // Compute a multiplier from 0 to 1 based on an exponential scale.
+            var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+            // Get back to the frequency value between min and max.
+            return maxValue * multiplier;
+        },
+        distort: function(value) {
+            // create waveShaper distortion curve from 0 to 1
+            var k = value * 100,
+                n = 22050,
+                curve = new Float32Array(n),
+                deg = Math.PI / 180;
+
+            for (var i = 0; i < n; i++) {
+                var x = i * 2 / n - 1;
+                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+    };
+}
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = WebAudioUtils;
+}
+
 },{}],9:[function(_dereq_,module,exports){
 'use strict';
 
 var AssetLoader = _dereq_('./lib/asset-loader.js'),
     HTMLSound = _dereq_('./lib/html-sound.js'),
     PageVisibility = _dereq_('./lib/page-visibility.js'),
-    WebAudioHelpers = _dereq_('./lib/webaudio-helpers.js'),
     WebAudioNodeFactory = _dereq_('./lib/webaudio-nodefactory.js'),
-    WebAudioPlayer = _dereq_('./lib/webaudio-player.js');
+    WebAudioPlayer = _dereq_('./lib/webaudio-player.js'),
+    WebAudioUtils = _dereq_('./lib/webaudio-utils.js');
 
 function Sono() {
+    this.VERSION = '0.0.0';
+
     this._sounds = {};
     this.context = this.createAudioContext();
 
@@ -1762,8 +1796,6 @@ function Sono() {
 
     this.log(false);
 }
-
-Sono.VERSION = '0.0.0';
 
 /*
  * add - data can be element, arraybuffer or null/undefined
@@ -1888,6 +1920,17 @@ Sono.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext
     return this.load(key, url, loop, callback, callbackContext, false);
 };
 
+Sono.prototype.destroy = function(key) {
+    var sound = this._sounds[key];
+    delete this._sounds[key];
+    if(sound) {
+        if(sound.loader) {
+            sound.loader.cancel();
+        }
+        sound.stop();
+    }
+};
+
 /*
  * Support
  */
@@ -1924,6 +1967,7 @@ Sono.prototype.getSupportedFile = function(fileNames) {
         }
     }
     // if no extension add the fits good one
+    // FIXME this currently fails with urls like: './audio/foo.mp3'
     else if(typeof fileNames === 'string' && !this.getExtension(fileNames)) {
         if(fileNames.lastIndexOf('.') !== fileNames.length - 1) {
             fileNames = fileNames + '.';
@@ -2009,7 +2053,7 @@ Sono.prototype.handlePageVisibility = function() {
  */
 
 Sono.prototype.log = function(colorFull) {
-    var title = 'Sono ' + Sono.VERSION,
+    var title = 'Sono ' + this.VERSION,
         support = 'Supported:' + this.isSupported +
                   ' WebAudioAPI:' + this.hasWebAudio +
                   ' TouchLocked:' + this._isTouchLocked +
@@ -2080,10 +2124,10 @@ Object.defineProperty(Sono.prototype, 'create', {
 
 Object.defineProperty(Sono.prototype, 'utils', {
     get: function() {
-        if(!this._webAudioHelpers) {
-            this._webAudioHelpers = new WebAudioHelpers(this.context);
+        if(!this._utils) {
+            this._utils = new WebAudioUtils(this.context);
         }
-        return this._webAudioHelpers;
+        return this._utils;
     }
 });
 
@@ -2101,6 +2145,6 @@ if (typeof module === 'object' && module.exports) {
     module.exports = new Sono();
 }
 
-},{"./lib/asset-loader.js":2,"./lib/html-sound.js":3,"./lib/page-visibility.js":4,"./lib/webaudio-helpers.js":5,"./lib/webaudio-nodefactory.js":6,"./lib/webaudio-player.js":7}]},{},[9])
+},{"./lib/asset-loader.js":2,"./lib/html-sound.js":3,"./lib/page-visibility.js":4,"./lib/webaudio-nodefactory.js":5,"./lib/webaudio-player.js":6,"./lib/webaudio-utils.js":8}]},{},[9])
 (9)
 });
