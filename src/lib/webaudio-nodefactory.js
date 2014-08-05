@@ -100,6 +100,7 @@ function WebAudioNodeFactory(context) {
         reverb: function(seconds, decay, reverse) {
            return this.convolver(this.createImpulseResponse(seconds, decay, reverse));
         },
+        // TODO: should prob be moved to utils:
         createImpulseResponse: function(seconds, decay, reverse) {
             // generate a reverb effect
             seconds = seconds || 1;
@@ -164,7 +165,7 @@ function WebAudioNodeFactory(context) {
             inputChannels = inputChannels === undefined ? 0 : inputChannels;
             outputChannels = outputChannels === undefined ? 1 : outputChannels;
             var node = context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
-            //node.onaudioprocess = callback.bind(callbackContext);
+            //node.onaudioprocess = callback.bind(callbackContext|| node);
             node.onaudioprocess = function (event) {
                 // available props:
                 /*
@@ -183,6 +184,19 @@ function WebAudioNodeFactory(context) {
                 callback.call(callbackContext || this, event);
             };
             return node;
+        },
+        // creates MediaStreamAudioSourceNode
+        microphoneSource: function(stream, connectTo) {
+            var mediaStreamSource = context.createMediaStreamSource( stream );
+            if(connectTo) {
+                mediaStreamSource.connect(connectTo);
+            }
+            // HACK: stops moz garbage collection killing the stream
+            // see https://support.mozilla.org/en-US/questions/984179
+            if(navigator.mozGetUserMedia) {
+                window.mozHack = mediaStreamSource;
+            }
+            return mediaStreamSource;
         }
     };
 
@@ -268,9 +282,10 @@ function WebAudioNodeFactory(context) {
             };
         },
         scriptProcessor: function() {
-            return {
-
-            };
+            return {};
+        },
+        microphoneSource: function() {
+            return {};
         }
     };
 

@@ -3,9 +3,9 @@
 var AssetLoader = require('./lib/asset-loader.js'),
     HTMLSound = require('./lib/html-sound.js'),
     PageVisibility = require('./lib/page-visibility.js'),
-    WebAudioHelpers = require('./lib/webaudio-helpers.js'),
     WebAudioNodeFactory = require('./lib/webaudio-nodefactory.js'),
-    WebAudioPlayer = require('./lib/webaudio-player.js');
+    WebAudioPlayer = require('./lib/webaudio-player.js'),
+    WebAudioUtils = require('./lib/webaudio-utils.js');
 
 function Sono() {
     this.VERSION = '0.0.0';
@@ -355,10 +355,10 @@ Object.defineProperty(Sono.prototype, 'create', {
 
 Object.defineProperty(Sono.prototype, 'utils', {
     get: function() {
-        if(!this._webAudioHelpers) {
-            this._webAudioHelpers = new WebAudioHelpers(this.context);
+        if(!this._utils) {
+            this._utils = new WebAudioUtils(this.context);
         }
-        return this._webAudioHelpers;
+        return this._utils;
     }
 });
 

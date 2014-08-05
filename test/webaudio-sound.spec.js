@@ -1,6 +1,6 @@
 'use strict';
 
-var Sono = require('../src/sono.js');
+//var Sono = require('../src/sono.js');
 var WebAudioSound = require('../src/lib/webaudio-sound.js');
 
 describe('WebAudio Sound', function() {
