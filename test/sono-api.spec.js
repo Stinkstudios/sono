@@ -53,4 +53,16 @@ describe('Sono', function() {
         expect(Sono.loader).to.be.an('object');
     });
 
+    it('should have get/set volume', function() {
+        var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'volume');
+        expect(desc.get).to.be.a('function');
+        expect(desc.set).to.be.a('function');
+    });
+
+    it('should have get create', function() {
+        var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'create');
+        expect(desc.get).to.be.a('function');
+        expect(desc.set).to.not.exist;
+    });
+
 });

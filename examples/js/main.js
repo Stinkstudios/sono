@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    console.log('SONO:', SONO);
+    console.log('Sono:', Sono);
 
     var url;
     //url = sounds[Math.floor(Math.random() * sounds.length)];
@@ -24,10 +24,10 @@
     };
     // test no WebAudio
     //SONO.context = null;
-    var sound = SONO.load('test', url, false, soundLoaded, this, false).play();
+    var sound = Sono.load('test', url, false, soundLoaded, this, false).play();
     sound.loader.onProgress.add(soundLoadProgress, this);
     //this.sound.loop = true;
     //this.sound.addNode(SONO.create.reverb(0.2, 0.5));
-    var delay = SONO.create.delay(sound._gain, 0.5, 0.5);
+    var delay = Sono.create.delay(sound._gain, 0.5, 0.5);
 
 }());
