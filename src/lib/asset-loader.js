@@ -133,8 +133,6 @@ AssetLoader.Loader.prototype = {
             if (event.lengthComputable) {
                 var percentComplete = event.loaded / event.total;
                 self.onProgress.dispatch(percentComplete);
-            } else {
-                //console.log('Unable to compute progress information since the total size is unknown');
             }
         };
         request.onload = function() {
@@ -150,6 +148,7 @@ AssetLoader.Loader.prototype = {
             self.onError.dispatch(e);
         };
         request.send();
+        this.request = request;
     },
     loadHTML5Audio: function(touchLocked) {
         var request = new Audio();
@@ -239,34 +238,13 @@ AssetLoader.Loader.prototype = {
         }
 
         request.send();
+        this.request = request;
     },
     cancel: function() {
-      // if loaded return
-      // if this.request and it's xhr
-      // if(request && request.readystate != 4){
-      //    request.abort();
-      //}
-      // if request is img
-      // if request is audio
-      //
-      // dispatch complete or error
+      if(this.request && this.request.readyState !== 4) {
+          this.request.abort();
+      }
     }
 };
 
 module.exports = AssetLoader;
-
-/*if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AssetLoader;
-}*/
-
-/*var root = this;
-if (typeof exports !== 'undefined') {
-    if (typeof module !== 'undefined' && module.exports) {
-        exports = module.exports = AssetLoader;
-    }
-    exports.AssetLoader = AssetLoader;
-} else if (typeof define !== 'undefined' && define.amd) {
-    define('PIXI', (function() { return root.AssetLoader = AssetLoader; })() );
-} else {
-    root.PIXI = PIXI;
-}*/

@@ -9,6 +9,8 @@ function WebAudioSound(buffer, context) {
     this._startedAt = 0;
     this._pausedAt = 0;
     this._onEnded = null;
+    this._playing = false;
+    this._paused = false;
 }
 
 WebAudioSound.prototype.add = function(buffer) {

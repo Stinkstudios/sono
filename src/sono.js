@@ -8,6 +8,8 @@ var AssetLoader = require('./lib/asset-loader.js'),
     WebAudioPlayer = require('./lib/webaudio-player.js');
 
 function Sono() {
+    this.VERSION = '0.0.0';
+
     this._sounds = {};
     this.context = this.createAudioContext();
 
@@ -26,8 +28,6 @@ function Sono() {
 
     this.log(false);
 }
-
-Sono.VERSION = '0.0.0';
 
 /*
  * add - data can be element, arraybuffer or null/undefined
@@ -150,6 +150,17 @@ Sono.prototype.loadBuffer = function(key, url, loop, callback, callbackContext) 
 
 Sono.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext) {
     return this.load(key, url, loop, callback, callbackContext, false);
+};
+
+Sono.prototype.destroy = function(key) {
+    var sound = this._sounds[key];
+    delete this._sounds[key];
+    if(sound) {
+        if(sound.loader) {
+            sound.loader.cancel();
+        }
+        sound.stop();
+    }
 };
 
 /*

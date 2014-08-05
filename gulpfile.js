@@ -153,7 +153,8 @@ gulp.task('connect', function() {
 // watch
 gulp.task('watch', function() {
   gulp.watch(cssSrc+'**/*.css', ['css']);
-  gulp.watch(src+'**/*.js', ['bundle']);
+  gulp.watch(src+'**/*.js', ['jshint']);
+  gulp.watch('test/**/*.js', ['jshint']);
 });
 
 // default

@@ -56,6 +56,8 @@ Sono.loadBuffer(key, url, loop, callback, callbackContext) // load as array buff
 
 Sono.loadAudioTag(key, url, loop, callback, callbackContext) // load as html audio el
 
+Sono.destroy(key) // remove, stop and cancel if still loading (should it be called remove?)
+
 ##### set up / detection:
 
 [internal]?? Sono.createAudioContext()
@@ -175,3 +177,16 @@ Sono.utils.distort(value)
 #### Sono.loader (loader module)
 
 Sono.loader
+
+
+
+## Notes
+
+Inconsistencies:
+
+* HTMLSound has get/set volume and WebAudioSound doesn't
+* WebAudioSound has get source and HTMLSound doesn't
+
+
+
+
