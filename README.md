@@ -12,13 +12,15 @@ var Sono = require('Sono');
 
 Sono.context // the WebAudio context
 
-[static] Sono.VERSION // current version
+Sono.VERSION // current version
 
 ##### add / get sounds:
 
-Sono.add(key, data, loop)
+Sono.add(data, id) // return sound obj id is optional
 
-Sono.get(key) // returns a WebAudioPlayer or HTMLSound
+Sono.get(id) // returns a WebAudioPlayer or HTMLSound
+
+[internal] Sono.createId // returns a unique id
 
 * var sound = Sono.get('someKey');
 * sound.play()
@@ -36,29 +38,29 @@ Sono.resumeAll() // all currently paused
 
 Sono.stopAll() // all
 
-Sono.play(key) // individual sound
+Sono.play(id) // individual sound
 
-Sono.pause(key) // individual sound
+Sono.pause(id) // individual sound
 
-Sono.stop(key) // individual sound
+Sono.stop(id) // individual sound
 
 ##### loading:
 
 [internal] Sono.initLoader()
 
-Sono.load(key, url, loop, callback, callbackContext, asBuffer)
+Sono.load(url, callback, callbackContext, asBuffer) returns sound obj
 
-* Sono.load('someKey', 'audio/foo.ogg', false, onSoundLoaded, this, true); // loads this file
-* Sono.load('someKey', ['audio/foo.ogg', 'audio/foo.mp3']); // loads first one that works
-* Sono.load('someKey', ['audio/foo.ogg', 'audio/foo.mp3']).play(); // plays sound when loaded
+* Sono.load('audio/foo.ogg', false, onSoundLoaded, this, true); // loads this file
+* Sono.load(['audio/foo.ogg', 'audio/foo.mp3']); // loads first one that works
+* Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play(); // plays sound when loaded
 
-Sono.loadBuffer(key, url, loop, callback, callbackContext) // load as array buffer
+Sono.loadArrayBuffer(url, callback, callbackContext) // load as array buffer
 
-Sono.loadAudioTag(key, url, loop, callback, callbackContext) // load as html audio el
+Sono.loadAudioElement(url, callback, callbackContext) // load as html audio el
 
-Sono.destroy(key) // remove, stop and cancel if still loading (should it be called remove?)
+Sono.destroy(id) // remove, stop and cancel if still loading (should it be called remove?)
 
-##### set up / detection:
+##### set up / detection (should these be in utils module?):
 
 [internal]?? Sono.createAudioContext()
 
@@ -81,7 +83,7 @@ Sono.destroy(key) // remove, stop and cancel if still loading (should it be call
 
 [internal]?? Sono.handlePageVisibility()
 
-##### logs info about Sono version and current browser:
+##### logs info about Sono version and current browser (utils?):
 
 Sono.log()
 
@@ -94,6 +96,10 @@ get Sono.hasWebAudio // is WebAudio supported?
 ##### volume:
 
 get/set Sono.volume
+
+##### getter to access sounds hash:
+
+get Sono.sounds
 
 ##### getter to access node factory:
 
@@ -186,7 +192,3 @@ Inconsistencies:
 
 * HTMLSound has get/set volume and WebAudioSound doesn't
 * WebAudioSound has get source and HTMLSound doesn't
-
-
-
-

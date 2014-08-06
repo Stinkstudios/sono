@@ -1,7 +1,7 @@
 'use strict';
 
 function HTMLSound(el, volume) {
-    this.name = '';
+    this.id = '';
     this._loop = false;
     this._volume = volume === undefined ? 1 : volume;
     this._playing = false;
@@ -62,7 +62,7 @@ HTMLSound.prototype.stop = function() {
 };
 
 HTMLSound.prototype.onEnded = function() {
-    console.log('onended');
+    //console.log('onended');
     this._playing = false;
     this._paused = false;
     if(this._loop) {

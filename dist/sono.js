@@ -701,7 +701,7 @@ module.exports = AssetLoader;
 'use strict';
 
 function HTMLSound(el, volume) {
-    this.name = '';
+    this.id = '';
     this._loop = false;
     this._volume = volume === undefined ? 1 : volume;
     this._playing = false;
@@ -762,7 +762,7 @@ HTMLSound.prototype.stop = function() {
 };
 
 HTMLSound.prototype.onEnded = function() {
-    console.log('onended');
+    //console.log('onended');
     this._playing = false;
     this._paused = false;
     if(this._loop) {
@@ -1189,7 +1189,7 @@ var WebAudioSound = _dereq_('./webaudio-sound.js'),
     HTMLSound = _dereq_('./html-sound.js');
 
 function WebAudioPlayer(context, buffer, destination) {
-    this.name = '';
+    this.id = '';
     this._context = context;
     this._source = null; // AudioBufferSourceNode
     this._nodeList = [];
@@ -1465,7 +1465,7 @@ if (typeof module === 'object' && module.exports) {
 'use strict';
 
 function WebAudioSound(buffer, context) {
-    this.name = '';
+    this.id = '';
     this._buffer = buffer; // AudioBuffer
     this._context = context;
     this._source = null; // AudioBufferSourceNode
@@ -1798,13 +1798,24 @@ function Sono() {
 }
 
 /*
- * add - data can be element, arraybuffer or null/undefined
+ * add - data can be element, arraybuffer or as yet null/undefined
  */
 
-Sono.prototype.add = function(key, data, loop) {
-    // TODO: handle dupe key
-    if(this._sounds[key]) {
-        return this._sounds[key];
+Sono.prototype.add = function(data, id) {
+
+    // try to load if url is put into add?
+    if(data && !(data instanceof HTMLMediaElement) && !(data instanceof AudioBuffer)) {
+        var s = this.load(data);
+        if(id) { s.id = id; }
+        return s;
+    }
+
+
+
+    if(!id) { id = this.createId(); }
+
+    if(this._sounds[id]) {
+        return this._sounds[id];
     }
 
     var sound;
@@ -1814,15 +1825,49 @@ Sono.prototype.add = function(key, data, loop) {
     else {
         sound = new HTMLSound(data, this._masterGain);
     }
-    sound.name = key;
-    sound.loop = !!loop;
+    sound.id = id;
+    //sound.loop = !!loop;
     sound.add(data);
-    this._sounds[key] = sound;
+    this._sounds[id] = sound;
     return sound;
 };
 
-Sono.prototype.get = function(key) {
-    return this._sounds[key];
+Sono.prototype.load = function(url, callback, callbackContext, asBuffer) {
+    var sound = this.add();
+
+    url = this.getSupportedFile(url);
+
+    sound.loader = this._loader.add(url);
+    //sound.loader = new AssetLoader.Loader(url);
+    //sound.loader.touchLocked = this._isTouchLocked;
+    if(asBuffer) {
+        sound.loader.webAudioContext = this.context;
+    }
+    else {
+        sound.loader.webAudioContext = null;
+    }
+    //sound.loader.crossOrigin = true;
+    sound.loader.onComplete.add(function(buffer) {
+        sound.add(buffer);
+        //console.log('sound loaded:', url, buffer);
+        if(callback) {
+            callback.call(callbackContext || this, sound);
+        }
+    }, this);
+    sound.loader.start();
+    return sound;
+};
+
+Sono.prototype.get = function(id) {
+    return this._sounds[id];
+};
+
+Sono.prototype.createId = function() {
+    if(this._id === undefined) {
+        this._id = 0;
+    }
+    this._id++;
+    return this._id.toString(10);
 };
 
 /*
@@ -1855,21 +1900,21 @@ Sono.prototype.resumeAll = function() {
 };
 
 Sono.prototype.stopAll = function() {
-    for(var key in this._sounds) {
-        this._sounds[key].stop();
+    for(var id in this._sounds) {
+        this._sounds[id].stop();
     }
 };
 
-Sono.prototype.play = function(key) {
-    this._sounds[key].play();
+Sono.prototype.play = function(id) {
+    this._sounds[id].play();
 };
 
-Sono.prototype.pause = function(key) {
-    this._sounds[key].pause();
+Sono.prototype.pause = function(id) {
+    this._sounds[id].pause();
 };
 
-Sono.prototype.stop = function(key) {
-    this._sounds[key].stop();
+Sono.prototype.stop = function(id) {
+    this._sounds[id].stop();
 };
 
 /*
@@ -1883,46 +1928,17 @@ Sono.prototype.initLoader = function() {
     this._loader.crossOrigin = true;
 };
 
-Sono.prototype.load = function(key, url, loop, callback, callbackContext, asBuffer) {
-  // TODO: handle dupe key
-    if(this._sounds[key]) {
-        return this._sounds[key];
-    }
-    var sound = this.add(key, null, loop);
-    url = this.getSupportedFile(url);
-    //console.log('url:', url);
-    sound.loader = this._loader.add(url);
-    //sound.loader = new AssetLoader.Loader(url);
-    //sound.loader.touchLocked = this._isTouchLocked;
-    if(asBuffer) {
-        sound.loader.webAudioContext = this.context;
-    }
-    else {
-        sound.loader.webAudioContext = null;
-    }
-    //sound.loader.crossOrigin = true;
-    sound.loader.onComplete.add(function(buffer) {
-        sound.add(buffer);
-        //console.log('sound loaded:', url, buffer);
-        if(callback) {
-            callback.call(callbackContext || this, sound);
-        }
-    }, this);
-    sound.loader.start();
-    return sound;
+Sono.prototype.loadArrayBuffer = function(url, callback, callbackContext) {
+    return this.load(url, callback, callbackContext, true);
 };
 
-Sono.prototype.loadBuffer = function(key, url, loop, callback, callbackContext) {
-    return this.load(key, url, loop, callback, callbackContext, true);
+Sono.prototype.loadAudioElement = function(url, callback, callbackContext) {
+    return this.load(url, callback, callbackContext, false);
 };
 
-Sono.prototype.loadAudioTag = function(key, url, loop, callback, callbackContext) {
-    return this.load(key, url, loop, callback, callbackContext, false);
-};
-
-Sono.prototype.destroy = function(key) {
-    var sound = this._sounds[key];
-    delete this._sounds[key];
+Sono.prototype.destroy = function(id) {
+    var sound = this._sounds[id];
+    delete this._sounds[id];
     if(sound) {
         if(sound.loader) {
             sound.loader.cancel();
@@ -1968,12 +1984,14 @@ Sono.prototype.getSupportedFile = function(fileNames) {
     }
     // if no extension add the fits good one
     // FIXME this currently fails with urls like: './audio/foo.mp3'
-    else if(typeof fileNames === 'string' && !this.getExtension(fileNames)) {
+    // Think this could be a bit unstable - too many cases where could fail
+    // e.g. some endpoint that returns a sound...
+    /*else if(typeof fileNames === 'string' && !this.getExtension(fileNames)) {
         if(fileNames.lastIndexOf('.') !== fileNames.length - 1) {
             fileNames = fileNames + '.';
         }
         return fileNames + supportedExtensions[0];
-    }
+    }*/
     // if has extension already just return
     return fileNames;
 };
@@ -2110,6 +2128,12 @@ Object.defineProperty(Sono.prototype, 'volume', {
                 this._sounds[i].volume = this._masterGain;
             }
         }
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'sounds', {
+    get: function() {
+        return this._sounds;
     }
 });
 

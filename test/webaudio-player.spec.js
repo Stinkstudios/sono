@@ -7,7 +7,7 @@ describe('WebAudio Player', function() {
     var player = new WebAudioPlayer(Sono.context);
 
     it('should have expected API', function() {
-        expect(player).to.have.property('name');
+        expect(player).to.have.property('id');
         expect(player.add).to.be.a('function');
 
         expect(player.play).to.be.a('function');

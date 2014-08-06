@@ -4,7 +4,7 @@ var WebAudioSound = require('./webaudio-sound.js'),
     HTMLSound = require('./html-sound.js');
 
 function WebAudioPlayer(context, buffer, destination) {
-    this.name = '';
+    this.id = '';
     this._context = context;
     this._source = null; // AudioBufferSourceNode
     this._nodeList = [];

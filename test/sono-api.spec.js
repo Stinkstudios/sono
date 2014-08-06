@@ -37,8 +37,8 @@ describe('Sono', function() {
         expect(Sono.stop).to.be.a('function');
         expect(Sono.initLoader).to.be.a('function');
         expect(Sono.load).to.be.a('function');
-        expect(Sono.loadBuffer).to.be.a('function');
-        expect(Sono.loadAudioTag).to.be.a('function');
+        expect(Sono.loadArrayBuffer).to.be.a('function');
+        expect(Sono.loadAudioElement).to.be.a('function');
         expect(Sono.destroy).to.be.a('function');
         expect(Sono.createAudioContext).to.be.a('function');
         expect(Sono.getSupportedFile).to.be.a('function');

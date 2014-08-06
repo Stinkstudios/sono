@@ -7,7 +7,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, minimal-ui">
 
 	<meta name="description" content="">
-    <meta name="keywords" content="">
+    <meta name="idwords" content="">
 
     <meta property="og:title" content="">
     <meta property="og:site_name" content="">
@@ -32,7 +32,46 @@
         <li>Video el</li>
     </ul>
 
+
+
 	<script src="../dist/sono.js"></script>
-    <script src="js/main.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            console.log('Sono:', Sono);
+
+            var urls;
+            //url = sounds[Math.floor(Math.random() * sounds.length)];
+            // will load this file
+            //url = 'audio/TEST.ogg';
+            // will load first key compatible with browser
+            //url = { foo: 'audio/TEST.ogg', bar: 'audio/TEST.mp3' };
+            // will load first index compatible with browser
+            urls = ['audio/TEST.ogg', 'audio/TEST.mp3'];
+            // will add first compatible extension
+            //url = 'audio/TEST';
+
+            var soundLoadProgress = function(progress) {
+                //console.log('soundLoadProgress', progress);
+            };
+
+            var soundLoaded = function(sound) {
+                console.log('soundLoaded', sound._buffer);
+                //sound.play();
+
+            };
+            // test no WebAudio
+            //SONO.context = null;
+            //var sound = Sono.loadArrayBuffer(urls, soundLoaded, this, false).play();
+            var sound = Sono.add(urls).play();
+            sound.loop = true;
+            sound.loader.onProgress.add(soundLoadProgress, this);
+            //this.sound.loop = true;
+            //this.sound.addNode(SONO.create.reverb(0.2, 0.5));
+            var delay = Sono.create.delay(sound._gain, 0.5, 0.5);
+
+        }());
+    </script>
 </body>
 </html>

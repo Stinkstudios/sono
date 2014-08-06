@@ -6,7 +6,7 @@ describe('HTML Sound', function() {
 	var sound = new HTMLSound();
 
 	it('should have expected API', function() {
-        expect(sound).to.have.property('name');
+        expect(sound).to.have.property('id');
         expect(sound.add).to.be.a('function');
 
         expect(sound.play).to.be.a('function');

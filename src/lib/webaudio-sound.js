@@ -1,7 +1,7 @@
 'use strict';
 
 function WebAudioSound(buffer, context) {
-    this.name = '';
+    this.id = '';
     this._buffer = buffer; // AudioBuffer
     this._context = context;
     this._source = null; // AudioBufferSourceNode
