@@ -1,37 +1,40 @@
 'use strict';
 
-var WebAudioSound = require('./webaudio-sound.js'),
-    HTMLSound = require('./html-sound.js');
+var BufferSource = require('./buffer-source.js'),
+    ElementSource = require('./element-source.js');
 
-function WebAudioPlayer(context, buffer, destination) {
+function Sound(context, data, destination) {
     this.id = '';
     this._context = context;
-    this._source = null; // AudioBufferSourceNode
-    this._nodeList = [];
-    this._gain = this._context.createGain();
-    this._gain.connect(destination || this._context.destination);
     this._loop = false;
-    this._startedAt = 0;
+    this._nodeList = [];
+    this._onEnded = null;
     this._pausedAt = 0;
     this._playWhenReady = false;
-    this._onEnded = null;
+    this._source = null;
+    this._sourceNode = null;
+    this._startedAt = 0;
 
-    this.add(buffer);
+    if(this._context) {
+        this._gain = this._context.createGain();
+        this._gain.connect(destination || this._context.destination);
+    }
+
+    this.add(data);
 }
 
-WebAudioPlayer.prototype.add = function(buffer) {
-    if(!buffer) { return; }
-    this._buffer = buffer; // AudioBuffer or Media Element
-
-    if(this._buffer.tagName) {
-      this._sound = new HTMLSound(buffer);
-      this.getSource();
+Sound.prototype.add = function(data) {
+    if(!data) { return; }
+    this._data = data; // AudioBuffer or Media Element
+    console.log('data:', this._data);
+    if(this._data.tagName) {
+      this._source = new ElementSource(data);
     }
     else {
-      this._sound = new WebAudioSound(buffer, this._context);
-      this.getSource();
+      this._source = new BufferSource(data, this._context);
     }
-    this._sound.addEndedListener(this.onEnded, this);
+    this.createSourceNode();
+    this._source.addEndedListener(this.onEnded, this);
 
     // should this take account of delay and offset?
     if(this._playWhenReady) {
@@ -39,35 +42,35 @@ WebAudioPlayer.prototype.add = function(buffer) {
     }
 };
 
-WebAudioPlayer.prototype.play = function(delay, offset) {
-    if(!this._sound) {
+Sound.prototype.play = function(delay, offset) {
+    if(!this._source) {
         this._playWhenReady = true;
         return this;
     }
-    this.getSource();
-    this._sound.loop = this._loop;
+    this.createSourceNode();
+    this._source.loop = this._loop;
 
     // volume update?
-    this._sound.play(delay, offset);
+    this._source.play(delay, offset);
 };
 
-WebAudioPlayer.prototype.pause = function() {
-    if(!this._sound) { return; }
-    this._sound.pause();
+Sound.prototype.pause = function() {
+    if(!this._source) { return; }
+    this._source.pause();
 };
 
-WebAudioPlayer.prototype.stop = function() {
-    if(!this._sound) { return; }
-    this._sound.stop();
+Sound.prototype.stop = function() {
+    if(!this._source) { return; }
+    this._source.stop();
 };
 
-WebAudioPlayer.prototype.addNode = function(node) {
+Sound.prototype.addNode = function(node) {
     this._nodeList.push(node);
     this.updateConnections();
     return node;
 };
 
-WebAudioPlayer.prototype.removeNode = function(node) {
+Sound.prototype.removeNode = function(node) {
     var l = this._nodeList.length;
     for (var i = 0; i < l; i++) {
         if(node === this._nodeList[i]) {
@@ -84,8 +87,8 @@ WebAudioPlayer.prototype.removeNode = function(node) {
 // feels like node list could be a linked list??
 // if list.last is destination addbefore
 
-/*WebAudioPlayer.prototype.updateConnections = function() {
-    if(!this._source) {
+/*Sound.prototype.updateConnections = function() {
+    if(!this._sourceNode) {
         return;
     }
     var l = this._nodeList.length;
@@ -93,13 +96,13 @@ WebAudioPlayer.prototype.removeNode = function(node) {
       this._nodeList[i-1].connect(this._nodeList[i]);
     }
 };*/
-/*WebAudioPlayer.prototype.updateConnections = function() {
-    if(!this._source) {
+/*Sound.prototype.updateConnections = function() {
+    if(!this._sourceNode) {
         return;
     }
     console.log('updateConnections');
-    this._source.disconnect(0);
-    this._source.connect(this._gain);
+    this._sourceNode.disconnect(0);
+    this._sourceNode.connect(this._gain);
     var l = this._nodeList.length;
 
     for (var i = 0; i < l; i++) {
@@ -116,8 +119,8 @@ WebAudioPlayer.prototype.removeNode = function(node) {
     }
     this.connectTo(this._context.destination);
 };*/
-WebAudioPlayer.prototype.updateConnections = function() {
-    if(!this._source) {
+Sound.prototype.updateConnections = function() {
+    if(!this._sourceNode) {
         return;
     }
     //console.log('updateConnections');
@@ -125,8 +128,8 @@ WebAudioPlayer.prototype.updateConnections = function() {
     for (var i = 0; i < l; i++) {
         if(i === 0) {
             //console.log(' - connect source to node:', this._nodeList[i]);
-            //this._source.disconnect(0);
-            this._source.connect(this._nodeList[i]);
+            //this._sourceNode.disconnect(0);
+            this._sourceNode.connect(this._nodeList[i]);
         }
         else {
             //console.log('connect:', this._nodeList[i-1], 'to', this._nodeList[i]);
@@ -144,7 +147,7 @@ WebAudioPlayer.prototype.updateConnections = function() {
 };
 
 // or setter for destination?
-/*WebAudioPlayer.prototype.connectTo = function(node) {
+/*Sound.prototype.connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
       console.log('connect:', this._nodeList[l - 1], 'to', node);
@@ -158,7 +161,7 @@ WebAudioPlayer.prototype.updateConnections = function() {
     }
     this.destination = node;
 };*/
-WebAudioPlayer.prototype.connectTo = function(node) {
+Sound.prototype.connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
         //console.log('connect:', this._nodeList[l - 1], 'to', node);
@@ -167,13 +170,13 @@ WebAudioPlayer.prototype.connectTo = function(node) {
     }
     else {
         //console.log(' x connect source to node:', node);
-        //this._source.disconnect(0);
-        this._source.connect(node);
+        //this._sourceNode.disconnect(0);
+        this._sourceNode.connect(node);
     }
     this.destination = node;
 };
 
-WebAudioPlayer.prototype.onEnded = function() {
+Sound.prototype.onEnded = function() {
     //console.log('p onended');
     //this.stop();
     if(typeof this._onEnded === 'function') {
@@ -182,29 +185,32 @@ WebAudioPlayer.prototype.onEnded = function() {
     }
 };
 
-WebAudioPlayer.prototype.addEndedListener = function(fn, context) {
+Sound.prototype.addEndedListener = function(fn, context) {
     this._onEnded = fn.bind(context || this);
 };
 
-WebAudioPlayer.prototype.removeEndedListener = function() {
+Sound.prototype.removeEndedListener = function() {
     this._onEnded = null;
 };
 
-WebAudioPlayer.prototype.getSource = function() {
-    //console.log('get source', this._source);
-    if(this._buffer.tagName) {
+Sound.prototype.createSourceNode = function() {
+    //console.log('get source', this._sourceNode);
+    if(!this._context) {
+        return;
+    }
+    else if(this._data.tagName) {
         // audio or video tag
-        if(!this._source) {
-            this._source = this._context.createMediaElementSource(this._buffer);
+        if(!this._sourceNode) {
+            this._sourceNode = this._context.createMediaElementSource(this._data);
             this.updateConnections();
         }
     }
     else {
-        // array buffer
-        this._source = this._sound.source;
+        // array buffer source
+        this._sourceNode = this._source.source;
         this.updateConnections();
     }
-    return this._source;
+    return this._sourceNode;
 };
 
 /*
@@ -216,55 +222,61 @@ WebAudioPlayer.prototype.getSource = function() {
  */
 
 
-Object.defineProperty(WebAudioPlayer.prototype, 'loop', {
+Object.defineProperty(Sound.prototype, 'loop', {
     get: function() {
         return this._loop;
     },
     set: function(value) {
         this._loop = !!value;
-        if(this._sound) {
-          this._sound.loop = this._loop;
+        if(this._source) {
+          this._source.loop = this._loop;
         }
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'duration', {
+Object.defineProperty(Sound.prototype, 'duration', {
     get: function() {
-        return this._sound ? this._sound.duration : 0;
+        return this._source ? this._source.duration : 0;
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'currentTime', {
+Object.defineProperty(Sound.prototype, 'currentTime', {
     get: function() {
-        return this._sound ? this._sound.currentTime : 0;
+        return this._source ? this._source.currentTime : 0;
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'progress', {
+Object.defineProperty(Sound.prototype, 'progress', {
   get: function() {
-    return this._sound ? this._sound.progress : 0;
+    return this._source ? this._source.progress : 0;
   }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'volume', {
+Object.defineProperty(Sound.prototype, 'volume', {
     get: function() {
-        return this._gain.gain.value;
+        return this._gain ? this._gain.gain.value : this._source.volume;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
-        this._gain.gain.value = value;
+
+        if(this._gain) {
+            this._gain.gain.value = value;
+        }
+        else {
+            this._source.volume = value;
+        }
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'playing', {
+Object.defineProperty(Sound.prototype, 'playing', {
     get: function() {
-        return this._sound ? this._sound.playing : false;
+        return this._source ? this._source.playing : false;
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'paused', {
+Object.defineProperty(Sound.prototype, 'paused', {
     get: function() {
-        return this._sound ? this._sound.paused : false;
+        return this._source ? this._source.paused : false;
     }
 });
 
@@ -273,5 +285,5 @@ Object.defineProperty(WebAudioPlayer.prototype, 'paused', {
  */
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioPlayer;
+    module.exports = Sound;
 }

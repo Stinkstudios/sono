@@ -30,6 +30,8 @@
         <li>WebAudio</li>
         <li>Audio el v Array Buffer</li>
         <li>Video el</li>
+        <li>Crazy ones like video texture in THREE.js (a TV?)</li>
+        <li>Game e.g. different environments/rooms?</li>
     </ul>
 
 
@@ -39,6 +41,8 @@
         (function() {
             'use strict';
 
+            //Sono.context = null;
+            Sono.log();
             console.log('Sono:', Sono);
 
             var urls;
@@ -65,7 +69,7 @@
             //SONO.context = null;
             //var sound = Sono.loadArrayBuffer(urls, soundLoaded, this, false).play();
             var sound = Sono.add(urls).play();
-            sound.loop = true;
+            //sound.loop = true;
             sound.loader.onProgress.add(soundLoadProgress, this);
             //this.sound.loop = true;
             //this.sound.addNode(SONO.create.reverb(0.2, 0.5));

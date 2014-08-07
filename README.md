@@ -16,9 +16,9 @@ Sono.VERSION // current version
 
 ##### add / get sounds:
 
-Sono.add(data, id) // return sound obj id is optional
+Sono.add(data, id) // return Sound obj with optional id
 
-Sono.get(id) // returns a WebAudioPlayer or HTMLSound
+Sono.get(id) // returns a Sound
 
 [internal] Sono.createId // returns a unique id
 
@@ -50,7 +50,7 @@ Sono.stop(id) // individual sound
 
 Sono.load(url, callback, callbackContext, asBuffer) returns sound obj
 
-* Sono.load('audio/foo.ogg', false, onSoundLoaded, this, true); // loads this file
+* Sono.load('audio/foo.ogg', onSoundLoaded, this, true); // loads this file
 * Sono.load(['audio/foo.ogg', 'audio/foo.mp3']); // loads first one that works
 * Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play(); // plays sound when loaded
 
@@ -58,7 +58,7 @@ Sono.loadArrayBuffer(url, callback, callbackContext) // load as array buffer
 
 Sono.loadAudioElement(url, callback, callbackContext) // load as html audio el
 
-Sono.destroy(id) // remove, stop and cancel if still loading (should it be called remove?)
+Sono.destroy(soundOrId) // remove, stop and cancel if still loading (should it be called remove?)
 
 ##### set up / detection (should these be in utils module?):
 
@@ -81,7 +81,7 @@ Sono.destroy(id) // remove, stop and cancel if still loading (should it be calle
 
 ##### pause/resume on page visibility change:
 
-[internal]?? Sono.handlePageVisibility()
+[internal]?? Sono.handleVisibility()
 
 ##### logs info about Sono version and current browser (utils?):
 
@@ -190,5 +190,8 @@ Sono.loader
 
 Inconsistencies:
 
-* HTMLSound has get/set volume and WebAudioSound doesn't
-* WebAudioSound has get source and HTMLSound doesn't
+* ElementSource has get/set volume and BufferSource doesn't
+* BufferSource has get source and ElementSource doesn't
+
+
+Naming/division of responsibility a bit confusing between webaudio-player, html-sound, webaudio-sound

@@ -1,16 +1,17 @@
 'use strict';
 
-var AssetLoader = require('./lib/asset-loader.js'),
-    HTMLSound = require('./lib/html-sound.js'),
-    PageVisibility = require('./lib/page-visibility.js'),
-    WebAudioNodeFactory = require('./lib/webaudio-nodefactory.js'),
-    WebAudioPlayer = require('./lib/webaudio-player.js'),
-    WebAudioUtils = require('./lib/webaudio-utils.js');
+var Loader = require('./lib/loader.js'),
+    Visibility = require('./lib/visibility.js'),
+    NodeFactory = require('./lib/node-factory.js'),
+    Sound = require('./lib/sound.js'),
+    Utils = require('./lib/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.0';
 
     this._sounds = {};
+    this._soundList = [];
+
     this.context = this.createAudioContext();
 
     if(this.hasWebAudio) {
@@ -23,7 +24,8 @@ function Sono() {
 
     this.getSupportedExtensions();
     this.handleTouchlock();
-    this.handlePageVisibility();
+    // TODO: should this be optional?
+    this.handleVisibility();
     this.initLoader();
 
     this.log(false);
@@ -36,29 +38,24 @@ function Sono() {
 Sono.prototype.add = function(data, id) {
 
     // try to load if url is put into add?
-    if(data && !(data instanceof HTMLMediaElement) && !(data instanceof AudioBuffer)) {
+    var isAudioBuffer = data && window.AudioBuffer && data instanceof window.AudioBuffer;
+    var isMediaElement = data && data instanceof window.HTMLMediaElement;
+    if(data && !isAudioBuffer && !isMediaElement) {
         var s = this.load(data);
         if(id) { s.id = id; }
         return s;
     }
 
-    if(!id) { id = this.createId(); }
-
-    if(this._sounds[id]) {
-        return this._sounds[id];
+    if(id && this.get(id)) {
+        return this.get(id);
     }
 
-    var sound;
-    if(this.hasWebAudio) {
-        sound = new WebAudioPlayer(this.context, data, this._masterGain);
-    }
-    else {
-        sound = new HTMLSound(data, this._masterGain);
-    }
-    sound.id = id;
+    var sound = new Sound(this.context, data, this._masterGain);
+    sound.id = id || this.createId();
     //sound.loop = !!loop;
     sound.add(data);
     this._sounds[id] = sound;
+    this._soundList.push(sound);
     return sound;
 };
 
@@ -68,7 +65,7 @@ Sono.prototype.load = function(url, callback, callbackContext, asBuffer) {
     url = this.getSupportedFile(url);
 
     sound.loader = this._loader.add(url);
-    //sound.loader = new AssetLoader.Loader(url);
+    //sound.loader = new Loader.Loader(url);
     //sound.loader.touchLocked = this._isTouchLocked;
     if(asBuffer === undefined) {
         asBuffer = this.hasWebAudio;
@@ -92,6 +89,11 @@ Sono.prototype.load = function(url, callback, callbackContext, asBuffer) {
 };
 
 Sono.prototype.get = function(id) {
+    for (var i = 0, l = this._soundList.length; i < l; i++) {
+        if(this._soundList[i] === id || this._soundList[i].id === id) {
+            return this._soundList[i];
+        }
+    }
     return this._sounds[id];
 };
 
@@ -117,7 +119,9 @@ Sono.prototype.unMute = function() {
 };
 
 Sono.prototype.pauseAll = function() {
-    for(var i in this._sounds) {
+    var l = this._soundList.length;
+    for (var i = 0; i < l; i++) {
+    //for(var i in this._sounds) {
         if(this._sounds[i].playing) {
             this._sounds[i].pause();
         }
@@ -125,7 +129,9 @@ Sono.prototype.pauseAll = function() {
 };
 
 Sono.prototype.resumeAll = function() {
-    for(var i in this._sounds) {
+    var l = this._soundList.length;
+    for (var i = 0; i < l; i++) {
+    //for(var i in this._sounds) {
         if(this._sounds[i].paused) {
             this._sounds[i].play();
         }
@@ -133,21 +139,26 @@ Sono.prototype.resumeAll = function() {
 };
 
 Sono.prototype.stopAll = function() {
-    for(var id in this._sounds) {
-        this._sounds[id].stop();
+    var l = this._soundList.length;
+    for (var i = 0; i < l; i++) {
+    //for(var i in this._sounds) {
+        this._sounds[i].stop();
     }
 };
 
 Sono.prototype.play = function(id) {
-    this._sounds[id].play();
+    this.get(id).play();
+    //this._sounds[id].play();
 };
 
 Sono.prototype.pause = function(id) {
-    this._sounds[id].pause();
+    this.get(id).pause();
+    //this._sounds[id].pause();
 };
 
 Sono.prototype.stop = function(id) {
-    this._sounds[id].stop();
+    this.get(id).stop();
+    //this._sounds[id].stop();
 };
 
 /*
@@ -155,7 +166,7 @@ Sono.prototype.stop = function(id) {
  */
 
 Sono.prototype.initLoader = function() {
-    this._loader = new AssetLoader();
+    this._loader = new Loader();
     this._loader.touchLocked = this._isTouchLocked;
     this._loader.webAudioContext = this.context;
     this._loader.crossOrigin = true;
@@ -170,10 +181,18 @@ Sono.prototype.loadAudioElement = function(url, callback, callbackContext) {
 };
 
 Sono.prototype.destroy = function(soundOrId) {
-    var id = (typeof soundOrId === 'string') ? soundOrId : soundOrId.id;
-    var sound = this._sounds[id];
-    delete this._sounds[id];
-    if(sound) {
+    var i = 0,
+        sound;
+    for (var l = this._soundList.length; i < l; i++) {
+        sound = this._soundList[i];
+        if(sound === soundOrId || sound.id === soundOrId) {
+            break;
+        }
+    }
+    if(sound !== undefined) {
+        delete this._sounds[sound.id];
+        this._soundList.splice(i, 1);
+
         if(sound.loader) {
             sound.loader.cancel();
         }
@@ -297,9 +316,9 @@ Sono.prototype.handleTouchlock = function() {
  * Page visibility events
  */
 
-Sono.prototype.handlePageVisibility = function() {
-    PageVisibility.onPageHidden.add(this.pauseAll, this);
-    PageVisibility.onPageShown.add(this.resumeAll, this);
+Sono.prototype.handleVisibility = function() {
+    Visibility.onPageHidden.add(this.pauseAll, this);
+    Visibility.onPageShown.add(this.resumeAll, this);
 };
 
 /*
@@ -360,8 +379,8 @@ Object.defineProperty(Sono.prototype, 'volume', {
         }
         else {
             this._masterGain = value;
-            for(var i in this._sounds) {
-                this._sounds[i].volume = this._masterGain;
+            for (var i = 0, l = this._soundList.length; i < l; i++) {
+                this._soundList[i].volume = this._masterGain;
             }
         }
     }
@@ -376,7 +395,7 @@ Object.defineProperty(Sono.prototype, 'sounds', {
 Object.defineProperty(Sono.prototype, 'create', {
     get: function() {
         if(!this._webAudioNodeFactory) {
-            this._webAudioNodeFactory = new WebAudioNodeFactory(this.context);
+            this._webAudioNodeFactory = new NodeFactory(this.context);
         }
         return this._webAudioNodeFactory;
     }
@@ -385,7 +404,7 @@ Object.defineProperty(Sono.prototype, 'create', {
 Object.defineProperty(Sono.prototype, 'utils', {
     get: function() {
         if(!this._utils) {
-            this._utils = new WebAudioUtils(this.context);
+            this._utils = new Utils(this.context);
         }
         return this._utils;
     }

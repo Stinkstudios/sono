@@ -1,6 +1,6 @@
 'use strict';
 
-function HTMLSound(el, volume) {
+function ElementSource(el, volume) {
     this.id = '';
     this._loop = false;
     this._volume = volume === undefined ? 1 : volume;
@@ -12,7 +12,7 @@ function HTMLSound(el, volume) {
     this.add(el);
 }
 
-HTMLSound.prototype.add = function(el) {
+ElementSource.prototype.add = function(el) {
     this._el = el;
     // should this take account of delay and offset?
     if(this._playWhenReady) {
@@ -20,7 +20,7 @@ HTMLSound.prototype.add = function(el) {
     }
 };
 
-HTMLSound.prototype.play = function(delay, offset) {
+ElementSource.prototype.play = function(delay, offset) {
     if(!this._el) {
         this._playWhenReady = true;
         return this;
@@ -41,7 +41,7 @@ HTMLSound.prototype.play = function(delay, offset) {
     this._el.addEventListener('ended', this._endedListener, false);
 };
 
-HTMLSound.prototype.pause = function() {
+ElementSource.prototype.pause = function() {
     clearTimeout(this._delayTimeout);
     if(!this._el) { return; }
     this._el.pause();
@@ -49,7 +49,7 @@ HTMLSound.prototype.pause = function() {
     this._paused = true;
 };
 
-HTMLSound.prototype.stop = function() {
+ElementSource.prototype.stop = function() {
     if(!this._el) { return; }
     this._el.pause();
     try {
@@ -61,7 +61,7 @@ HTMLSound.prototype.stop = function() {
     this._paused = false;
 };
 
-HTMLSound.prototype.onEnded = function() {
+ElementSource.prototype.onEnded = function() {
     //console.log('onended');
     this._playing = false;
     this._paused = false;
@@ -75,11 +75,11 @@ HTMLSound.prototype.onEnded = function() {
     }
 };
 
-HTMLSound.prototype.addEndedListener = function(fn, context) {
+ElementSource.prototype.addEndedListener = function(fn, context) {
     this._onEnded = fn.bind(context || this);
 };
 
-HTMLSound.prototype.removeEndedListener = function() {
+ElementSource.prototype.removeEndedListener = function() {
     this._onEnded = null;
 };
 
@@ -87,7 +87,7 @@ HTMLSound.prototype.removeEndedListener = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(HTMLSound.prototype, 'loop', {
+Object.defineProperty(ElementSource.prototype, 'loop', {
     get: function() {
         return this._loop;
     },
@@ -96,7 +96,7 @@ Object.defineProperty(HTMLSound.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(HTMLSound.prototype, 'volume', {
+Object.defineProperty(ElementSource.prototype, 'volume', {
     get: function() {
         return this._volume;
     },
@@ -109,42 +109,42 @@ Object.defineProperty(HTMLSound.prototype, 'volume', {
     }
 });
 
-Object.defineProperty(HTMLSound.prototype, 'playing', {
+Object.defineProperty(ElementSource.prototype, 'playing', {
     get: function() {
         return this._playing;
     }
 });
 
-Object.defineProperty(HTMLSound.prototype, 'paused', {
+Object.defineProperty(ElementSource.prototype, 'paused', {
     get: function() {
         return this._paused;
     }
 });
 
-/*Object.defineProperty(HTMLSound.prototype, 'sound', {
+/*Object.defineProperty(ElementSource.prototype, 'sound', {
     get: function() {
         return this._el;
     }
 });*/
 
-Object.defineProperty(HTMLSound.prototype, 'duration', {
+Object.defineProperty(ElementSource.prototype, 'duration', {
     get: function() {
         return this._el ? this._el.duration : 0;
     }
 });
 
-Object.defineProperty(HTMLSound.prototype, 'currentTime', {
+Object.defineProperty(ElementSource.prototype, 'currentTime', {
     get: function() {
         return this._el ? this._el.currentTime : 0;
     }
 });
 
-Object.defineProperty(HTMLSound.prototype, 'progress', {
+Object.defineProperty(ElementSource.prototype, 'progress', {
     get: function() {
         return this.currentTime / this.duration;
     }
 });
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = HTMLSound;
+    module.exports = ElementSource;
 }

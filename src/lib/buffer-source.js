@@ -1,10 +1,10 @@
 'use strict';
 
-function WebAudioSound(buffer, context) {
+function BufferSource(buffer, context) {
     this.id = '';
     this._buffer = buffer; // AudioBuffer
     this._context = context;
-    this._source = null; // AudioBufferSourceNode
+    this._source = null; // BufferSourceNode
     this._loop = false;
     this._startedAt = 0;
     this._pausedAt = 0;
@@ -13,12 +13,12 @@ function WebAudioSound(buffer, context) {
     this._paused = false;
 }
 
-WebAudioSound.prototype.add = function(buffer) {
+BufferSource.prototype.add = function(buffer) {
     this._buffer = buffer;
     return this._buffer;
 };
 
-WebAudioSound.prototype.play = function(delay, offset) {
+BufferSource.prototype.play = function(delay, offset) {
     if(delay === undefined) { delay = 0; }
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
@@ -36,7 +36,7 @@ WebAudioSound.prototype.play = function(delay, offset) {
     this._paused = false;
 };
 
-WebAudioSound.prototype.pause = function() {
+BufferSource.prototype.pause = function() {
     var elapsed = Date.now() - this._startedAt;
     this.stop();
     this._pausedAt = elapsed;
@@ -44,7 +44,7 @@ WebAudioSound.prototype.pause = function() {
     this._paused = true;
 };
 
-WebAudioSound.prototype.stop = function() {
+BufferSource.prototype.stop = function() {
     if(this._source) {
         this._source.onended = null;
         this._source.stop(0);
@@ -56,7 +56,7 @@ WebAudioSound.prototype.stop = function() {
     this._paused = false;
 };
 
-WebAudioSound.prototype.onEnded = function() {
+BufferSource.prototype.onEnded = function() {
     console.log('onended');
     this.stop();
     if(typeof this._onEnded === 'function') {
@@ -65,11 +65,11 @@ WebAudioSound.prototype.onEnded = function() {
     }
 };
 
-WebAudioSound.prototype.addEndedListener = function(fn, context) {
+BufferSource.prototype.addEndedListener = function(fn, context) {
     this._onEnded = fn.bind(context || this);
 };
 
-WebAudioSound.prototype.removeEndedListener = function() {
+BufferSource.prototype.removeEndedListener = function() {
     this._onEnded = null;
 };
 
@@ -81,7 +81,7 @@ WebAudioSound.prototype.removeEndedListener = function() {
  * TODO: set up so source can be stream, oscillator, etc
  */
 
-Object.defineProperty(WebAudioSound.prototype, 'source', {
+Object.defineProperty(BufferSource.prototype, 'source', {
     get: function() {
         if(!this._source) {
             this._source = this._context.createBufferSource();
@@ -92,7 +92,7 @@ Object.defineProperty(WebAudioSound.prototype, 'source', {
     }
 });
 
-Object.defineProperty(WebAudioSound.prototype, 'loop', {
+Object.defineProperty(BufferSource.prototype, 'loop', {
     get: function() {
         return this._loop;
     },
@@ -101,13 +101,13 @@ Object.defineProperty(WebAudioSound.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(WebAudioSound.prototype, 'duration', {
+Object.defineProperty(BufferSource.prototype, 'duration', {
     get: function() {
         return this._buffer ? this._buffer.duration : 0;
     }
 });
 
-Object.defineProperty(WebAudioSound.prototype, 'currentTime', {
+Object.defineProperty(BufferSource.prototype, 'currentTime', {
     get: function() {
         if(this._pausedAt) {
           return this._pausedAt * 0.001;
@@ -116,19 +116,19 @@ Object.defineProperty(WebAudioSound.prototype, 'currentTime', {
     }
 });
 
-Object.defineProperty(WebAudioSound.prototype, 'progress', {
+Object.defineProperty(BufferSource.prototype, 'progress', {
   get: function() {
     return Math.min(this.currentTime / this.duration, 1);
   }
 });
 
-Object.defineProperty(WebAudioSound.prototype, 'playing', {
+Object.defineProperty(BufferSource.prototype, 'playing', {
     get: function() {
         return this._playing;
     }
 });
 
-Object.defineProperty(WebAudioSound.prototype, 'paused', {
+Object.defineProperty(BufferSource.prototype, 'paused', {
     get: function() {
         return this._paused;
     }
@@ -139,5 +139,5 @@ Object.defineProperty(WebAudioSound.prototype, 'paused', {
  */
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioSound;
+    module.exports = BufferSource;
 }

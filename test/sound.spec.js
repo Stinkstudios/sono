@@ -1,10 +1,10 @@
 'use strict';
 
-//var Sono = require('../src/sono.js');
-var WebAudioSound = require('../src/lib/webaudio-sound.js');
+var Sono = require('../src/sono.js');
+var Sound = require('../src/lib/sound.js');
 
-describe('WebAudio Sound', function() {
-    var sound = new WebAudioSound();
+describe('Sound', function() {
+    var sound = new Sound(Sono.context);
 
     it('should have expected API', function() {
         expect(sound).to.have.property('id');
@@ -18,14 +18,18 @@ describe('WebAudio Sound', function() {
         expect(sound.addEndedListener).to.be.a('function');
         expect(sound.removeEndedListener).to.be.a('function');
 
-        //expect(sound.source).to.be.an('object');
-        
         expect(sound.loop).to.be.a('boolean');
         expect(sound.duration).to.be.a('number');
         expect(sound.currentTime).to.be.a('number');
         expect(sound.progress).to.be.a('number');
-        // DOESN'T HAVE VOLUME expect(sound.volume).to.be.a('number');
+        expect(sound.volume).to.be.a('number');
         expect(sound.playing).to.be.a('boolean');
         expect(sound.paused).to.be.a('boolean');
+
+        expect(sound.createSourceNode).to.be.a('function');
+        expect(sound.addNode).to.be.a('function');
+        expect(sound.removeNode).to.be.a('function');
+        expect(sound.updateConnections).to.be.a('function');
+        expect(sound.connectTo).to.be.a('function');
     });
 });

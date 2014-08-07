@@ -1,6 +1,6 @@
 'use strict';
 
- function WebAudioUtils(context) {
+ function Utils(context) {
     function parseNum(x) {
         return isNaN(x) ? 0 : parseFloat(x, 10);
     }
@@ -153,5 +153,5 @@
 }
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioUtils;
+    module.exports = Utils;
 }

@@ -448,6 +448,303 @@
 },{}],2:[function(_dereq_,module,exports){
 'use strict';
 
+function BufferSource(buffer, context) {
+    this.id = '';
+    this._buffer = buffer; // AudioBuffer
+    this._context = context;
+    this._source = null; // BufferSourceNode
+    this._loop = false;
+    this._startedAt = 0;
+    this._pausedAt = 0;
+    this._onEnded = null;
+    this._playing = false;
+    this._paused = false;
+}
+
+BufferSource.prototype.add = function(buffer) {
+    this._buffer = buffer;
+    return this._buffer;
+};
+
+BufferSource.prototype.play = function(delay, offset) {
+    if(delay === undefined) { delay = 0; }
+    if(delay > 0) { delay = this._context.currentTime + delay; }
+
+    if(offset === undefined) { offset = 0; }
+    if(this._pausedAt > 0) { offset = offset + this._pausedAt / 1000; }
+
+    //this.stop();
+    this.source.loop = this._loop;
+    this.source.start(delay, offset);
+
+    this._startedAt = Date.now() - this._pausedAt;
+    this._pausedAt = 0;
+
+    this._playing = true;
+    this._paused = false;
+};
+
+BufferSource.prototype.pause = function() {
+    var elapsed = Date.now() - this._startedAt;
+    this.stop();
+    this._pausedAt = elapsed;
+    this._playing = false;
+    this._paused = true;
+};
+
+BufferSource.prototype.stop = function() {
+    if(this._source) {
+        this._source.onended = null;
+        this._source.stop(0);
+        this._source = null;
+    }
+    this._startedAt = 0;
+    this._pausedAt = 0;
+    this._playing = false;
+    this._paused = false;
+};
+
+BufferSource.prototype.onEnded = function() {
+    console.log('onended');
+    this.stop();
+    if(typeof this._onEnded === 'function') {
+
+        this._onEnded();
+    }
+};
+
+BufferSource.prototype.addEndedListener = function(fn, context) {
+    this._onEnded = fn.bind(context || this);
+};
+
+BufferSource.prototype.removeEndedListener = function() {
+    this._onEnded = null;
+};
+
+/*
+ * Getters & Setters
+ */
+
+/*
+ * TODO: set up so source can be stream, oscillator, etc
+ */
+
+Object.defineProperty(BufferSource.prototype, 'source', {
+    get: function() {
+        if(!this._source) {
+            this._source = this._context.createBufferSource();
+            this._source.buffer = this._buffer;
+            this._source.onended = this.onEnded.bind(this);
+        }
+        return this._source;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'loop', {
+    get: function() {
+        return this._loop;
+    },
+    set: function(value) {
+        this._loop = !!value;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'duration', {
+    get: function() {
+        return this._buffer ? this._buffer.duration : 0;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'currentTime', {
+    get: function() {
+        if(this._pausedAt) {
+          return this._pausedAt * 0.001;
+        }
+        return this._startedAt ? (Date.now() - this._startedAt) * 0.001 : 0;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'progress', {
+  get: function() {
+    return Math.min(this.currentTime / this.duration, 1);
+  }
+});
+
+Object.defineProperty(BufferSource.prototype, 'playing', {
+    get: function() {
+        return this._playing;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'paused', {
+    get: function() {
+        return this._paused;
+    }
+});
+
+/*
+ * Exports
+ */
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = BufferSource;
+}
+
+},{}],3:[function(_dereq_,module,exports){
+'use strict';
+
+function ElementSource(el, volume) {
+    this.id = '';
+    this._loop = false;
+    this._volume = volume === undefined ? 1 : volume;
+    this._playing = false;
+    this._paused = false;
+    this._onEnded = null;
+    this._endedListener = this.onEnded.bind(this);
+    this._playWhenReady = false;
+    this.add(el);
+}
+
+ElementSource.prototype.add = function(el) {
+    this._el = el;
+    // should this take account of delay and offset?
+    if(this._playWhenReady) {
+        this.play();
+    }
+};
+
+ElementSource.prototype.play = function(delay, offset) {
+    if(!this._el) {
+        this._playWhenReady = true;
+        return this;
+    }
+    this.volume = this._volume;
+    if(offset !== undefined && offset > 0) {
+        this._el.currentTime = offset;
+    }
+    if(delay !== undefined && delay > 0) {
+        this._delayTimeout = setTimeout(this.play.bind(this), delay);
+    }
+    else {
+        this._el.play();
+    }
+    this._playing = true;
+    this._paused = false;
+    this._el.removeEventListener('ended', this._endedListener);
+    this._el.addEventListener('ended', this._endedListener, false);
+};
+
+ElementSource.prototype.pause = function() {
+    clearTimeout(this._delayTimeout);
+    if(!this._el) { return; }
+    this._el.pause();
+    this._playing = false;
+    this._paused = true;
+};
+
+ElementSource.prototype.stop = function() {
+    if(!this._el) { return; }
+    this._el.pause();
+    try {
+        this._el.currentTime = 0;
+        // fixes bug where server doesn't support seek:
+        if(this._el.currentTime > 0) { this._el.load(); }    
+    } catch(e) {}
+    this._playing = false;
+    this._paused = false;
+};
+
+ElementSource.prototype.onEnded = function() {
+    //console.log('onended');
+    this._playing = false;
+    this._paused = false;
+    if(this._loop) {
+        this._el.currentTime = 0;
+        // fixes bug where server doesn't support seek:
+        if(this._el.currentTime > 0) { this._el.load(); }
+        this.play();
+    } else if(typeof this._onEnded === 'function') {
+        this._onEnded();
+    }
+};
+
+ElementSource.prototype.addEndedListener = function(fn, context) {
+    this._onEnded = fn.bind(context || this);
+};
+
+ElementSource.prototype.removeEndedListener = function() {
+    this._onEnded = null;
+};
+
+/*
+ * Getters & Setters
+ */
+
+Object.defineProperty(ElementSource.prototype, 'loop', {
+    get: function() {
+        return this._loop;
+    },
+    set: function(value) {
+        this._loop = value;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'volume', {
+    get: function() {
+        return this._volume;
+    },
+    set: function(value) {
+        if(isNaN(value)) { return; }
+        this._volume = value;
+        if(this._el && this._el.volume !== undefined) {
+            this._el.volume = this._volume;
+        }
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'playing', {
+    get: function() {
+        return this._playing;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'paused', {
+    get: function() {
+        return this._paused;
+    }
+});
+
+/*Object.defineProperty(ElementSource.prototype, 'sound', {
+    get: function() {
+        return this._el;
+    }
+});*/
+
+Object.defineProperty(ElementSource.prototype, 'duration', {
+    get: function() {
+        return this._el ? this._el.duration : 0;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'currentTime', {
+    get: function() {
+        return this._el ? this._el.currentTime : 0;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'progress', {
+    get: function() {
+        return this.currentTime / this.duration;
+    }
+});
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = ElementSource;
+}
+
+},{}],4:[function(_dereq_,module,exports){
+'use strict';
+
 var signals = _dereq_('signals');
 
 function AssetLoader() {
@@ -697,201 +994,10 @@ AssetLoader.Loader.prototype = {
 
 module.exports = AssetLoader;
 
-},{"signals":1}],3:[function(_dereq_,module,exports){
-'use strict';
-
-function HTMLSound(el, volume) {
-    this.id = '';
-    this._loop = false;
-    this._volume = volume === undefined ? 1 : volume;
-    this._playing = false;
-    this._paused = false;
-    this._onEnded = null;
-    this._endedListener = this.onEnded.bind(this);
-    this._playWhenReady = false;
-    this.add(el);
-}
-
-HTMLSound.prototype.add = function(el) {
-    this._el = el;
-    // should this take account of delay and offset?
-    if(this._playWhenReady) {
-        this.play();
-    }
-};
-
-HTMLSound.prototype.play = function(delay, offset) {
-    if(!this._el) {
-        this._playWhenReady = true;
-        return this;
-    }
-    this.volume = this._volume;
-    if(offset !== undefined && offset > 0) {
-        this._el.currentTime = offset;
-    }
-    if(delay !== undefined && delay > 0) {
-        this._delayTimeout = setTimeout(this.play.bind(this), delay);
-    }
-    else {
-        this._el.play();
-    }
-    this._playing = true;
-    this._paused = false;
-    this._el.removeEventListener('ended', this._endedListener);
-    this._el.addEventListener('ended', this._endedListener, false);
-};
-
-HTMLSound.prototype.pause = function() {
-    clearTimeout(this._delayTimeout);
-    if(!this._el) { return; }
-    this._el.pause();
-    this._playing = false;
-    this._paused = true;
-};
-
-HTMLSound.prototype.stop = function() {
-    if(!this._el) { return; }
-    this._el.pause();
-    try {
-        this._el.currentTime = 0;
-        // fixes bug where server doesn't support seek:
-        if(this._el.currentTime > 0) { this._el.load(); }    
-    } catch(e) {}
-    this._playing = false;
-    this._paused = false;
-};
-
-HTMLSound.prototype.onEnded = function() {
-    //console.log('onended');
-    this._playing = false;
-    this._paused = false;
-    if(this._loop) {
-        this._el.currentTime = 0;
-        // fixes bug where server doesn't support seek:
-        if(this._el.currentTime > 0) { this._el.load(); }
-        this.play();
-    } else if(typeof this._onEnded === 'function') {
-        this._onEnded();
-    }
-};
-
-HTMLSound.prototype.addEndedListener = function(fn, context) {
-    this._onEnded = fn.bind(context || this);
-};
-
-HTMLSound.prototype.removeEndedListener = function() {
-    this._onEnded = null;
-};
-
-/*
- * Getters & Setters
- */
-
-Object.defineProperty(HTMLSound.prototype, 'loop', {
-    get: function() {
-        return this._loop;
-    },
-    set: function(value) {
-        this._loop = value;
-    }
-});
-
-Object.defineProperty(HTMLSound.prototype, 'volume', {
-    get: function() {
-        return this._volume;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-        this._volume = value;
-        if(this._el && this._el.volume !== undefined) {
-            this._el.volume = this._volume;
-        }
-    }
-});
-
-Object.defineProperty(HTMLSound.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(HTMLSound.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-/*Object.defineProperty(HTMLSound.prototype, 'sound', {
-    get: function() {
-        return this._el;
-    }
-});*/
-
-Object.defineProperty(HTMLSound.prototype, 'duration', {
-    get: function() {
-        return this._el ? this._el.duration : 0;
-    }
-});
-
-Object.defineProperty(HTMLSound.prototype, 'currentTime', {
-    get: function() {
-        return this._el ? this._el.currentTime : 0;
-    }
-});
-
-Object.defineProperty(HTMLSound.prototype, 'progress', {
-    get: function() {
-        return this.currentTime / this.duration;
-    }
-});
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = HTMLSound;
-}
-
-},{}],4:[function(_dereq_,module,exports){
-'use strict';
-
-var signals = _dereq_('signals');
-
-var onPageHidden = new signals.Signal(),
-    onPageShown = new signals.Signal(),
-    hidden, visibilityChange;
-
-function onVisibilityChange() {
-    if (document[hidden]) {
-        onPageHidden.dispatch();
-    } else {
-        onPageShown.dispatch();
-    }
-}
-
-if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support 
-    hidden = 'hidden';
-    visibilityChange = 'visibilitychange';
-} else if (typeof document.mozHidden !== 'undefined') {
-    hidden = 'mozHidden';
-    visibilityChange = 'mozvisibilitychange';
-} else if (typeof document.msHidden !== 'undefined') {
-    hidden = 'msHidden';
-    visibilityChange = 'msvisibilitychange';
-} else if (typeof document.webkitHidden !== 'undefined') {
-    hidden = 'webkitHidden';
-    visibilityChange = 'webkitvisibilitychange';
-}
-
-if(visibilityChange !== undefined) {
-    document.addEventListener(visibilityChange, onVisibilityChange, false);
-}
-
-module.exports = {
-    onPageShown: onPageShown,
-    onPageHidden: onPageHidden
-};
 },{"signals":1}],5:[function(_dereq_,module,exports){
 'use strict';
 
-function WebAudioNodeFactory(context) {
+function NodeFactory(context) {
 
     function createFilter(type, frequency) {
         var filterNode = context.createBiquadFilter();
@@ -1179,44 +1285,47 @@ function WebAudioNodeFactory(context) {
 }
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioNodeFactory;
+    module.exports = NodeFactory;
 }
 
 },{}],6:[function(_dereq_,module,exports){
 'use strict';
 
-var WebAudioSound = _dereq_('./webaudio-sound.js'),
-    HTMLSound = _dereq_('./html-sound.js');
+var BufferSource = _dereq_('./buffer-source.js'),
+    ElementSource = _dereq_('./element-source.js');
 
-function WebAudioPlayer(context, buffer, destination) {
+function Sound(context, data, destination) {
     this.id = '';
     this._context = context;
-    this._source = null; // AudioBufferSourceNode
-    this._nodeList = [];
-    this._gain = this._context.createGain();
-    this._gain.connect(destination || this._context.destination);
     this._loop = false;
-    this._startedAt = 0;
+    this._nodeList = [];
+    this._onEnded = null;
     this._pausedAt = 0;
     this._playWhenReady = false;
-    this._onEnded = null;
+    this._source = null;
+    this._sourceNode = null;
+    this._startedAt = 0;
 
-    this.add(buffer);
+    if(this._context) {
+        this._gain = this._context.createGain();
+        this._gain.connect(destination || this._context.destination);
+    }
+
+    this.add(data);
 }
 
-WebAudioPlayer.prototype.add = function(buffer) {
-    if(!buffer) { return; }
-    this._buffer = buffer; // AudioBuffer or Media Element
-
-    if(this._buffer.tagName) {
-      this._sound = new HTMLSound(buffer);
-      this.getSource();
+Sound.prototype.add = function(data) {
+    if(!data) { return; }
+    this._data = data; // AudioBuffer or Media Element
+    console.log('data:', this._data);
+    if(this._data.tagName) {
+      this._source = new ElementSource(data);
     }
     else {
-      this._sound = new WebAudioSound(buffer, this._context);
-      this.getSource();
+      this._source = new BufferSource(data, this._context);
     }
-    this._sound.addEndedListener(this.onEnded, this);
+    this.createSourceNode();
+    this._source.addEndedListener(this.onEnded, this);
 
     // should this take account of delay and offset?
     if(this._playWhenReady) {
@@ -1224,35 +1333,35 @@ WebAudioPlayer.prototype.add = function(buffer) {
     }
 };
 
-WebAudioPlayer.prototype.play = function(delay, offset) {
-    if(!this._sound) {
+Sound.prototype.play = function(delay, offset) {
+    if(!this._source) {
         this._playWhenReady = true;
         return this;
     }
-    this.getSource();
-    this._sound.loop = this._loop;
+    this.createSourceNode();
+    this._source.loop = this._loop;
 
     // volume update?
-    this._sound.play(delay, offset);
+    this._source.play(delay, offset);
 };
 
-WebAudioPlayer.prototype.pause = function() {
-    if(!this._sound) { return; }
-    this._sound.pause();
+Sound.prototype.pause = function() {
+    if(!this._source) { return; }
+    this._source.pause();
 };
 
-WebAudioPlayer.prototype.stop = function() {
-    if(!this._sound) { return; }
-    this._sound.stop();
+Sound.prototype.stop = function() {
+    if(!this._source) { return; }
+    this._source.stop();
 };
 
-WebAudioPlayer.prototype.addNode = function(node) {
+Sound.prototype.addNode = function(node) {
     this._nodeList.push(node);
     this.updateConnections();
     return node;
 };
 
-WebAudioPlayer.prototype.removeNode = function(node) {
+Sound.prototype.removeNode = function(node) {
     var l = this._nodeList.length;
     for (var i = 0; i < l; i++) {
         if(node === this._nodeList[i]) {
@@ -1269,8 +1378,8 @@ WebAudioPlayer.prototype.removeNode = function(node) {
 // feels like node list could be a linked list??
 // if list.last is destination addbefore
 
-/*WebAudioPlayer.prototype.updateConnections = function() {
-    if(!this._source) {
+/*Sound.prototype.updateConnections = function() {
+    if(!this._sourceNode) {
         return;
     }
     var l = this._nodeList.length;
@@ -1278,13 +1387,13 @@ WebAudioPlayer.prototype.removeNode = function(node) {
       this._nodeList[i-1].connect(this._nodeList[i]);
     }
 };*/
-/*WebAudioPlayer.prototype.updateConnections = function() {
-    if(!this._source) {
+/*Sound.prototype.updateConnections = function() {
+    if(!this._sourceNode) {
         return;
     }
     console.log('updateConnections');
-    this._source.disconnect(0);
-    this._source.connect(this._gain);
+    this._sourceNode.disconnect(0);
+    this._sourceNode.connect(this._gain);
     var l = this._nodeList.length;
 
     for (var i = 0; i < l; i++) {
@@ -1301,8 +1410,8 @@ WebAudioPlayer.prototype.removeNode = function(node) {
     }
     this.connectTo(this._context.destination);
 };*/
-WebAudioPlayer.prototype.updateConnections = function() {
-    if(!this._source) {
+Sound.prototype.updateConnections = function() {
+    if(!this._sourceNode) {
         return;
     }
     //console.log('updateConnections');
@@ -1310,8 +1419,8 @@ WebAudioPlayer.prototype.updateConnections = function() {
     for (var i = 0; i < l; i++) {
         if(i === 0) {
             //console.log(' - connect source to node:', this._nodeList[i]);
-            //this._source.disconnect(0);
-            this._source.connect(this._nodeList[i]);
+            //this._sourceNode.disconnect(0);
+            this._sourceNode.connect(this._nodeList[i]);
         }
         else {
             //console.log('connect:', this._nodeList[i-1], 'to', this._nodeList[i]);
@@ -1329,7 +1438,7 @@ WebAudioPlayer.prototype.updateConnections = function() {
 };
 
 // or setter for destination?
-/*WebAudioPlayer.prototype.connectTo = function(node) {
+/*Sound.prototype.connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
       console.log('connect:', this._nodeList[l - 1], 'to', node);
@@ -1343,7 +1452,7 @@ WebAudioPlayer.prototype.updateConnections = function() {
     }
     this.destination = node;
 };*/
-WebAudioPlayer.prototype.connectTo = function(node) {
+Sound.prototype.connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
         //console.log('connect:', this._nodeList[l - 1], 'to', node);
@@ -1352,13 +1461,13 @@ WebAudioPlayer.prototype.connectTo = function(node) {
     }
     else {
         //console.log(' x connect source to node:', node);
-        //this._source.disconnect(0);
-        this._source.connect(node);
+        //this._sourceNode.disconnect(0);
+        this._sourceNode.connect(node);
     }
     this.destination = node;
 };
 
-WebAudioPlayer.prototype.onEnded = function() {
+Sound.prototype.onEnded = function() {
     //console.log('p onended');
     //this.stop();
     if(typeof this._onEnded === 'function') {
@@ -1367,29 +1476,32 @@ WebAudioPlayer.prototype.onEnded = function() {
     }
 };
 
-WebAudioPlayer.prototype.addEndedListener = function(fn, context) {
+Sound.prototype.addEndedListener = function(fn, context) {
     this._onEnded = fn.bind(context || this);
 };
 
-WebAudioPlayer.prototype.removeEndedListener = function() {
+Sound.prototype.removeEndedListener = function() {
     this._onEnded = null;
 };
 
-WebAudioPlayer.prototype.getSource = function() {
-    //console.log('get source', this._source);
-    if(this._buffer.tagName) {
+Sound.prototype.createSourceNode = function() {
+    //console.log('get source', this._sourceNode);
+    if(!this._context) {
+        return;
+    }
+    else if(this._data.tagName) {
         // audio or video tag
-        if(!this._source) {
-            this._source = this._context.createMediaElementSource(this._buffer);
+        if(!this._sourceNode) {
+            this._sourceNode = this._context.createMediaElementSource(this._data);
             this.updateConnections();
         }
     }
     else {
-        // array buffer
-        this._source = this._sound.source;
+        // array buffer source
+        this._sourceNode = this._source.source;
         this.updateConnections();
     }
-    return this._source;
+    return this._sourceNode;
 };
 
 /*
@@ -1401,55 +1513,61 @@ WebAudioPlayer.prototype.getSource = function() {
  */
 
 
-Object.defineProperty(WebAudioPlayer.prototype, 'loop', {
+Object.defineProperty(Sound.prototype, 'loop', {
     get: function() {
         return this._loop;
     },
     set: function(value) {
         this._loop = !!value;
-        if(this._sound) {
-          this._sound.loop = this._loop;
+        if(this._source) {
+          this._source.loop = this._loop;
         }
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'duration', {
+Object.defineProperty(Sound.prototype, 'duration', {
     get: function() {
-        return this._sound ? this._sound.duration : 0;
+        return this._source ? this._source.duration : 0;
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'currentTime', {
+Object.defineProperty(Sound.prototype, 'currentTime', {
     get: function() {
-        return this._sound ? this._sound.currentTime : 0;
+        return this._source ? this._source.currentTime : 0;
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'progress', {
+Object.defineProperty(Sound.prototype, 'progress', {
   get: function() {
-    return this._sound ? this._sound.progress : 0;
+    return this._source ? this._source.progress : 0;
   }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'volume', {
+Object.defineProperty(Sound.prototype, 'volume', {
     get: function() {
-        return this._gain.gain.value;
+        return this._gain ? this._gain.gain.value : this._source.volume;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
-        this._gain.gain.value = value;
+
+        if(this._gain) {
+            this._gain.gain.value = value;
+        }
+        else {
+            this._source.volume = value;
+        }
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'playing', {
+Object.defineProperty(Sound.prototype, 'playing', {
     get: function() {
-        return this._sound ? this._sound.playing : false;
+        return this._source ? this._source.playing : false;
     }
 });
 
-Object.defineProperty(WebAudioPlayer.prototype, 'paused', {
+Object.defineProperty(Sound.prototype, 'paused', {
     get: function() {
-        return this._sound ? this._sound.paused : false;
+        return this._source ? this._source.paused : false;
     }
 });
 
@@ -1458,158 +1576,13 @@ Object.defineProperty(WebAudioPlayer.prototype, 'paused', {
  */
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioPlayer;
+    module.exports = Sound;
 }
 
-},{"./html-sound.js":3,"./webaudio-sound.js":7}],7:[function(_dereq_,module,exports){
+},{"./buffer-source.js":2,"./element-source.js":3}],7:[function(_dereq_,module,exports){
 'use strict';
 
-function WebAudioSound(buffer, context) {
-    this.id = '';
-    this._buffer = buffer; // AudioBuffer
-    this._context = context;
-    this._source = null; // AudioBufferSourceNode
-    this._loop = false;
-    this._startedAt = 0;
-    this._pausedAt = 0;
-    this._onEnded = null;
-    this._playing = false;
-    this._paused = false;
-}
-
-WebAudioSound.prototype.add = function(buffer) {
-    this._buffer = buffer;
-    return this._buffer;
-};
-
-WebAudioSound.prototype.play = function(delay, offset) {
-    if(delay === undefined) { delay = 0; }
-    if(delay > 0) { delay = this._context.currentTime + delay; }
-
-    if(offset === undefined) { offset = 0; }
-    if(this._pausedAt > 0) { offset = offset + this._pausedAt / 1000; }
-
-    //this.stop();
-    this.source.loop = this._loop;
-    this.source.start(delay, offset);
-
-    this._startedAt = Date.now() - this._pausedAt;
-    this._pausedAt = 0;
-
-    this._playing = true;
-    this._paused = false;
-};
-
-WebAudioSound.prototype.pause = function() {
-    var elapsed = Date.now() - this._startedAt;
-    this.stop();
-    this._pausedAt = elapsed;
-    this._playing = false;
-    this._paused = true;
-};
-
-WebAudioSound.prototype.stop = function() {
-    if(this._source) {
-        this._source.onended = null;
-        this._source.stop(0);
-        this._source = null;
-    }
-    this._startedAt = 0;
-    this._pausedAt = 0;
-    this._playing = false;
-    this._paused = false;
-};
-
-WebAudioSound.prototype.onEnded = function() {
-    console.log('onended');
-    this.stop();
-    if(typeof this._onEnded === 'function') {
-
-        this._onEnded();
-    }
-};
-
-WebAudioSound.prototype.addEndedListener = function(fn, context) {
-    this._onEnded = fn.bind(context || this);
-};
-
-WebAudioSound.prototype.removeEndedListener = function() {
-    this._onEnded = null;
-};
-
-/*
- * Getters & Setters
- */
-
-/*
- * TODO: set up so source can be stream, oscillator, etc
- */
-
-Object.defineProperty(WebAudioSound.prototype, 'source', {
-    get: function() {
-        if(!this._source) {
-            this._source = this._context.createBufferSource();
-            this._source.buffer = this._buffer;
-            this._source.onended = this.onEnded.bind(this);
-        }
-        return this._source;
-    }
-});
-
-Object.defineProperty(WebAudioSound.prototype, 'loop', {
-    get: function() {
-        return this._loop;
-    },
-    set: function(value) {
-        this._loop = !!value;
-    }
-});
-
-Object.defineProperty(WebAudioSound.prototype, 'duration', {
-    get: function() {
-        return this._buffer ? this._buffer.duration : 0;
-    }
-});
-
-Object.defineProperty(WebAudioSound.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-          return this._pausedAt * 0.001;
-        }
-        return this._startedAt ? (Date.now() - this._startedAt) * 0.001 : 0;
-    }
-});
-
-Object.defineProperty(WebAudioSound.prototype, 'progress', {
-  get: function() {
-    return Math.min(this.currentTime / this.duration, 1);
-  }
-});
-
-Object.defineProperty(WebAudioSound.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(WebAudioSound.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioSound;
-}
-
-},{}],8:[function(_dereq_,module,exports){
-'use strict';
-
- function WebAudioUtils(context) {
+ function Utils(context) {
     function parseNum(x) {
         return isNaN(x) ? 0 : parseFloat(x, 10);
     }
@@ -1762,23 +1735,63 @@ if (typeof module === 'object' && module.exports) {
 }
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioUtils;
+    module.exports = Utils;
 }
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],8:[function(_dereq_,module,exports){
 'use strict';
 
-var AssetLoader = _dereq_('./lib/asset-loader.js'),
-    HTMLSound = _dereq_('./lib/html-sound.js'),
-    PageVisibility = _dereq_('./lib/page-visibility.js'),
-    WebAudioNodeFactory = _dereq_('./lib/webaudio-nodefactory.js'),
-    WebAudioPlayer = _dereq_('./lib/webaudio-player.js'),
-    WebAudioUtils = _dereq_('./lib/webaudio-utils.js');
+var signals = _dereq_('signals');
+
+var onPageHidden = new signals.Signal(),
+    onPageShown = new signals.Signal(),
+    hidden, visibilityChange;
+
+function onVisibilityChange() {
+    if (document[hidden]) {
+        onPageHidden.dispatch();
+    } else {
+        onPageShown.dispatch();
+    }
+}
+
+if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support 
+    hidden = 'hidden';
+    visibilityChange = 'visibilitychange';
+} else if (typeof document.mozHidden !== 'undefined') {
+    hidden = 'mozHidden';
+    visibilityChange = 'mozvisibilitychange';
+} else if (typeof document.msHidden !== 'undefined') {
+    hidden = 'msHidden';
+    visibilityChange = 'msvisibilitychange';
+} else if (typeof document.webkitHidden !== 'undefined') {
+    hidden = 'webkitHidden';
+    visibilityChange = 'webkitvisibilitychange';
+}
+
+if(visibilityChange !== undefined) {
+    document.addEventListener(visibilityChange, onVisibilityChange, false);
+}
+
+module.exports = {
+    onPageShown: onPageShown,
+    onPageHidden: onPageHidden
+};
+},{"signals":1}],9:[function(_dereq_,module,exports){
+'use strict';
+
+var Loader = _dereq_('./lib/loader.js'),
+    Visibility = _dereq_('./lib/visibility.js'),
+    NodeFactory = _dereq_('./lib/node-factory.js'),
+    Sound = _dereq_('./lib/sound.js'),
+    Utils = _dereq_('./lib/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.0';
 
     this._sounds = {};
+    this._soundList = [];
+
     this.context = this.createAudioContext();
 
     if(this.hasWebAudio) {
@@ -1791,7 +1804,8 @@ function Sono() {
 
     this.getSupportedExtensions();
     this.handleTouchlock();
-    this.handlePageVisibility();
+    // TODO: should this be optional?
+    this.handleVisibility();
     this.initLoader();
 
     this.log(false);
@@ -1804,31 +1818,24 @@ function Sono() {
 Sono.prototype.add = function(data, id) {
 
     // try to load if url is put into add?
-    if(data && !(data instanceof HTMLMediaElement) && !(data instanceof AudioBuffer)) {
+    var isAudioBuffer = data && window.AudioBuffer && data instanceof window.AudioBuffer;
+    var isMediaElement = data && data instanceof window.HTMLMediaElement;
+    if(data && !isAudioBuffer && !isMediaElement) {
         var s = this.load(data);
         if(id) { s.id = id; }
         return s;
     }
 
-
-
-    if(!id) { id = this.createId(); }
-
-    if(this._sounds[id]) {
-        return this._sounds[id];
+    if(id && this.get(id)) {
+        return this.get(id);
     }
 
-    var sound;
-    if(this.hasWebAudio) {
-        sound = new WebAudioPlayer(this.context, data, this._masterGain);
-    }
-    else {
-        sound = new HTMLSound(data, this._masterGain);
-    }
-    sound.id = id;
+    var sound = new Sound(this.context, data, this._masterGain);
+    sound.id = id || this.createId();
     //sound.loop = !!loop;
     sound.add(data);
     this._sounds[id] = sound;
+    this._soundList.push(sound);
     return sound;
 };
 
@@ -1838,8 +1845,11 @@ Sono.prototype.load = function(url, callback, callbackContext, asBuffer) {
     url = this.getSupportedFile(url);
 
     sound.loader = this._loader.add(url);
-    //sound.loader = new AssetLoader.Loader(url);
+    //sound.loader = new Loader.Loader(url);
     //sound.loader.touchLocked = this._isTouchLocked;
+    if(asBuffer === undefined) {
+        asBuffer = this.hasWebAudio;
+    }
     if(asBuffer) {
         sound.loader.webAudioContext = this.context;
     }
@@ -1859,6 +1869,11 @@ Sono.prototype.load = function(url, callback, callbackContext, asBuffer) {
 };
 
 Sono.prototype.get = function(id) {
+    for (var i = 0, l = this._soundList.length; i < l; i++) {
+        if(this._soundList[i] === id || this._soundList[i].id === id) {
+            return this._soundList[i];
+        }
+    }
     return this._sounds[id];
 };
 
@@ -1884,7 +1899,9 @@ Sono.prototype.unMute = function() {
 };
 
 Sono.prototype.pauseAll = function() {
-    for(var i in this._sounds) {
+    var l = this._soundList.length;
+    for (var i = 0; i < l; i++) {
+    //for(var i in this._sounds) {
         if(this._sounds[i].playing) {
             this._sounds[i].pause();
         }
@@ -1892,7 +1909,9 @@ Sono.prototype.pauseAll = function() {
 };
 
 Sono.prototype.resumeAll = function() {
-    for(var i in this._sounds) {
+    var l = this._soundList.length;
+    for (var i = 0; i < l; i++) {
+    //for(var i in this._sounds) {
         if(this._sounds[i].paused) {
             this._sounds[i].play();
         }
@@ -1900,21 +1919,26 @@ Sono.prototype.resumeAll = function() {
 };
 
 Sono.prototype.stopAll = function() {
-    for(var id in this._sounds) {
-        this._sounds[id].stop();
+    var l = this._soundList.length;
+    for (var i = 0; i < l; i++) {
+    //for(var i in this._sounds) {
+        this._sounds[i].stop();
     }
 };
 
 Sono.prototype.play = function(id) {
-    this._sounds[id].play();
+    this.get(id).play();
+    //this._sounds[id].play();
 };
 
 Sono.prototype.pause = function(id) {
-    this._sounds[id].pause();
+    this.get(id).pause();
+    //this._sounds[id].pause();
 };
 
 Sono.prototype.stop = function(id) {
-    this._sounds[id].stop();
+    this.get(id).stop();
+    //this._sounds[id].stop();
 };
 
 /*
@@ -1922,7 +1946,7 @@ Sono.prototype.stop = function(id) {
  */
 
 Sono.prototype.initLoader = function() {
-    this._loader = new AssetLoader();
+    this._loader = new Loader();
     this._loader.touchLocked = this._isTouchLocked;
     this._loader.webAudioContext = this.context;
     this._loader.crossOrigin = true;
@@ -1936,14 +1960,25 @@ Sono.prototype.loadAudioElement = function(url, callback, callbackContext) {
     return this.load(url, callback, callbackContext, false);
 };
 
-Sono.prototype.destroy = function(id) {
-    var sound = this._sounds[id];
-    delete this._sounds[id];
-    if(sound) {
+Sono.prototype.destroy = function(soundOrId) {
+    var i = 0,
+        sound;
+    for (var l = this._soundList.length; i < l; i++) {
+        sound = this._soundList[i];
+        if(sound === soundOrId || sound.id === soundOrId) {
+            break;
+        }
+    }
+    if(sound !== undefined) {
+        delete this._sounds[sound.id];
+        this._soundList.splice(i, 1);
+
         if(sound.loader) {
             sound.loader.cancel();
         }
-        sound.stop();
+        try {
+            sound.stop();    
+        } catch(e) {}
     }
 };
 
@@ -2061,9 +2096,9 @@ Sono.prototype.handleTouchlock = function() {
  * Page visibility events
  */
 
-Sono.prototype.handlePageVisibility = function() {
-    PageVisibility.onPageHidden.add(this.pauseAll, this);
-    PageVisibility.onPageShown.add(this.resumeAll, this);
+Sono.prototype.handleVisibility = function() {
+    Visibility.onPageHidden.add(this.pauseAll, this);
+    Visibility.onPageShown.add(this.resumeAll, this);
 };
 
 /*
@@ -2124,8 +2159,8 @@ Object.defineProperty(Sono.prototype, 'volume', {
         }
         else {
             this._masterGain = value;
-            for(var i in this._sounds) {
-                this._sounds[i].volume = this._masterGain;
+            for (var i = 0, l = this._soundList.length; i < l; i++) {
+                this._soundList[i].volume = this._masterGain;
             }
         }
     }
@@ -2140,7 +2175,7 @@ Object.defineProperty(Sono.prototype, 'sounds', {
 Object.defineProperty(Sono.prototype, 'create', {
     get: function() {
         if(!this._webAudioNodeFactory) {
-            this._webAudioNodeFactory = new WebAudioNodeFactory(this.context);
+            this._webAudioNodeFactory = new NodeFactory(this.context);
         }
         return this._webAudioNodeFactory;
     }
@@ -2149,7 +2184,7 @@ Object.defineProperty(Sono.prototype, 'create', {
 Object.defineProperty(Sono.prototype, 'utils', {
     get: function() {
         if(!this._utils) {
-            this._utils = new WebAudioUtils(this.context);
+            this._utils = new Utils(this.context);
         }
         return this._utils;
     }
@@ -2169,6 +2204,6 @@ if (typeof module === 'object' && module.exports) {
     module.exports = new Sono();
 }
 
-},{"./lib/asset-loader.js":2,"./lib/html-sound.js":3,"./lib/page-visibility.js":4,"./lib/webaudio-nodefactory.js":5,"./lib/webaudio-player.js":6,"./lib/webaudio-utils.js":8}]},{},[9])
+},{"./lib/loader.js":4,"./lib/node-factory.js":5,"./lib/sound.js":6,"./lib/utils.js":7,"./lib/visibility.js":8}]},{},[9])
 (9)
 });

@@ -144,7 +144,7 @@ gulp.task('connect', function() {
     browser: 'google chrome',
     server: {
       baseDir: './',
-      startPath: '/examples/index.html'
+      startPath: 'examples/index.html'
     }
 
   });

@@ -1,6 +1,6 @@
 'use strict';
 
-function WebAudioNodeFactory(context) {
+function NodeFactory(context) {
 
     function createFilter(type, frequency) {
         var filterNode = context.createBiquadFilter();
@@ -288,5 +288,5 @@ function WebAudioNodeFactory(context) {
 }
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = WebAudioNodeFactory;
+    module.exports = NodeFactory;
 }

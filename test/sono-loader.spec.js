@@ -24,7 +24,7 @@ describe('Sono loader', function() {
         expect(sound.loader).to.exist;
         expect(sound.loader.data).to.exist;
         expect(sound.play).to.be.a('function');
-
+        //data instanceof window.HTMLMediaElement || data instanceof window.AudioBuffer
         Sono.destroy(sound);
         expect(Sono.get(sound.id)).to.not.exist;
     });
