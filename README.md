@@ -180,6 +180,8 @@ Sono.utils.createMicrophoneSource(stream, connectTo) // should prob go into .cre
 
 Sono.utils.distort(value)
 
+Sono.utils.waveform(buffer, length) // returns an array of amplitudes
+
 #### Sono.loader (loader module)
 
 Sono.loader
