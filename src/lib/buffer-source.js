@@ -23,13 +23,13 @@ BufferSource.prototype.play = function(delay, offset) {
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
     if(offset === undefined) { offset = 0; }
-    if(this._pausedAt > 0) { offset = offset + this._pausedAt / 1000; }
+    if(this._pausedAt > 0) { offset = offset + this._pausedAt; }
 
     //this.stop();
     this.source.loop = this._loop;
     this.source.start(delay, offset);
 
-    this._startedAt = Date.now() - this._pausedAt;
+    this._startedAt = this._context.currentTime - this._pausedAt;
     this._pausedAt = 0;
 
     this._playing = true;
@@ -37,7 +37,7 @@ BufferSource.prototype.play = function(delay, offset) {
 };
 
 BufferSource.prototype.pause = function() {
-    var elapsed = Date.now() - this._startedAt;
+    var elapsed = this.clockTime - this._startedAt;
     this.stop();
     this._pausedAt = elapsed;
     this._playing = false;
@@ -57,10 +57,8 @@ BufferSource.prototype.stop = function() {
 };
 
 BufferSource.prototype.onEnded = function() {
-    console.log('onended');
     this.stop();
     if(typeof this._onEnded === 'function') {
-
         this._onEnded();
     }
 };
@@ -110,9 +108,9 @@ Object.defineProperty(BufferSource.prototype, 'duration', {
 Object.defineProperty(BufferSource.prototype, 'currentTime', {
     get: function() {
         if(this._pausedAt) {
-          return this._pausedAt * 0.001;
+          return this._pausedAt;
         }
-        return this._startedAt ? (Date.now() - this._startedAt) * 0.001 : 0;
+        return this._startedAt ? (this.clockTime - this._startedAt) : 0;
     }
 });
 
@@ -131,6 +129,13 @@ Object.defineProperty(BufferSource.prototype, 'playing', {
 Object.defineProperty(BufferSource.prototype, 'paused', {
     get: function() {
         return this._paused;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'clockTime', {
+    get: function() {
+        return this._context.currentTime;
+        //return Date.now() / 1000;
     }
 });
 

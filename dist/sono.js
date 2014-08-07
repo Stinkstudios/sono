@@ -471,13 +471,13 @@ BufferSource.prototype.play = function(delay, offset) {
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
     if(offset === undefined) { offset = 0; }
-    if(this._pausedAt > 0) { offset = offset + this._pausedAt / 1000; }
+    if(this._pausedAt > 0) { offset = offset + this._pausedAt; }
 
     //this.stop();
     this.source.loop = this._loop;
     this.source.start(delay, offset);
 
-    this._startedAt = Date.now() - this._pausedAt;
+    this._startedAt = this._context.currentTime - this._pausedAt;
     this._pausedAt = 0;
 
     this._playing = true;
@@ -485,7 +485,7 @@ BufferSource.prototype.play = function(delay, offset) {
 };
 
 BufferSource.prototype.pause = function() {
-    var elapsed = Date.now() - this._startedAt;
+    var elapsed = this.clockTime - this._startedAt;
     this.stop();
     this._pausedAt = elapsed;
     this._playing = false;
@@ -505,10 +505,8 @@ BufferSource.prototype.stop = function() {
 };
 
 BufferSource.prototype.onEnded = function() {
-    console.log('onended');
     this.stop();
     if(typeof this._onEnded === 'function') {
-
         this._onEnded();
     }
 };
@@ -558,9 +556,9 @@ Object.defineProperty(BufferSource.prototype, 'duration', {
 Object.defineProperty(BufferSource.prototype, 'currentTime', {
     get: function() {
         if(this._pausedAt) {
-          return this._pausedAt * 0.001;
+          return this._pausedAt;
         }
-        return this._startedAt ? (Date.now() - this._startedAt) * 0.001 : 0;
+        return this._startedAt ? (this.clockTime - this._startedAt) : 0;
     }
 });
 
@@ -579,6 +577,13 @@ Object.defineProperty(BufferSource.prototype, 'playing', {
 Object.defineProperty(BufferSource.prototype, 'paused', {
     get: function() {
         return this._paused;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'clockTime', {
+    get: function() {
+        return this._context.currentTime;
+        //return Date.now() / 1000;
     }
 });
 
@@ -1317,7 +1322,7 @@ function Sound(context, data, destination) {
 Sound.prototype.add = function(data) {
     if(!data) { return; }
     this._data = data; // AudioBuffer or Media Element
-    console.log('data:', this._data);
+    //console.log('data:', this._data);
     if(this._data.tagName) {
       this._source = new ElementSource(data);
     }
@@ -1730,6 +1735,41 @@ if (typeof module === 'object' && module.exports) {
                 curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
             }
             return curve;
+        },
+        waveform: function(buffer, length) {
+            var waveform = new Float32Array(length),
+                chunk = Math.floor(buffer.length / length),
+                //chunk = buffer.length / length,
+                resolution = 10,
+                incr = Math.floor(chunk / resolution),
+                greatest = 0;
+
+            if(incr < 1) { incr = 1 };
+
+            for (var i = 0; i < buffer.numberOfChannels; i++) {
+                // check each channel
+                var channel = buffer.getChannelData(i);
+                for (var j = 0; j < length; j++) {
+                    // get highest value within the chunk
+                    for (var k = j * chunk, l = k + chunk; k < l; k += incr) {
+                        // select highest value from channels
+                        var a = Math.abs(channel[k]);
+                        if (a > waveform[j]) {
+                            waveform[j] = a;
+                        }
+                        // update highest overall for scaling
+                        if(a > greatest) {
+                            greatest = a;
+                        }
+                    }
+                }
+            }
+            // scale up?
+            var scale = 1 / greatest;
+            for (i = 0, l = waveform.length; i < l; i++) {
+                waveform[i] *= scale;
+            }
+            return waveform;
         }
     };
 }

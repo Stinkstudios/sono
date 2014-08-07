@@ -148,6 +148,41 @@
                 curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
             }
             return curve;
+        },
+        waveform: function(buffer, length) {
+            var waveform = new Float32Array(length),
+                chunk = Math.floor(buffer.length / length),
+                //chunk = buffer.length / length,
+                resolution = 10,
+                incr = Math.floor(chunk / resolution),
+                greatest = 0;
+
+            if(incr < 1) { incr = 1 };
+
+            for (var i = 0; i < buffer.numberOfChannels; i++) {
+                // check each channel
+                var channel = buffer.getChannelData(i);
+                for (var j = 0; j < length; j++) {
+                    // get highest value within the chunk
+                    for (var k = j * chunk, l = k + chunk; k < l; k += incr) {
+                        // select highest value from channels
+                        var a = Math.abs(channel[k]);
+                        if (a > waveform[j]) {
+                            waveform[j] = a;
+                        }
+                        // update highest overall for scaling
+                        if(a > greatest) {
+                            greatest = a;
+                        }
+                    }
+                }
+            }
+            // scale up?
+            var scale = 1 / greatest;
+            for (i = 0, l = waveform.length; i < l; i++) {
+                waveform[i] *= scale;
+            }
+            return waveform;
         }
     };
 }

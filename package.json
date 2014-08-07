@@ -1,5 +1,5 @@
 {
-  "name": "sono-js",
+  "name": "sono",
   "version": "0.0.0",
   "description": "A small library for managing sound in the browser.",
   "keywords": [
@@ -11,7 +11,7 @@
   ],
   "main": "dist/sono.js",
   "scripts": {
-    "test": "karma start"
+    "test": "./node_modules/.bin/karma start --single-run --browsers Firefox"
   },
   "repository": {
     "type": "git",
@@ -50,13 +50,11 @@
     "rework-suit": "^4.0.0",
     "signals": "^1.0.0",
     "suitcss-base": "^0.7.0",
+    "usfl": "^0.2.4",
     "vinyl-source-stream": "^0.1.1"
   },
-  "browser": {
-    "lib": "./bower_components/js-lib/dist/lib.js"
-  },
-  "browserify-shim": {
-  },
+  "browser": {},
+  "browserify-shim": {},
   "browserify": {
     "transform": [
       "browserify-shim"

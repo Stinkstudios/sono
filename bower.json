@@ -1,7 +1,25 @@
 {
-    "name": "sono-js",
-    "version": "0.0.0",
-    "dependencies": {
-        "js-lib": "latest"
-    }
+  "name": "sono",
+  "version": "0.0.0",
+  "homepage": "https://github.com/Stinkdigital/sono",
+  "authors": [
+    "Ian McGregor <ian@stinkdigital.com>"
+  ],
+  "description": "A small library for managing sound in the browser.",
+  "main": "dist/sono.js",
+  "moduleType": [
+    "node",
+    "amd",
+    "globals"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test"
+  ],
+  "dependencies": {
+    "usfl": "latest"
+  }
 }

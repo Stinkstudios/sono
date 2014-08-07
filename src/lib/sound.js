@@ -26,7 +26,7 @@ function Sound(context, data, destination) {
 Sound.prototype.add = function(data) {
     if(!data) { return; }
     this._data = data; // AudioBuffer or Media Element
-    console.log('data:', this._data);
+    //console.log('data:', this._data);
     if(this._data.tagName) {
       this._source = new ElementSource(data);
     }

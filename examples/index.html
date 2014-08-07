@@ -34,25 +34,50 @@
         <li>Game e.g. different environments/rooms?</li>
     </ul>
 
+    <div class="js-output"></div>
+    <canvas class="js-waveform" width="400", height="80"></canvas>
+    <div><button class="js-playpause">PLAY</button><div>
+    
+    <div class="js-output-b"></div>
+    <canvas class="js-waveform-b" width="400", height="80"></canvas>
+    <div><button class="js-playpause-b">PLAY</button><div>
 
 
 	<script src="../dist/sono.js"></script>
+    <script src="../bower_components/usfl/dist/usfl.js"></script>
+    <script src="../bower_components/usfl/src/lib/graphics.js"></script>
     <script>
         (function() {
             'use strict';
 
-            //Sono.context = null;
-            Sono.log();
-            console.log('Sono:', Sono);
+            var output = document.querySelector('.js-output'),
+                outputB = document.querySelector('.js-output-b'),
+                playpause = document.querySelector('.js-playpause'),
+                playpauseB = document.querySelector('.js-playpause-b'),
+                canvas = document.querySelector('.js-waveform'),
+                canvasB = document.querySelector('.js-waveform-b');
 
-            var urls;
-            //url = sounds[Math.floor(Math.random() * sounds.length)];
+
+            var graphics = new Graphics(canvas);
+            graphics.clear('#eeeeee');
+            graphics.fill(128, 0, 0, 40);
+
+            var graphicsB = new Graphics(canvasB);
+            graphicsB.clear('#eeeeee');
+            graphicsB.fill(128, 0, 0, 40);
+
+            //Sono.context = null;
+            //Sono.log();
+            //console.log('Sono:', Sono);=
+
+            //var urls;
             // will load this file
             //url = 'audio/TEST.ogg';
             // will load first key compatible with browser
             //url = { foo: 'audio/TEST.ogg', bar: 'audio/TEST.mp3' };
             // will load first index compatible with browser
-            urls = ['audio/TEST.ogg', 'audio/TEST.mp3'];
+            //urls = ['audio/TEST.ogg', 'audio/TEST.mp3'];
+            //urls = ['audio/VOX.ogg', 'audio/VOX.mp3'];
             // will add first compatible extension
             //url = 'audio/TEST';
 
@@ -60,20 +85,91 @@
                 //console.log('soundLoadProgress', progress);
             };
 
-            var soundLoaded = function(sound) {
-                console.log('soundLoaded', sound._buffer);
-                //sound.play();
+            var waveform, waveformB;
 
-            };
+            function drawPeak(waveform, graphics, i) {
+                if(waveform === undefined) {
+                    return;
+                }
+                var x = i + 0.5,
+                    h = graphics.height,
+                    y = h - Math.round(h * waveform[i]);
+                //console.log(h);
+                graphics.line(x, y, x, h);
+            }
+
             // test no WebAudio
             //SONO.context = null;
-            //var sound = Sono.loadArrayBuffer(urls, soundLoaded, this, false).play();
-            var sound = Sono.add(urls).play();
+            var sound = Sono.load(['audio/VOX.ogg', 'audio/VOX.mp3'], getLoadedHandler(graphics));
+            //var sound = Sono.add(urls);
+            //.play();
             //sound.loop = true;
             sound.loader.onProgress.add(soundLoadProgress, this);
             //this.sound.loop = true;
             //this.sound.addNode(SONO.create.reverb(0.2, 0.5));
             var delay = Sono.create.delay(sound._gain, 0.5, 0.5);
+
+            addButtonHandler(playpause, sound);
+
+            //sound.onEnded(function() {
+            //sound.onComplete(function() {
+            //sound.endedCallback(function() {
+            //sound.ended = function() {
+            //sound.addEndedHandler(function() {
+
+
+            var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], getLoadedHandler(graphicsB));
+            addButtonHandler(playpauseB, soundB);
+
+            
+            function getLoadedHandler(graphics) {
+                return function(sound) {
+                    sound.waveform = Sono.utils.waveform(sound._data, canvas.width);
+
+                    for (var i = 0; i < sound.waveform.length; i++) {
+                        drawPeak(sound.waveform, graphics, i);
+                    }
+                    graphics.stroke(128, 0, 0)
+                };
+            }
+
+            function addButtonHandler(button, sound) {
+                button.addEventListener('click', function() {
+                    if(sound.playing) {
+                        sound.pause();
+                        button.innerHTML = 'PLAY';
+                    }
+                    else {
+                        sound.play();
+                        button.innerHTML = 'PAUSE';
+                    }
+                });
+                sound.addEndedListener(function() {
+                    button.innerHTML = 'PLAY';
+                });
+            }
+
+            function updateOutput(el, sound) {
+                el.innerHTML = sound.currentTime.toFixed(2) + ' / ' +
+                               sound.duration.toFixed(2) + ' / ' +
+                               sound.progress.toFixed(2);
+            }
+
+            function updateWaveform(waveform, graphics, progress) {
+                var i = Math.floor(graphics.width * progress);
+                drawPeak(waveform, graphics, i);            
+            }
+
+            function update() {
+                window.requestAnimationFrame(update);
+                
+                updateOutput(output, sound);
+                updateOutput(outputB, soundB);
+                
+                updateWaveform(sound.waveform, graphics, sound.progress);
+                updateWaveform(soundB.waveform, graphicsB, soundB.progress);
+            }
+            update();
 
         }());
     </script>
