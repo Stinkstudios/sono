@@ -52,7 +52,9 @@ BufferSource.prototype.pause = function() {
 BufferSource.prototype.stop = function() {
     if(this._sourceNode) {
         this._sourceNode.onended = null;
-        this._sourceNode.stop(0);
+        try {
+            this._sourceNode.stop(0);
+        } catch(e) {}
         this._sourceNode = null;
     }
     this._startedAt = 0;

@@ -500,7 +500,9 @@ BufferSource.prototype.pause = function() {
 BufferSource.prototype.stop = function() {
     if(this._sourceNode) {
         this._sourceNode.onended = null;
-        this._sourceNode.stop(0);
+        try {
+            this._sourceNode.stop(0);
+        } catch(e) {}
         this._sourceNode = null;
     }
     this._startedAt = 0;
@@ -1893,7 +1895,7 @@ function Sono() {
     this.handleVisibility();
     this.initLoader();
 
-    this.log(false);
+    //this.log(false);
 }
 
 /*
@@ -2174,8 +2176,27 @@ Sono.prototype.handleTouchlock = function() {
  */
 
 Sono.prototype.handleVisibility = function() {
-    Visibility.onPageHidden.add(this.pauseAll, this);
-    Visibility.onPageShown.add(this.resumeAll, this);
+    Visibility.onPageHidden.add(this.onPageHidden, this);
+    Visibility.onPageShown.add(this.onPageShown, this);
+};
+
+Sono.prototype.onPageHidden = function() {
+    this._pageHiddenPaused = [];
+    var l = this._sounds.length;
+    for (var i = 0; i < l; i++) {
+        if(this._sounds[i].playing) {
+            this._sounds[i].pause();
+            this._pageHiddenPaused.push(this._sounds[i]);
+        }
+    }    
+};
+
+Sono.prototype.onPageShown = function() {
+    if(!this._pageHiddenPaused) { return; }
+
+    while(this._pageHiddenPaused.length) {
+        this._pageHiddenPaused.pop().play();
+    }
 };
 
 /*
