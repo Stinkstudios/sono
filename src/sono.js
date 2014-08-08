@@ -1,7 +1,6 @@
 'use strict';
 
 var Loader = require('./lib/loader.js'),
-    Visibility = require('./lib/visibility.js'),
     nodeFactory = require('./lib/node-factory.js'),
     Sound = require('./lib/sound.js'),
     Utils = require('./lib/utils.js');
@@ -305,26 +304,55 @@ Sono.prototype.handleTouchlock = function() {
  */
 
 Sono.prototype.handleVisibility = function() {
-    Visibility.onPageHidden.add(this.onPageHidden, this);
-    Visibility.onPageShown.add(this.onPageShown, this);
-};
+    var pageHiddenPaused = [],
+        sounds = this._sounds,
+        hidden,
+        visibilityChange;
 
-Sono.prototype.onPageHidden = function() {
-    this._pageHiddenPaused = [];
-    var l = this._sounds.length;
-    for (var i = 0; i < l; i++) {
-        if(this._sounds[i].playing) {
-            this._sounds[i].pause();
-            this._pageHiddenPaused.push(this._sounds[i]);
+    if (typeof document.hidden !== 'undefined') {
+        hidden = 'hidden';
+        visibilityChange = 'visibilitychange';
+    } else if (typeof document.mozHidden !== 'undefined') {
+        hidden = 'mozHidden';
+        visibilityChange = 'mozvisibilitychange';
+    } else if (typeof document.msHidden !== 'undefined') {
+        hidden = 'msHidden';
+        visibilityChange = 'msvisibilitychange';
+    } else if (typeof document.webkitHidden !== 'undefined') {
+        hidden = 'webkitHidden';
+        visibilityChange = 'webkitvisibilitychange';
+    }
+
+    // pause currently playing sounds and store refs
+    function onHidden() {
+        var l = sounds.length;
+        for (var i = 0; i < l; i++) {
+            var sound = sounds[i];
+            if(sound.playing) {
+                sound.pause();
+                pageHiddenPaused.push(sound);
+            }
         }
-    }    
-};
+    }
 
-Sono.prototype.onPageShown = function() {
-    if(!this._pageHiddenPaused) { return; }
+    // play sounds that got paused when page was hidden
+    function onShown() {
+        while(pageHiddenPaused.length) {
+            pageHiddenPaused.pop().play();
+        }
+    }
 
-    while(this._pageHiddenPaused.length) {
-        this._pageHiddenPaused.pop().play();
+    function onChange() {
+        if (document[hidden]) {
+            onHidden();
+        }
+        else {
+            onShown();
+        }
+    }
+
+    if(visibilityChange !== undefined) {
+        document.addEventListener(visibilityChange, onChange, false);
     }
 };
 

@@ -1832,47 +1832,7 @@ if (typeof module === 'object' && module.exports) {
 },{}],8:[function(_dereq_,module,exports){
 'use strict';
 
-var signals = _dereq_('signals');
-
-var onPageHidden = new signals.Signal(),
-    onPageShown = new signals.Signal(),
-    hidden, visibilityChange;
-
-function onVisibilityChange() {
-    if (document[hidden]) {
-        onPageHidden.dispatch();
-    } else {
-        onPageShown.dispatch();
-    }
-}
-
-if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support 
-    hidden = 'hidden';
-    visibilityChange = 'visibilitychange';
-} else if (typeof document.mozHidden !== 'undefined') {
-    hidden = 'mozHidden';
-    visibilityChange = 'mozvisibilitychange';
-} else if (typeof document.msHidden !== 'undefined') {
-    hidden = 'msHidden';
-    visibilityChange = 'msvisibilitychange';
-} else if (typeof document.webkitHidden !== 'undefined') {
-    hidden = 'webkitHidden';
-    visibilityChange = 'webkitvisibilitychange';
-}
-
-if(visibilityChange !== undefined) {
-    document.addEventListener(visibilityChange, onVisibilityChange, false);
-}
-
-module.exports = {
-    onPageShown: onPageShown,
-    onPageHidden: onPageHidden
-};
-},{"signals":1}],9:[function(_dereq_,module,exports){
-'use strict';
-
 var Loader = _dereq_('./lib/loader.js'),
-    Visibility = _dereq_('./lib/visibility.js'),
     nodeFactory = _dereq_('./lib/node-factory.js'),
     Sound = _dereq_('./lib/sound.js'),
     Utils = _dereq_('./lib/utils.js');
@@ -2176,26 +2136,55 @@ Sono.prototype.handleTouchlock = function() {
  */
 
 Sono.prototype.handleVisibility = function() {
-    Visibility.onPageHidden.add(this.onPageHidden, this);
-    Visibility.onPageShown.add(this.onPageShown, this);
-};
+    var pageHiddenPaused = [],
+        sounds = this._sounds,
+        hidden,
+        visibilityChange;
 
-Sono.prototype.onPageHidden = function() {
-    this._pageHiddenPaused = [];
-    var l = this._sounds.length;
-    for (var i = 0; i < l; i++) {
-        if(this._sounds[i].playing) {
-            this._sounds[i].pause();
-            this._pageHiddenPaused.push(this._sounds[i]);
+    if (typeof document.hidden !== 'undefined') {
+        hidden = 'hidden';
+        visibilityChange = 'visibilitychange';
+    } else if (typeof document.mozHidden !== 'undefined') {
+        hidden = 'mozHidden';
+        visibilityChange = 'mozvisibilitychange';
+    } else if (typeof document.msHidden !== 'undefined') {
+        hidden = 'msHidden';
+        visibilityChange = 'msvisibilitychange';
+    } else if (typeof document.webkitHidden !== 'undefined') {
+        hidden = 'webkitHidden';
+        visibilityChange = 'webkitvisibilitychange';
+    }
+
+    // pause currently playing sounds and store refs
+    function onHidden() {
+        var l = sounds.length;
+        for (var i = 0; i < l; i++) {
+            var sound = sounds[i];
+            if(sound.playing) {
+                sound.pause();
+                pageHiddenPaused.push(sound);
+            }
         }
-    }    
-};
+    }
 
-Sono.prototype.onPageShown = function() {
-    if(!this._pageHiddenPaused) { return; }
+    // play sounds that got paused when page was hidden
+    function onShown() {
+        while(pageHiddenPaused.length) {
+            pageHiddenPaused.pop().play();
+        }
+    }
 
-    while(this._pageHiddenPaused.length) {
-        this._pageHiddenPaused.pop().play();
+    function onChange() {
+        if (document[hidden]) {
+            onHidden();
+        }
+        else {
+            onShown();
+        }
+    }
+
+    if(visibilityChange !== undefined) {
+        document.addEventListener(visibilityChange, onChange, false);
     }
 };
 
@@ -2300,6 +2289,6 @@ if (typeof module === 'object' && module.exports) {
     module.exports = new Sono();
 }
 
-},{"./lib/loader.js":4,"./lib/node-factory.js":5,"./lib/sound.js":6,"./lib/utils.js":7,"./lib/visibility.js":8}]},{},[9])
-(9)
+},{"./lib/loader.js":4,"./lib/node-factory.js":5,"./lib/sound.js":6,"./lib/utils.js":7}]},{},[8])
+(8)
 });
