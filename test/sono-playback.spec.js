@@ -2,7 +2,7 @@
 
 var Sono = require('../src/sono.js');
 
-describe('Sono', function() {
+describe('Sono playback', function() {
 
     var files = [
             'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
@@ -15,7 +15,7 @@ describe('Sono', function() {
         //load = function(url, callback, callbackContext, asBuffer)
         Sono.loadArrayBuffer(files, function(loadedSound) {
             sound = loadedSound;
-            sound.addEndedListener(function() {
+            sound.onEnded(function() {
                 ended = true;
                 done();
             });

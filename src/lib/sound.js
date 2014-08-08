@@ -1,72 +1,87 @@
 'use strict';
 
 var BufferSource = require('./buffer-source.js'),
-    ElementSource = require('./element-source.js');
+    ElementSource = require('./element-source.js'),
+    nodeFactory = require('./node-factory.js');
 
 function Sound(context, data, destination) {
     this.id = '';
     this._context = context;
+    this._data = null;
+    this._endedCallback = null;
     this._loop = false;
     this._nodeList = [];
-    this._onEnded = null;
     this._pausedAt = 0;
     this._playWhenReady = false;
     this._source = null;
     this._sourceNode = null;
     this._startedAt = 0;
 
-    if(this._context) {
-        this._gain = this._context.createGain();
-        this._gain.connect(destination || this._context.destination);
-    }
+    this._gain = nodeFactory(this._context).gain();
+    this._gain.connect(destination || this._context.destination);
 
     this.add(data);
 }
 
 Sound.prototype.add = function(data) {
-    if(!data) { return; }
+    if(!data) { return this; }
     this._data = data; // AudioBuffer or Media Element
     //console.log('data:', this._data);
     if(this._data.tagName) {
-      this._source = new ElementSource(data);
+      this._source = new ElementSource(data, this._context);
     }
     else {
       this._source = new BufferSource(data, this._context);
     }
-    this.createSourceNode();
-    this._source.addEndedListener(this.onEnded, this);
+    this._createSourceNode();
+    this._source.onEnded(this._endedHandler, this);
 
     // should this take account of delay and offset?
     if(this._playWhenReady) {
         this.play();
     }
+    return this;
 };
+
+/*
+ * Controls
+ */
 
 Sound.prototype.play = function(delay, offset) {
     if(!this._source) {
         this._playWhenReady = true;
         return this;
     }
-    this.createSourceNode();
+    this._createSourceNode();
     this._source.loop = this._loop;
 
-    // volume update?
+    // update volume needed for no webaudio
+    if(!this._context) { this.volume = this.volume; }
+
     this._source.play(delay, offset);
+
+    return this;
 };
 
 Sound.prototype.pause = function() {
-    if(!this._source) { return; }
+    if(!this._source) { return this; }
     this._source.pause();
+    return this;  
 };
 
 Sound.prototype.stop = function() {
-    if(!this._source) { return; }
+    if(!this._source) { return this; }
     this._source.stop();
+    return this;
 };
+
+/*
+ * Nodes
+ */
 
 Sound.prototype.addNode = function(node) {
     this._nodeList.push(node);
-    this.updateConnections();
+    this._updateConnections();
     return node;
 };
 
@@ -78,7 +93,8 @@ Sound.prototype.removeNode = function(node) {
         }
     }
     node.disconnect(0);
-    this.updateConnections();
+    this._updateConnections();
+    return this;
 };
 
 // should source be item 0 in nodelist and desination last
@@ -87,7 +103,7 @@ Sound.prototype.removeNode = function(node) {
 // feels like node list could be a linked list??
 // if list.last is destination addbefore
 
-/*Sound.prototype.updateConnections = function() {
+/*Sound.prototype._updateConnections = function() {
     if(!this._sourceNode) {
         return;
     }
@@ -96,11 +112,11 @@ Sound.prototype.removeNode = function(node) {
       this._nodeList[i-1].connect(this._nodeList[i]);
     }
 };*/
-/*Sound.prototype.updateConnections = function() {
+/*Sound.prototype._updateConnections = function() {
     if(!this._sourceNode) {
         return;
     }
-    console.log('updateConnections');
+    console.log('_updateConnections');
     this._sourceNode.disconnect(0);
     this._sourceNode.connect(this._gain);
     var l = this._nodeList.length;
@@ -119,11 +135,11 @@ Sound.prototype.removeNode = function(node) {
     }
     this.connectTo(this._context.destination);
 };*/
-Sound.prototype.updateConnections = function() {
+Sound.prototype._updateConnections = function() {
     if(!this._sourceNode) {
         return;
     }
-    //console.log('updateConnections');
+    //console.log('_updateConnections');
     var l = this._nodeList.length;
     for (var i = 0; i < l; i++) {
         if(i === 0) {
@@ -168,49 +184,41 @@ Sound.prototype.connectTo = function(node) {
         //this._nodeList[l - 1].disconnect(0);
         this._nodeList[l - 1].connect(node);
     }
-    else {
+    else if(this._sourceNode) {
         //console.log(' x connect source to node:', node);
         //this._sourceNode.disconnect(0);
         this._sourceNode.connect(node);
     }
     this.destination = node;
+
+    return this;
 };
 
-Sound.prototype.onEnded = function() {
-    //console.log('p onended');
-    //this.stop();
-    if(typeof this._onEnded === 'function') {
-
-        this._onEnded();
-    }
-};
-
-Sound.prototype.addEndedListener = function(fn, context) {
-    this._onEnded = fn.bind(context || this);
-};
-
-Sound.prototype.removeEndedListener = function() {
-    this._onEnded = null;
-};
-
-Sound.prototype.createSourceNode = function() {
+Sound.prototype._createSourceNode = function() {
     //console.log('get source', this._sourceNode);
     if(!this._context) {
         return;
     }
-    else if(this._data.tagName) {
-        // audio or video tag
-        if(!this._sourceNode) {
-            this._sourceNode = this._context.createMediaElementSource(this._data);
-            this.updateConnections();
-        }
-    }
-    else {
-        // array buffer source
-        this._sourceNode = this._source.source;
-        this.updateConnections();
-    }
+
+    this._sourceNode = this._source.sourceNode;
+    this._updateConnections();
+
     return this._sourceNode;
+};
+
+/*
+ * Ended handler
+ */
+
+Sound.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+    return this;
+};
+
+Sound.prototype._endedHandler = function() {
+    if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
+    }
 };
 
 /*
@@ -252,18 +260,18 @@ Object.defineProperty(Sound.prototype, 'progress', {
   }
 });
 
+
 Object.defineProperty(Sound.prototype, 'volume', {
     get: function() {
-        return this._gain ? this._gain.gain.value : this._source.volume;
+        return this._gain.gain.value;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
 
-        if(this._gain) {
-            this._gain.gain.value = value;
-        }
-        else {
-            this._source.volume = value;
+        this._gain.gain.value = value;
+
+        if(this._data && this._data.volume !== undefined) {
+            this._data.volume = value;
         }
     }
 });

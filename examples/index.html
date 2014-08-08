@@ -34,15 +34,23 @@
         <li>Game e.g. different environments/rooms?</li>
     </ul>
 
-    <div class="js-output"></div>
-    <canvas class="js-waveform" width="400", height="80"></canvas>
-    <div><button class="js-playpause">PLAY</button><div>
+    <div class="js-output-a"></div>
+    <canvas class="js-waveform-a" width="400", height="80"></canvas>
+    <div><button class="js-playpause-a">PLAY</button><div>
+    <div><input class="js-volume-a" type="range" min="0" max="100" value="100" /><div>
     
     <div class="js-output-b"></div>
     <canvas class="js-waveform-b" width="400", height="80"></canvas>
     <div><button class="js-playpause-b">PLAY</button><div>
+    <div><input class="js-volume-b" type="range" min="0" max="100" value="100" /><div>
 
+    <h3>master volume</h3>
+    <div><input class="js-volume" type="range" min="0" max="100" value="100" /><div>
 
+    <script>
+        // Test with no WebAudio
+        //window.AudioContext = window.webkitAudioContext = undefined;
+    </script>
 	<script src="../dist/sono.js"></script>
     <script src="../bower_components/usfl/dist/usfl.js"></script>
     <script src="../bower_components/usfl/src/lib/graphics.js"></script>
@@ -50,12 +58,15 @@
         (function() {
             'use strict';
 
-            var output = document.querySelector('.js-output'),
+            var output = document.querySelector('.js-output-a'),
                 outputB = document.querySelector('.js-output-b'),
-                playpause = document.querySelector('.js-playpause'),
+                playpause = document.querySelector('.js-playpause-a'),
                 playpauseB = document.querySelector('.js-playpause-b'),
-                canvas = document.querySelector('.js-waveform'),
-                canvasB = document.querySelector('.js-waveform-b');
+                canvas = document.querySelector('.js-waveform-a'),
+                canvasB = document.querySelector('.js-waveform-b'),
+                volumeA = document.querySelector('.js-volume-a'),
+                volumeB = document.querySelector('.js-volume-b'),
+                volume = document.querySelector('.js-volume');
 
 
             var graphics = new Graphics(canvas);
@@ -110,16 +121,21 @@
             var delay = Sono.create.delay(sound._gain, 0.5, 0.5);
 
             addButtonHandler(playpause, sound);
-
-            //sound.onEnded(function() {
-            //sound.onComplete(function() {
-            //sound.endedCallback(function() {
-            //sound.ended = function() {
-            //sound.addEndedHandler(function() {
-
+            addVolumeHandler(volumeA, sound)
 
             var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], getLoadedHandler(graphicsB));
             addButtonHandler(playpauseB, soundB);
+            addVolumeHandler(volumeB, soundB);
+
+
+            addVolumeHandler(volume, Sono);
+
+            function addVolumeHandler(slider, sound) {
+                var onVolumeChange = function() {
+                    sound.volume = this.value / 100;
+                };
+                slider.addEventListener('change', onVolumeChange);
+            }
 
             
             function getLoadedHandler(graphics) {
@@ -144,7 +160,7 @@
                         button.innerHTML = 'PAUSE';
                     }
                 });
-                sound.addEndedListener(function() {
+                sound.onEnded(function() {
                     button.innerHTML = 'PLAY';
                 });
             }

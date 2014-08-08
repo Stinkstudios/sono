@@ -449,22 +449,26 @@
 'use strict';
 
 function BufferSource(buffer, context) {
+    this.add(buffer);
     this.id = '';
-    this._buffer = buffer; // AudioBuffer
     this._context = context;
-    this._source = null; // BufferSourceNode
+    this._endedCallback = null;
     this._loop = false;
-    this._startedAt = 0;
-    this._pausedAt = 0;
-    this._onEnded = null;
-    this._playing = false;
     this._paused = false;
+    this._pausedAt = 0;
+    this._playing = false;
+    this._sourceNode = null; // BufferSourceNode
+    this._startedAt = 0;
 }
 
 BufferSource.prototype.add = function(buffer) {
-    this._buffer = buffer;
+    this._buffer = buffer; // ArrayBuffer
     return this._buffer;
 };
+
+/*
+ * Controls
+ */
 
 BufferSource.prototype.play = function(delay, offset) {
     if(delay === undefined) { delay = 0; }
@@ -474,8 +478,9 @@ BufferSource.prototype.play = function(delay, offset) {
     if(this._pausedAt > 0) { offset = offset + this._pausedAt; }
 
     //this.stop();
-    this.source.loop = this._loop;
-    this.source.start(delay, offset);
+    this.sourceNode.loop = this._loop;
+    this.sourceNode.onended = this._endedHandler.bind(this);
+    this.sourceNode.start(delay, offset);
 
     this._startedAt = this._context.currentTime - this._pausedAt;
     this._pausedAt = 0;
@@ -485,7 +490,7 @@ BufferSource.prototype.play = function(delay, offset) {
 };
 
 BufferSource.prototype.pause = function() {
-    var elapsed = this.clockTime - this._startedAt;
+    var elapsed = this._context.currentTime - this._startedAt;
     this.stop();
     this._pausedAt = elapsed;
     this._playing = false;
@@ -493,10 +498,10 @@ BufferSource.prototype.pause = function() {
 };
 
 BufferSource.prototype.stop = function() {
-    if(this._source) {
-        this._source.onended = null;
-        this._source.stop(0);
-        this._source = null;
+    if(this._sourceNode) {
+        this._sourceNode.onended = null;
+        this._sourceNode.stop(0);
+        this._sourceNode = null;
     }
     this._startedAt = 0;
     this._pausedAt = 0;
@@ -504,37 +509,40 @@ BufferSource.prototype.stop = function() {
     this._paused = false;
 };
 
-BufferSource.prototype.onEnded = function() {
+/*
+ * Ended handler
+ */
+
+BufferSource.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+};
+
+BufferSource.prototype._endedHandler = function() {
     this.stop();
-    if(typeof this._onEnded === 'function') {
-        this._onEnded();
+    if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
     }
-};
-
-BufferSource.prototype.addEndedListener = function(fn, context) {
-    this._onEnded = fn.bind(context || this);
-};
-
-BufferSource.prototype.removeEndedListener = function() {
-    this._onEnded = null;
 };
 
 /*
  * Getters & Setters
  */
 
-/*
- * TODO: set up so source can be stream, oscillator, etc
- */
-
-Object.defineProperty(BufferSource.prototype, 'source', {
+Object.defineProperty(BufferSource.prototype, 'currentTime', {
     get: function() {
-        if(!this._source) {
-            this._source = this._context.createBufferSource();
-            this._source.buffer = this._buffer;
-            this._source.onended = this.onEnded.bind(this);
+        if(this._pausedAt) {
+            return this._pausedAt;
         }
-        return this._source;
+        if(this._startedAt) {
+            return this._context.currentTime - this._startedAt;
+        }
+        return 0;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'duration', {
+    get: function() {
+        return this._buffer ? this._buffer.duration : 0;
     }
 });
 
@@ -547,18 +555,15 @@ Object.defineProperty(BufferSource.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(BufferSource.prototype, 'duration', {
+Object.defineProperty(BufferSource.prototype, 'paused', {
     get: function() {
-        return this._buffer ? this._buffer.duration : 0;
+        return this._paused;
     }
 });
 
-Object.defineProperty(BufferSource.prototype, 'currentTime', {
+Object.defineProperty(BufferSource.prototype, 'playing', {
     get: function() {
-        if(this._pausedAt) {
-          return this._pausedAt;
-        }
-        return this._startedAt ? (this.clockTime - this._startedAt) : 0;
+        return this._playing;
     }
 });
 
@@ -568,24 +573,16 @@ Object.defineProperty(BufferSource.prototype, 'progress', {
   }
 });
 
-Object.defineProperty(BufferSource.prototype, 'playing', {
+Object.defineProperty(BufferSource.prototype, 'sourceNode', {
     get: function() {
-        return this._playing;
+        if(!this._sourceNode) {
+            this._sourceNode = this._context.createBufferSource();
+            this._sourceNode.buffer = this._buffer;
+        }
+        return this._sourceNode;
     }
 });
 
-Object.defineProperty(BufferSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'clockTime', {
-    get: function() {
-        return this._context.currentTime;
-        //return Date.now() / 1000;
-    }
-});
 
 /*
  * Exports
@@ -598,92 +595,114 @@ if (typeof module === 'object' && module.exports) {
 },{}],3:[function(_dereq_,module,exports){
 'use strict';
 
-function ElementSource(el, volume) {
-    this.id = '';
-    this._loop = false;
-    this._volume = volume === undefined ? 1 : volume;
-    this._playing = false;
-    this._paused = false;
-    this._onEnded = null;
-    this._endedListener = this.onEnded.bind(this);
-    this._playWhenReady = false;
+function ElementSource(el, context) {
     this.add(el);
+    this.id = '';
+    this._context = context;
+    this._endedCallback = null;
+    this._endedHandlerBound = this._endedHandler.bind(this);
+    this._loop = false;
+    this._paused = false;
+    this._playing = false;
+    this._sourceNode = null; // MediaElementSourceNode
 }
 
 ElementSource.prototype.add = function(el) {
-    this._el = el;
-    // should this take account of delay and offset?
-    if(this._playWhenReady) {
-        this.play();
-    }
+    this._el = el; // HTMLMediaElement
+    return this._el;
 };
 
+/*
+ * Controls
+ */
+
 ElementSource.prototype.play = function(delay, offset) {
-    if(!this._el) {
-        this._playWhenReady = true;
-        return this;
-    }
+    clearTimeout(this._delayTimeout);
+
     this.volume = this._volume;
-    if(offset !== undefined && offset > 0) {
+
+    if(offset) {
         this._el.currentTime = offset;
     }
-    if(delay !== undefined && delay > 0) {
+
+    if(delay) {
         this._delayTimeout = setTimeout(this.play.bind(this), delay);
     }
     else {
         this._el.play();
     }
+
     this._playing = true;
     this._paused = false;
-    this._el.removeEventListener('ended', this._endedListener);
-    this._el.addEventListener('ended', this._endedListener, false);
+
+    this._el.removeEventListener('ended', this._endedHandlerBound);
+    this._el.addEventListener('ended', this._endedHandlerBound, false);
 };
 
 ElementSource.prototype.pause = function() {
     clearTimeout(this._delayTimeout);
+
     if(!this._el) { return; }
+
     this._el.pause();
     this._playing = false;
     this._paused = true;
 };
 
 ElementSource.prototype.stop = function() {
+    clearTimeout(this._delayTimeout);
+
     if(!this._el) { return; }
+
     this._el.pause();
+
     try {
         this._el.currentTime = 0;
         // fixes bug where server doesn't support seek:
         if(this._el.currentTime > 0) { this._el.load(); }    
     } catch(e) {}
+
     this._playing = false;
     this._paused = false;
 };
 
-ElementSource.prototype.onEnded = function() {
-    //console.log('onended');
+/*
+ * Ended handler
+ */
+
+ElementSource.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+};
+
+ElementSource.prototype._endedHandler = function() {
     this._playing = false;
     this._paused = false;
+
     if(this._loop) {
         this._el.currentTime = 0;
         // fixes bug where server doesn't support seek:
         if(this._el.currentTime > 0) { this._el.load(); }
         this.play();
-    } else if(typeof this._onEnded === 'function') {
-        this._onEnded();
+    } else if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
     }
-};
-
-ElementSource.prototype.addEndedListener = function(fn, context) {
-    this._onEnded = fn.bind(context || this);
-};
-
-ElementSource.prototype.removeEndedListener = function() {
-    this._onEnded = null;
 };
 
 /*
  * Getters & Setters
  */
+
+Object.defineProperty(ElementSource.prototype, 'currentTime', {
+    get: function() {
+        return this._el ? this._el.currentTime : 0;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'duration', {
+    get: function() {
+        return this._el ? this._el.duration : 0;
+    }
+});
 
 Object.defineProperty(ElementSource.prototype, 'loop', {
     get: function() {
@@ -694,16 +713,9 @@ Object.defineProperty(ElementSource.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'volume', {
+Object.defineProperty(ElementSource.prototype, 'paused', {
     get: function() {
-        return this._volume;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-        this._volume = value;
-        if(this._el && this._el.volume !== undefined) {
-            this._el.volume = this._volume;
-        }
+        return this._paused;
     }
 });
 
@@ -713,33 +725,18 @@ Object.defineProperty(ElementSource.prototype, 'playing', {
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-/*Object.defineProperty(ElementSource.prototype, 'sound', {
-    get: function() {
-        return this._el;
-    }
-});*/
-
-Object.defineProperty(ElementSource.prototype, 'duration', {
-    get: function() {
-        return this._el ? this._el.duration : 0;
-    }
-});
-
-Object.defineProperty(ElementSource.prototype, 'currentTime', {
-    get: function() {
-        return this._el ? this._el.currentTime : 0;
-    }
-});
-
 Object.defineProperty(ElementSource.prototype, 'progress', {
     get: function() {
         return this.currentTime / this.duration;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'sourceNode', {
+    get: function() {
+        if(!this._sourceNode && this._context) {
+            this._sourceNode = this._context.createMediaElementSource(this._el);
+        }
+        return this._sourceNode;
     }
 });
 
@@ -1002,290 +999,278 @@ module.exports = AssetLoader;
 },{"signals":1}],5:[function(_dereq_,module,exports){
 'use strict';
 
-function NodeFactory(context) {
+var context;
 
-    function createFilter(type, frequency) {
-        var filterNode = context.createBiquadFilter();
-        filterNode.type = type;
-        if(frequency !== undefined) {
-            filterNode.frequency.value = frequency;
-        }
-        return filterNode;
+function createFilter(type, frequency) {
+    var filterNode = context.createBiquadFilter();
+    filterNode.type = type;
+    if(frequency !== undefined) {
+        filterNode.frequency.value = frequency;
     }
+    return filterNode;
+}
 
-    var create = {
-        gain: function(value) {
-            var node = context.createGain();
-            if(value !== undefined) {
-                node.gain.value = value;
-            }
-            return node;
+var create = {
+    gain: function(value) {
+        var node = context.createGain();
+        if(value !== undefined) {
+            node.gain.value = value;
+        }
+        return node;
+    },
+    pan: function() {
+        var node = context.createPanner();
+        // Default for stereo is HRTF
+        node.panningModel = 'HRTF'; // 'equalpower'
+
+        // Distance model and attributes
+        node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
+        node.refDistance = 1;
+        node.maxDistance = 1000;
+        node.rolloffFactor = 1;
+
+        // Uses a 3D cartesian coordinate system
+        // node.setPosition(0, 0, 0);
+        // node.setOrientation(1, 0, 0);
+        // node.setVelocity(0, 0, 0);
+
+        // Directional sound cone - The cone angles are in degrees and run from 0 to 360
+        // node.coneInnerAngle = 360;
+        // node.coneOuterAngle = 360;
+        // node.coneOuterGain = 0;
+
+        // normalised vec
+        // node.setOrientation(vec.x, vec.y, vec.z);
+        return node;
+    },
+    filter: {
+        lowpass: function(frequency) {
+            return createFilter('lowpass', frequency);
         },
-        pan: function() {
-            var node = context.createPanner();
-            // Default for stereo is HRTF
-            node.panningModel = 'HRTF'; // 'equalpower'
-
-            // Distance model and attributes
-            node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
-            node.refDistance = 1;
-            node.maxDistance = 1000;
-            node.rolloffFactor = 1;
-
-            // Uses a 3D cartesian coordinate system
-            // node.setPosition(0, 0, 0);
-            // node.setOrientation(1, 0, 0);
-            // node.setVelocity(0, 0, 0);
-
-            // Directional sound cone - The cone angles are in degrees and run from 0 to 360
-            // node.coneInnerAngle = 360;
-            // node.coneOuterAngle = 360;
-            // node.coneOuterGain = 0;
-
-            // normalised vec
-            // node.setOrientation(vec.x, vec.y, vec.z);
-            return node;
+        highpass: function(frequency) {
+            return createFilter('highpass', frequency);
         },
-        filter: {
-            lowpass: function(frequency) {
-                return createFilter('lowpass', frequency);
-            },
-            highpass: function(frequency) {
-                return createFilter('highpass', frequency);
-            },
-            bandpass: function(frequency) {
-                return createFilter('bandpass', frequency);
-            },
-            lowshelf: function(frequency) {
-                return createFilter('lowshelf', frequency);
-            },
-            highshelf: function(frequency) {
-                return createFilter('highshelf', frequency);
-            },
-            peaking: function(frequency) {
-                return createFilter('peaking', frequency);
-            },
-            notch: function(frequency) {
-                return createFilter('notch', frequency);
-            },
-            allpass: function(frequency) {
-                return createFilter('allpass', frequency);
-            }
+        bandpass: function(frequency) {
+            return createFilter('bandpass', frequency);
         },
-        delay: function(input, time, gain) {
-            var delayNode = context.createDelay();
-            var gainNode = this.gain(gain || 0.5);
-            if(time !== undefined) {
-                delayNode.delayTime.value = time;
-            }
-            delayNode.connect(gainNode);
+        lowshelf: function(frequency) {
+            return createFilter('lowshelf', frequency);
+        },
+        highshelf: function(frequency) {
+            return createFilter('highshelf', frequency);
+        },
+        peaking: function(frequency) {
+            return createFilter('peaking', frequency);
+        },
+        notch: function(frequency) {
+            return createFilter('notch', frequency);
+        },
+        allpass: function(frequency) {
+            return createFilter('allpass', frequency);
+        }
+    },
+    delay: function(input, time, gain) {
+        var delayNode = context.createDelay();
+        var gainNode = this.gain(gain || 0.5);
+        if(time !== undefined) {
+            delayNode.delayTime.value = time;
+        }
+        delayNode.connect(gainNode);
+        if(input) {
             input.connect(delayNode);
-            gainNode.connect(input);
-            return delayNode;
-            // ?
-            /*return {
-              delayNode: delayNode,
-              gainNode: gainNode
-            };*/
-        },
-        convolver: function(impulseResponse) {
-            // impulseResponse is an audio file buffer
-            var node = context.createConvolver();
-            node.buffer = impulseResponse;
-            return node;
-        },
-        reverb: function(seconds, decay, reverse) {
-           return this.convolver(this.createImpulseResponse(seconds, decay, reverse));
-        },
-        // TODO: should prob be moved to utils:
-        createImpulseResponse: function(seconds, decay, reverse) {
-            // generate a reverb effect
-            seconds = seconds || 1;
-            decay = decay || 5;
-            reverse = !!reverse;
-
-            var numChannels = 2,
-                rate = context.sampleRate,
-                length = rate * seconds,
-                impulseResponse = context.createBuffer(numChannels, length, rate),
-                left = impulseResponse.getChannelData(0),
-                right = impulseResponse.getChannelData(1),
-                n;
-
-            for (var i = 0; i < length; i++) {
-                n = reverse ? length - 1 : i;
-                left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
-                right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
-            }
-
-            return impulseResponse;
-        },
-        analyser: function(fftSize) {
-            fftSize = fftSize || 1024;
-            var node = context.createAnalyser();
-            node.smoothingTimeConstant = 0.85;
-            // resolution fftSize: 32 - 2048 (pow 2)
-            // frequencyBinCount will be half this value
-            node.fftSize = fftSize;
-            //node.minDecibels = -100;
-            //node.maxDecibels = -30;
-            return node;
-        },
-        compressor: function() {
-            // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
-            var node = context.createDynamicsCompressor();
-            // min decibels to start compressing at from -100 to 0
-            node.threshold.value = -24;
-            // decibel value to start curve to compressed value from 0 to 40
-            node.knee.value = 30;
-            // amount of change per decibel from 1 to 20
-            node.ratio.value = 12;
-            // gain reduction currently applied by compressor from -20 to 0
-            // node.reduction.value
-            // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
-            node.attack.value = 0.0003;
-            // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
-            node.release.value = 0.25;
-            return node;
-        },
-        distortion: function() {
-            var node = context.createWaveShaper();
-            // Float32Array defining curve (values are interpolated)
-            //node.curve
-            // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
-            //node.oversample = '2x';
-            return node;
-        },
-        scriptProcessor: function(bufferSize, inputChannels, outputChannels, callback, callbackContext) {
-            // bufferSize 256 - 16384 (pow 2)
-            bufferSize = bufferSize || 1024;
-            inputChannels = inputChannels === undefined ? 0 : inputChannels;
-            outputChannels = outputChannels === undefined ? 1 : outputChannels;
-            var node = context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
-            //node.onaudioprocess = callback.bind(callbackContext|| node);
-            node.onaudioprocess = function (event) {
-                // available props:
-                /*
-                event.inputBuffer
-                event.outputBuffer
-                event.playbackTime
-                */
-                // Example: generate noise
-                /*
-                var output = event.outputBuffer.getChannelData(0);
-                var l = output.length;
-                for (var i = 0; i < l; i++) {
-                    output[i] = Math.random();
-                }
-                */
-                callback.call(callbackContext || this, event);
-            };
-            return node;
-        },
-        // creates MediaStreamAudioSourceNode
-        microphoneSource: function(stream, connectTo) {
-            var mediaStreamSource = context.createMediaStreamSource( stream );
-            if(connectTo) {
-                mediaStreamSource.connect(connectTo);
-            }
-            // HACK: stops moz garbage collection killing the stream
-            // see https://support.mozilla.org/en-US/questions/984179
-            if(navigator.mozGetUserMedia) {
-                window.mozHack = mediaStreamSource;
-            }
-            return mediaStreamSource;
+            gainNode.connect(input);    
         }
-    };
+        return delayNode;
+        // ?
+        /*return {
+          delayNode: delayNode,
+          gainNode: gainNode
+        };*/
+    },
+    convolver: function(impulseResponse) {
+        // impulseResponse is an audio file buffer
+        var node = context.createConvolver();
+        node.buffer = impulseResponse;
+        return node;
+    },
+    reverb: function(seconds, decay, reverse) {
+       return this.convolver(this.impulseResponse(seconds, decay, reverse));
+    },
+    // TODO: should prob be moved to utils:
+    impulseResponse: function(seconds, decay, reverse) {
+        // generate a reverb effect
+        seconds = seconds || 1;
+        decay = decay || 5;
+        reverse = !!reverse;
 
-    var fake = {
-        gain: function() {
-            return {gain:{value: 0}};
-        },
-        pan: function() {
-            var fn = function(){};
-            return {
-              panningModel: 0,
-              setPosition: fn,
-              setOrientation: fn,
-              setVelocity: fn,
-              distanceModel: 0,
-              refDistance: 0,
-              maxDistance: 0,
-              rolloffFactor: 0,
-              coneInnerAngle: 360,
-              coneOuterAngle: 360,
-              coneOuterGain: 0
-            };
-        },
-        filter: {
-            lowpass: function() {
-                return { type:0, frequency: { value: 0 } };
-            },
-            highpass: function() {
-                return { type:0, frequency: { value: 0 } };
-            },
-            bandpass: function() {
-                return { type:0, frequency: { value: 0 } };
-            },
-            lowshelf: function() {
-                return { type:0, frequency: { value: 0 } };
-            },
-            highshelf: function() {
-                return { type:0, frequency: { value: 0 } };
-            },
-            peaking: function() {
-                return { type:0, frequency: { value: 0 } };
-            },
-            notch: function() {
-                return { type:0, frequency: { value: 0 } };
-            },
-            allpass: function() {
-                return { type:0, frequency: { value: 0 } };
-            }
-        },
-        delay: function() {
-          return { delayTime: { value: 0 } };
-        },
-        convolver: function() {
-            return { buffer: 0 };
-        },
-        reverb: function() {
-           return this.convolver();
-        },
-        createImpulseResponse: function() {
-            return [];
-        },
-        analyser: function() {
-            return {
-              smoothingTimeConstant: 0,
-              fftSize: 0,
-              minDecibels: 0,
-              maxDecibels: 0
-            };
-        },
-        compressor: function() {
-            return {
-              threshold:{value: 0},
-              knee:{value: 0},
-              ratio:{value: 0},
-              attack:{value: 0},
-              release:{value: 0}
-            };
-        },
-        distortion: function() {
-            return {
-              oversample: 0,
-              curve: 0
-            };
-        },
-        scriptProcessor: function() {
-            return {};
-        },
-        microphoneSource: function() {
-            return {};
+        var numChannels = 2,
+            rate = context.sampleRate,
+            length = rate * seconds,
+            impulseResponse = context.createBuffer(numChannels, length, rate),
+            left = impulseResponse.getChannelData(0),
+            right = impulseResponse.getChannelData(1),
+            n;
+
+        for (var i = 0; i < length; i++) {
+            n = reverse ? length - 1 : i;
+            left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+            right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
         }
-    };
 
+        return impulseResponse;
+    },
+    analyser: function(fftSize) {
+        fftSize = fftSize || 1024;
+        var node = context.createAnalyser();
+        node.smoothingTimeConstant = 0.85;
+        // resolution fftSize: 32 - 2048 (pow 2)
+        // frequencyBinCount will be half this value
+        node.fftSize = fftSize;
+        //node.minDecibels = -100;
+        //node.maxDecibels = -30;
+        return node;
+    },
+    compressor: function() {
+        // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
+        var node = context.createDynamicsCompressor();
+        // min decibels to start compressing at from -100 to 0
+        node.threshold.value = -24;
+        // decibel value to start curve to compressed value from 0 to 40
+        node.knee.value = 30;
+        // amount of change per decibel from 1 to 20
+        node.ratio.value = 12;
+        // gain reduction currently applied by compressor from -20 to 0
+        // node.reduction.value
+        // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
+        node.attack.value = 0.0003;
+        // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
+        node.release.value = 0.25;
+        return node;
+    },
+    distortion: function() {
+        var node = context.createWaveShaper();
+        // Float32Array defining curve (values are interpolated)
+        //node.curve
+        // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
+        //node.oversample = '2x';
+        return node;
+    },
+    scriptProcessor: function(bufferSize, inputChannels, outputChannels, callback, callbackContext) {
+        // bufferSize 256 - 16384 (pow 2)
+        bufferSize = bufferSize || 1024;
+        inputChannels = inputChannels === undefined ? 0 : inputChannels;
+        outputChannels = outputChannels === undefined ? 1 : outputChannels;
+        var node = context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
+        //node.onaudioprocess = callback.bind(callbackContext|| node);
+        node.onaudioprocess = function (event) {
+            // available props:
+            /*
+            event.inputBuffer
+            event.outputBuffer
+            event.playbackTime
+            */
+            // Example: generate noise
+            /*
+            var output = event.outputBuffer.getChannelData(0);
+            var l = output.length;
+            for (var i = 0; i < l; i++) {
+                output[i] = Math.random();
+            }
+            */
+            callback.call(callbackContext || this, event);
+        };
+        return node;
+    },
+    // creates MediaStreamAudioSourceNode
+    microphoneSource: function(stream, connectTo) {
+        var mediaStreamSource = context.createMediaStreamSource( stream );
+        if(connectTo) {
+            mediaStreamSource.connect(connectTo);
+        }
+        // HACK: stops moz garbage collection killing the stream
+        // see https://support.mozilla.org/en-US/questions/984179
+        if(navigator.mozGetUserMedia) {
+            window.mozHack = mediaStreamSource;
+        }
+        return mediaStreamSource;
+    }
+};
+
+/*
+ * Fake nodes - not sure if this is a good idea?
+ * The usage is that code can fail silently (removing need for conditionals)
+ */
+
+var fn = function(){};
+var param = { value: 1 };
+var fakeNode = {
+    connect:fn,
+    disconnect:fn,
+    // gain
+    gain:{value: 1},
+    // panner
+    panningModel: 0,
+    setPosition: fn,
+    setOrientation: fn,
+    setVelocity: fn,
+    distanceModel: 0,
+    refDistance: 0,
+    maxDistance: 0,
+    rolloffFactor: 0,
+    coneInnerAngle: 360,
+    coneOuterAngle: 360,
+    coneOuterGain: 0,
+    // filter:
+    type:0,
+    frequency: param,
+    // delay
+    delayTime: param,
+    // convolver
+    buffer: 0,
+    // analyser
+    smoothingTimeConstant: 0,
+    fftSize: 0,
+    minDecibels: 0,
+    maxDecibels: 0,
+    // compressor
+    threshold: param,
+    knee: param,
+    ratio: param,
+    attack: param,
+    release: param,
+    // distortion
+    oversample: 0,
+    curve: 0
+};
+var returnFakeNode = function(){ return fakeNode; };
+var fake = {
+    gain: function() {
+        return {gain:{value: 1}, connect:fn, disconnect:fn};
+    },
+    pan: returnFakeNode,
+    filter: {
+        lowpass: returnFakeNode,
+        highpass: returnFakeNode,
+        bandpass: returnFakeNode,
+        lowshelf: returnFakeNode,
+        highshelf: returnFakeNode,
+        peaking: returnFakeNode,
+        notch: returnFakeNode,
+        allpass: returnFakeNode
+    },
+    delay: returnFakeNode,
+    convolver: returnFakeNode,
+    reverb: returnFakeNode,
+    impulseResponse: function() { return []; },
+    analyser: returnFakeNode,
+    compressor: returnFakeNode,
+    distortion: returnFakeNode,
+    scriptProcessor: returnFakeNode,
+    microphoneSource: returnFakeNode
+};
+
+function NodeFactory(webAudioContext) {
+    context = webAudioContext;
     return context ? create : fake;
 }
 
@@ -1297,72 +1282,87 @@ if (typeof module === 'object' && module.exports) {
 'use strict';
 
 var BufferSource = _dereq_('./buffer-source.js'),
-    ElementSource = _dereq_('./element-source.js');
+    ElementSource = _dereq_('./element-source.js'),
+    nodeFactory = _dereq_('./node-factory.js');
 
 function Sound(context, data, destination) {
     this.id = '';
     this._context = context;
+    this._data = null;
+    this._endedCallback = null;
     this._loop = false;
     this._nodeList = [];
-    this._onEnded = null;
     this._pausedAt = 0;
     this._playWhenReady = false;
     this._source = null;
     this._sourceNode = null;
     this._startedAt = 0;
 
-    if(this._context) {
-        this._gain = this._context.createGain();
-        this._gain.connect(destination || this._context.destination);
-    }
+    this._gain = nodeFactory(this._context).gain();
+    this._gain.connect(destination || this._context.destination);
 
     this.add(data);
 }
 
 Sound.prototype.add = function(data) {
-    if(!data) { return; }
+    if(!data) { return this; }
     this._data = data; // AudioBuffer or Media Element
     //console.log('data:', this._data);
     if(this._data.tagName) {
-      this._source = new ElementSource(data);
+      this._source = new ElementSource(data, this._context);
     }
     else {
       this._source = new BufferSource(data, this._context);
     }
-    this.createSourceNode();
-    this._source.addEndedListener(this.onEnded, this);
+    this._createSourceNode();
+    this._source.onEnded(this._endedHandler, this);
 
     // should this take account of delay and offset?
     if(this._playWhenReady) {
         this.play();
     }
+    return this;
 };
+
+/*
+ * Controls
+ */
 
 Sound.prototype.play = function(delay, offset) {
     if(!this._source) {
         this._playWhenReady = true;
         return this;
     }
-    this.createSourceNode();
+    this._createSourceNode();
     this._source.loop = this._loop;
 
-    // volume update?
+    // update volume needed for no webaudio
+    if(!this._context) { this.volume = this.volume; }
+
     this._source.play(delay, offset);
+
+    return this;
 };
 
 Sound.prototype.pause = function() {
-    if(!this._source) { return; }
+    if(!this._source) { return this; }
     this._source.pause();
+    return this;  
 };
 
 Sound.prototype.stop = function() {
-    if(!this._source) { return; }
+    if(!this._source) { return this; }
     this._source.stop();
+    return this;
 };
+
+/*
+ * Nodes
+ */
 
 Sound.prototype.addNode = function(node) {
     this._nodeList.push(node);
-    this.updateConnections();
+    this._updateConnections();
     return node;
 };
 
@@ -1374,7 +1374,8 @@ Sound.prototype.removeNode = function(node) {
         }
     }
     node.disconnect(0);
-    this.updateConnections();
+    this._updateConnections();
+    return this;
 };
 
 // should source be item 0 in nodelist and desination last
@@ -1383,7 +1384,7 @@ Sound.prototype.removeNode = function(node) {
 // feels like node list could be a linked list??
 // if list.last is destination addbefore
 
-/*Sound.prototype.updateConnections = function() {
+/*Sound.prototype._updateConnections = function() {
     if(!this._sourceNode) {
         return;
     }
@@ -1392,11 +1393,11 @@ Sound.prototype.removeNode = function(node) {
       this._nodeList[i-1].connect(this._nodeList[i]);
     }
 };*/
-/*Sound.prototype.updateConnections = function() {
+/*Sound.prototype._updateConnections = function() {
     if(!this._sourceNode) {
         return;
     }
-    console.log('updateConnections');
+    console.log('_updateConnections');
     this._sourceNode.disconnect(0);
     this._sourceNode.connect(this._gain);
     var l = this._nodeList.length;
@@ -1415,11 +1416,11 @@ Sound.prototype.removeNode = function(node) {
     }
     this.connectTo(this._context.destination);
 };*/
-Sound.prototype.updateConnections = function() {
+Sound.prototype._updateConnections = function() {
     if(!this._sourceNode) {
         return;
     }
-    //console.log('updateConnections');
+    //console.log('_updateConnections');
     var l = this._nodeList.length;
     for (var i = 0; i < l; i++) {
         if(i === 0) {
@@ -1464,49 +1465,41 @@ Sound.prototype.connectTo = function(node) {
         //this._nodeList[l - 1].disconnect(0);
         this._nodeList[l - 1].connect(node);
     }
-    else {
+    else if(this._sourceNode) {
         //console.log(' x connect source to node:', node);
         //this._sourceNode.disconnect(0);
         this._sourceNode.connect(node);
     }
     this.destination = node;
+
+    return this;
 };
 
-Sound.prototype.onEnded = function() {
-    //console.log('p onended');
-    //this.stop();
-    if(typeof this._onEnded === 'function') {
-
-        this._onEnded();
-    }
-};
-
-Sound.prototype.addEndedListener = function(fn, context) {
-    this._onEnded = fn.bind(context || this);
-};
-
-Sound.prototype.removeEndedListener = function() {
-    this._onEnded = null;
-};
-
-Sound.prototype.createSourceNode = function() {
+Sound.prototype._createSourceNode = function() {
     //console.log('get source', this._sourceNode);
     if(!this._context) {
         return;
     }
-    else if(this._data.tagName) {
-        // audio or video tag
-        if(!this._sourceNode) {
-            this._sourceNode = this._context.createMediaElementSource(this._data);
-            this.updateConnections();
-        }
-    }
-    else {
-        // array buffer source
-        this._sourceNode = this._source.source;
-        this.updateConnections();
-    }
+
+    this._sourceNode = this._source.sourceNode;
+    this._updateConnections();
+
     return this._sourceNode;
+};
+
+/*
+ * Ended handler
+ */
+
+Sound.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+    return this;
+};
+
+Sound.prototype._endedHandler = function() {
+    if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
+    }
 };
 
 /*
@@ -1548,18 +1541,18 @@ Object.defineProperty(Sound.prototype, 'progress', {
   }
 });
 
+
 Object.defineProperty(Sound.prototype, 'volume', {
     get: function() {
-        return this._gain ? this._gain.gain.value : this._source.volume;
+        return this._gain.gain.value;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
 
-        if(this._gain) {
-            this._gain.gain.value = value;
-        }
-        else {
-            this._source.volume = value;
+        this._gain.gain.value = value;
+
+        if(this._data && this._data.volume !== undefined) {
+            this._data.volume = value;
         }
     }
 });
@@ -1584,7 +1577,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = Sound;
 }
 
-},{"./buffer-source.js":2,"./element-source.js":3}],7:[function(_dereq_,module,exports){
+},{"./buffer-source.js":2,"./element-source.js":3,"./node-factory.js":5}],7:[function(_dereq_,module,exports){
 'use strict';
 
  function Utils(context) {
@@ -1878,24 +1871,20 @@ module.exports = {
 
 var Loader = _dereq_('./lib/loader.js'),
     Visibility = _dereq_('./lib/visibility.js'),
-    NodeFactory = _dereq_('./lib/node-factory.js'),
+    nodeFactory = _dereq_('./lib/node-factory.js'),
     Sound = _dereq_('./lib/sound.js'),
     Utils = _dereq_('./lib/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.0';
 
-    this._sounds = {};
-    this._soundList = [];
-
     this.context = this.createAudioContext();
 
-    if(this.hasWebAudio) {
-        this._masterGain = this.context.createGain();
+    this._sounds = [];
+
+    this._masterGain = this.create.gain();
+    if(this.context) {
         this._masterGain.connect(this.context.destination);
-    }
-    else {
-        this._masterGain = 1;
     }
 
     this.getSupportedExtensions();
@@ -1930,8 +1919,7 @@ Sono.prototype.add = function(data, id) {
     sound.id = id || this.createId();
     //sound.loop = !!loop;
     sound.add(data);
-    this._sounds[id] = sound;
-    this._soundList.push(sound);
+    this._sounds.push(sound);
     return sound;
 };
 
@@ -1965,12 +1953,12 @@ Sono.prototype.load = function(url, callback, callbackContext, asBuffer) {
 };
 
 Sono.prototype.get = function(id) {
-    for (var i = 0, l = this._soundList.length; i < l; i++) {
-        if(this._soundList[i] === id || this._soundList[i].id === id) {
-            return this._soundList[i];
+    for (var i = 0, l = this._sounds.length; i < l; i++) {
+        if(this._sounds[i] === id || this._sounds[i].id === id) {
+            return this._sounds[i];
         }
     }
-    return this._sounds[id];
+    return null;
 };
 
 Sono.prototype.createId = function() {
@@ -1995,9 +1983,8 @@ Sono.prototype.unMute = function() {
 };
 
 Sono.prototype.pauseAll = function() {
-    var l = this._soundList.length;
+    var l = this._sounds.length;
     for (var i = 0; i < l; i++) {
-    //for(var i in this._sounds) {
         if(this._sounds[i].playing) {
             this._sounds[i].pause();
         }
@@ -2005,9 +1992,8 @@ Sono.prototype.pauseAll = function() {
 };
 
 Sono.prototype.resumeAll = function() {
-    var l = this._soundList.length;
+    var l = this._sounds.length;
     for (var i = 0; i < l; i++) {
-    //for(var i in this._sounds) {
         if(this._sounds[i].paused) {
             this._sounds[i].play();
         }
@@ -2015,26 +2001,22 @@ Sono.prototype.resumeAll = function() {
 };
 
 Sono.prototype.stopAll = function() {
-    var l = this._soundList.length;
+    var l = this._sounds.length;
     for (var i = 0; i < l; i++) {
-    //for(var i in this._sounds) {
         this._sounds[i].stop();
     }
 };
 
 Sono.prototype.play = function(id) {
     this.get(id).play();
-    //this._sounds[id].play();
 };
 
 Sono.prototype.pause = function(id) {
     this.get(id).pause();
-    //this._sounds[id].pause();
 };
 
 Sono.prototype.stop = function(id) {
     this.get(id).stop();
-    //this._sounds[id].stop();
 };
 
 /*
@@ -2059,15 +2041,14 @@ Sono.prototype.loadAudioElement = function(url, callback, callbackContext) {
 Sono.prototype.destroy = function(soundOrId) {
     var i = 0,
         sound;
-    for (var l = this._soundList.length; i < l; i++) {
-        sound = this._soundList[i];
+    for (var l = this._sounds.length; i < l; i++) {
+        sound = this._sounds[i];
         if(sound === soundOrId || sound.id === soundOrId) {
             break;
         }
     }
     if(sound !== undefined) {
-        delete this._sounds[sound.id];
-        this._soundList.splice(i, 1);
+        this._sounds.splice(i, 1);
 
         if(sound.loader) {
             sound.loader.cancel();
@@ -2245,18 +2226,16 @@ Object.defineProperty(Sono.prototype, 'hasWebAudio', {
 
 Object.defineProperty(Sono.prototype, 'volume', {
     get: function() {
-        return this.hasWebAudio ? this._masterGain.gain.value : this._masterGain;
+        return this._masterGain.gain.value;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
 
-        if(this.hasWebAudio) {
-            this._masterGain.gain.value = value;
-        }
-        else {
-            this._masterGain = value;
-            for (var i = 0, l = this._soundList.length; i < l; i++) {
-                this._soundList[i].volume = this._masterGain;
+        this._masterGain.gain.value = value;
+
+        if(!this.hasWebAudio) {
+            for (var i = 0, l = this._sounds.length; i < l; i++) {
+                this._sounds[i].volume = value;
             }
         }
     }
@@ -2270,10 +2249,10 @@ Object.defineProperty(Sono.prototype, 'sounds', {
 
 Object.defineProperty(Sono.prototype, 'create', {
     get: function() {
-        if(!this._webAudioNodeFactory) {
-            this._webAudioNodeFactory = new NodeFactory(this.context);
+        if(!this._nodeFactory) {
+            this._nodeFactory = nodeFactory(this.context);
         }
-        return this._webAudioNodeFactory;
+        return this._nodeFactory;
     }
 });
 

@@ -142,7 +142,7 @@ Sono.create.convolver(impulseResponse)
 
 Sono.create.reverb(seconds, decay, reverse)
 
-Sono.create.createImpulseResponse(seconds, decay, reverse)
+Sono.create.impulseResponse(seconds, decay, reverse)
 
 Sono.create.analyser(fftSize)
 
@@ -192,8 +192,4 @@ Sono.loader
 
 Inconsistencies:
 
-* ElementSource has get/set volume and BufferSource doesn't
-* BufferSource has get source and ElementSource doesn't
 
-
-Naming/division of responsibility a bit confusing between webaudio-player, html-sound, webaudio-sound

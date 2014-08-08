@@ -40,7 +40,7 @@ describe('Sono API', function() {
         expect(Sono.stop).to.be.a('function');
         expect(Sono.volume).to.be.a('number');
     });
-    
+
     it('should have expected members (loading)', function() {
         expect(Sono.initLoader).to.be.a('function');
         expect(Sono.load).to.be.a('function');

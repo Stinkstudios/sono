@@ -1,91 +1,113 @@
 'use strict';
 
-function ElementSource(el, volume) {
-    this.id = '';
-    this._loop = false;
-    this._volume = volume === undefined ? 1 : volume;
-    this._playing = false;
-    this._paused = false;
-    this._onEnded = null;
-    this._endedListener = this.onEnded.bind(this);
-    this._playWhenReady = false;
+function ElementSource(el, context) {
     this.add(el);
+    this.id = '';
+    this._context = context;
+    this._endedCallback = null;
+    this._endedHandlerBound = this._endedHandler.bind(this);
+    this._loop = false;
+    this._paused = false;
+    this._playing = false;
+    this._sourceNode = null; // MediaElementSourceNode
 }
 
 ElementSource.prototype.add = function(el) {
-    this._el = el;
-    // should this take account of delay and offset?
-    if(this._playWhenReady) {
-        this.play();
-    }
+    this._el = el; // HTMLMediaElement
+    return this._el;
 };
 
+/*
+ * Controls
+ */
+
 ElementSource.prototype.play = function(delay, offset) {
-    if(!this._el) {
-        this._playWhenReady = true;
-        return this;
-    }
+    clearTimeout(this._delayTimeout);
+
     this.volume = this._volume;
-    if(offset !== undefined && offset > 0) {
+
+    if(offset) {
         this._el.currentTime = offset;
     }
-    if(delay !== undefined && delay > 0) {
+
+    if(delay) {
         this._delayTimeout = setTimeout(this.play.bind(this), delay);
     }
     else {
         this._el.play();
     }
+
     this._playing = true;
     this._paused = false;
-    this._el.removeEventListener('ended', this._endedListener);
-    this._el.addEventListener('ended', this._endedListener, false);
+
+    this._el.removeEventListener('ended', this._endedHandlerBound);
+    this._el.addEventListener('ended', this._endedHandlerBound, false);
 };
 
 ElementSource.prototype.pause = function() {
     clearTimeout(this._delayTimeout);
+
     if(!this._el) { return; }
+
     this._el.pause();
     this._playing = false;
     this._paused = true;
 };
 
 ElementSource.prototype.stop = function() {
+    clearTimeout(this._delayTimeout);
+
     if(!this._el) { return; }
+
     this._el.pause();
+
     try {
         this._el.currentTime = 0;
         // fixes bug where server doesn't support seek:
         if(this._el.currentTime > 0) { this._el.load(); }    
     } catch(e) {}
+
     this._playing = false;
     this._paused = false;
 };
 
-ElementSource.prototype.onEnded = function() {
-    //console.log('onended');
+/*
+ * Ended handler
+ */
+
+ElementSource.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+};
+
+ElementSource.prototype._endedHandler = function() {
     this._playing = false;
     this._paused = false;
+
     if(this._loop) {
         this._el.currentTime = 0;
         // fixes bug where server doesn't support seek:
         if(this._el.currentTime > 0) { this._el.load(); }
         this.play();
-    } else if(typeof this._onEnded === 'function') {
-        this._onEnded();
+    } else if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
     }
-};
-
-ElementSource.prototype.addEndedListener = function(fn, context) {
-    this._onEnded = fn.bind(context || this);
-};
-
-ElementSource.prototype.removeEndedListener = function() {
-    this._onEnded = null;
 };
 
 /*
  * Getters & Setters
  */
+
+Object.defineProperty(ElementSource.prototype, 'currentTime', {
+    get: function() {
+        return this._el ? this._el.currentTime : 0;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'duration', {
+    get: function() {
+        return this._el ? this._el.duration : 0;
+    }
+});
 
 Object.defineProperty(ElementSource.prototype, 'loop', {
     get: function() {
@@ -96,16 +118,9 @@ Object.defineProperty(ElementSource.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'volume', {
+Object.defineProperty(ElementSource.prototype, 'paused', {
     get: function() {
-        return this._volume;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-        this._volume = value;
-        if(this._el && this._el.volume !== undefined) {
-            this._el.volume = this._volume;
-        }
+        return this._paused;
     }
 });
 
@@ -115,33 +130,18 @@ Object.defineProperty(ElementSource.prototype, 'playing', {
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-/*Object.defineProperty(ElementSource.prototype, 'sound', {
-    get: function() {
-        return this._el;
-    }
-});*/
-
-Object.defineProperty(ElementSource.prototype, 'duration', {
-    get: function() {
-        return this._el ? this._el.duration : 0;
-    }
-});
-
-Object.defineProperty(ElementSource.prototype, 'currentTime', {
-    get: function() {
-        return this._el ? this._el.currentTime : 0;
-    }
-});
-
 Object.defineProperty(ElementSource.prototype, 'progress', {
     get: function() {
         return this.currentTime / this.duration;
+    }
+});
+
+Object.defineProperty(ElementSource.prototype, 'sourceNode', {
+    get: function() {
+        if(!this._sourceNode && this._context) {
+            this._sourceNode = this._context.createMediaElementSource(this._el);
+        }
+        return this._sourceNode;
     }
 });
 

@@ -2,24 +2,20 @@
 
 var Loader = require('./lib/loader.js'),
     Visibility = require('./lib/visibility.js'),
-    NodeFactory = require('./lib/node-factory.js'),
+    nodeFactory = require('./lib/node-factory.js'),
     Sound = require('./lib/sound.js'),
     Utils = require('./lib/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.0';
 
-    this._sounds = {};
-    this._soundList = [];
-
     this.context = this.createAudioContext();
 
-    if(this.hasWebAudio) {
-        this._masterGain = this.context.createGain();
+    this._sounds = [];
+
+    this._masterGain = this.create.gain();
+    if(this.context) {
         this._masterGain.connect(this.context.destination);
-    }
-    else {
-        this._masterGain = 1;
     }
 
     this.getSupportedExtensions();
@@ -54,8 +50,7 @@ Sono.prototype.add = function(data, id) {
     sound.id = id || this.createId();
     //sound.loop = !!loop;
     sound.add(data);
-    this._sounds[id] = sound;
-    this._soundList.push(sound);
+    this._sounds.push(sound);
     return sound;
 };
 
@@ -89,12 +84,12 @@ Sono.prototype.load = function(url, callback, callbackContext, asBuffer) {
 };
 
 Sono.prototype.get = function(id) {
-    for (var i = 0, l = this._soundList.length; i < l; i++) {
-        if(this._soundList[i] === id || this._soundList[i].id === id) {
-            return this._soundList[i];
+    for (var i = 0, l = this._sounds.length; i < l; i++) {
+        if(this._sounds[i] === id || this._sounds[i].id === id) {
+            return this._sounds[i];
         }
     }
-    return this._sounds[id];
+    return null;
 };
 
 Sono.prototype.createId = function() {
@@ -119,9 +114,8 @@ Sono.prototype.unMute = function() {
 };
 
 Sono.prototype.pauseAll = function() {
-    var l = this._soundList.length;
+    var l = this._sounds.length;
     for (var i = 0; i < l; i++) {
-    //for(var i in this._sounds) {
         if(this._sounds[i].playing) {
             this._sounds[i].pause();
         }
@@ -129,9 +123,8 @@ Sono.prototype.pauseAll = function() {
 };
 
 Sono.prototype.resumeAll = function() {
-    var l = this._soundList.length;
+    var l = this._sounds.length;
     for (var i = 0; i < l; i++) {
-    //for(var i in this._sounds) {
         if(this._sounds[i].paused) {
             this._sounds[i].play();
         }
@@ -139,26 +132,22 @@ Sono.prototype.resumeAll = function() {
 };
 
 Sono.prototype.stopAll = function() {
-    var l = this._soundList.length;
+    var l = this._sounds.length;
     for (var i = 0; i < l; i++) {
-    //for(var i in this._sounds) {
         this._sounds[i].stop();
     }
 };
 
 Sono.prototype.play = function(id) {
     this.get(id).play();
-    //this._sounds[id].play();
 };
 
 Sono.prototype.pause = function(id) {
     this.get(id).pause();
-    //this._sounds[id].pause();
 };
 
 Sono.prototype.stop = function(id) {
     this.get(id).stop();
-    //this._sounds[id].stop();
 };
 
 /*
@@ -183,15 +172,14 @@ Sono.prototype.loadAudioElement = function(url, callback, callbackContext) {
 Sono.prototype.destroy = function(soundOrId) {
     var i = 0,
         sound;
-    for (var l = this._soundList.length; i < l; i++) {
-        sound = this._soundList[i];
+    for (var l = this._sounds.length; i < l; i++) {
+        sound = this._sounds[i];
         if(sound === soundOrId || sound.id === soundOrId) {
             break;
         }
     }
     if(sound !== undefined) {
-        delete this._sounds[sound.id];
-        this._soundList.splice(i, 1);
+        this._sounds.splice(i, 1);
 
         if(sound.loader) {
             sound.loader.cancel();
@@ -369,18 +357,16 @@ Object.defineProperty(Sono.prototype, 'hasWebAudio', {
 
 Object.defineProperty(Sono.prototype, 'volume', {
     get: function() {
-        return this.hasWebAudio ? this._masterGain.gain.value : this._masterGain;
+        return this._masterGain.gain.value;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
 
-        if(this.hasWebAudio) {
-            this._masterGain.gain.value = value;
-        }
-        else {
-            this._masterGain = value;
-            for (var i = 0, l = this._soundList.length; i < l; i++) {
-                this._soundList[i].volume = this._masterGain;
+        this._masterGain.gain.value = value;
+
+        if(!this.hasWebAudio) {
+            for (var i = 0, l = this._sounds.length; i < l; i++) {
+                this._sounds[i].volume = value;
             }
         }
     }
@@ -394,10 +380,10 @@ Object.defineProperty(Sono.prototype, 'sounds', {
 
 Object.defineProperty(Sono.prototype, 'create', {
     get: function() {
-        if(!this._webAudioNodeFactory) {
-            this._webAudioNodeFactory = new NodeFactory(this.context);
+        if(!this._nodeFactory) {
+            this._nodeFactory = nodeFactory(this.context);
         }
-        return this._webAudioNodeFactory;
+        return this._nodeFactory;
     }
 });
 
