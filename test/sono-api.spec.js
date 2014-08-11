@@ -26,7 +26,9 @@ describe('Sono API', function() {
 
     it('should have expected members (add, get)', function() {
         expect(Sono.add).to.be.a('function');
+        expect(Sono.add.length).to.eql(2);
         expect(Sono.get).to.be.a('function');
+        expect(Sono.get.length).to.eql(1);
     });
 
     it('should have expected members (controls)', function() {
@@ -42,19 +44,27 @@ describe('Sono API', function() {
     });
 
     it('should have expected members (loading)', function() {
-        expect(Sono.initLoader).to.be.a('function');
+        expect(Sono._initLoader).to.be.a('function');
         expect(Sono.load).to.be.a('function');
+        expect(Sono.load.length).to.eql(4);
         expect(Sono.loadArrayBuffer).to.be.a('function');
         expect(Sono.loadAudioElement).to.be.a('function');
-        expect(Sono.loader).to.be.an('object');
+        var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'loader');
+        expect(desc.get).to.be.a('function');
+        expect(desc.set).to.not.exist;
         expect(Sono.destroy).to.be.a('function');
     });
 
     it('should have expected members (support, setup)', function() {
         expect(Sono.createAudioContext).to.be.a('function');
-        expect(Sono.getSupportedFile).to.be.a('function');
-        expect(Sono.getExtension).to.be.a('function');
-        expect(Sono.getSupportedExtensions).to.be.a('function');
+
+        expect(Sono.canPlay).to.be.an('object');
+        expect(Sono.canPlay.ogg).to.be.a('boolean');
+        expect(Sono.canPlay.mp3).to.be.a('boolean');
+        expect(Sono.canPlay.opus).to.be.a('boolean');
+        expect(Sono.canPlay.wav).to.be.a('boolean');
+        expect(Sono.canPlay.m4a).to.be.a('boolean');
+
         expect(Sono.handleTouchlock).to.be.a('function');
         expect(Sono.handleVisibility).to.be.a('function');
         expect(Sono.log).to.be.a('function');

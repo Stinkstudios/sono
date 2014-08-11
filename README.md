@@ -2,6 +2,10 @@
 
 A small library for managing sound in the browser.
 
+[Sono.add](docs/Sono.md#add)
+
+[Sono.load](docs/Sono.md#load)
+
 
 ### Current WIP API
 
@@ -48,7 +52,7 @@ Sono.stop(id) // individual sound
 
 [internal] Sono.initLoader()
 
-Sono.load(url, callback, callbackContext, asBuffer) returns sound obj
+Sono.load(url, callback, callbackContext, asMediaElement) returns sound obj
 
 * Sono.load('audio/foo.ogg', onSoundLoaded, this, true); // loads this file
 * Sono.load(['audio/foo.ogg', 'audio/foo.mp3']); // loads first one that works

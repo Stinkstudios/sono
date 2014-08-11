@@ -187,6 +187,20 @@
             }
             update();
 
+
+            var sounds = [
+                { id: 'a', url: ['audio/TEST.ogg', 'audio/TEST.mp3'] },
+                { id: 'b', url: ['audio/VOX.ogg', 'audio/VOX.mp3'] }
+            ];
+
+            Sono.load(sounds, function(loaded) {
+                console.log('all loaded:', loaded)
+                console.log(Sono.get(sounds[0].id) === Sono.get('a'), Sono.get('a'));
+                console.log(Sono.get(sounds[1].id) === Sono.get('b'), Sono.get('b'));
+            }, function(progress) {
+                console.log('progress:', progress);
+            });
+
         }());
     </script>
 </body>

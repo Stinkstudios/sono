@@ -2,7 +2,7 @@
 
 var signals = require('signals');
 
-function AssetLoader() {
+function Loader() {
     this.onChildComplete = new signals.Signal();
     this.onComplete = new signals.Signal();
     this.onProgress = new signals.Signal();
@@ -13,6 +13,7 @@ function AssetLoader() {
     this.loaders = {};
 
     this.loaded = false;
+    this.loading = false;
     this.webAudioContext = null;
     this.crossOrigin = false;
     this.touchLocked = false;
@@ -20,26 +21,9 @@ function AssetLoader() {
     this.numLoaded = 0;
 }
 
-function createXHR() {
-    var xhr, i, progId,
-        progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'];
-
-    if (typeof XMLHttpRequest !== 'undefined') {
-        return new XMLHttpRequest();
-    } else if (typeof window.ActiveXObject !== 'undefined') {
-        for (i = 0; i < 3; i += 1) {
-            progId = progIds[i];
-            try {
-                xhr = new window.ActiveXObject(progId);
-            } catch (e) {}
-        }
-    }
-    return xhr;
-}
-
-AssetLoader.prototype = {
-    add: function(url, type) {
-        var loader = new AssetLoader.Loader(url, type);
+Loader.prototype = {
+    add: function(url) {
+        var loader = new Loader.File(url);
         loader.webAudioContext = this.webAudioContext;
         loader.crossOrigin = this.crossOrigin;
         loader.touchLocked = this.touchLocked;
@@ -50,29 +34,42 @@ AssetLoader.prototype = {
     },
     start: function() {
         this.numTotal = this.queue.length;
-        this.next();
+        if(!this.loading) {
+            this.loading = true;
+            this.next();
+        }
     },
     next: function() {
         if(this.queue.length === 0) {
             this.loaded = true;
+            this.loading = false;
             this.onComplete.dispatch(this.loaders);
             return;
         }
         var loader = this.queue.pop();
         var self = this;
-        loader.onComplete.addOnce(function(){
+        var progressHandler = function(progress) {
+            var numLoaded = self.numLoaded + progress;
+            if(self.onProgress.getNumListeners() > 0) {
+                self.onProgress.dispatch(numLoaded/self.numTotal);
+            }
+        };
+        loader.onProgress.add(progressHandler);
+        var completeHandler = function(){
+            loader.onProgress.remove(progressHandler);
             self.numLoaded++;
             if(self.onProgress.getNumListeners() > 0) {
                 self.onProgress.dispatch(self.numLoaded/self.numTotal);
             }
-            //self.loaders[loader.url] = loader;
             self.onChildComplete.dispatch(loader);
             self.next();
-        });
-        loader.onError.addOnce(function(){
+        };
+        loader.onBeforeComplete.addOnce(completeHandler);
+        var errorHandler = function(){
             self.onError.dispatch(loader);
             self.next();
-        });
+        };
+        loader.onError.addOnce(errorHandler);
         loader.start();
     },
     addMultiple: function(array) {
@@ -85,60 +82,45 @@ AssetLoader.prototype = {
     }
 };
 
-AssetLoader.Loader = function(url, type) {
+Loader.File = function(url) {
     this.url = url;
-    this.type = type || this.url.split('?')[0].toLowerCase().split('.').pop();
 
     this.onProgress = new signals.Signal();
+    this.onBeforeComplete = new signals.Signal();
     this.onComplete = new signals.Signal();
     this.onError = new signals.Signal();
 
     this.webAudioContext = null;
     this.crossOrigin = false;
     this.touchLocked = false;
+    this.progress = 0;
 };
 
-AssetLoader.Loader.prototype = {
+Loader.File.prototype = {
     start: function() {
-        switch(this.type) {
-            case 'mp3':
-            case 'ogg':
-                this.loadAudio(this.webAudioContext, this.touchLocked);
-                break;
-            case 'jpg':
-            case 'png':
-            case 'gif':
-                this.loadImage(this.crossOrigin);
-                break;
-            case 'json':
-                this.loadJSON();
-                break;
-            default:
-                throw 'ERROR: Unknown type for file with URL: ' + this.url;
-        }
-    },
-    loadAudio: function(webAudioContext, touchLocked) {
-        if(webAudioContext) {
-            this.loadWebAudio(webAudioContext);
+        if(this.webAudioContext) {
+            this.loadArrayBuffer(this.webAudioContext);
         } else {
-            this.loadHTML5Audio(touchLocked);
+            this.loadAudioElement(this.touchLocked);
         }
     },
-    loadWebAudio: function(webAudioContext) {
+    loadArrayBuffer: function(webAudioContext) {
         var request = new XMLHttpRequest();
         request.open('GET', this.url, true);
         request.responseType = 'arraybuffer';
         var self = this;
         request.onprogress = function(event) {
             if (event.lengthComputable) {
-                var percentComplete = event.loaded / event.total;
-                self.onProgress.dispatch(percentComplete);
+                self.progress = event.loaded / event.total;
+                self.onProgress.dispatch(self.progress);
             }
         };
         request.onload = function() {
             webAudioContext.decodeAudioData(request.response, function(buffer) {
                 self.data = buffer;
+                self.progress = 1;
                 self.onProgress.dispatch(1);
+                self.onBeforeComplete.dispatch(buffer);
                 self.onComplete.dispatch(buffer);
             }, function() {
                 self.onError.dispatch();
@@ -150,7 +132,7 @@ AssetLoader.Loader.prototype = {
         request.send();
         this.request = request;
     },
-    loadHTML5Audio: function(touchLocked) {
+    loadAudioElement: function(touchLocked) {
         var request = new Audio();
         this.data = request;
         request.name = this.url;
@@ -165,11 +147,11 @@ AssetLoader.Loader.prototype = {
             var ready = function(){
                 request.removeEventListener('canplaythrough', ready);
                 clearTimeout(timeout);
-                //console.log('audio canplaythrough');
+                self.progress = 1;
                 self.onProgress.dispatch(1);
+                self.onBeforeComplete.dispatch(self.data);
                 self.onComplete.dispatch(self.data);
             };
-
             // timeout because sometimes canplaythrough doesn't fire
             var timeout = setTimeout(ready, 2000);
             request.addEventListener('canplaythrough', ready, false);
@@ -180,66 +162,6 @@ AssetLoader.Loader.prototype = {
             request.load();
         }
     },
-    loadImage: function(crossOrigin) {
-        var request = new Image();
-        this.data = request;
-        request.name = this.url;
-        var self = this;
-        request.onload = function () {
-            self.onComplete.dispatch(self.data);
-        };
-        request.onerror = function () {
-            self.onError.dispatch();
-        };
-        if(crossOrigin) {
-            request.crossOrigin = 'anonymous';
-        }
-        request.src = this.url;
-    },
-    loadJSON: function() {
-
-        var request = createXHR();
-        request.open('GET', this.url, true);
-        request.responseType = 'text';
-        var self = this;
-
-        function handleLoaded() {
-            if (request.status >= 400) {
-                self.onError.dispatch();
-                return;
-            }
-            self.json = self.data = JSON.parse(request.responseText);
-
-            self.onComplete.dispatch(self.data);
-        }
-
-        function handleError() {
-            self.onError.dispatch();
-        }
-
-        if ('onload' in request && 'onerror' in request) {
-            request.onload = handleLoaded;
-            request.onerror = handleError;
-        } else {
-            request.onreadystatechange = function () {
-                try {
-                    if (this.done !== undefined) { return; }
-
-                    if (this.status >= 200 && this.status < 300) {
-                        this.done = true;
-                        handleLoaded();
-                    }
-                    if (this.status >= 400) {
-                        this.done = true;
-                        handleError();
-                    }
-                } catch(e) {}
-            };
-        }
-
-        request.send();
-        this.request = request;
-    },
     cancel: function() {
       if(this.request && this.request.readyState !== 4) {
           this.request.abort();
@@ -247,4 +169,4 @@ AssetLoader.Loader.prototype = {
     }
 };
 
-module.exports = AssetLoader;
+module.exports = Loader;
