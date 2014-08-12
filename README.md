@@ -1,10 +1,19 @@
 # Sono
 
-A small library for managing sound in the browser.
+A JavaScript library for managing sound in the browser.
 
 [Sono.add](docs/Sono.md#add)
 
 [Sono.load](docs/Sono.md#load)
+
+
+### TODO
+
+* Try moving loader into sound - see if it simplifies things
+* Refactor 'Web Audio Demos' project to use Sono
+* Bring in microphone code
+* Channel split/merge
+* Add nodes to main output - maybe moving node manager into module
 
 
 ### Current WIP API
@@ -195,5 +204,3 @@ Sono.loader
 ## Notes
 
 Inconsistencies:
-
-

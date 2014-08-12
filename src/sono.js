@@ -45,12 +45,33 @@ Sono.prototype.add = function(data, id) {
     }
 
     var sound = new Sound(this.context, data, this._masterGain);
-    sound.id = id || this.createId();
+    sound.id = id || this._createId();
     //sound.loop = !!loop;
     sound.add(data);
     this._sounds.push(sound);
     return sound;
 };
+
+Sono.prototype.get = function(soundOrId) {
+    for (var i = 0, l = this._sounds.length; i < l; i++) {
+        if(this._sounds[i] === soundOrId || this._sounds[i].id === soundOrId) {
+            return this._sounds[i];
+        }
+    }
+    return null;
+};
+
+Sono.prototype._createId = function() {
+    if(this._id === undefined) {
+        this._id = 0;
+    }
+    this._id++;
+    return this._id.toString(10);
+};
+
+/*
+ * Loading
+ */
 
 Sono.prototype.load = function(url, callback, thisArg, asMediaElement) {
     if(!this._loader) {
@@ -119,21 +140,19 @@ Sono.prototype.loadMultiple = function(config, complete, progress, thisArg, asMe
     this._loader.start();
 };
 
-Sono.prototype.get = function(soundOrId) {
-    for (var i = 0, l = this._sounds.length; i < l; i++) {
-        if(this._sounds[i] === soundOrId || this._sounds[i].id === soundOrId) {
-            return this._sounds[i];
-        }
-    }
-    return null;
+Sono.prototype._initLoader = function() {
+    this._loader = new Loader();
+    this._loader.touchLocked = this._isTouchLocked;
+    this._loader.webAudioContext = this.context;
+    this._loader.crossOrigin = true;
 };
 
-Sono.prototype.createId = function() {
-    if(this._id === undefined) {
-        this._id = 0;
-    }
-    this._id++;
-    return this._id.toString(10);
+Sono.prototype.loadArrayBuffer = function(url, callback, thisArg) {
+    return this.load(url, callback, thisArg, false);
+};
+
+Sono.prototype.loadAudioElement = function(url, callback, thisArg) {
+    return this.load(url, callback, thisArg, true);
 };
 
 /*
@@ -184,23 +203,8 @@ Sono.prototype.stop = function(id) {
 };
 
 /*
- * Loading
+ * Destroy
  */
-
-Sono.prototype._initLoader = function() {
-    this._loader = new Loader();
-    this._loader.touchLocked = this._isTouchLocked;
-    this._loader.webAudioContext = this.context;
-    this._loader.crossOrigin = true;
-};
-
-Sono.prototype.loadArrayBuffer = function(url, callback, thisArg) {
-    return this.load(url, callback, thisArg, false);
-};
-
-Sono.prototype.loadAudioElement = function(url, callback, thisArg) {
-    return this.load(url, callback, thisArg, true);
-};
 
 Sono.prototype.destroy = function(soundOrId) {
     var sound;
