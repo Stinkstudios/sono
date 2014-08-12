@@ -1,6 +1,6 @@
 'use strict';
 
-function ElementSource(el, context) {
+function MediaSource(el, context) {
     this.add(el);
     this.id = '';
     this._context = context;
@@ -9,10 +9,10 @@ function ElementSource(el, context) {
     this._loop = false;
     this._paused = false;
     this._playing = false;
-    this._sourceNode = null; // MediaElementSourceNode
+    this._sourceNode = null; // MediaMediaSourceNode
 }
 
-ElementSource.prototype.add = function(el) {
+MediaSource.prototype.add = function(el) {
     this._el = el; // HTMLMediaElement
     return this._el;
 };
@@ -21,7 +21,7 @@ ElementSource.prototype.add = function(el) {
  * Controls
  */
 
-ElementSource.prototype.play = function(delay, offset) {
+MediaSource.prototype.play = function(delay, offset) {
     clearTimeout(this._delayTimeout);
 
     this.volume = this._volume;
@@ -44,7 +44,7 @@ ElementSource.prototype.play = function(delay, offset) {
     this._el.addEventListener('ended', this._endedHandlerBound, false);
 };
 
-ElementSource.prototype.pause = function() {
+MediaSource.prototype.pause = function() {
     clearTimeout(this._delayTimeout);
 
     if(!this._el) { return; }
@@ -54,7 +54,7 @@ ElementSource.prototype.pause = function() {
     this._paused = true;
 };
 
-ElementSource.prototype.stop = function() {
+MediaSource.prototype.stop = function() {
     clearTimeout(this._delayTimeout);
 
     if(!this._el) { return; }
@@ -75,11 +75,11 @@ ElementSource.prototype.stop = function() {
  * Ended handler
  */
 
-ElementSource.prototype.onEnded = function(fn, context) {
+MediaSource.prototype.onEnded = function(fn, context) {
     this._endedCallback = fn ? fn.bind(context || this) : null;
 };
 
-ElementSource.prototype._endedHandler = function() {
+MediaSource.prototype._endedHandler = function() {
     this._playing = false;
     this._paused = false;
 
@@ -97,19 +97,19 @@ ElementSource.prototype._endedHandler = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(ElementSource.prototype, 'currentTime', {
+Object.defineProperty(MediaSource.prototype, 'currentTime', {
     get: function() {
         return this._el ? this._el.currentTime : 0;
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'duration', {
+Object.defineProperty(MediaSource.prototype, 'duration', {
     get: function() {
         return this._el ? this._el.duration : 0;
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'loop', {
+Object.defineProperty(MediaSource.prototype, 'loop', {
     get: function() {
         return this._loop;
     },
@@ -118,33 +118,33 @@ Object.defineProperty(ElementSource.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'paused', {
+Object.defineProperty(MediaSource.prototype, 'paused', {
     get: function() {
         return this._paused;
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'playing', {
+Object.defineProperty(MediaSource.prototype, 'playing', {
     get: function() {
         return this._playing;
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'progress', {
+Object.defineProperty(MediaSource.prototype, 'progress', {
     get: function() {
         return this.currentTime / this.duration;
     }
 });
 
-Object.defineProperty(ElementSource.prototype, 'sourceNode', {
+Object.defineProperty(MediaSource.prototype, 'sourceNode', {
     get: function() {
         if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createMediaElementSource(this._el);
+            this._sourceNode = this._context.createMediaMediaSource(this._el);
         }
         return this._sourceNode;
     }
 });
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = ElementSource;
+    module.exports = MediaSource;
 }

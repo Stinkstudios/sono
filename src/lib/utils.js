@@ -157,7 +157,7 @@
         },
         waveformData: function(buffer, length) {
             console.log('-------------------');
-            console.time('waveform');
+            console.time('waveformData');
             var waveform = new Float32Array(length),
                 chunk = Math.floor(buffer.length / length),
                 //chunk = buffer.length / length,
@@ -195,10 +195,10 @@
             for (i = 0; i < len; i++) {
                 waveform[i] *= scale;
             }
-            console.timeEnd('waveform');
+            console.timeEnd('waveformData');
             return waveform;
         },
-        waveform: function(arr, height, color, bgColor, canvasEl) {
+        waveformCanvas: function(arr, height, color, bgColor, canvasEl) {
         //waveform: function(arr, width, height, color, bgColor, canvasEl) {
             //var arr = this.waveformData(buffer, width);
             var canvas = canvasEl || document.createElement('canvas');
@@ -209,7 +209,7 @@
             context.fillStyle = bgColor;
             context.fillRect(0, 0, width, height);
             var x, y;
-            console.time('drawWaveform');
+            console.time('waveformCanvas');
             context.beginPath();
             for (var i = 0, l = arr.length; i < l; i++) {
                 x = i + 0.5;
@@ -218,8 +218,18 @@
                 context.lineTo(x, height);
             }
             context.stroke();
-            console.timeEnd('drawWaveform');
+            console.timeEnd('waveformCanvas');
             return canvas;
+        },
+        timeCode: function(seconds, delim) {
+            if(delim === undefined) { delim = ':'; }
+            var h = Math.floor(seconds / 3600);
+            var m = Math.floor((seconds % 3600) / 60);
+            var s = Math.floor((seconds % 3600) % 60);
+            var hr = (h === 0 ? '' : (h < 10 ? '0' + h + delim : h + delim));
+            var mn = (m < 10 ? '0' + m : m) + delim;
+            var sc = (s < 10 ? '0' + s : s);
+            return hr + mn + sc;
         }
     };
 }

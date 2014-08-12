@@ -1,7 +1,7 @@
 'use strict';
 
 var BufferSource = require('./buffer-source.js'),
-    ElementSource = require('./element-source.js'),
+    MediaSource = require('./media-source.js'),
     nodeFactory = require('./node-factory.js');
 
 function Sound(context, data, destination) {
@@ -28,7 +28,7 @@ Sound.prototype.add = function(data) {
     this._data = data; // AudioBuffer or Media Element
     //console.log('data:', this._data);
     if(this._data.tagName) {
-      this._source = new ElementSource(data, this._context);
+      this._source = new MediaSource(data, this._context);
     }
     else {
       this._source = new BufferSource(data, this._context);
@@ -72,6 +72,13 @@ Sound.prototype.pause = function() {
 Sound.prototype.stop = function() {
     if(!this._source) { return this; }
     this._source.stop();
+    return this;
+};
+
+Sound.prototype.seek = function(percent) {
+    if(!this._source) { return this; }
+    this.stop();
+    this.play(0, this._source.duration * percent);
     return this;
 };
 
