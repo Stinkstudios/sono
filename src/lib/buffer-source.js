@@ -33,7 +33,13 @@ BufferSource.prototype.play = function(delay, offset) {
     this.sourceNode.onended = this._endedHandler.bind(this);
     this.sourceNode.start(delay, offset);
 
-    this._startedAt = this._context.currentTime - offset - this._pausedAt;
+    if(this._pausedAt) {
+        this._startedAt = this._context.currentTime - this._pausedAt;
+    }
+    else {
+        this._startedAt = this._context.currentTime - offset;
+    }
+
     this._pausedAt = 0;
 
     this._playing = true;
