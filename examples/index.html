@@ -34,18 +34,38 @@
         <li>Game e.g. different environments/rooms?</li>
     </ul>
 
-    <div class="js-output-a"></div>
-    <canvas class="js-waveform-a" width="400", height="80"></canvas>
-    <div><button class="js-playpause-a">PLAY</button><div>
-    <div><input class="js-volume-a" type="range" min="0" max="100" value="100" /><div>
-    
-    <div class="js-output-b"></div>
-    <canvas class="js-waveform-b" width="400", height="80"></canvas>
-    <div><button class="js-playpause-b">PLAY</button><div>
-    <div><input class="js-volume-b" type="range" min="0" max="100" value="100" /><div>
+    <h3>Player A</h3>
 
-    <h3>master volume</h3>
-    <div><input class="js-volume" type="range" min="0" max="100" value="100" /><div>
+    <div class="Player js-playerA">
+        <div class="Player-waveform">
+            <canvas class="Player-waveform-inner js-waveform-bottom" width="400", height="80"></canvas>
+            <div class="Player-waveform-inner Player-waveform-clip js-waveform-progress">
+                <canvas class="js-waveform-top" width="400", height="80"></canvas>
+            </div>
+        </div>
+        <button class="Player-button js-playpause">PLAY</button>
+        <input class="Player-volume js-volume" type="range" min="0" max="100" value="100" />
+        <div class="Player-info js-output"></div>
+    </div>
+
+    <h3>Player B</h3>
+
+    <div class="Player js-playerB">
+        <div class="Player-waveform">
+            <canvas class="Player-waveform-inner js-waveform-bottom" width="400", height="80"></canvas>
+            <div class="Player-waveform-inner Player-waveform-clip js-waveform-progress">
+                <canvas class="js-waveform-top" width="400", height="80"></canvas>
+            </div>
+        </div>
+        <button class="Player-button js-playpause">PLAY</button>
+        <input class="Player-volume js-volume" type="range" min="0" max="100" value="100" />
+        <div class="Player-info js-output"></div>
+    </div>
+
+    
+
+    <h3>Master volume</h3>
+    <div><input class="js-master-volume" type="range" min="0" max="100" value="100" /><div>
 
     <script>
         // Test with no WebAudio
@@ -58,98 +78,31 @@
         (function() {
             'use strict';
 
-            var output = document.querySelector('.js-output-a'),
-                outputB = document.querySelector('.js-output-b'),
-                playpause = document.querySelector('.js-playpause-a'),
-                playpauseB = document.querySelector('.js-playpause-b'),
-                canvas = document.querySelector('.js-waveform-a'),
-                canvasB = document.querySelector('.js-waveform-b'),
-                volumeA = document.querySelector('.js-volume-a'),
-                volumeB = document.querySelector('.js-volume-b'),
-                volume = document.querySelector('.js-volume');
+            function Player(sound, selector) {
 
+                var view = document.querySelector(selector);
+                var waveformBottom = view.querySelector('.js-waveform-bottom');
+                var waveformTop = view.querySelector('.js-waveform-top');
+                var waveformProgress = view.querySelector('.js-waveform-progress');
+                var button = view.querySelector('.js-playpause');
+                var volumeSlider = view.querySelector('.js-volume');
+                var output = view.querySelector('.js-output');
 
-            var graphics = new Graphics(canvas);
-            graphics.clear('#eeeeee');
-            graphics.fill(128, 0, 0, 40);
-
-            var graphicsB = new Graphics(canvasB);
-            graphicsB.clear('#eeeeee');
-            graphicsB.fill(128, 0, 0, 40);
-
-            //Sono.context = null;
-            //Sono.log();
-            //console.log('Sono:', Sono);=
-
-            //var urls;
-            // will load this file
-            //url = 'audio/TEST.ogg';
-            // will load first key compatible with browser
-            //url = { foo: 'audio/TEST.ogg', bar: 'audio/TEST.mp3' };
-            // will load first index compatible with browser
-            //urls = ['audio/TEST.ogg', 'audio/TEST.mp3'];
-            //urls = ['audio/VOX.ogg', 'audio/VOX.mp3'];
-            // will add first compatible extension
-            //url = 'audio/TEST';
-
-            var soundLoadProgress = function(progress) {
-                //console.log('soundLoadProgress', progress);
-            };
-
-            var waveform, waveformB;
-
-            function drawPeak(waveform, graphics, i) {
-                if(waveform === undefined) {
-                    return;
-                }
-                var x = i + 0.5,
-                    h = graphics.height,
-                    y = h - Math.round(h * waveform[i]);
-                //console.log(h);
-                graphics.line(x, y, x, h);
-            }
-
-            // test no WebAudio
-            //SONO.context = null;
-            var sound = Sono.load(['audio/VOX.ogg', 'audio/VOX.mp3'], getLoadedHandler(graphics));
-            //var sound = Sono.add(urls);
-            //.play();
-            //sound.loop = true;
-            sound.loader.onProgress.add(soundLoadProgress, this);
-            //this.sound.loop = true;
-            //this.sound.addNode(SONO.create.reverb(0.2, 0.5));
-            var delay = Sono.create.delay(sound._gain, 0.5, 0.5);
-
-            addButtonHandler(playpause, sound);
-            addVolumeHandler(volumeA, sound)
-
-            var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], getLoadedHandler(graphicsB));
-            addButtonHandler(playpauseB, soundB);
-            addVolumeHandler(volumeB, soundB);
-
-
-            addVolumeHandler(volume, Sono);
-
-            function addVolumeHandler(slider, sound) {
-                var onVolumeChange = function() {
-                    sound.volume = this.value / 100;
-                };
-                slider.addEventListener('change', onVolumeChange);
-            }
-
-            
-            function getLoadedHandler(graphics) {
-                return function(sound) {
-                    sound.waveform = Sono.utils.waveform(sound._data, canvas.width);
-
-                    for (var i = 0; i < sound.waveform.length; i++) {
-                        drawPeak(sound.waveform, graphics, i);
+                // update
+                function update() {
+                    if(sound.playing) {
+                        window.requestAnimationFrame(update);
                     }
-                    graphics.stroke(128, 0, 0)
-                };
-            }
+                    
+                    output.innerHTML = sound.currentTime.toFixed(2) + ' / ' +
+                                       sound.duration.toFixed(2) + ' / ' +
+                                       sound.progress.toFixed(2);
 
-            function addButtonHandler(button, sound) {
+                    waveformProgress.style.width = (sound.progress * 100).toFixed(1) + '%';
+                }
+                update();
+
+                // button
                 button.addEventListener('click', function() {
                     if(sound.playing) {
                         sound.pause();
@@ -158,48 +111,63 @@
                     else {
                         sound.play();
                         button.innerHTML = 'PAUSE';
+                        update();
                     }
                 });
                 sound.onEnded(function() {
                     button.innerHTML = 'PLAY';
                 });
+
+                // volume
+                var onVolumeChange = function() {
+                    sound.volume = this.value / 100;
+                };
+                volumeSlider.addEventListener('change', onVolumeChange);
+
+                // waveform
+                var waveformData = Sono.utils.waveformData(sound._data, waveformBottom.width);
+                Sono.utils.waveform(waveformData, waveformBottom.height, '#00ffff', '#333333', waveformBottom);
+                Sono.utils.waveform(waveformData, waveformTop.height, '#ffffff', '#333333', waveformTop);
             }
 
-            function updateOutput(el, sound) {
-                el.innerHTML = sound.currentTime.toFixed(2) + ' / ' +
-                               sound.duration.toFixed(2) + ' / ' +
-                               sound.progress.toFixed(2);
-            }
 
-            function updateWaveform(waveform, graphics, progress) {
-                var i = Math.floor(graphics.width * progress);
-                drawPeak(waveform, graphics, i);            
-            }
+            var soundLoadProgress = function(progress) {
+                //console.log('soundLoadProgress', progress);
+            };
 
-            function update() {
-                window.requestAnimationFrame(update);
-                
-                updateOutput(output, sound);
-                updateOutput(outputB, soundB);
-                
-                updateWaveform(sound.waveform, graphics, sound.progress);
-                updateWaveform(soundB.waveform, graphicsB, soundB.progress);
-            }
-            update();
+            // test no WebAudio
+            //SONO.context = null;
+            var soundA = Sono.load(['audio/VOX.ogg', 'audio/VOX.mp3'], function(sound) {
+                new Player(sound, '.js-playerA');
+            });
+            soundA.loader.onProgress.add(soundLoadProgress, this);
+            //this.sound.loop = true;
+            //this.sound.addNode(SONO.create.reverb(0.2, 0.5));
+            var delay = Sono.create.delay(soundA._gain, 0.5, 0.5);
 
+
+            var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], function(sound) {
+                new Player(sound, '.js-playerB');
+            });
+           
+            // master gain
+            var masterVolumeSlider = document.querySelector('.js-master-volume');
+            masterVolumeSlider.addEventListener('change', function() {
+                Sono.volume = this.value / 100;
+            });
 
             var sounds = [
                 { id: 'a', url: ['audio/TEST.ogg', 'audio/TEST.mp3'] },
                 { id: 'b', url: ['audio/VOX.ogg', 'audio/VOX.mp3'] }
             ];
 
-            Sono.load(sounds, function(loaded) {
+            /*Sono.load(sounds, function(loaded) {
                 console.log('all loaded:', loaded)
                 console.log(Sono.get(sounds[0].id) === Sono.get('a'), Sono.get('a'));
                 console.log(Sono.get(sounds[1].id) === Sono.get('b'), Sono.get('b'));
             }, function(progress) {
                 console.log('progress:', progress);
-            });
+            });*/
 
         }());
     </script>

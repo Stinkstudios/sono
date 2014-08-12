@@ -9,3 +9,5 @@
 @import url('./elements/sections.css');
 
 /*! Components */
+
+@import url('./components/player.css');

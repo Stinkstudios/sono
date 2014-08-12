@@ -1,0 +1,32 @@
+.Player {
+    background: #eee;
+    padding: 10px;
+    width: 400px;
+}
+
+.Player-waveform {
+    height: 80px;
+    position: relative;
+    width: 400px;
+}
+
+.Player-waveform-inner {
+    left: 0;
+    position: absolute;
+    top: 0;
+}
+
+.Player-waveform-clip {
+    height: 80px;
+    overflow: hidden;
+}
+
+.Player-button {
+}
+
+.Player-volume {
+}
+
+.Player-info {
+    display: inline-block;
+}

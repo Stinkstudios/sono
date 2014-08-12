@@ -118,55 +118,6 @@
                 }
             };
         },
-        /*panX: function(panner, value) {
-            // x from -Math.PI/4 to Math.PI/4 (-45 to 45 deg)
-            var x = parseFloat(value, 10) * Math.PI / 4;
-            var z = x + Math.PI / 2;
-            if (z > Math.PI / 2) {
-                z = Math.PI - z;
-            }
-            x = Math.sin(x);
-            z = Math.sin(z);
-            panner.setPosition(x, 0, z);
-        },
-        pan: function(panner, x, y, z) {
-            x = parseNum(x);
-            y = parseNum(y);
-            z = parseNum(z);
-            panner.setPosition(x, y, z);
-        },
-        setSourcePosition: function(panner, positionVec) {
-            // set the position of the source (where the audio is coming from)
-            panner.setPosition(positionVec.x, positionVec.y, positionVec.z);
-        },
-        setSourceOrientation: function(panner, forwardVec) { // forwardVec = THREE.Vector3
-            // set the orientation of the source (where the audio is coming from)
-            var fw = forwardVec.clone().normalize();
-            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-            var globalUp = { x: 0, y: 1, z: 0 };
-            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
-            // set the audio context's listener position to match the camera position
-            panner.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-        },
-        setListenerPosition: function(positionVec) {
-            // set the position of the listener (who is hearing the audio)
-            context.listener.setPosition(positionVec.x, positionVec.y, positionVec.z);
-        },
-        setListenerOrientation: function(forwardVec) { // forwardVec = THREE.Vector3
-            // set the orientation of the listener (who is hearing the audio)
-            var fw = forwardVec.clone().normalize();
-            // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-            var globalUp = { x: 0, y: 1, z: 0 };
-            var up = forwardVec.clone().cross(globalUp).cross(forwardVec).normalize();
-            // set the audio context's listener position to match the camera position
-            context.listener.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-        },
-        doppler: function(panner, x, y, z, deltaX, deltaY, deltaZ, deltaTime) {
-            // Tracking the velocity can be done by getting the object's previous position, subtracting
-            // it from the current position and dividing the result by the time elapsed since last frame
-            panner.setPosition(x, y, z);
-            panner.setVelocity(deltaX/deltaTime, deltaY/deltaTime, deltaZ/deltaTime);
-        },*/
         filter: function(filterNode, value, quality, gain) {
             // set filter frequency based on value from 0 to 1
             value = parseFloat(value, 10);
@@ -204,24 +155,30 @@
             }
             return curve;
         },
-        waveform: function(buffer, length) {
+        waveformData: function(buffer, length) {
+            console.log('-------------------');
+            console.time('waveform');
             var waveform = new Float32Array(length),
                 chunk = Math.floor(buffer.length / length),
                 //chunk = buffer.length / length,
-                resolution = 10,
+                resolution = 5, // 10
                 incr = Math.floor(chunk / resolution),
                 greatest = 0;
 
             if(incr < 1) { incr = 1; }
 
-            for (var i = 0; i < buffer.numberOfChannels; i++) {
+            for (var i = 0, chnls = buffer.numberOfChannels; i < chnls; i++) {
                 // check each channel
                 var channel = buffer.getChannelData(i);
+                //for (var j = length - 1; j >= 0; j--) {
                 for (var j = 0; j < length; j++) {
                     // get highest value within the chunk
+                    //var ch = j * chunk;
+                    //for (var k = ch + chunk - 1; k >= ch; k -= incr) {
                     for (var k = j * chunk, l = k + chunk; k < l; k += incr) {
                         // select highest value from channels
-                        var a = Math.abs(channel[k]);
+                        var a = channel[k];
+                        if(a < 0) { a = -a; }
                         if (a > waveform[j]) {
                             waveform[j] = a;
                         }
@@ -238,7 +195,31 @@
             for (i = 0; i < len; i++) {
                 waveform[i] *= scale;
             }
+            console.timeEnd('waveform');
             return waveform;
+        },
+        waveform: function(arr, height, color, bgColor, canvasEl) {
+        //waveform: function(arr, width, height, color, bgColor, canvasEl) {
+            //var arr = this.waveformData(buffer, width);
+            var canvas = canvasEl || document.createElement('canvas');
+            var width = canvas.width = arr.length;
+            canvas.height = height;
+            var context = canvas.getContext('2d');
+            context.strokeStyle = color;
+            context.fillStyle = bgColor;
+            context.fillRect(0, 0, width, height);
+            var x, y;
+            console.time('drawWaveform');
+            context.beginPath();
+            for (var i = 0, l = arr.length; i < l; i++) {
+                x = i + 0.5;
+                y = height - Math.round(height * arr[i]);
+                context.moveTo(x, y);
+                context.lineTo(x, height);
+            }
+            context.stroke();
+            console.timeEnd('drawWaveform');
+            return canvas;
         }
     };
 }

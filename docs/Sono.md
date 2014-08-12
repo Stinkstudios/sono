@@ -19,7 +19,7 @@ click.play();
 
 Load a sound and add to Sono
 
->`Sono.load(url, callback, callbackContext, asBuffer)` returns Sound
+>`Sono.load(url, callback, thisArg, asBuffer)` returns Sound
 
 #### Examples
 
