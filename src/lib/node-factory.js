@@ -79,7 +79,7 @@ var create = {
         delayNode.connect(gainNode);
         if(input) {
             input.connect(delayNode);
-            gainNode.connect(input);    
+            gainNode.connect(input);
         }
         return delayNode;
         // ?

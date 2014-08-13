@@ -9,7 +9,7 @@ function MediaSource(el, context) {
     this._loop = false;
     this._paused = false;
     this._playing = false;
-    this._sourceNode = null; // MediaMediaSourceNode
+    this._sourceNode = null; // MediaElementSourceNode
 }
 
 MediaSource.prototype.add = function(el) {

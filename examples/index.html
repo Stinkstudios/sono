@@ -89,7 +89,7 @@
                 console.log(progress);
             });*/
             //this.sound.loop = true;
-            //this.sound.addNode(SONO.create.reverb(0.2, 0.5));
+            //this.sound.addNode(Sono.create.reverb(0.2, 0.5));
             //Sono.create.delay(soundA._gain, 0.5, 0.5);
 
             /*var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], function(sound) {
@@ -114,6 +114,16 @@
 
                 new Player(Sono.get('a'), '.js-playerA');
                 new Player(Sono.get('b'), '.js-playerB');
+
+                //Sono.get('a').nodes.add(Sono.create.reverb(4, 10));
+                //var delay = Sono.create.delay(Sono.get('b')._gain, 0.5, 0.5);
+                //Sono.create.delay(delay, 2, 0.2)
+
+                //var delay = Sono.create.delay(Sono._masterGain, 0.5, 0.5);
+                //var delay = Sono.create.delay(Sono._masterGain, 0.5, 0.5);
+                //delay.disconnect();
+
+                Sono.nodes.add(Sono.create.reverb(4, 10));
 
             }, function(progress) {
                 console.log('progress:', progress);

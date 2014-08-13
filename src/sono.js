@@ -2,6 +2,7 @@
 
 var Loader = require('./lib/loader.js'),
     nodeFactory = require('./lib/node-factory.js'),
+    NodeManager = require('./lib/node-manager.js'),
     Sound = require('./lib/sound.js'),
     support = require('./lib/support.js'),
     Utils = require('./lib/utils.js');
@@ -13,8 +14,14 @@ function Sono() {
 
     this._masterGain = this.create.gain();
 
-    if(this.context) {
+    /*if(this.context) {
         this._masterGain.connect(this.context.destination);
+    }*/
+
+    this._nodes = new NodeManager();
+    if(this.context) {
+        this._nodes.setSource(this._masterGain);
+        this._nodes.setDestination(this.context.destination);
     }
 
     this._sounds = [];
@@ -46,9 +53,13 @@ Sono.prototype.add = function(data, id) {
 
     var sound = new Sound(this.context, data, this._masterGain);
     sound.id = id || this._createId();
-    //sound.loop = !!loop;
-    sound.add(data);
     this._sounds.push(sound);
+    return sound;
+};
+
+Sono.prototype.addOscillator = function(type, id) {
+    var sound = this.add(null, id);
+    sound.oscillator(type);
     return sound;
 };
 
@@ -420,6 +431,12 @@ Object.defineProperty(Sono.prototype, 'utils', {
 Object.defineProperty(Sono.prototype, 'loader', {
     get: function() {
         return this._loader;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'nodes', {
+    get: function() {
+        return this._nodes;
     }
 });
 

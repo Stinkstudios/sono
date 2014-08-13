@@ -2,7 +2,9 @@
 
 var BufferSource = require('./buffer-source.js'),
     MediaSource = require('./media-source.js'),
-    nodeFactory = require('./node-factory.js');
+    nodeFactory = require('./node-factory.js'),
+    NodeManager = require('./node-manager.js'),
+    OscillatorSource = require('./oscillator-source.js');
 
 function Sound(context, data, destination) {
     this.id = '';
@@ -10,15 +12,16 @@ function Sound(context, data, destination) {
     this._data = null;
     this._endedCallback = null;
     this._loop = false;
-    this._nodeList = [];
     this._pausedAt = 0;
     this._playWhenReady = false;
     this._source = null;
-    this._sourceNode = null;
     this._startedAt = 0;
 
     this._gain = nodeFactory(this._context).gain();
     this._gain.connect(destination || this._context.destination);
+    
+    this._nodes = new NodeManager();
+    this._nodes.setDestination(this._gain);
 
     this.add(data);
 }
@@ -33,7 +36,7 @@ Sound.prototype.add = function(data) {
     else {
       this._source = new BufferSource(data, this._context);
     }
-    this._createSourceNode();
+    this._nodes.setSource(this._source.sourceNode);
     this._source.onEnded(this._endedHandler, this);
 
     // should this take account of delay and offset?
@@ -41,6 +44,20 @@ Sound.prototype.add = function(data) {
         this.play();
     }
     return this;
+};
+
+Sound.prototype.oscillator = function(type) {
+    this._source = new OscillatorSource(type || 'sine', this._context);
+    this._nodes.setSource(this._source.sourceNode);
+    return this;
+};
+
+Sound.prototype.setOscillatorType = function(value) {
+    this._source.type = value;
+};
+
+Sound.prototype.setOscillatorFrequency = function(value) {
+    this._source.frequency = value;
 };
 
 /*
@@ -52,7 +69,7 @@ Sound.prototype.play = function(delay, offset) {
         this._playWhenReady = true;
         return this;
     }
-    this._createSourceNode();
+    this._nodes.setSource(this._source.sourceNode);
     this._source.loop = this._loop;
 
     // update volume needed for no webaudio
@@ -86,132 +103,18 @@ Sound.prototype.seek = function(percent) {
  * Nodes
  */
 
-Sound.prototype.addNode = function(node) {
-    this._nodeList.push(node);
-    this._updateConnections();
-    return node;
+/*Sound.prototype.addNode = function(node) {
+    return this._nodes.add(node);
 };
 
 Sound.prototype.removeNode = function(node) {
-    var l = this._nodeList.length;
-    for (var i = 0; i < l; i++) {
-        if(node === this._nodeList[i]) {
-            this._nodeList.splice(i, 1);
-        }
-    }
-    node.disconnect(0);
-    this._updateConnections();
-    return this;
-};
-
-// should source be item 0 in nodelist and desination last
-// prob is addNode needs to add before destination
-// + should it be called chain or something nicer?
-// feels like node list could be a linked list??
-// if list.last is destination addbefore
-
-/*Sound.prototype._updateConnections = function() {
-    if(!this._sourceNode) {
-        return;
-    }
-    var l = this._nodeList.length;
-    for (var i = 1; i < l; i++) {
-      this._nodeList[i-1].connect(this._nodeList[i]);
-    }
+    return this._nodes.remove(node);
 };*/
-/*Sound.prototype._updateConnections = function() {
-    if(!this._sourceNode) {
-        return;
-    }
-    console.log('_updateConnections');
-    this._sourceNode.disconnect(0);
-    this._sourceNode.connect(this._gain);
-    var l = this._nodeList.length;
 
-    for (var i = 0; i < l; i++) {
-        if(i === 0) {
-            console.log(' - connect source to node:', this._nodeList[i]);
-            this._gain.disconnect(0);
-            this._gain.connect(this._nodeList[i]);
-        }
-        else {
-            console.log('connect:', this._nodeList[i-1], 'to', this._nodeList[i]);
-            this._nodeList[i-1].disconnect(0);
-            this._nodeList[i-1].connect(this._nodeList[i]);
-        }
-    }
-    this.connectTo(this._context.destination);
-};*/
-Sound.prototype._updateConnections = function() {
-    if(!this._sourceNode) {
-        return;
-    }
-    //console.log('_updateConnections');
-    var l = this._nodeList.length;
-    for (var i = 0; i < l; i++) {
-        if(i === 0) {
-            //console.log(' - connect source to node:', this._nodeList[i]);
-            //this._sourceNode.disconnect(0);
-            this._sourceNode.connect(this._nodeList[i]);
-        }
-        else {
-            //console.log('connect:', this._nodeList[i-1], 'to', this._nodeList[i]);
-            //this._nodeList[i-1].disconnect(0);
-            this._nodeList[i-1].connect(this._nodeList[i]);
-        }
-    }
-    //console.log(this.destination)
-    if(this.destination) {
-        this.connectTo(this.destination);
-    }
-    else if (this._gain) {
-        this.connectTo(this._gain);
-    }
-};
-
-// or setter for destination?
 /*Sound.prototype.connectTo = function(node) {
-    var l = this._nodeList.length;
-    if(l > 0) {
-      console.log('connect:', this._nodeList[l - 1], 'to', node);
-        this._nodeList[l - 1].disconnect(0);
-        this._nodeList[l - 1].connect(node);
-    }
-    else {
-        console.log(' x connect source to node:', node);
-        this._gain.disconnect(0);
-        this._gain.connect(node);
-    }
-    this.destination = node;
-};*/
-Sound.prototype.connectTo = function(node) {
-    var l = this._nodeList.length;
-    if(l > 0) {
-        //console.log('connect:', this._nodeList[l - 1], 'to', node);
-        //this._nodeList[l - 1].disconnect(0);
-        this._nodeList[l - 1].connect(node);
-    }
-    else if(this._sourceNode) {
-        //console.log(' x connect source to node:', node);
-        //this._sourceNode.disconnect(0);
-        this._sourceNode.connect(node);
-    }
-    this.destination = node;
-
+    this._nodes.connectTo(node);
     return this;
-};
-
-Sound.prototype._createSourceNode = function() {
-    //console.log('get source', this._sourceNode);
-    if(!this._context) {
-        return;
-    }
-
-    this._sourceNode = this._source.sourceNode;
-    this._updateConnections();
-
-    return this._sourceNode;
-};
+};*/
 
 /*
  * Ended handler
@@ -292,6 +195,12 @@ Object.defineProperty(Sound.prototype, 'playing', {
 Object.defineProperty(Sound.prototype, 'paused', {
     get: function() {
         return this._source ? this._source.paused : false;
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'nodes', {
+    get: function() {
+        return this._nodes;
     }
 });
 

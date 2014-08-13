@@ -1,9 +1,9 @@
 'use strict';
 
-var ElementSource = require('../src/lib/element-source.js');
+var MediaSource = require('../src/lib/media-source.js');
 
 describe('Element Source', function() {
-	var source = new ElementSource();
+	var source = new MediaSource();
 
     it('should have expected members (id, add)', function() {
         expect(source).to.have.property('id');
