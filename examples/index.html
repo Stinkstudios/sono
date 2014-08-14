@@ -123,7 +123,8 @@
                 //var delay = Sono.create.delay(Sono._masterGain, 0.5, 0.5);
                 //delay.disconnect();
 
-                Sono.nodes.add(Sono.create.reverb(4, 10));
+                Sono.node.add(Sono.create.reverb(4, 10));
+                //Sono.node.create.reverb();
 
             }, function(progress) {
                 console.log('progress:', progress);

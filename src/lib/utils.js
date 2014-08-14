@@ -9,7 +9,7 @@
         fade: function(gainNode, value, duration) {
             gainNode.gain.linearRampToValueAtTime(value, context.currentTime + duration);
         },
-        panHandler: function(panner) {
+        pan: function(panner) {
             return {
                 // pan left to right with value from -1 to 1
                 x: function(value) {

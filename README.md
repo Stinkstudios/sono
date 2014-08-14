@@ -29,7 +29,7 @@ Sono.VERSION // current version
 
 ##### add / get sounds:
 
-Sono.add(data, id) // return Sound obj with optional id
+Sono.sound(data, id) // return Sound obj with optional id
 
 Sono.get(id) // returns a Sound
 

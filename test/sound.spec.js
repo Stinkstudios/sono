@@ -32,15 +32,15 @@ describe('Sound', function() {
     });
 
     it('should have expected members (nodes)', function() {
-        expect(sound.addNode).to.be.a('function');
+        //expect(sound.addNode).to.be.a('function');
         //expect(sound.connectTo).to.be.a('function');
-        expect(sound.removeNode).to.be.a('function');
+        //expect(sound.removeNode).to.be.a('function');
 
-        expect(sound.nodes).to.be.an('object');
-        expect(sound.nodes.setSource).to.be.a('function');
-        expect(sound.nodes.setDestination).to.be.a('function');
-        expect(sound.nodes.add).to.be.a('function');
-        expect(sound.nodes.remove).to.be.a('function');
+        expect(sound.node).to.be.an('object');
+        expect(sound.node.setSource).to.be.a('function');
+        expect(sound.node.setDestination).to.be.a('function');
+        expect(sound.node.add).to.be.a('function');
+        expect(sound.node.remove).to.be.a('function');
     });
 
     it('should have chainable methods', function() {

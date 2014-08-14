@@ -4,7 +4,9 @@ var BufferSource = require('./buffer-source.js'),
     MediaSource = require('./media-source.js'),
     nodeFactory = require('./node-factory.js'),
     NodeManager = require('./node-manager.js'),
-    OscillatorSource = require('./oscillator-source.js');
+    MicrophoneSource = require('./microphone-source.js'),
+    OscillatorSource = require('./oscillator-source.js'),
+    ScriptSource = require('./script-source.js');
 
 function Sound(context, data, destination) {
     this.id = '';
@@ -20,8 +22,8 @@ function Sound(context, data, destination) {
     this._gain = nodeFactory(this._context).gain();
     this._gain.connect(destination || this._context.destination);
     
-    this._nodes = new NodeManager();
-    this._nodes.setDestination(this._gain);
+    this._node = new NodeManager();
+    this._node.setDestination(this._gain);
 
     this.add(data);
 }
@@ -36,7 +38,7 @@ Sound.prototype.add = function(data) {
     else {
       this._source = new BufferSource(data, this._context);
     }
-    this._nodes.setSource(this._source.sourceNode);
+    this._node.setSource(this._source.sourceNode);
     this._source.onEnded(this._endedHandler, this);
 
     // should this take account of delay and offset?
@@ -48,7 +50,7 @@ Sound.prototype.add = function(data) {
 
 Sound.prototype.oscillator = function(type) {
     this._source = new OscillatorSource(type || 'sine', this._context);
-    this._nodes.setSource(this._source.sourceNode);
+    this._node.setSource(this._source.sourceNode);
     return this;
 };
 
@@ -60,6 +62,18 @@ Sound.prototype.setOscillatorFrequency = function(value) {
     this._source.frequency = value;
 };
 
+Sound.prototype.microphone = function(stream) {
+    this._source = new MicrophoneSource(stream, this._context);
+    this._node.setSource(this._source.sourceNode);
+    return this;
+};
+
+Sound.prototype.script = function(bufferSize, channels, callback, thisArg) {
+    this._source = new ScriptSource(bufferSize, channels, callback, thisArg, this._context);
+    this._node.setSource(this._source.sourceNode);
+    return this;
+};
+
 /*
  * Controls
  */
@@ -69,7 +83,7 @@ Sound.prototype.play = function(delay, offset) {
         this._playWhenReady = true;
         return this;
     }
-    this._nodes.setSource(this._source.sourceNode);
+    this._node.setSource(this._source.sourceNode);
     this._source.loop = this._loop;
 
     // update volume needed for no webaudio
@@ -104,15 +118,15 @@ Sound.prototype.seek = function(percent) {
  */
 
 /*Sound.prototype.addNode = function(node) {
-    return this._nodes.add(node);
+    return this._node.add(node);
 };
 
 Sound.prototype.removeNode = function(node) {
-    return this._nodes.remove(node);
+    return this._node.remove(node);
 };*/
 
 /*Sound.prototype.connectTo = function(node) {
-    this._nodes.connectTo(node);
+    this._node.connectTo(node);
     return this;
 };*/
 
@@ -198,9 +212,9 @@ Object.defineProperty(Sound.prototype, 'paused', {
     }
 });
 
-Object.defineProperty(Sound.prototype, 'nodes', {
+Object.defineProperty(Sound.prototype, 'node', {
     get: function() {
-        return this._nodes;
+        return this._node;
     }
 });
 

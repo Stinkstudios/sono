@@ -18,10 +18,10 @@ function Sono() {
         this._masterGain.connect(this.context.destination);
     }*/
 
-    this._nodes = new NodeManager();
+    this._node = new NodeManager();
     if(this.context) {
-        this._nodes.setSource(this._masterGain);
-        this._nodes.setDestination(this.context.destination);
+        this._node.setSource(this._masterGain);
+        this._node.setDestination(this.context.destination);
     }
 
     this._sounds = [];
@@ -36,30 +36,35 @@ function Sono() {
  * add - data can be element, arraybuffer or as yet null/undefined
  */
 
-Sono.prototype.add = function(data, id) {
-
+Sono.prototype.sound = function(data) {
     // try to load if url is put into add?
     var isAudioBuffer = data && window.AudioBuffer && data instanceof window.AudioBuffer;
     var isMediaElement = data && data instanceof window.HTMLMediaElement;
     if(data && !isAudioBuffer && !isMediaElement) {
         var s = this.load(data);
-        if(id) { s.id = id; }
         return s;
     }
-
-    if(id && this.get(id)) {
-        return this.get(id);
-    }
-
     var sound = new Sound(this.context, data, this._masterGain);
-    sound.id = id || this._createId();
+    sound.id = this._createId();
     this._sounds.push(sound);
     return sound;
 };
 
-Sono.prototype.addOscillator = function(type, id) {
-    var sound = this.add(null, id);
+Sono.prototype.oscillator = function(type) {
+    var sound = this.sound();
     sound.oscillator(type);
+    return sound;
+};
+
+Sono.prototype.microphone = function(stream) {
+    var sound = this.sound(null, id);
+    sound.microphone(stream);
+    return sound;
+};
+
+Sono.prototype.script = function(bufferSize, channels, callback, thisArg) {
+    var sound = this.sound(null, id);
+    sound.script(bufferSize, channels, callback, thisArg);
     return sound;
 };
 
@@ -115,7 +120,7 @@ Sono.prototype.queue = function(url, asMediaElement) {
 
     url = support.getSupportedFile(url);
 
-    var sound = this.add();
+    var sound = this.sound();
 
     sound.loader = this._loader.add(url);
     sound.loader.onBeforeComplete.addOnce(function(buffer) {
@@ -135,7 +140,7 @@ Sono.prototype.loadMultiple = function(config, complete, progress, thisArg, asMe
         var file = config[i];
 
         var sound = this.queue(file.url, asMediaElement);
-        sound.id = file.id;
+        if(file.id) { sound.id = file.id; }
         sounds.push(sound);
     }
     if(progress) {
@@ -434,9 +439,9 @@ Object.defineProperty(Sono.prototype, 'loader', {
     }
 });
 
-Object.defineProperty(Sono.prototype, 'nodes', {
+Object.defineProperty(Sono.prototype, 'node', {
     get: function() {
-        return this._nodes;
+        return this._node;
     }
 });
 

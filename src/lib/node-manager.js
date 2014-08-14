@@ -35,6 +35,14 @@ NodeManager.prototype.remove = function(node) {
     return this;
 };
 
+NodeManager.prototype.removeAll = function() {
+    while(this._nodeList.length) {
+        this._nodeList.pop().disconnect();
+    }
+    this._updateConnections();
+    return this;
+};
+
 NodeManager.prototype.connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
@@ -43,7 +51,7 @@ NodeManager.prototype.connectTo = function(node) {
         this._nodeList[l - 1].connect(node);
     }
     else if(this._sourceNode) {
-        console.log(' x connect source to node:', node);
+        //console.log(' x connect source to node:', node);
         this._sourceNode.disconnect();
         this._sourceNode.connect(node);
     }

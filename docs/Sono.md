@@ -2,14 +2,14 @@
 
 Create a Sound object
 
->`Sono.add(data, id)` returns Sound
+>`Sono.sound(data, id)` returns Sound
 
 #### Examples
 
 ```javascript
-var click = Sono.add(clickSoundData);
-var click = Sono.add(clickSoundData, 'click'); // with id
-var click = Sono.add(['audio/click.ogg', 'audio/click.mp3']); // load
+var click = Sono.sound(clickSoundData);
+var click = Sono.sound(clickSoundData, 'click'); // with id
+var click = Sono.sound(['audio/click.ogg', 'audio/click.mp3']); // load
 
 click.play();
 ```

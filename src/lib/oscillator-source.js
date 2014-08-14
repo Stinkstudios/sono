@@ -3,21 +3,14 @@
 function OscillatorSource(type, context) {
     this.id = '';
     this._context = context;
-    this._endedCallback = null;
-    this._loop = false;
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
     this._sourceNode = null; // OscillatorSourceNode
     this._startedAt = 0;
     this._type = type;
-    this._frequency = 40;
+    this._frequency = 200;
 }
-
-/*OscillatorSource.prototype.add = function(buffer) {
-    this._buffer = buffer; // ArrayBuffer
-    return this._buffer;
-};*/
 
 /*
  * Controls
@@ -52,7 +45,6 @@ OscillatorSource.prototype.pause = function() {
 
 OscillatorSource.prototype.stop = function() {
     if(this._sourceNode) {
-        //this._sourceNode.onended = null;
         try {
             this._sourceNode.stop(0);
         } catch(e) {}
@@ -63,14 +55,6 @@ OscillatorSource.prototype.stop = function() {
     this._playing = false;
     this._paused = false;
 };
-
-/*
- * Ended handler
- */
-
-/*OscillatorSource.prototype.onEnded = function(fn, context) {
-    
-};*/
 
 /*
  * Getters & Setters
@@ -117,15 +101,6 @@ Object.defineProperty(OscillatorSource.prototype, 'duration', {
         return 0;
     }
 });
-
-/*Object.defineProperty(OscillatorSource.prototype, 'loop', {
-    get: function() {
-        return;
-    },
-    set: function(value) {
-        return;
-    }
-});*/
 
 Object.defineProperty(OscillatorSource.prototype, 'paused', {
     get: function() {

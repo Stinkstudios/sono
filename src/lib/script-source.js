@@ -1,24 +1,28 @@
 'use strict';
 
-function MicrophoneSource(stream, context) {
+function ScriptSource(bufferSize, channels, callback, thisArg, context) {
     this.id = '';
     this._context = context;
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._sourceNode = null; // MicrophoneSourceNode
+    this._sourceNode = null; // ScriptSourceNode
     this._startedAt = 0;
-    this._stream = stream;
+
+    this._bufferSize = bufferSize;
+    this._channels = channels;
+    this._onProcess = callback.bind(thisArg || this);
 }
 
 /*
  * Controls
  */
 
-MicrophoneSource.prototype.play = function(delay) {
+ScriptSource.prototype.play = function(delay) {
     if(delay === undefined) { delay = 0; }
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
+    this.sourceNode.onaudioprocess = this._onProcess;
     this.sourceNode.start(delay);
 
     if(this._pausedAt) {
@@ -34,7 +38,7 @@ MicrophoneSource.prototype.play = function(delay) {
     this._paused = false;
 };
 
-MicrophoneSource.prototype.pause = function() {
+ScriptSource.prototype.pause = function() {
     var elapsed = this._context.currentTime - this._startedAt;
     this.stop();
     this._pausedAt = elapsed;
@@ -42,12 +46,15 @@ MicrophoneSource.prototype.pause = function() {
     this._paused = true;
 };
 
-MicrophoneSource.prototype.stop = function() {
+ScriptSource.prototype.stop = function() {
     if(this._sourceNode) {
-        try {
+        this._sourceNode.onaudioprocess = this._onPaused;
+        /*try {
             this._sourceNode.stop(0);
-        } catch(e) {}
-        this._sourceNode = null;
+        } catch(e) {
+            console.log(e);
+        }
+        this._sourceNode = null;*/
     }
     this._startedAt = 0;
     this._pausedAt = 0;
@@ -55,11 +62,21 @@ MicrophoneSource.prototype.stop = function() {
     this._paused = false;
 };
 
+ScriptSource.prototype._onPaused = function(event) {
+    var buffer = event.outputBuffer;
+    for (var i = 0, l = buffer.numberOfChannels; i < l; i++) {
+        var channel = buffer.getChannelData(i);
+        for (var j = 0, len = channel.length; j < len; j++) {
+            channel[j] = 0;
+        }
+    }
+};
+
 /*
  * Getters & Setters
  */
 
-Object.defineProperty(MicrophoneSource.prototype, 'type', {
+Object.defineProperty(ScriptSource.prototype, 'type', {
     get: function() {
         return this._type;
     },
@@ -71,7 +88,7 @@ Object.defineProperty(MicrophoneSource.prototype, 'type', {
     }
 });
 
-Object.defineProperty(MicrophoneSource.prototype, 'frequency', {
+Object.defineProperty(ScriptSource.prototype, 'frequency', {
     get: function() {
         return this._frequency;
     },
@@ -83,7 +100,7 @@ Object.defineProperty(MicrophoneSource.prototype, 'frequency', {
     }
 });
 
-Object.defineProperty(MicrophoneSource.prototype, 'currentTime', {
+Object.defineProperty(ScriptSource.prototype, 'currentTime', {
     get: function() {
         if(this._pausedAt) {
             return this._pausedAt;
@@ -95,39 +112,34 @@ Object.defineProperty(MicrophoneSource.prototype, 'currentTime', {
     }
 });
 
-Object.defineProperty(MicrophoneSource.prototype, 'duration', {
+Object.defineProperty(ScriptSource.prototype, 'duration', {
     get: function() {
         return 0;
     }
 });
 
-Object.defineProperty(MicrophoneSource.prototype, 'paused', {
+Object.defineProperty(ScriptSource.prototype, 'paused', {
     get: function() {
         return this._paused;
     }
 });
 
-Object.defineProperty(MicrophoneSource.prototype, 'playing', {
+Object.defineProperty(ScriptSource.prototype, 'playing', {
     get: function() {
         return this._playing;
     }
 });
 
-Object.defineProperty(MicrophoneSource.prototype, 'progress', {
+Object.defineProperty(ScriptSource.prototype, 'progress', {
   get: function() {
     return 0;
   }
 });
 
-Object.defineProperty(MicrophoneSource.prototype, 'sourceNode', {
+Object.defineProperty(ScriptSource.prototype, 'sourceNode', {
     get: function() {
         if(!this._sourceNode) {
-            this._sourceNode = this._context.createMediaStreamSource(this._stream);
-            // HACK: stops moz garbage collection killing the stream
-            // see https://support.mozilla.org/en-US/questions/984179
-            if(navigator.mozGetUserMedia) {
-                window.mozHack = this._sourceNode;
-            }
+            this._sourceNode = this._context.createScriptProcessor(this._bufferSize, 0, this._channels);
         }
         return this._sourceNode;
     }
@@ -139,5 +151,5 @@ Object.defineProperty(MicrophoneSource.prototype, 'sourceNode', {
  */
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = MicrophoneSource;
+    module.exports = ScriptSource;
 }
