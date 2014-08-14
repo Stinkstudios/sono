@@ -89,8 +89,8 @@
                 console.log(progress);
             });*/
             //this.sound.loop = true;
-            //this.sound.addNode(Sono.create.reverb(0.2, 0.5));
-            //Sono.create.delay(soundA._gain, 0.5, 0.5);
+            //this.sound.node.reverb(0.2, 0.5);
+            //Sono.node.delay(soundA._gain, 0.5, 0.5);
 
             /*var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], function(sound) {
                 new Player(sound, '.js-playerB');
@@ -115,16 +115,15 @@
                 new Player(Sono.get('a'), '.js-playerA');
                 new Player(Sono.get('b'), '.js-playerB');
 
-                //Sono.get('a').nodes.add(Sono.create.reverb(4, 10));
-                //var delay = Sono.create.delay(Sono.get('b')._gain, 0.5, 0.5);
-                //Sono.create.delay(delay, 2, 0.2)
+                //Sono.get('a').node.reverb(4, 10);
+                //var delay = Sono.node.delay(Sono.get('b')._gain, 0.5, 0.5);
+                //Sono.node.delay(delay, 2, 0.2)
 
-                //var delay = Sono.create.delay(Sono._masterGain, 0.5, 0.5);
-                //var delay = Sono.create.delay(Sono._masterGain, 0.5, 0.5);
+                //var delay = Sono.node.delay(Sono._masterGain, 0.5, 0.5);
+                //var delay = Sono.node.delay(Sono._masterGain, 0.5, 0.5);
                 //delay.disconnect();
 
-                Sono.node.add(Sono.create.reverb(4, 10));
-                //Sono.node.create.reverb();
+                Sono.node.reverb(4, 10);
 
             }, function(progress) {
                 console.log('progress:', progress);

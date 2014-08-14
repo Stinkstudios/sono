@@ -6,9 +6,9 @@ var Sound = require('../src/lib/sound.js');
 describe('Sound', function() {
     var sound = new Sound(Sono.context);
 
-    it('should have expected members (id, add)', function() {
+    it('should have expected members (id, setdata)', function() {
         expect(sound).to.have.property('id');
-        expect(sound.add).to.be.a('function');
+        expect(sound.setData).to.be.a('function');
     });
 
     it('should have expected members (controls)', function() {
@@ -32,10 +32,6 @@ describe('Sound', function() {
     });
 
     it('should have expected members (nodes)', function() {
-        //expect(sound.addNode).to.be.a('function');
-        //expect(sound.connectTo).to.be.a('function');
-        //expect(sound.removeNode).to.be.a('function');
-
         expect(sound.node).to.be.an('object');
         expect(sound.node.setSource).to.be.a('function');
         expect(sound.node.setDestination).to.be.a('function');
@@ -44,13 +40,12 @@ describe('Sound', function() {
     });
 
     it('should have chainable methods', function() {
-        expect(sound.add()).to.be.an.instanceof(Sound);
+        expect(sound.setData()).to.be.an.instanceof(Sound);
         expect(sound.play()).to.be.an.instanceof(Sound);
         expect(sound.pause()).to.be.an.instanceof(Sound);
         expect(sound.stop()).to.be.an.instanceof(Sound);
         expect(sound.onEnded()).to.be.an.instanceof(Sound);
-        //expect(sound.connectTo()).to.be.an.instanceof(Sound);
-        expect(sound.add().onEnded(function(){}).play()).to.be.an.instanceof(Sound);
+        expect(sound.setData().onEnded(function(){}).play()).to.be.an.instanceof(Sound);
     });
 
 });

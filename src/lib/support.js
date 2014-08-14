@@ -87,5 +87,5 @@ Object.defineProperty(Support.prototype, 'canPlay', {
  */
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = new Support();
+    module.exports = Support;
 }

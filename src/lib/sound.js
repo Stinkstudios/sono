@@ -2,7 +2,6 @@
 
 var BufferSource = require('./buffer-source.js'),
     MediaSource = require('./media-source.js'),
-    nodeFactory = require('./node-factory.js'),
     NodeManager = require('./node-manager.js'),
     MicrophoneSource = require('./microphone-source.js'),
     OscillatorSource = require('./oscillator-source.js'),
@@ -19,19 +18,20 @@ function Sound(context, data, destination) {
     this._source = null;
     this._startedAt = 0;
 
-    this._gain = nodeFactory(this._context).gain();
-    this._gain.connect(destination || this._context.destination);
-    
-    this._node = new NodeManager();
-    this._node.setDestination(this._gain);
+    this._node = new NodeManager(this._context);
+    this._gain = this._node.gain();
+    if(this._context) {
+        this._node.setSource(this._gain);
+        this._node.setDestination(destination || this._context.destination);
+    }
 
-    this.add(data);
+    this.setData(data);
 }
 
-Sound.prototype.add = function(data) {
+Sound.prototype.setData = function(data) {
     if(!data) { return this; }
     this._data = data; // AudioBuffer or Media Element
-    //console.log('data:', this._data);
+
     if(this._data.tagName) {
       this._source = new MediaSource(data, this._context);
     }
@@ -51,6 +51,15 @@ Sound.prototype.add = function(data) {
 Sound.prototype.oscillator = function(type) {
     this._source = new OscillatorSource(type || 'sine', this._context);
     this._node.setSource(this._source.sourceNode);
+
+    this.setType = function(value) {
+        this._source.type = value;    
+    }.bind(this);
+
+    this.setFrequency = function(value) {
+        this._source.frequency = value;
+    }.bind(this);
+
     return this;
 };
 
@@ -114,23 +123,6 @@ Sound.prototype.seek = function(percent) {
 };
 
 /*
- * Nodes
- */
-
-/*Sound.prototype.addNode = function(node) {
-    return this._node.add(node);
-};
-
-Sound.prototype.removeNode = function(node) {
-    return this._node.remove(node);
-};*/
-
-/*Sound.prototype.connectTo = function(node) {
-    this._node.connectTo(node);
-    return this;
-};*/
-
-/*
  * Ended handler
  */
 
@@ -149,10 +141,29 @@ Sound.prototype._endedHandler = function() {
  * Getters & Setters
  */
 
-/*
- * TODO: set up so source can be stream, oscillator, etc
- */
+Object.defineProperty(Sound.prototype, 'context', {
+    get: function() {
+        return this._context;
+    }
+});
 
+Object.defineProperty(Sound.prototype, 'currentTime', {
+    get: function() {
+        return this._source ? this._source.currentTime : 0;
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'data', {
+    get: function() {
+        return this._data;
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'duration', {
+    get: function() {
+        return this._source ? this._source.duration : 0;
+    }
+});
 
 Object.defineProperty(Sound.prototype, 'loop', {
     get: function() {
@@ -166,15 +177,21 @@ Object.defineProperty(Sound.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(Sound.prototype, 'duration', {
+Object.defineProperty(Sound.prototype, 'node', {
     get: function() {
-        return this._source ? this._source.duration : 0;
+        return this._node;
     }
 });
 
-Object.defineProperty(Sound.prototype, 'currentTime', {
+Object.defineProperty(Sound.prototype, 'paused', {
     get: function() {
-        return this._source ? this._source.currentTime : 0;
+        return this._source ? this._source.paused : false;
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'playing', {
+    get: function() {
+        return this._source ? this._source.playing : false;
     }
 });
 
@@ -183,7 +200,6 @@ Object.defineProperty(Sound.prototype, 'progress', {
     return this._source ? this._source.progress : 0;
   }
 });
-
 
 Object.defineProperty(Sound.prototype, 'volume', {
     get: function() {
@@ -197,24 +213,6 @@ Object.defineProperty(Sound.prototype, 'volume', {
         if(this._data && this._data.volume !== undefined) {
             this._data.volume = value;
         }
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'playing', {
-    get: function() {
-        return this._source ? this._source.playing : false;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'paused', {
-    get: function() {
-        return this._source ? this._source.paused : false;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'node', {
-    get: function() {
-        return this._node;
     }
 });
 

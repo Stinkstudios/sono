@@ -11,6 +11,8 @@ var click = Sono.sound(clickSoundData);
 var click = Sono.sound(clickSoundData, 'click'); // with id
 var click = Sono.sound(['audio/click.ogg', 'audio/click.mp3']); // load
 
+var osc = Sono.oscillator('sine');
+
 click.play();
 ```
 

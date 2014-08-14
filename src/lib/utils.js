@@ -6,6 +6,12 @@
     }
 
     return {
+        isAudioBuffer: function(data) {
+            return !!(data && window.AudioBuffer && data instanceof window.AudioBuffer);
+        },
+        isMediaElement: function(data) {
+            return !!(data && window.HTMLMediaElement && data instanceof window.HTMLMediaElement);
+        },
         fade: function(gainNode, value, duration) {
             gainNode.gain.linearRampToValueAtTime(value, context.currentTime + duration);
         },

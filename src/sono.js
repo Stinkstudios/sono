@@ -1,31 +1,26 @@
 'use strict';
 
 var Loader = require('./lib/loader.js'),
-    nodeFactory = require('./lib/node-factory.js'),
     NodeManager = require('./lib/node-manager.js'),
     Sound = require('./lib/sound.js'),
-    support = require('./lib/support.js'),
+    Support = require('./lib/support.js'),
     Utils = require('./lib/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.0';
 
-    this.context = this.createAudioContext();
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    this._context = window.AudioContext ? new window.AudioContext() : null;
 
-    this._masterGain = this.create.gain();
-
-    /*if(this.context) {
-        this._masterGain.connect(this.context.destination);
-    }*/
-
-    this._node = new NodeManager();
-    if(this.context) {
+    this._node = new NodeManager(this._context);
+    this._masterGain = this._node.gain();
+    if(this._context) {
         this._node.setSource(this._masterGain);
-        this._node.setDestination(this.context.destination);
+        this._node.setDestination(this._context.destination);
     }
 
     this._sounds = [];
-    this._support = support;
+    this._support = new Support();
 
     this.handleTouchlock();
     this.handleVisibility();
@@ -33,19 +28,16 @@ function Sono() {
 }
 
 /*
- * add - data can be element, arraybuffer or as yet null/undefined
+ * Create / Add Sounds
  */
 
+// sound - param data (can be HTMLMediaElement, ArrayBuffer or undefined)
 Sono.prototype.sound = function(data) {
-    // try to load if url is put into add?
-    var isAudioBuffer = data && window.AudioBuffer && data instanceof window.AudioBuffer;
-    var isMediaElement = data && data instanceof window.HTMLMediaElement;
-    if(data && !isAudioBuffer && !isMediaElement) {
-        var s = this.load(data);
-        return s;
+    // try to load if data exists and not buffer or media el
+    if(data && !Utils.isAudioBuffer(data) && !Utils.isMediaElement(data)) {
+        return this.load(data);
     }
-    var sound = new Sound(this.context, data, this._masterGain);
-    sound.id = this._createId();
+    var sound = new Sound(this._context, data, this._masterGain);
     this._sounds.push(sound);
     return sound;
 };
@@ -57,16 +49,20 @@ Sono.prototype.oscillator = function(type) {
 };
 
 Sono.prototype.microphone = function(stream) {
-    var sound = this.sound(null, id);
+    var sound = this.sound();
     sound.microphone(stream);
     return sound;
 };
 
 Sono.prototype.script = function(bufferSize, channels, callback, thisArg) {
-    var sound = this.sound(null, id);
+    var sound = this.sound();
     sound.script(bufferSize, channels, callback, thisArg);
     return sound;
 };
+
+/*
+ * Retrieve Sound (by instance or id)
+ */
 
 Sono.prototype.get = function(soundOrId) {
     for (var i = 0, l = this._sounds.length; i < l; i++) {
@@ -75,14 +71,6 @@ Sono.prototype.get = function(soundOrId) {
         }
     }
     return null;
-};
-
-Sono.prototype._createId = function() {
-    if(this._id === undefined) {
-        this._id = 0;
-    }
-    this._id++;
-    return this._id.toString(10);
 };
 
 /*
@@ -118,13 +106,13 @@ Sono.prototype.queue = function(url, asMediaElement) {
         this._initLoader();
     }
 
-    url = support.getSupportedFile(url);
+    url = this._support.getSupportedFile(url);
 
     var sound = this.sound();
 
     sound.loader = this._loader.add(url);
     sound.loader.onBeforeComplete.addOnce(function(buffer) {
-        sound.add(buffer);
+        sound.setData(buffer);
     });
 
     if(asMediaElement) {
@@ -159,7 +147,7 @@ Sono.prototype.loadMultiple = function(config, complete, progress, thisArg, asMe
 Sono.prototype._initLoader = function() {
     this._loader = new Loader();
     this._loader.touchLocked = this._isTouchLocked;
-    this._loader.webAudioContext = this.context;
+    this._loader.webAudioContext = this._context;
     this._loader.crossOrigin = true;
 };
 
@@ -243,19 +231,6 @@ Sono.prototype.destroy = function(soundOrId) {
 };
 
 /*
- * Audio context
- */
-
-Sono.prototype.createAudioContext = function() {
-    var context = null;
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    if(window.AudioContext) {
-        context = new window.AudioContext();
-    }
-    return context;
-};
-
-/*
  * Mobile touch lock
  */
 
@@ -296,13 +271,16 @@ Sono.prototype.handleVisibility = function() {
     if (typeof document.hidden !== 'undefined') {
         hidden = 'hidden';
         visibilityChange = 'visibilitychange';
-    } else if (typeof document.mozHidden !== 'undefined') {
+    }
+    else if (typeof document.mozHidden !== 'undefined') {
         hidden = 'mozHidden';
         visibilityChange = 'mozvisibilitychange';
-    } else if (typeof document.msHidden !== 'undefined') {
+    }
+    else if (typeof document.msHidden !== 'undefined') {
         hidden = 'msHidden';
         visibilityChange = 'msvisibilitychange';
-    } else if (typeof document.webkitHidden !== 'undefined') {
+    }
+    else if (typeof document.webkitHidden !== 'undefined') {
         hidden = 'webkitHidden';
         visibilityChange = 'webkitvisibilitychange';
     }
@@ -341,7 +319,7 @@ Sono.prototype.handleVisibility = function() {
 };
 
 /*
- * Log device support info
+ * Log version & device support info
  */
 
 Sono.prototype.log = function(colorFull) {
@@ -374,21 +352,60 @@ Sono.prototype.log = function(colorFull) {
  * Getters & Setters
  */
 
-Object.defineProperty(Sono.prototype, 'isSupported', {
-    get: function() {
-        return this._support.extensions.length > 0;
-    }
-});
-
 Object.defineProperty(Sono.prototype, 'canPlay', {
     get: function() {
         return this._support.canPlay;
     }
 });
 
+Object.defineProperty(Sono.prototype, 'context', {
+    get: function() {
+        return this._context;
+    }
+});
+
 Object.defineProperty(Sono.prototype, 'hasWebAudio', {
     get: function() {
-        return !!this.context;
+        return !!this._context;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'isSupported', {
+    get: function() {
+        return this._support.extensions.length > 0;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'loader', {
+    get: function() {
+        return this._loader;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'masterGain', {
+    get: function() {
+        return this._masterGain;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'node', {
+    get: function() {
+        return this._node;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'sounds', {
+    get: function() {
+        return this._sounds;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'utils', {
+    get: function() {
+        if(!this._utils) {
+            this._utils = new Utils(this._context);
+        }
+        return this._utils;
     }
 });
 
@@ -406,42 +423,6 @@ Object.defineProperty(Sono.prototype, 'volume', {
                 this._sounds[i].volume = value;
             }
         }
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'sounds', {
-    get: function() {
-        return this._sounds;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'create', {
-    get: function() {
-        if(!this._nodeFactory) {
-            this._nodeFactory = nodeFactory(this.context);
-        }
-        return this._nodeFactory;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'utils', {
-    get: function() {
-        if(!this._utils) {
-            this._utils = new Utils(this.context);
-        }
-        return this._utils;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'loader', {
-    get: function() {
-        return this._loader;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'node', {
-    get: function() {
-        return this._node;
     }
 });
 
