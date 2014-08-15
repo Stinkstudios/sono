@@ -21,8 +21,10 @@ function Sound(context, data, destination) {
     this._node = new NodeManager(this._context);
     this._gain = this._node.gain();
     if(this._context) {
-        this._node.setSource(this._gain);
-        this._node.setDestination(destination || this._context.destination);
+        //this._node.setSource(this._gain);
+        //this._node.setDestination(destination || this._context.destination);
+        this._node.setDestination(this._gain);
+        this._gain.connect(destination || this._context.destination);
     }
 
     this.setData(data);

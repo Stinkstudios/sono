@@ -161,6 +161,16 @@
             }
             return curve;
         },
+        timeCode: function(seconds, delim) {
+            if(delim === undefined) { delim = ':'; }
+            var h = Math.floor(seconds / 3600);
+            var m = Math.floor((seconds % 3600) / 60);
+            var s = Math.floor((seconds % 3600) % 60);
+            var hr = (h === 0 ? '' : (h < 10 ? '0' + h + delim : h + delim));
+            var mn = (m < 10 ? '0' + m : m) + delim;
+            var sc = (s < 10 ? '0' + s : s);
+            return hr + mn + sc;
+        },
         waveformData: function(buffer, length) {
             console.log('-------------------');
             console.time('waveformData');
@@ -226,16 +236,6 @@
             context.stroke();
             console.timeEnd('waveformCanvas');
             return canvas;
-        },
-        timeCode: function(seconds, delim) {
-            if(delim === undefined) { delim = ':'; }
-            var h = Math.floor(seconds / 3600);
-            var m = Math.floor((seconds % 3600) / 60);
-            var s = Math.floor((seconds % 3600) % 60);
-            var hr = (h === 0 ? '' : (h < 10 ? '0' + h + delim : h + delim));
-            var mn = (m < 10 ? '0' + m : m) + delim;
-            var sc = (s < 10 ? '0' + s : s);
-            return hr + mn + sc;
         }
     };
 }

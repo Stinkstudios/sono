@@ -33,7 +33,7 @@ NodeManager.prototype.remove = function(node) {
     }
     node.disconnect();
     this._updateConnections();
-    return this;
+    return node;
 };
 
 NodeManager.prototype.removeAll = function() {
@@ -141,42 +141,69 @@ NodeManager.prototype._updateConnections = function() {
     this.connectTo(this._context.destination);
 };*/
 
-
-NodeManager.prototype.gain = function(value) {
-    if(!this._context) {
-        var fn = function(){};
-        return {gain:{value: 1}, connect:fn, disconnect:fn};
-    }
-    var node = this._context.createGain();
-    if(value !== undefined) {
-        node.gain.value = value;
-    }
+NodeManager.prototype.analyser = function(fftSize) {
+    fftSize = fftSize || 1024;
+    var node = this._context.createAnalyser();
+    node.smoothingTimeConstant = 0.85;
+    // resolution fftSize: 32 - 2048 (pow 2)
+    // frequencyBinCount will be half this value
+    node.fftSize = fftSize;
+    //node.minDecibels = -100;
+    //node.maxDecibels = -30;
     return this.add(node);
 };
 
-NodeManager.prototype.panner = function() {
-    var node = this._context.createPanner();
-    // Default for stereo is HRTF
-    node.panningModel = 'HRTF'; // 'equalpower'
+NodeManager.prototype.compressor = function() {
+    // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
+    var node = this._context.createDynamicsCompressor();
+    // min decibels to start compressing at from -100 to 0
+    node.threshold.value = -24;
+    // decibel value to start curve to compressed value from 0 to 40
+    node.knee.value = 30;
+    // amount of change per decibel from 1 to 20
+    node.ratio.value = 12;
+    // gain reduction currently applied by compressor from -20 to 0
+    // node.reduction.value
+    // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
+    node.attack.value = 0.0003;
+    // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
+    node.release.value = 0.25;
+    return this.add(node);
+};
 
-    // Distance model and attributes
-    node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
-    node.refDistance = 1;
-    node.maxDistance = 1000;
-    node.rolloffFactor = 1;
+NodeManager.prototype.convolver = function(impulseResponse) {
+    // impulseResponse is an audio file buffer
+    var node = this._context.createConvolver();
+    node.buffer = impulseResponse;
+    return this.add(node);
+};
 
-    // Uses a 3D cartesian coordinate system
-    // node.setPosition(0, 0, 0);
-    // node.setOrientation(1, 0, 0);
-    // node.setVelocity(0, 0, 0);
+NodeManager.prototype.delay = function(input, time, gain) {
+    var delayNode = this._context.createDelay();
+    var gainNode = this._context.createGain();
+    gainNode.gain.value = gain || 0.5;
+    if(time !== undefined) {
+        delayNode.delayTime.value = time;
+    }
+    delayNode.connect(gainNode);
+    if(input) {
+        input.connect(delayNode);
+        gainNode.connect(input);
+    }
+    return delayNode;
+    // ?
+    /*return {
+      delayNode: delayNode,
+      gainNode: gainNode
+    };*/
+};
 
-    // Directional sound cone - The cone angles are in degrees and run from 0 to 360
-    // node.coneInnerAngle = 360;
-    // node.coneOuterAngle = 360;
-    // node.coneOuterGain = 0;
-
-    // normalised vec
-    // node.setOrientation(vec.x, vec.y, vec.z);
+NodeManager.prototype.distortion = function() {
+    var node = this._context.createWaveShaper();
+    // Float32Array defining curve (values are interpolated)
+    //node.curve
+    // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
+    //node.oversample = '2x';
     return this.add(node);
 };
 
@@ -214,39 +241,46 @@ NodeManager.prototype.allpass = function(frequency) {
     return this.filter('allpass', frequency);
 };
 
-NodeManager.prototype.delay = function(input, time, gain) {
-    var delayNode = this._context.createDelay();
-    var gainNode = this.gain(gain || 0.5);
-    if(time !== undefined) {
-        delayNode.delayTime.value = time;
+NodeManager.prototype.gain = function(value) {
+    if(!this._context) {
+        var fn = function(){};
+        return {gain:{value: 1}, connect:fn, disconnect:fn};
     }
-    delayNode.connect(gainNode);
-    if(input) {
-        input.connect(delayNode);
-        gainNode.connect(input);
+    var node = this._context.createGain();
+    if(value !== undefined) {
+        node.gain.value = value;
     }
-    return delayNode;
-    // ?
-    /*return {
-      delayNode: delayNode,
-      gainNode: gainNode
-    };*/
+    return node;
 };
 
-NodeManager.prototype.convolver = function(impulseResponse) {
-    // impulseResponse is an audio file buffer
-    var node = this._context.createConvolver();
-    node.buffer = impulseResponse;
+NodeManager.prototype.panner = function() {
+    var node = this._context.createPanner();
+    // Default for stereo is HRTF
+    node.panningModel = 'HRTF'; // 'equalpower'
+
+    // Distance model and attributes
+    node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
+    node.refDistance = 1;
+    node.maxDistance = 1000;
+    node.rolloffFactor = 1;
+
+    // Uses a 3D cartesian coordinate system
+    // node.setPosition(0, 0, 0);
+    // node.setOrientation(1, 0, 0);
+    // node.setVelocity(0, 0, 0);
+
+    // Directional sound cone - The cone angles are in degrees and run from 0 to 360
+    // node.coneInnerAngle = 360;
+    // node.coneOuterAngle = 360;
+    // node.coneOuterGain = 0;
+
+    // normalised vec
+    // node.setOrientation(vec.x, vec.y, vec.z);
     return this.add(node);
 };
 
-NodeManager.prototype.reverb = function(seconds, decay, reverse) {
-   return this.convolver(this.impulseResponse(seconds, decay, reverse));
-};
-
-// TODO: should prob be moved to utils:
-NodeManager.prototype.impulseResponse = function(seconds, decay, reverse) {
-    // generate a reverb effect
+NodeManager.prototype.reverb = function(seconds, decay, reverse, node) {
+    // TODO: should prob be moved to utils:
     seconds = seconds || 1;
     decay = decay || 5;
     reverse = !!reverse;
@@ -264,47 +298,13 @@ NodeManager.prototype.impulseResponse = function(seconds, decay, reverse) {
         left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
         right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
     }
-
-    return impulseResponse;
-};
-
-NodeManager.prototype.analyser = function(fftSize) {
-    fftSize = fftSize || 1024;
-    var node = this._context.createAnalyser();
-    node.smoothingTimeConstant = 0.85;
-    // resolution fftSize: 32 - 2048 (pow 2)
-    // frequencyBinCount will be half this value
-    node.fftSize = fftSize;
-    //node.minDecibels = -100;
-    //node.maxDecibels = -30;
-    return this.add(node);
-};
-
-NodeManager.prototype.compressor = function() {
-    // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
-    var node = this._context.createDynamicsCompressor();
-    // min decibels to start compressing at from -100 to 0
-    node.threshold.value = -24;
-    // decibel value to start curve to compressed value from 0 to 40
-    node.knee.value = 30;
-    // amount of change per decibel from 1 to 20
-    node.ratio.value = 12;
-    // gain reduction currently applied by compressor from -20 to 0
-    // node.reduction.value
-    // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
-    node.attack.value = 0.0003;
-    // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
-    node.release.value = 0.25;
-    return this.add(node);
-};
-
-NodeManager.prototype.distortion = function() {
-    var node = this._context.createWaveShaper();
-    // Float32Array defining curve (values are interpolated)
-    //node.curve
-    // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
-    //node.oversample = '2x';
-    return this.add(node);
+    if(node) {
+        node.buffer = impulseResponse;
+    }
+    else {
+        return this.convolver(impulseResponse);
+    }
+    return node;
 };
 
 NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outputChannels, callback, callbackContext) {

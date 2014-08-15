@@ -1,187 +1,161 @@
 # Sono
 
-A JavaScript library for managing sound in the browser.
-
-[Sono.add](docs/Sono.md#add)
-
-[Sono.load](docs/Sono.md#load)
-
+A JavaScript library for working with audio. WebAudio API with fallback to HTMLMediaElement.
 
 ### TODO
 
 * Try moving loader into sound - see if it simplifies things
-* Refactor 'Web Audio Demos' project to use Sono
+* ~~Refactor 'Web Audio Demos' project to use Sono~~
 * Bring in microphone code
 * Channel split/merge
-* Add nodes to main output - maybe moving node manager into module
+* ~~Add nodes to main output - maybe moving node manager into module~~
 
+## Installation
 
-### Current WIP API
+* npm: ```npm install sono --save-dev```
+* bower: ```bower install sono --save```
 
-var Sono = require('Sono');
+## Usage
 
+### Load and play:
+```javascript
+// Sono will load the first file in the array compatible with the browser
+var sound = Sono.sound(['audio/foo.ogg', 'audio/foo.mp3']).play();
+```
 
-#### main api
+### Reverb:
+```javascript
+var sound = Sono.sound(['audio/foo.ogg', 'audio/foo.mp3']);
+sound.play();
+// apply reverb to specific sound:
+var reverb = sound.node.reverb(2, 0.5);
+// apply reverb to all sounds:
+var reverb = Sono.node.reverb(2, 0.5);
+```
 
-Sono.context // the WebAudio context
+## Api
 
-Sono.VERSION // current version
+### Create / Add Sound
 
-##### add / get sounds:
+[Sono.sound(data)](docs/Sono.md#sound) // returns Sound
 
-Sono.sound(data, id) // return Sound obj with optional id
+[Sono.oscillator(type)](docs/Sono.md#oscillator) // returns Sound
 
-Sono.get(id) // returns a Sound
+[Sono.microphone(stream)](docs/Sono.md#microphone) // returns Sound
 
-[internal] Sono.createId // returns a unique id
+[Sono.script(bufferSize, channels, callback, thisArg)](docs/Sono.md#script) // returns Sound
 
-* var sound = Sono.get('someKey');
-* sound.play()
-* Sono.get('someKey').play()
+### Retrieve Sound (by instance or id)
 
-##### controls:
+[Sono.get(soundOrId)](docs/Sono.md#get) // returns Sound
 
-Sono.mute() // master
+### Controls
 
-Sono.unMute() // master
+[Sono.mute()](docs/Sono.md#mute) // mutes master volume
 
-Sono.pauseAll() // all currently playing
+[Sono.unMute()](docs/Sono.md#unmute) // un-mutes master volume
 
-Sono.resumeAll() // all currently paused
+[Sono.volume](docs/Sono.md#volume) // get/set master volume
 
-Sono.stopAll() // all
+[Sono.pauseAll()](docs/Sono.md#pauseall) // pause all currently playing
 
-Sono.play(id) // individual sound
+[Sono.resumeAll()](docs/Sono.md#resumeall) // resume all currently paused
 
-Sono.pause(id) // individual sound
+[Sono.stopAll()](docs/Sono.md#stopall) // stop all currentlt playing or paused
 
-Sono.stop(id) // individual sound
+[Sono.play(id, delay, offset)](docs/Sono.md#play) // play sound by id
 
-##### loading:
+[Sono.pause(id)](docs/Sono.md#pause) // pause sound by id
 
-[internal] Sono.initLoader()
+[Sono.stop(id)](docs/Sono.md#stop) // stop sound by id
 
-Sono.load(url, callback, callbackContext, asMediaElement) returns sound obj
+### Destroy
 
-* Sono.load('audio/foo.ogg', onSoundLoaded, this, true); // loads this file
-* Sono.load(['audio/foo.ogg', 'audio/foo.mp3']); // loads first one that works
-* Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play(); // plays sound when loaded
+[Sono.destroy(soundOrId)](docs/Sono.md#destroy) // destroy sound instance or by id
 
-Sono.loadArrayBuffer(url, callback, callbackContext) // load as array buffer
+### Getters
 
-Sono.loadAudioElement(url, callback, callbackContext) // load as html audio el
+[Sono.canPlay](docs/Sono.md#canplay) // returns audio file support info
 
-Sono.destroy(soundOrId) // remove, stop and cancel if still loading (should it be called remove?)
+[Sono.context](docs/Sono.md#context) // returns WebAudioContext instance
 
-##### set up / detection (should these be in utils module?):
+[Sono.hasWebAudio](docs/Sono.md#haswebaudio) // returns boolean
 
-[internal]?? Sono.createAudioContext()
+[Sono.isSupported](docs/Sono.md#issupported) // returns boolean
 
-[internal]?? Sono.getSupportedFile(fileNames) // accepts single string, array or object and attempts to return best supported file
+[Sono.masterGain](docs/Sono.md#mastergain) // returns GainNode
 
-* Sono.getSupportedFile(['audio/foo.ogg', 'audio/foo.mp3'])
-* Sono.getSupportedFile({ foo: 'audio/foo.ogg', bar: 'audio/foo.mp3'})
-* Sono.getSupportedFile('audio/foo') // adds first detected extension (.ogg, .mp3, etc)
-* Sono.getSupportedFile('audio/foo.ogg')
+[Sono.node](docs/Sono.md#node) // returns node manager module
 
-[internal]?? Sono.getExtension(fileName)
+[Sono.sounds](docs/Sono.md#sounds) // returns array
 
-[internal]?? Sono.getSupportedExtensions()
+[Sono.utils](docs/Sono.md#utils) // returns utils module
 
-##### handle mobile device touch lock:
 
-[internal]?? Sono.handleTouchlock()
 
-##### pause/resume on page visibility change:
+### Sono.node (node manager module)
 
-[internal]?? Sono.handleVisibility()
+Sono.node.add
 
-##### logs info about Sono version and current browser (utils?):
+Sono.node.remove
 
-Sono.log()
+Sono.node.removeAll
 
-##### get support info:
+Sono.node.analyser(fftSize)
 
-get Sono.isSupported // is audio supported at all?
+Sono.node.compressor()
 
-get Sono.hasWebAudio // is WebAudio supported?
+Sono.node.convolver(impulseResponse)
 
-##### volume:
+Sono.node.delay(input, time, gain)
 
-get/set Sono.volume
+Sono.node.distortion()
 
-##### getter to access sounds hash:
+Sono.node.filer(type, frequency)
 
-get Sono.sounds
+Sono.node.lowpass(frequency)
 
-##### getter to access node factory:
+Sono.node.highpass(frequency)
 
-get Sono.create
+Sono.node.bandpass(frequency)
 
-##### getter to access loader:
+Sono.node.lowshelf(frequency)
 
-get Sono.loader
+Sono.node.highshelf(frequency)
 
-##### getter to access utils:
+Sono.node.peaking(frequency)
 
-get Sono.utils
+Sono.node.notch(frequency)
 
+Sono.node.allpass(frequency)
 
-#### Sono.create (node factory module)
+Sono.node.gain(value)
 
-Sono.create.gain(value)
+Sono.node.pan()
 
-Sono.create.pan()
+Sono.node.reverb(seconds, decay, reverse)
 
-Sono.create.filter.lowpass(frequency)
+Sono.node.scriptProcessor(bufferSize, inputChannels, outputChannels, callback, callbackContext)
 
-Sono.create.filter.highpass(frequency)
 
-Sono.create.filter.bandpass(frequency)
-
-Sono.create.filter.lowshelf(frequency)
-
-Sono.create.filter.highshelf(frequency)
-
-Sono.create.filter.peaking(frequency)
-
-Sono.create.filter.notch(frequency)
-
-Sono.create.filter.allpass(frequency)
-
-Sono.create.delay(input, time, gain)
-
-Sono.create.convolver(impulseResponse)
-
-Sono.create.reverb(seconds, decay, reverse)
-
-Sono.create.impulseResponse(seconds, decay, reverse)
-
-Sono.create.analyser(fftSize)
-
-Sono.create.compressor()
-
-Sono.create.distortion()
-
-Sono.create.scriptProcessor(bufferSize, inputChannels, outputChannels, callback, callbackContext)
-
-#### Sono.utils (helper utils module)
+### Sono.utils (helper utils module)
 
 Sono.utils.fade(gainNode, value, duration)
 
-NOTE: should pan stuff be moed into pan module? (i.e. Sono.utils.pan() returns pan module?)
+Sono.utils.pan(panner)
 
-Sono.utils.panX(panner, value)
+pan.x(value)
 
-Sono.utils.pan(panner, x, y, z)
+pan.xyz(x, y, z)
 
-Sono.utils.setSourcePosition(panner, positionVec)
+pan.setSourcePosition(panner, positionVec)
 
-Sono.utils.setSourceOrientation(panner, forwardVec) // forwardVec = THREE.Vector3
+pan.setSourceOrientation(forwardVec)
 
-Sono.utils.setListenerPosition(positionVec)
+pan.setListenerPosition(positionVec)
 
-Sono.utils.setListenerOrientation(forwardVec) // forwardVec = THREE.Vector3
+pan.setListenerOrientation(forwardVec)
+
 
 Sono.utils.doppler(panner, x, y, z, deltaX, deltaY, deltaZ, deltaTime)
 
@@ -193,14 +167,27 @@ Sono.utils.createMicrophoneSource(stream, connectTo) // should prob go into .cre
 
 Sono.utils.distort(value)
 
-Sono.utils.waveform(buffer, length) // returns an array of amplitudes
+Sono.utils.timeCode(seconds, delim) // eg: 02:15 or 01:25:30
 
-#### Sono.loader (loader module)
+Sono.utils.waveformData(buffer, length) // returns an array of amplitudes
 
-Sono.loader
+Sono.utils.waveformCanvas(arr, height, color, bgColor, canvasEl)
 
 
 
-## Notes
 
-Inconsistencies:
+
+## Dev setup
+
+To install dependencies:
+
+```
+$ npm install
+```
+
+To run tests:
+
+```
+$ npm install -g karma-cli
+$ karma start
+```

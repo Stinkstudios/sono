@@ -28,7 +28,7 @@ function Sono() {
 }
 
 /*
- * Create / Add Sounds
+ * Create / Add Sound
  */
 
 // sound - param data (can be HTMLMediaElement, ArrayBuffer or undefined)
@@ -172,6 +172,23 @@ Sono.prototype.unMute = function() {
     this.volume = this._preMuteVolume || 1;
 };
 
+Object.defineProperty(Sono.prototype, 'volume', {
+    get: function() {
+        return this._masterGain.gain.value;
+    },
+    set: function(value) {
+        if(isNaN(value)) { return; }
+
+        this._masterGain.gain.value = value;
+
+        if(!this.hasWebAudio) {
+            for (var i = 0, l = this._sounds.length; i < l; i++) {
+                this._sounds[i].volume = value;
+            }
+        }
+    }
+});
+
 Sono.prototype.pauseAll = function() {
     for (var i = 0, l = this._sounds.length; i < l; i++) {
         if(this._sounds[i].playing) {
@@ -225,7 +242,7 @@ Sono.prototype.destroy = function(soundOrId) {
             sound.loader.cancel();
         }
         try {
-            sound.stop();    
+            sound.stop();
         } catch(e) {}
     }
 };
@@ -406,23 +423,6 @@ Object.defineProperty(Sono.prototype, 'utils', {
             this._utils = new Utils(this._context);
         }
         return this._utils;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'volume', {
-    get: function() {
-        return this._masterGain.gain.value;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-
-        this._masterGain.gain.value = value;
-
-        if(!this.hasWebAudio) {
-            for (var i = 0, l = this._sounds.length; i < l; i++) {
-                this._sounds[i].volume = value;
-            }
-        }
     }
 });
 

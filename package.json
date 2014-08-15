@@ -1,7 +1,7 @@
 {
   "name": "sono",
   "version": "0.0.0",
-  "description": "A small library for managing sound in the browser.",
+  "description": "A JavaScript library for working with audio. WebAudio API with fallback to HTMLMediaElement.",
   "keywords": [
     "WebAudio",
     "audio",
