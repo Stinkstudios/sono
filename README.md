@@ -2,6 +2,8 @@
 
 A JavaScript library for working with audio. WebAudio API with fallback to HTMLMediaElement.
 
+<http://prototypes.stinkdigital.com/webaudio/sono/examples/>
+
 ### TODO
 
 * Try moving loader into sound - see if it simplifies things

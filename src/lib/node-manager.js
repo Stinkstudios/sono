@@ -1,7 +1,7 @@
 'use strict';
 
 function NodeManager(context) {
-    this._context = context;
+    this._context = context || this.createFakeContext();
     this._destination = null;
     this._nodeList = [];
     this._sourceNode = null;
@@ -242,10 +242,6 @@ NodeManager.prototype.allpass = function(frequency) {
 };
 
 NodeManager.prototype.gain = function(value) {
-    if(!this._context) {
-        var fn = function(){};
-        return {gain:{value: 1}, connect:fn, disconnect:fn};
-    }
     var node = this._context.createGain();
     if(value !== undefined) {
         node.gain.value = value;
@@ -332,6 +328,64 @@ NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outp
         callback.call(callbackContext || this, event);
     };
     return this.add(node);
+};
+
+NodeManager.prototype.createFakeContext = function() {
+    var fn = function(){};
+    var param = { value: 1 };
+    var fakeNode = {
+        connect:fn,
+        disconnect:fn,
+        // gain
+        gain:{value: 1},
+        // panner
+        panningModel: 0,
+        setPosition: fn,
+        setOrientation: fn,
+        setVelocity: fn,
+        distanceModel: 0,
+        refDistance: 0,
+        maxDistance: 0,
+        rolloffFactor: 0,
+        coneInnerAngle: 360,
+        coneOuterAngle: 360,
+        coneOuterGain: 0,
+        // filter:
+        type:0,
+        frequency: param,
+        // delay
+        delayTime: param,
+        // convolver
+        buffer: 0,
+        // analyser
+        smoothingTimeConstant: 0,
+        fftSize: 0,
+        minDecibels: 0,
+        maxDecibels: 0,
+        // compressor
+        threshold: param,
+        knee: param,
+        ratio: param,
+        attack: param,
+        release: param,
+        // distortion
+        oversample: 0,
+        curve: 0
+    };
+    var returnFakeNode = function(){ return fakeNode; };
+    return {
+        createAnalyser: returnFakeNode,
+        createBiquadFilter: returnFakeNode,
+        createDynamicsCompressor: returnFakeNode,
+        createConvolver: returnFakeNode,
+        createDelay: returnFakeNode,
+        createGain: function() {
+            return {gain:{value: 1}, connect:fn, disconnect:fn};
+        },
+        createPanner: returnFakeNode,
+        createScriptProcessor: returnFakeNode,
+        createWaveShaper: returnFakeNode
+    };
 };
 
 /*

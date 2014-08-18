@@ -34,6 +34,11 @@ function Sono() {
 // createSound - param data (can be HTMLMediaElement, ArrayBuffer or undefined)
 Sono.prototype.createSound = function(data) {
 
+    /*{
+        source: 'oscillator',
+        type: 'sine'
+    }*/
+
     // try to load if data exists and not buffer or media el
     if(data && !this.utils.isAudioBuffer(data) && !this.utils.isMediaElement(data)) {
         return this.load(data);
