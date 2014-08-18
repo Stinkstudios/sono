@@ -13,7 +13,7 @@ describe('Sono playback', function() {
 
     beforeEach(function(done) {
         //load = function(url, callback, callbackContext, asBuffer)
-        Sono.loadArrayBuffer(files, function(loadedSound) {
+        Sono.load(files, function(loadedSound) {
             sound = loadedSound;
             sound.onEnded(function() {
                 ended = true;

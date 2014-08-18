@@ -315,6 +315,8 @@ body {
 
 .Player-controls {
   border-top: 1px solid #ccc;
+  font-size: 1rem;
+  line-height: 14px;
   padding-top: 8px;
 }
 
@@ -334,9 +336,17 @@ body {
   outline: 0;
 }
 
+.Player-slider {
+  display: inline-block;
+  font-size: 1rem;
+  margin-left: 20px;
+}
+
+.Player-pan,
 .Player-volume {
-  margin-left: 30px;
-  width: 200px;
+  display: inline-block;
+  width: 80px;
+  margin: 2px;
   vertical-align: middle;
 }
 

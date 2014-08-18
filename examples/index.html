@@ -45,7 +45,12 @@
         </div>
         <div class="Player-controls">
             <button class="Player-button">PLAY</button>
-            <input class="Player-volume" type="range" min="0" max="100" value="100" />
+            <div class="Player-slider">
+                <span>0</span><input class="Player-volume" type="range" min="0" max="100" value="100" /><span>1</span>
+            </div>
+            <div class="Player-slider">
+                <span>L</span><input class="Player-pan" type="range" min="-100" max="100" value="0" /><span>R</span>
+            </div>
             <div class="Player-info"></div>
         </div>
     </div>
@@ -61,7 +66,12 @@
         </div>
         <div class="Player-controls">
             <button class="Player-button">PLAY</button>
-            <input class="Player-volume" type="range" min="0" max="100" value="100" />
+            <div class="Player-slider">
+                <span>0</span><input class="Player-volume" type="range" min="0" max="100" value="100" /><span>1</span>
+            </div>
+            <div class="Player-slider">
+                <span>L</span><input class="Player-pan" type="range" min="-100" max="100" value="0" /><span>R</span>
+            </div>
             <div class="Player-info"></div>
         </div>
     </div>
@@ -124,7 +134,8 @@
                 //Sono.node.delay(delay, 2, 0.2)
 
                 //var delay = Sono.node.delay(Sono.masterGain, 0.5, 0.5);
-                var delay = a.node.delay(a.gain, 0.5, 0.5);
+                var delay = a.node.delay(a.gain, 0.2, 0.5);
+                //var reverb = a.node.reverb(0.5, 0.5);
                 //delay.disconnect();
 
                 //Sono.node.reverb(4, 10);
@@ -136,14 +147,15 @@
 
             function Player(sound, selector) {
 
-                var view = document.querySelector(selector);
-                var waveform = view.querySelector('.Player-waveform');
-                var waveformBack = view.querySelector('.js-waveform-back');
-                var waveformFront = view.querySelector('.js-waveform-front');
-                var waveformProgress = view.querySelector('.js-waveform-progress');
-                var button = view.querySelector('.Player-button');
-                var volumeSlider = view.querySelector('.Player-volume');
-                var info = view.querySelector('.Player-info');
+                var view = document.querySelector(selector),
+                    waveform = view.querySelector('.Player-waveform'),
+                    waveformBack = view.querySelector('.js-waveform-back'),
+                    waveformFront = view.querySelector('.js-waveform-front'),
+                    waveformProgress = view.querySelector('.js-waveform-progress'),
+                    button = view.querySelector('.Player-button'),
+                    volumeSlider = view.querySelector('.Player-volume'),
+                    panSlider = view.querySelector('.Player-pan'),
+                    info = view.querySelector('.Player-info');
 
                 // update time and waveform
                 function update() {
@@ -181,12 +193,20 @@
                     sound.volume = this.value / 100;
                 });
 
+                var panner = sound.node.panner();
+                var pan = Sono.utils.pan(panner);
+
+                // pan slider
+                panSlider.addEventListener('change', function() {
+                    pan.x(this.value / 100);
+                });
+
                 // waveform display
-                var waveformData = Sono.utils.waveformData(sound._data, waveformBack.width);
+                var wave = Sono.utils.waveform(sound._data, waveformBack.width);
                 var height = waveformBack.height;
-                Sono.utils.waveformCanvas(waveformData, height, '#333333', '#dddddd', waveformBack);
+                wave.getCanvas(height, '#333333', '#dddddd', waveformBack);
                 //Sono.utils.waveformCanvas(waveformData, height, '#00ffff', '#444444', waveformFront);
-                Sono.utils.waveformCanvas(waveformData, height, '#dddddd', '#333333', waveformFront);
+                wave.getCanvas(height, '#dddddd', '#333333', waveformFront);
 
                 // click waveform to seek
                 waveform.addEventListener('click', function(event) {

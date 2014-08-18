@@ -51,9 +51,7 @@ describe('Sono API', function() {
     it('should have expected members (loading)', function() {
         expect(Sono._initLoader).to.be.a('function');
         expect(Sono.load).to.be.a('function');
-        expect(Sono.load.length).to.eql(4);
-        expect(Sono.loadArrayBuffer).to.be.a('function');
-        expect(Sono.loadAudioElement).to.be.a('function');
+        expect(Sono.load.length).to.eql(5);
         var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'loader');
         expect(desc.get).to.be.a('function');
         expect(desc.set).to.not.exist;

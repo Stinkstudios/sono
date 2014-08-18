@@ -28,13 +28,13 @@ function Sono() {
 }
 
 /*
- * Create / Add Sound
+ * Create new Sound
  */
 
 // sound - param data (can be HTMLMediaElement, ArrayBuffer or undefined)
 Sono.prototype.sound = function(data) {
     // try to load if data exists and not buffer or media el
-    if(data && !Utils.isAudioBuffer(data) && !Utils.isMediaElement(data)) {
+    if(data && !this.utils.isAudioBuffer(data) && !this.utils.isMediaElement(data)) {
         return this.load(data);
     }
     var sound = new Sound(this._context, data, this._masterGain);
@@ -101,47 +101,28 @@ Sono.prototype.getById = function(id) {
  * Loading
  */
 
-Sono.prototype.load = function(url, callback, thisArg, asMediaElement) {
+Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement) {
     if(!this._loader) {
         this._initLoader();
     }
 
     // multiple
     if(url instanceof Array && url.length && typeof url[0] === 'object') {
-        this.loadMultiple(url, callback, thisArg, asMediaElement);
+        this.loadMultiple(url, complete, progress, thisArg, asMediaElement);
         return;
     }
 
-    var sound = this.queue(url, asMediaElement);
+    var sound = this._queue(url, asMediaElement);
 
-    if(callback) {
+    if(progress) {
+        sound.loader.onProgress.add(progress, thisArg || this);
+    }
+    if(complete) {
         sound.loader.onComplete.addOnce(function() {
-            callback.call(thisArg || this, sound);
+            complete.call(thisArg || this, sound);
         });
     }
-
     sound.loader.start();
-
-    return sound;
-};
-
-Sono.prototype.queue = function(url, asMediaElement) {
-    if(!this._loader) {
-        this._initLoader();
-    }
-
-    url = this._support.getSupportedFile(url);
-
-    var sound = this.sound();
-
-    sound.loader = this._loader.add(url);
-    sound.loader.onBeforeComplete.addOnce(function(buffer) {
-        sound.setData(buffer);
-    });
-
-    if(asMediaElement) {
-        sound.loader.webAudioContext = null;
-    }
 
     return sound;
 };
@@ -150,8 +131,7 @@ Sono.prototype.loadMultiple = function(config, complete, progress, thisArg, asMe
     var sounds = [];
     for (var i = 0, l = config.length; i < l; i++) {
         var file = config[i];
-
-        var sound = this.queue(file.url, asMediaElement);
+        var sound = this._queue(file.url, asMediaElement);
         if(file.id) { sound.id = file.id; }
         sounds.push(sound);
     }
@@ -175,12 +155,25 @@ Sono.prototype._initLoader = function() {
     this._loader.crossOrigin = true;
 };
 
-Sono.prototype.loadArrayBuffer = function(url, callback, thisArg) {
-    return this.load(url, callback, thisArg, false);
-};
+Sono.prototype._queue = function(url, asMediaElement) {
+    if(!this._loader) {
+        this._initLoader();
+    }
 
-Sono.prototype.loadAudioElement = function(url, callback, thisArg) {
-    return this.load(url, callback, thisArg, true);
+    url = this._support.getSupportedFile(url);
+
+    var sound = this.sound();
+
+    sound.loader = this._loader.add(url);
+    sound.loader.onBeforeComplete.addOnce(function(buffer) {
+        sound.setData(buffer);
+    });
+
+    if(asMediaElement) {
+        sound.loader.webAudioContext = null;
+    }
+
+    return sound;
 };
 
 /*

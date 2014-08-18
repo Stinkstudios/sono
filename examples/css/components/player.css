@@ -26,6 +26,8 @@
 
 .Player-controls {
     border-top: 1px solid #ccc;
+    font-size: 1rem;
+    line-height: 14px;
     padding-top: 8px;
 }
 
@@ -45,9 +47,16 @@
     outline: 0;
 }
 
-.Player-volume {
-    margin-left: 30px;
-    width: 200px;
+.Player-slider {
+    display: inline-block;
+    font-size: 1rem;
+    margin-left: 20px;
+}
+
+.Player-volume, .Player-pan {
+    display: inline-block;
+    width: 80px;
+    margin: 2px;
     vertical-align: middle;
 }
 

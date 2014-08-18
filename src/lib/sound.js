@@ -21,8 +21,6 @@ function Sound(context, data, destination) {
     this._node = new NodeManager(this._context);
     this._gain = this._node.gain();
     if(this._context) {
-        //this._node.setSource(this._gain);
-        //this._node.setDestination(destination || this._context.destination);
         this._node.setDestination(this._gain);
         this._gain.connect(destination || this._context.destination);
     }
@@ -63,14 +61,6 @@ Sound.prototype.oscillator = function(type) {
     }.bind(this);
 
     return this;
-};
-
-Sound.prototype.setOscillatorType = function(value) {
-    this._source.type = value;
-};
-
-Sound.prototype.setOscillatorFrequency = function(value) {
-    this._source.frequency = value;
 };
 
 Sound.prototype.microphone = function(stream) {
@@ -164,6 +154,12 @@ Object.defineProperty(Sound.prototype, 'data', {
 Object.defineProperty(Sound.prototype, 'duration', {
     get: function() {
         return this._source ? this._source.duration : 0;
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'gain', {
+    get: function() {
+        return this._gain;
     }
 });
 
