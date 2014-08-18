@@ -38,13 +38,13 @@ var reverb = Sono.node.reverb(2, 0.5);
 
 ### Create / Add Sound
 
-[Sono.sound(data)](docs/Sono.md#sound) // returns Sound
+[Sono.createSound(data)](docs/Sono.md#createsound) // returns Sound
 
-[Sono.oscillator(type)](docs/Sono.md#oscillator) // returns Sound
+[Sono.createOscillator(type)](docs/Sono.md#oscillator) // returns Sound
 
-[Sono.microphone(stream)](docs/Sono.md#microphone) // returns Sound
+[Sono.createMicrophone(stream)](docs/Sono.md#microphone) // returns Sound
 
-[Sono.script(bufferSize, channels, callback, thisArg)](docs/Sono.md#script) // returns Sound
+[Sono.createScript(bufferSize, channels, callback, thisArg)](docs/Sono.md#script) // returns Sound
 
 ### Destroy
 

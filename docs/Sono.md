@@ -1,15 +1,15 @@
-## add
+## createSound
 
 Create a Sound object
 
->`Sono.sound(data, id)` returns Sound
+>`Sono.createSound(data)` returns Sound
 
 #### Examples
 
 ```javascript
-var click = Sono.sound(clickSoundData);
-var click = Sono.sound(clickSoundData, 'click'); // with id
-var click = Sono.sound(['audio/click.ogg', 'audio/click.mp3']); // load
+var click = Sono.createSound(clickSoundData);
+var click = Sono.createSound(clickSoundData);
+var click = Sono.createSound(['audio/click.ogg', 'audio/click.mp3']); // load
 
 var osc = Sono.oscillator('sine');
 
@@ -21,7 +21,7 @@ click.play();
 
 Load a sound and add to Sono
 
->`Sono.load(url, callback, thisArg, asBuffer)` returns Sound
+>`Sono.load(url, complete, progress, thisArg, asMediaElement)` returns Sound
 
 #### Examples
 
