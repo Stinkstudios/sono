@@ -7,13 +7,51 @@ Create a Sound object
 #### Examples
 
 ```javascript
-var click = Sono.createSound(clickSoundData);
-var click = Sono.createSound(clickSoundData);
-var click = Sono.createSound(['audio/click.ogg', 'audio/click.mp3']); // load
+// load
+var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = Sono.createSound('audio/foo.ogg');
 
-var osc = Sono.oscillator('sine');
+// existing MediaElement or ArrayBuffer
+var el = document.querySelector('video');
+var sound = Sono.createSound(el);
 
-click.play();
+// oscillator
+var sineWave = Sono.createSound('sine');
+
+// microphone stream
+navigator.getUserMedia({audio:true}, function(stream) {
+	var mic = Sono.createSound(stream);
+});
+
+// script processor
+var script = Sono.createSound({
+	bufferSize: 1024,
+	channels: 1,
+	callback: function(event) {
+		var output = event.outputBuffer.getChannelData(0);
+	    var l = output.length;
+	    for (var i = 0; i < l; i++) {
+	        output[i] = Math.random();
+	    }
+	}
+});
+```
+
+## destroy
+
+Remove a sound from Sono
+
+>`Sono.destroy(soundOrId)`
+
+#### Examples
+
+```javascript
+var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+sound.id = 'bar';
+
+// either will work
+Sono.destroy(sound);
+Sono.destroy('bar');
 ```
 
 
@@ -26,35 +64,36 @@ Load a sound and add to Sono
 #### Examples
 
 ```javascript
-// array
-var click = Sono.load(['audio/click.ogg', 'audio/click.mp3']); // load first file compatible with browser
+// array - load first file compatible with browser
+var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']);
 
-// hashmap
-var click = Sono.load({foo: 'audio/click.ogg', bar: 'audio/click.mp3'}); // load first file compatible with browser
+// multiple sounds
+Sono.load([
+	{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
+	{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'] }
+], function(sounds) {
+	console.log('complete:', sounds);
+	var soundA = Sono.getById('a');
+	var soundB = Sono.getById('b');
+}, function(progress) {
+	console.log('progress:', progress);
+});
 
 // specific file
-var click = Sono.load('audio/click.ogg'); // load this file
+var sound = Sono.load('audio/foo.ogg');
+
+// hashmap - load first file compatible with browser
+var sound = Sono.load({foo: 'audio/foo.ogg', bar: 'audio/foo.mp3'});
 
 // check support manually
 if(Sono.canPlay.mp3) {
-	var click = Sono.load('audio/click.mp3');
+	var sound = Sono.load('audio/foo.mp3');
 }
 
 // add extension manually
-var click = Sono.load('audio/click' + Sono.getSupportedExtensions[0]);
+var sound = Sono.load('audio/foo' + Sono.getSupportedExtensions[0]);
 
-// load and play
-var click = Sono.load(['audio/click.ogg', 'audio/click.mp3']).play(); // load and play immediately
-
-// callbacks
-var click = Sono.load(['audio/click.ogg', 'audio/click.mp3'], onLoadComplete, this);
-click.loader.onProgress.add(onLoadProgress, this);
-var onLoadProgress = function(progress) {
-    //console.log('onLoadProgress', progress);
-};
-var onLoadComplete = function(sound) {
-    //console.log('onLoadComplete', sound);
-};
-
+// load and play immediately
+var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play();
 
 ```

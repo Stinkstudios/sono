@@ -38,15 +38,10 @@ var reverb = Sono.node.reverb(2, 0.5);
 ## Api
 
 
-### Create / Add Sound
+### Create Sound
 
 [Sono.createSound(data)](docs/Sono.md#createsound) // returns Sound
 
-[Sono.createOscillator(type)](docs/Sono.md#oscillator) // returns Sound
-
-[Sono.createMicrophone(stream)](docs/Sono.md#microphone) // returns Sound
-
-[Sono.createScript(bufferSize, channels, callback, thisArg)](docs/Sono.md#script) // returns Sound
 
 ### Destroy
 
