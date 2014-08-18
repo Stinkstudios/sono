@@ -1639,7 +1639,7 @@ ScriptSource.prototype.play = function(delay) {
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
     this.sourceNode.onaudioprocess = this._onProcess;
-    this.sourceNode.start(delay);
+    //this.sourceNode.start(delay);
 
     if(this._pausedAt) {
         this._startedAt = this._context.currentTime - this._pausedAt;
@@ -1814,7 +1814,7 @@ Sound.prototype.setData = function(data) {
     else if(this._utils.isMediaElement(data)) {
         this._source = new MediaSource(data, this._context);
     }
-    else if(this._utils.isMediaStreamTrack(data)) {
+    else if(this._utils.isMediaStream(data)) {
         this._source = new MicrophoneSource(data, this._context);
     }
     else if(this._utils.isOscillatorType(data)) {
@@ -2102,10 +2102,12 @@ Utils.prototype.isMediaElement = function(data) {
               data instanceof window.HTMLMediaElement);
 };
 
-Utils.prototype.isMediaStreamTrack = function(data) {
+Utils.prototype.isMediaStream = function(data) {
     return !!(data &&
+              typeof data.getAudioTracks === 'function' &&
+              data.getAudioTracks().length &&
               window.MediaStreamTrack &&
-              data instanceof window.MediaStreamTrack);
+              data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
 };
 
 Utils.prototype.isOscillatorType = function(data) {
@@ -2817,15 +2819,15 @@ Sono.prototype.stopAll = function() {
 };
 
 Sono.prototype.play = function(id, delay, offset) {
-    this.get(id).play(delay, offset);
+    this.getById(id).play(delay, offset);
 };
 
 Sono.prototype.pause = function(id) {
-    this.get(id).pause();
+    this.getById(id).pause();
 };
 
 Sono.prototype.stop = function(id) {
-    this.get(id).stop();
+    this.getById(id).stop();
 };
 
 /*

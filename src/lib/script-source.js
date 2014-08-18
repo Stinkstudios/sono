@@ -23,7 +23,7 @@ ScriptSource.prototype.play = function(delay) {
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
     this.sourceNode.onaudioprocess = this._onProcess;
-    this.sourceNode.start(delay);
+    //this.sourceNode.start(delay);
 
     if(this._pausedAt) {
         this._startedAt = this._context.currentTime - this._pausedAt;

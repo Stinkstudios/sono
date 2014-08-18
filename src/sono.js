@@ -221,15 +221,15 @@ Sono.prototype.stopAll = function() {
 };
 
 Sono.prototype.play = function(id, delay, offset) {
-    this.get(id).play(delay, offset);
+    this.getById(id).play(delay, offset);
 };
 
 Sono.prototype.pause = function(id) {
-    this.get(id).pause();
+    this.getById(id).pause();
 };
 
 Sono.prototype.stop = function(id) {
-    this.get(id).stop();
+    this.getById(id).stop();
 };
 
 /*

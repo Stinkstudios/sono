@@ -16,10 +16,12 @@ Utils.prototype.isMediaElement = function(data) {
               data instanceof window.HTMLMediaElement);
 };
 
-Utils.prototype.isMediaStreamTrack = function(data) {
+Utils.prototype.isMediaStream = function(data) {
     return !!(data &&
+              typeof data.getAudioTracks === 'function' &&
+              data.getAudioTracks().length &&
               window.MediaStreamTrack &&
-              data instanceof window.MediaStreamTrack);
+              data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
 };
 
 Utils.prototype.isOscillatorType = function(data) {

@@ -41,7 +41,7 @@ Sound.prototype.setData = function(data) {
     else if(this._utils.isMediaElement(data)) {
         this._source = new MediaSource(data, this._context);
     }
-    else if(this._utils.isMediaStreamTrack(data)) {
+    else if(this._utils.isMediaStream(data)) {
         this._source = new MicrophoneSource(data, this._context);
     }
     else if(this._utils.isOscillatorType(data)) {
