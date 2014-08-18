@@ -1,6 +1,6 @@
 'use strict';
 
-function ScriptSource(bufferSize, channels, callback, thisArg, context) {
+function ScriptSource(data, context) {
     this.id = '';
     this._context = context;
     this._paused = false;
@@ -9,9 +9,9 @@ function ScriptSource(bufferSize, channels, callback, thisArg, context) {
     this._sourceNode = null; // ScriptSourceNode
     this._startedAt = 0;
 
-    this._bufferSize = bufferSize;
-    this._channels = channels;
-    this._onProcess = callback.bind(thisArg || this);
+    this._bufferSize = data.bufferSize || 1024;
+    this._channels = data.channels || 1;
+    this._onProcess = data.callback.bind(data.thisArg || this);
 }
 
 /*

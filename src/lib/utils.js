@@ -5,11 +5,37 @@ function Utils(context) {
 }
 
 Utils.prototype.isAudioBuffer = function(data) {
-    return !!(data && window.AudioBuffer && data instanceof window.AudioBuffer);
+    return !!(data &&
+              window.AudioBuffer &&
+              data instanceof window.AudioBuffer);
 };
 
 Utils.prototype.isMediaElement = function(data) {
-    return !!(data && window.HTMLMediaElement && data instanceof window.HTMLMediaElement);
+    return !!(data &&
+              window.HTMLMediaElement &&
+              data instanceof window.HTMLMediaElement);
+};
+
+Utils.prototype.isMediaStreamTrack = function(data) {
+    return !!(data &&
+              window.MediaStreamTrack &&
+              data instanceof window.MediaStreamTrack);
+};
+
+Utils.prototype.isOscillatorType = function(data) {
+    return !!(data && typeof data === 'string' &&
+             (data === 'sine' || data === 'square' ||
+              data === 'sawtooth' || data === 'triangle'));
+};
+
+Utils.prototype.isScriptConfig = function(data) {
+    return !!(data && typeof data === 'object' &&
+              data.bufferSize && data.channels && data.callback);
+};
+
+Utils.prototype.isFile = function(data) {
+    return !!(data && (data instanceof Array ||
+              (typeof data === 'string' && data.indexOf('.') > -1)));
 };
 
 Utils.prototype.fade = function(gainNode, value, duration) {

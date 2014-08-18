@@ -5,7 +5,8 @@ var BufferSource = require('./buffer-source.js'),
     NodeManager = require('./node-manager.js'),
     MicrophoneSource = require('./microphone-source.js'),
     OscillatorSource = require('./oscillator-source.js'),
-    ScriptSource = require('./script-source.js');
+    ScriptSource = require('./script-source.js'),
+    Utils = require('./utils.js');
 
 function Sound(context, data, destination) {
     this.id = '';
@@ -25,53 +26,47 @@ function Sound(context, data, destination) {
         this._gain.connect(destination || this._context.destination);
     }
 
+    this._utils = new Utils(this._context);
+
     this.setData(data);
 }
 
 Sound.prototype.setData = function(data) {
     if(!data) { return this; }
-    this._data = data; // AudioBuffer or Media Element
+    this._data = data; // AudioBuffer, MediaElement, etc
 
-    if(this._data.tagName) {
-      this._source = new MediaSource(data, this._context);
+    if(this._utils.isAudioBuffer(data)) {
+        this._source = new BufferSource(data, this._context);
+    }
+    else if(this._utils.isMediaElement(data)) {
+        this._source = new MediaSource(data, this._context);
+    }
+    else if(this._utils.isMediaStreamTrack(data)) {
+        this._source = new MicrophoneSource(data, this._context);
+    }
+    else if(this._utils.isOscillatorType(data)) {
+        this._source = new OscillatorSource(data, this._context);
+        // FIXME: this is too dirty:
+        this.setType = function(value) { this._source.type = value; }.bind(this);
+        this.setFrequency = function(value) { this._source.frequency = value; }.bind(this);
+    }
+    else if(this._utils.isScriptConfig(data)) {
+        this._source = new ScriptSource(data, this._context);
     }
     else {
-      this._source = new BufferSource(data, this._context);
+        throw new Error('Cannot detect data type: ' + data);
     }
+
     this._node.setSource(this._source.sourceNode);
-    this._source.onEnded(this._endedHandler, this);
+
+    if(typeof this._source.onEnded === 'function') {
+        this._source.onEnded(this._endedHandler, this);
+    }
 
     // should this take account of delay and offset?
     if(this._playWhenReady) {
         this.play();
     }
-    return this;
-};
-
-Sound.prototype.oscillator = function(type) {
-    this._source = new OscillatorSource(type || 'sine', this._context);
-    this._node.setSource(this._source.sourceNode);
-
-    this.setType = function(value) {
-        this._source.type = value;    
-    }.bind(this);
-
-    this.setFrequency = function(value) {
-        this._source.frequency = value;
-    }.bind(this);
-
-    return this;
-};
-
-Sound.prototype.microphone = function(stream) {
-    this._source = new MicrophoneSource(stream, this._context);
-    this._node.setSource(this._source.sourceNode);
-    return this;
-};
-
-Sound.prototype.script = function(bufferSize, channels, callback, thisArg) {
-    this._source = new ScriptSource(bufferSize, channels, callback, thisArg, this._context);
-    this._node.setSource(this._source.sourceNode);
     return this;
 };
 
