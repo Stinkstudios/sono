@@ -31,31 +31,37 @@ function Sono() {
  * Create new Sound
  */
 
-// sound - param data (can be HTMLMediaElement, ArrayBuffer or undefined)
-Sono.prototype.sound = function(data) {
+// createSound - param data (can be HTMLMediaElement, ArrayBuffer or undefined)
+Sono.prototype.createSound = function(data) {
+
     // try to load if data exists and not buffer or media el
     if(data && !this.utils.isAudioBuffer(data) && !this.utils.isMediaElement(data)) {
         return this.load(data);
     }
     var sound = new Sound(this._context, data, this._masterGain);
     this._sounds.push(sound);
+
+    /*if(options.type === 'oscillator') {
+        return sound.oscillator(type)
+    }*/
+
     return sound;
 };
 
-Sono.prototype.oscillator = function(type) {
-    var sound = this.sound();
+Sono.prototype.createOscillator = function(type) {
+    var sound = this.createSound();
     sound.oscillator(type);
     return sound;
 };
 
-Sono.prototype.microphone = function(stream) {
-    var sound = this.sound();
+Sono.prototype.createMicrophone = function(stream) {
+    var sound = this.createSound();
     sound.microphone(stream);
     return sound;
 };
 
-Sono.prototype.script = function(bufferSize, channels, callback, thisArg) {
-    var sound = this.sound();
+Sono.prototype.createScript = function(bufferSize, channels, callback, thisArg) {
+    var sound = this.createSound();
     sound.script(bufferSize, channels, callback, thisArg);
     return sound;
 };
@@ -162,7 +168,7 @@ Sono.prototype._queue = function(url, asMediaElement) {
 
     url = this._support.getSupportedFile(url);
 
-    var sound = this.sound();
+    var sound = this.createSound();
 
     sound.loader = this._loader.add(url);
     sound.loader.onBeforeComplete.addOnce(function(buffer) {
