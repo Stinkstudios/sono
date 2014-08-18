@@ -27,9 +27,6 @@ describe('Sono API', function() {
     it('should have expected members (add, destroy, get)', function() {
         expect(Sono.createSound).to.be.a('function');
         expect(Sono.createSound.length).to.eql(1);
-        expect(Sono.createOscillator).to.be.a('function');
-        expect(Sono.createMicrophone).to.be.a('function');
-        expect(Sono.createScript).to.be.a('function');
         expect(Sono.destroy).to.be.a('function');
         expect(Sono.destroy.length).to.eql(1);
         expect(Sono.getById).to.be.a('function');

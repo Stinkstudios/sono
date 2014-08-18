@@ -28,36 +28,27 @@ function Sono() {
 }
 
 /*
- * Create new Sound
+ * Create
+ *
+ * Accepted values for param data:
+ * 
+ * ArrayBuffer
+ * HTMLMediaElement
+ * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
+ * String (filename e.g. 'foo.ogg')
+ * String (Oscillator type i.e. 'sine', 'square', 'sawtooth', 'triangle')
+ * Object (ScriptProcessor config: { bufferSize: 1024, channels: 1, callback: fn, thisArg: self })
  */
 
-// createSound - param data (can be HTMLMediaElement, ArrayBuffer or undefined)
 Sono.prototype.createSound = function(data) {
     // try to load if data is Array or file string
     if(this.utils.isFile(data)) {
         return this.load(data);
     }
+    // otherwise just return a new sound object
     var sound = new Sound(this._context, data, this._masterGain);
     this._sounds.push(sound);
 
-    return sound;
-};
-
-Sono.prototype.createOscillator = function(type) {
-    var sound = this.createSound();
-    sound.oscillator(type);
-    return sound;
-};
-
-Sono.prototype.createMicrophone = function(stream) {
-    var sound = this.createSound();
-    sound.microphone(stream);
-    return sound;
-};
-
-Sono.prototype.createScript = function(bufferSize, channels, callback, thisArg) {
-    var sound = this.createSound();
-    sound.script(bufferSize, channels, callback, thisArg);
     return sound;
 };
 
