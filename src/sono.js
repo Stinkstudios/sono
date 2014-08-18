@@ -61,12 +61,36 @@ Sono.prototype.script = function(bufferSize, channels, callback, thisArg) {
 };
 
 /*
- * Retrieve Sound (by instance or id)
+ * Destroy
  */
 
-Sono.prototype.get = function(soundOrId) {
+Sono.prototype.destroy = function(soundOrId) {
+    var sound;
     for (var i = 0, l = this._sounds.length; i < l; i++) {
-        if(this._sounds[i] === soundOrId || this._sounds[i].id === soundOrId) {
+        sound = this._sounds[i];
+        if(sound === soundOrId || sound.id === soundOrId) {
+            break;
+        }
+    }
+    if(sound !== undefined) {
+        this._sounds.splice(i, 1);
+
+        if(sound.loader) {
+            sound.loader.cancel();
+        }
+        try {
+            sound.stop();
+        } catch(e) {}
+    }
+};
+
+/*
+ * Get Sound by id
+ */
+
+Sono.prototype.getById = function(id) {
+    for (var i = 0, l = this._sounds.length; i < l; i++) {
+        if(this._sounds[i].id === id) {
             return this._sounds[i];
         }
     }
@@ -221,30 +245,6 @@ Sono.prototype.pause = function(id) {
 
 Sono.prototype.stop = function(id) {
     this.get(id).stop();
-};
-
-/*
- * Destroy
- */
-
-Sono.prototype.destroy = function(soundOrId) {
-    var sound;
-    for (var i = 0, l = this._sounds.length; i < l; i++) {
-        sound = this._sounds[i];
-        if(sound === soundOrId || sound.id === soundOrId) {
-            break;
-        }
-    }
-    if(sound !== undefined) {
-        this._sounds.splice(i, 1);
-
-        if(sound.loader) {
-            sound.loader.cancel();
-        }
-        try {
-            sound.stop();
-        } catch(e) {}
-    }
 };
 
 /*

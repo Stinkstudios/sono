@@ -24,14 +24,16 @@ describe('Sono API', function() {
         expect(Sono.VERSION).to.be.a('string');
     });
 
-    it('should have expected members (add, get)', function() {
+    it('should have expected members (add, destroy, get)', function() {
         expect(Sono.sound).to.be.a('function');
         expect(Sono.sound.length).to.eql(1);
         expect(Sono.oscillator).to.be.a('function');
         expect(Sono.microphone).to.be.a('function');
         expect(Sono.script).to.be.a('function');
-        expect(Sono.get).to.be.a('function');
-        expect(Sono.get.length).to.eql(1);
+        expect(Sono.destroy).to.be.a('function');
+        expect(Sono.destroy.length).to.eql(1);
+        expect(Sono.getById).to.be.a('function');
+        expect(Sono.getById.length).to.eql(1);
     });
 
     it('should have expected members (controls)', function() {
@@ -55,7 +57,6 @@ describe('Sono API', function() {
         var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'loader');
         expect(desc.get).to.be.a('function');
         expect(desc.set).to.not.exist;
-        expect(Sono.destroy).to.be.a('function');
     });
 
     it('should have expected members (support, setup)', function() {

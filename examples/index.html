@@ -110,17 +110,17 @@
             Sono.load(sounds, function(loaded) {
                 console.log('all loaded:', loaded)
 
-                var a = Sono.get('a');
-                var b = Sono.get('b');
+                var a = Sono.getById('a');
+                var b = Sono.getById('b');
 
-                console.log(Sono.get(sounds[0].id) === a, a);
-                console.log(Sono.get(sounds[1].id) === b, b);
+                console.log(Sono.getById(sounds[0].id) === a, a);
+                console.log(Sono.getById(sounds[1].id) === b, b);
 
                 new Player(a, '.js-playerA');
                 new Player(b, '.js-playerB');
 
-                //Sono.get('a').node.reverb(4, 10);
-                //var delay = Sono.node.delay(Sono.get('b')._gain, 0.5, 0.5);
+                //Sono.getById('a').node.reverb(4, 10);
+                //var delay = Sono.node.delay(Sono.getById('b')._gain, 0.5, 0.5);
                 //Sono.node.delay(delay, 2, 0.2)
 
                 //var delay = Sono.node.delay(Sono.masterGain, 0.5, 0.5);

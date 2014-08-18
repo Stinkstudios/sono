@@ -20,13 +20,13 @@ describe('Sono loader', function() {
 
     it('should have loaded sound', function(){
         expect(sound).to.exist;
-        expect(Sono.get(sound.id)).to.exist;
+        expect(Sono.getById(sound.id)).to.exist;
         expect(sound.loader).to.exist;
         expect(sound.loader.data).to.exist;
         expect(sound.play).to.be.a('function');
         //data instanceof window.HTMLMediaElement || data instanceof window.AudioBuffer
         Sono.destroy(sound);
-        expect(Sono.get(sound.id)).to.not.exist;
+        expect(Sono.getById(sound.id)).to.not.exist;
     });
 
 });

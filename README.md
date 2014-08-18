@@ -35,6 +35,7 @@ var reverb = Sono.node.reverb(2, 0.5);
 
 ## Api
 
+
 ### Create / Add Sound
 
 [Sono.sound(data)](docs/Sono.md#sound) // returns Sound
@@ -45,9 +46,14 @@ var reverb = Sono.node.reverb(2, 0.5);
 
 [Sono.script(bufferSize, channels, callback, thisArg)](docs/Sono.md#script) // returns Sound
 
-### Retrieve Sound (by instance or id)
+### Destroy
 
-[Sono.get(soundOrId)](docs/Sono.md#get) // returns Sound
+[Sono.destroy(soundOrId)](docs/Sono.md#destroy) // destroy sound instance or by id
+
+### Retrieve Sound by id
+
+[Sono.getById(id)](docs/Sono.md#getbyid) // returns Sound or null
+
 
 ### Controls
 
@@ -61,7 +67,7 @@ var reverb = Sono.node.reverb(2, 0.5);
 
 [Sono.resumeAll()](docs/Sono.md#resumeall) // resume all currently paused
 
-[Sono.stopAll()](docs/Sono.md#stopall) // stop all currentlt playing or paused
+[Sono.stopAll()](docs/Sono.md#stopall) // stop all currently playing or paused
 
 [Sono.play(id, delay, offset)](docs/Sono.md#play) // play sound by id
 
@@ -69,9 +75,6 @@ var reverb = Sono.node.reverb(2, 0.5);
 
 [Sono.stop(id)](docs/Sono.md#stop) // stop sound by id
 
-### Destroy
-
-[Sono.destroy(soundOrId)](docs/Sono.md#destroy) // destroy sound instance or by id
 
 ### Getters
 
