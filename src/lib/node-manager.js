@@ -14,7 +14,7 @@ NodeManager.prototype.setSource = function(node) {
 };
 
 NodeManager.prototype.setDestination = function(node) {
-    this.connectTo(node);
+    this._connectTo(node);
     return node;
 };
 
@@ -44,7 +44,7 @@ NodeManager.prototype.removeAll = function() {
     return this;
 };
 
-NodeManager.prototype.connectTo = function(node) {
+NodeManager.prototype._connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
         //console.log('connect:', this._nodeList[l - 1], 'to', node);
@@ -79,15 +79,15 @@ NodeManager.prototype._updateConnections = function() {
     }
     //console.log(this._destination)
     if(this._destination) {
-        this.connectTo(this._destination);
+        this._connectTo(this._destination);
     }
     /*else {
-        this.connectTo(this._gain);
+        this._connectTo(this._gain);
     }*/
 };
 
 // or setter for destination?
-/*NodeManager.prototype.connectTo = function(node) {
+/*NodeManager.prototype._connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
       console.log('connect:', this._nodeList[l - 1], 'to', node);
@@ -138,7 +138,7 @@ NodeManager.prototype._updateConnections = function() {
             this._nodeList[i-1].connect(this._nodeList[i]);
         }
     }
-    this.connectTo(this._context.destination);
+    this._connectTo(this._context.destination);
 };*/
 
 NodeManager.prototype.analyser = function(fftSize) {
@@ -303,7 +303,7 @@ NodeManager.prototype.reverb = function(seconds, decay, reverse, node) {
     return node;
 };
 
-NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outputChannels, callback, callbackContext) {
+NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outputChannels, callback, thisArg) {
     // bufferSize 256 - 16384 (pow 2)
     bufferSize = bufferSize || 1024;
     inputChannels = inputChannels === undefined ? 0 : inputChannels;
@@ -325,14 +325,23 @@ NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outp
             output[i] = Math.random();
         }
         */
-        callback.call(callbackContext || this, event);
+        callback.call(thisArg || this, event);
     };
     return this.add(node);
 };
 
 NodeManager.prototype.createFakeContext = function() {
     var fn = function(){};
-    var param = { value: 1 };
+    var param = {
+        value: 1,
+        defaultValue: 1,
+        linearRampToValueAtTime: fn,
+        setValueAtTime: fn,
+        exponentialRampToValueAtTime: fn,
+        setTargetAtTime: fn,
+        setValueCurveAtTime: fn,
+        cancelScheduledValues: fn
+    };
     var fakeNode = {
         connect:fn,
         disconnect:fn,
@@ -380,7 +389,20 @@ NodeManager.prototype.createFakeContext = function() {
         createConvolver: returnFakeNode,
         createDelay: returnFakeNode,
         createGain: function() {
-            return {gain:{value: 1}, connect:fn, disconnect:fn};
+            return {
+                gain: {
+                    value: 1,
+                    defaultValue: 1,
+                    linearRampToValueAtTime: fn,
+                    setValueAtTime: fn,
+                    exponentialRampToValueAtTime: fn,
+                    setTargetAtTime: fn,
+                    setValueCurveAtTime: fn,
+                    cancelScheduledValues: fn
+                },
+                connect:fn,
+                disconnect:fn
+            };
         },
         createPanner: returnFakeNode,
         createScriptProcessor: returnFakeNode,

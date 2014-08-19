@@ -22,8 +22,8 @@ function Sono() {
     this._sounds = [];
     this._support = new Support();
 
-    this.handleTouchlock();
-    this.handleVisibility();
+    this._handleTouchlock();
+    this._handleVisibility();
     //this.log();
 }
 
@@ -94,10 +94,6 @@ Sono.prototype.getById = function(id) {
  */
 
 Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement) {
-    if(!this._loader) {
-        this._initLoader();
-    }
-
     // multiple
     if(url instanceof Array && url.length && typeof url[0] === 'object') {
         this.loadMultiple(url, complete, progress, thisArg, asMediaElement);
@@ -236,7 +232,7 @@ Sono.prototype.stop = function(id) {
  * Mobile touch lock
  */
 
-Sono.prototype.handleTouchlock = function() {
+Sono.prototype._handleTouchlock = function() {
     var ua = navigator.userAgent,
         locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i),
         self = this;
@@ -264,7 +260,7 @@ Sono.prototype.handleTouchlock = function() {
  * Page visibility events
  */
 
-Sono.prototype.handleVisibility = function() {
+Sono.prototype._handleVisibility = function() {
     var pageHiddenPaused = [],
         sounds = this._sounds,
         hidden,
@@ -375,12 +371,6 @@ Object.defineProperty(Sono.prototype, 'hasWebAudio', {
 Object.defineProperty(Sono.prototype, 'isSupported', {
     get: function() {
         return this._support.extensions.length > 0;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'loader', {
-    get: function() {
-        return this._loader;
     }
 });
 

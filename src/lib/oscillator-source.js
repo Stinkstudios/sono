@@ -60,18 +60,6 @@ OscillatorSource.prototype.stop = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(OscillatorSource.prototype, 'type', {
-    get: function() {
-        return this._type;
-    },
-    set: function(value) {
-        this._type = value;
-        if(this._sourceNode) {
-            this._sourceNode.type = value;
-        }
-    }
-});
-
 Object.defineProperty(OscillatorSource.prototype, 'frequency', {
     get: function() {
         return this._frequency;
@@ -130,7 +118,6 @@ Object.defineProperty(OscillatorSource.prototype, 'sourceNode', {
         return this._sourceNode;
     }
 });
-
 
 /*
  * Exports

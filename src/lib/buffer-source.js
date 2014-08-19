@@ -1,8 +1,8 @@
 'use strict';
 
 function BufferSource(buffer, context) {
-    this.add(buffer);
     this.id = '';
+    this._buffer = buffer; // ArrayBuffer
     this._context = context;
     this._endedCallback = null;
     this._loop = false;
@@ -12,11 +12,6 @@ function BufferSource(buffer, context) {
     this._sourceNode = null; // BufferSourceNode
     this._startedAt = 0;
 }
-
-BufferSource.prototype.add = function(buffer) {
-    this._buffer = buffer; // ArrayBuffer
-    return this._buffer;
-};
 
 /*
  * Controls

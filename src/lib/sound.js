@@ -206,6 +206,8 @@ Object.defineProperty(Sound.prototype, 'volume', {
     }
 });
 
+// for oscillator
+
 Object.defineProperty(Sound.prototype, 'frequency', {
     get: function() {
         return this._source ? this._source.frequency : 0;

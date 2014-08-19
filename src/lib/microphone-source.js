@@ -59,30 +59,6 @@ MicrophoneSource.prototype.stop = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(MicrophoneSource.prototype, 'type', {
-    get: function() {
-        return this._type;
-    },
-    set: function(value) {
-        this._type = value;
-        if(this._sourceNode) {
-            this._sourceNode.type = value;
-        }
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'frequency', {
-    get: function() {
-        return this._frequency;
-    },
-    set: function(value) {
-        this._frequency = value;
-        if(this._sourceNode) {
-            this._sourceNode.frequency.value = value;
-        }
-    }
-});
-
 Object.defineProperty(MicrophoneSource.prototype, 'currentTime', {
     get: function() {
         if(this._pausedAt) {

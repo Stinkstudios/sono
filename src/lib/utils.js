@@ -4,6 +4,60 @@ function Utils(context) {
     this._context = context;
 }
 
+Utils.prototype.crossFade = function(fromSound, toSound, duration) {
+    fromSound.gain.gain.linearRampToValueAtTime(0, this._context.currentTime + duration);
+    toSound.gain.gain.linearRampToValueAtTime(1, this._context.currentTime + duration);
+};
+
+Utils.prototype.distort = function(value) {
+    // create waveShaper distortion curve from 0 to 1
+    var k = value * 100,
+        n = 22050,
+        curve = new Float32Array(n),
+        deg = Math.PI / 180;
+
+    for (var i = 0; i < n; i++) {
+        var x = i * 2 / n - 1;
+        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+};
+
+Utils.prototype.fadeFrom = function(sound, value, duration) {
+    var toValue = sound.gain.gain.value;
+    sound.gain.gain.value = value;
+    sound.gain.gain.linearRampToValueAtTime(toValue, this._context.currentTime + duration);
+};
+
+Utils.prototype.fadeTo = function(sound, value, duration) {
+    sound.gain.gain.linearRampToValueAtTime(value, this._context.currentTime + duration);
+};
+
+Utils.prototype.filter = function(filterNode, freqPercent, quality, gain) {
+    // set filter frequency based on value from 0 to 1
+    if(isNaN(freqPercent)) { freqPercent = 0.5; }
+    if(isNaN(quality)) { quality = 0; }
+    if(isNaN(gain)) { gain = 0; }
+    // Get back to the frequency value between min and max.
+    filterNode.frequency.value = this.getFrequency(freqPercent);
+    filterNode.Q.value = quality; // range of 0.0001 to 1000
+    filterNode.gain.value = gain; // -40 to 40
+};
+
+Utils.prototype.getFrequency = function(value) {
+    // get frequency by passing number from 0 to 1
+    // Clamp the frequency between the minimum value (40 Hz) and half of the
+    // sampling rate.
+    var minValue = 40;
+    var maxValue = this._context.sampleRate / 2;
+    // Logarithm (base 2) to compute how many octaves fall in the range.
+    var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+    // Compute a multiplier from 0 to 1 based on an exponential scale.
+    var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+    // Get back to the frequency value between min and max.
+    return maxValue * multiplier;
+};
+
 Utils.prototype.isAudioBuffer = function(data) {
     return !!(data &&
               window.AudioBuffer &&
@@ -40,47 +94,12 @@ Utils.prototype.isFile = function(data) {
               (typeof data === 'string' && data.indexOf('.') > -1)));
 };
 
-Utils.prototype.fade = function(gainNode, value, duration) {
-    gainNode.gain.linearRampToValueAtTime(value, this._context.currentTime + duration);
+Utils.prototype.microphone = function(connected, denied, error, thisArg) {
+    return new Utils.Microphone(connected, denied, error, thisArg);
 };
 
-Utils.prototype.filter = function(filterNode, freqPercent, quality, gain) {
-    // set filter frequency based on value from 0 to 1
-    if(isNaN(freqPercent)) { freqPercent = 0.5; }
-    if(isNaN(quality)) { quality = 0; }
-    if(isNaN(gain)) { gain = 0; }
-    // Get back to the frequency value between min and max.
-    filterNode.frequency.value = this.getFrequency(freqPercent);
-    filterNode.Q.value = quality; // range of 0.0001 to 1000
-    filterNode.gain.value = gain; // -40 to 40
-};
-
-Utils.prototype.getFrequency = function(value) {
-    // get frequency by passing number from 0 to 1
-    // Clamp the frequency between the minimum value (40 Hz) and half of the
-    // sampling rate.
-    var minValue = 40;
-    var maxValue = this._context.sampleRate / 2;
-    // Logarithm (base 2) to compute how many octaves fall in the range.
-    var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-    // Compute a multiplier from 0 to 1 based on an exponential scale.
-    var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-    // Get back to the frequency value between min and max.
-    return maxValue * multiplier;
-};
-
-Utils.prototype.distort = function(value) {
-    // create waveShaper distortion curve from 0 to 1
-    var k = value * 100,
-        n = 22050,
-        curve = new Float32Array(n),
-        deg = Math.PI / 180;
-
-    for (var i = 0; i < n; i++) {
-        var x = i * 2 / n - 1;
-        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
-    }
-    return curve;
+Utils.prototype.pan = function(panner) {
+    return new Utils.Pan(panner);
 };
 
 Utils.prototype.timeCode = function(seconds, delim) {
@@ -94,16 +113,8 @@ Utils.prototype.timeCode = function(seconds, delim) {
     return hr + mn + sc;
 };
 
-Utils.prototype.pan = function(panner) {
-    return new Utils.Pan(panner);
-};
-
 Utils.prototype.waveform = function(buffer, length) {
     return new Utils.Waveform(buffer, length);
-};
-
-Utils.prototype.microphone = function(connected, denied, error, thisArg) {
-    return new Utils.Microphone(connected, denied, error, thisArg);
 };
 
 /*

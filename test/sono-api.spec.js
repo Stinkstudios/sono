@@ -49,9 +49,6 @@ describe('Sono API', function() {
         expect(Sono._initLoader).to.be.a('function');
         expect(Sono.load).to.be.a('function');
         expect(Sono.load.length).to.eql(5);
-        var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'loader');
-        expect(desc.get).to.be.a('function');
-        expect(desc.set).to.not.exist;
     });
 
     it('should have expected members (support, setup)', function() {
@@ -62,8 +59,8 @@ describe('Sono API', function() {
         expect(Sono.canPlay.wav).to.be.a('boolean');
         expect(Sono.canPlay.m4a).to.be.a('boolean');
 
-        expect(Sono.handleTouchlock).to.be.a('function');
-        expect(Sono.handleVisibility).to.be.a('function');
+        expect(Sono._handleTouchlock).to.be.a('function');
+        expect(Sono._handleVisibility).to.be.a('function');
         expect(Sono.log).to.be.a('function');
         expect(Sono.node).to.be.an('object');
         expect(Sono.utils).to.be.an('object');

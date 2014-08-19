@@ -6,9 +6,8 @@ var BufferSource = require('../src/lib/buffer-source.js');
 describe('Buffer Source', function() {
     var source = new BufferSource();
 
-    it('should have expected members (id, add)', function() {
+    it('should have expected members (id)', function() {
         expect(source).to.have.property('id');
-        expect(source.add).to.be.a('function');
     });
 
     it('should have expected members (controls)', function() {

@@ -3,13 +3,12 @@
 var Sono = require('../src/sono.js');
 var MediaSource = require('../src/lib/media-source.js');
 
-describe('Element Source', function() {
+describe('Media Source', function() {
     var el = document.createElement('audio');
     var source = new MediaSource(el, Sono.context);
 
-    it('should have expected members (id, add)', function() {
+    it('should have expected members (id)', function() {
         expect(source).to.have.property('id');
-        expect(source.add).to.be.a('function');
     });
 
     it('should have expected members (controls)', function() {

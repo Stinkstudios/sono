@@ -38,6 +38,9 @@ var reverb = Sono.node.reverb(2, 0.5);
 ## Api
 
 
+## Sono
+
+
 ### Create Sound
 
 [Sono.createSound(data)](docs/Sono.md#createsound) // returns Sound
@@ -47,9 +50,17 @@ var reverb = Sono.node.reverb(2, 0.5);
 
 [Sono.destroy(soundOrId)](docs/Sono.md#destroy) // destroy sound instance or by id
 
+
 ### Retrieve Sound by id
 
 [Sono.getById(id)](docs/Sono.md#getbyid) // returns Sound or null
+
+
+### Load
+
+[Sono.load(url, complete, progress, thisArg, asMediaElement)](docs/Sono.md#load) // returns Sound
+
+[Sono.loadMultiple(config, complete, progress, thisArg, asMediaElement)](docs/Sono.md#loadmultiple)
 
 
 ### Controls
@@ -73,6 +84,11 @@ var reverb = Sono.node.reverb(2, 0.5);
 [Sono.stop(id)](docs/Sono.md#stop) // stop sound by id
 
 
+### Log
+
+[Sono.log()](docs/Sono.md#log) // log info to console
+
+
 ### Getters
 
 [Sono.canPlay](docs/Sono.md#canplay) // returns audio file support info
@@ -93,13 +109,17 @@ var reverb = Sono.node.reverb(2, 0.5);
 
 
 
-### Sono.node (node manager module)
+## Sono.node (node manager module)
 
-Sono.node.add
+Sono.node.setSource(node)
 
-Sono.node.remove
+Sono.node.setDestination(node)
 
-Sono.node.removeAll
+Sono.node.add(node)
+
+Sono.node.remove(node)
+
+Sono.node.removeAll()
 
 Sono.node.analyser(fftSize)
 
@@ -131,18 +151,48 @@ Sono.node.allpass(frequency)
 
 Sono.node.gain(value)
 
-Sono.node.pan()
+Sono.node.panner()
 
-Sono.node.reverb(seconds, decay, reverse)
+Sono.node.reverb(seconds, decay, reverse, node)
 
-Sono.node.scriptProcessor(bufferSize, inputChannels, outputChannels, callback, callbackContext)
+Sono.node.scriptProcessor(bufferSize, inputChannels, outputChannels, callback, thisArg)
 
 
-### Sono.utils (helper utils module)
+## Sono.utils (helper utils module)
 
-Sono.utils.fade(gainNode, value, duration)
+Sono.utils.crossFade(fromSound, toSound, duration)
+
+Sono.utils.distort(value)
+
+Sono.utils.fadeFrom(sound, value, duration)
+
+Sono.utils.fadeTo(sound, value, duration)
+
+Sono.utils.filter(filterNode, value, quality, gain)
+
+Sono.utils.getFrequency(value) // return a freq value by passing 0-1
+
+Sono.utils.isAudioBuffer(data)
+
+Sono.utils.isMediaElement(data)
+
+Sono.utils.isMediaStream(data)
+
+Sono.utils.isOscillatorType(data)
+
+Sono.utils.isScriptConfig(data)
+
+Sono.utils.isFile(data)
+
+Sono.utils.microphone(connected, denied, error, thisArg)
 
 Sono.utils.pan(panner)
+
+Sono.utils.timeCode(seconds, delim)
+
+Sono.utils.waveform(buffer, length)
+
+
 
 pan.x(value)
 
@@ -156,22 +206,7 @@ pan.setListenerPosition(positionVec)
 
 pan.setListenerOrientation(forwardVec)
 
-
-Sono.utils.doppler(panner, x, y, z, deltaX, deltaY, deltaZ, deltaTime)
-
-Sono.utils.filter(filterNode, value, quality, gain)
-
-Sono.utils.getFrequency(value) // return a freq value by passing 0-1
-
-Sono.utils.createMicrophoneSource(stream, connectTo) // should prob go into .create
-
-Sono.utils.distort(value)
-
-Sono.utils.timeCode(seconds, delim) // eg: 02:15 or 01:25:30
-
-Sono.utils.waveformData(buffer, length) // returns an array of amplitudes
-
-Sono.utils.waveformCanvas(arr, height, color, bgColor, canvasEl)
+pan.doppler(x, y, z, deltaX, deltaY, deltaZ, deltaTime)
 
 
 

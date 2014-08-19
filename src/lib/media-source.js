@@ -1,9 +1,9 @@
 'use strict';
 
 function MediaSource(el, context) {
-    this.add(el);
     this.id = '';
     this._context = context;
+    this._el = el; // HTMLMediaElement
     this._endedCallback = null;
     this._endedHandlerBound = this._endedHandler.bind(this);
     this._loop = false;
@@ -11,12 +11,6 @@ function MediaSource(el, context) {
     this._playing = false;
     this._sourceNode = null; // MediaElementSourceNode
 }
-
-MediaSource.prototype.add = function(el) {
-    this._el = el; // HTMLMediaElement
-    this._sourceNode = null;
-    return this._el;
-};
 
 /*
  * Controls
