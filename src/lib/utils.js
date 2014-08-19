@@ -99,7 +99,7 @@ Utils.prototype.microphone = function(connected, denied, error, thisArg) {
 };
 
 Utils.prototype.pan = function(panner) {
-    return new Utils.Pan(panner);
+    return new Utils.Pan(this._context, panner);
 };
 
 Utils.prototype.timeCode = function(seconds, delim) {
@@ -121,7 +121,8 @@ Utils.prototype.waveform = function(buffer, length) {
  * Pan
  */
 
-Utils.Pan = function(panner) {
+Utils.Pan = function(context, panner) {
+    this._context = context;
     this._panner = panner;
 };
 
