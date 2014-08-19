@@ -1,9 +1,11 @@
 'use strict';
 
+var Sono = require('../src/sono.js');
 var MediaSource = require('../src/lib/media-source.js');
 
 describe('Element Source', function() {
-	var source = new MediaSource();
+    var el = document.createElement('audio');
+    var source = new MediaSource(el, Sono.context);
 
     it('should have expected members (id, add)', function() {
         expect(source).to.have.property('id');
@@ -33,5 +35,6 @@ describe('Element Source', function() {
         var desc = Object.getOwnPropertyDescriptor(source.constructor.prototype, 'sourceNode');
         expect(desc.get).to.be.a('function');
         expect(desc.set).to.not.exist;
+        expect(source.sourceNode instanceof window.MediaElementAudioSourceNode).to.be.true;
     });
 });

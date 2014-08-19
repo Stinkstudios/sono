@@ -14,6 +14,7 @@ function MediaSource(el, context) {
 
 MediaSource.prototype.add = function(el) {
     this._el = el; // HTMLMediaElement
+    this._sourceNode = null;
     return this._el;
 };
 
