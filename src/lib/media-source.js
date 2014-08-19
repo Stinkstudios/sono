@@ -139,7 +139,7 @@ Object.defineProperty(MediaSource.prototype, 'progress', {
 Object.defineProperty(MediaSource.prototype, 'sourceNode', {
     get: function() {
         if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createMediaMediaSource(this._el);
+            this._sourceNode = this._context.createMediaElementSource(this._el);
         }
         return this._sourceNode;
     }

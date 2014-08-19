@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, minimal-ui">
+    <title></title>
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <h1>Video</h1>
+
+    <video controls preload="auto" width="960" height="540">
+        <source src="video/chanel_intro.mp4" type="video/mp4">
+        <source src="video/chanel_intro.ogg" type="video/ogg">
+    </video>
+
+    <canvas class="js-waveform" width="960", height="120"></canvas>
+
+    <script>
+        // Test with no WebAudio
+        //window.AudioContext = window.webkitAudioContext = undefined;
+    </script>
+    <script src="../dist/sono.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            var video = document.querySelector('video');
+
+            var sound = Sono.createSound(video);
+
+            var reverb = sound.node.reverb(5, 2);
+
+            var analyser = sound.node.analyser(2048);
+
+
+            var waveform = document.querySelector('.js-waveform');
+
+            new AnalyserDisplay(analyser, waveform);
+
+            function AnalyserDisplay(analyserNode, canvas) {
+
+                var context = canvas.getContext('2d');
+
+                function draw() {
+                    window.requestAnimationFrame(draw);
+
+                    var width = canvas.width,
+                        height = canvas.height,
+                        frequencyBinCount = analyserNode.frequencyBinCount,
+                        barWidth = Math.max(1, Math.round(width/frequencyBinCount));
+
+                        context.fillStyle = '#333333';
+                        context.fillRect(0, 0, width, height);
+
+
+                    var waveByteData = new Uint8Array(frequencyBinCount);
+
+                    var freqByteData = new Uint8Array(frequencyBinCount);
+                    
+                    analyserNode.getByteFrequencyData(freqByteData);
+
+                    for (var i = 0; i < frequencyBinCount; i++) {
+                        var magnitude = freqByteData[i];
+                        var percent = magnitude / 256;
+                        var hue = i/frequencyBinCount * 360;
+                        context.fillStyle = 'hsl(' + hue + ', 100%, 30%)';
+                        context.fillRect(barWidth * i, height, barWidth, 0 - height * percent);
+                    }
+
+                    analyserNode.getByteTimeDomainData(waveByteData);
+
+                    for (var i = 0; i < frequencyBinCount; i++) {
+                        var magnitude = waveByteData[i];
+                        var percent = magnitude / 256;
+                        var hue = i/frequencyBinCount * 360;
+                        context.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
+                        context.fillRect(barWidth * i, height - height * percent - 1, 2, 2);
+                    }
+                }
+                draw();
+            }
+
+        }());
+    </script>
+</body>
+</html>
