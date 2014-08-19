@@ -46,9 +46,6 @@ Sound.prototype.setData = function(data) {
     }
     else if(this._utils.isOscillatorType(data)) {
         this._source = new OscillatorSource(data, this._context);
-        // FIXME: this is too dirty:
-        this.setType = function(value) { this._source.type = value; }.bind(this);
-        this.setFrequency = function(value) { this._source.frequency = value; }.bind(this);
     }
     else if(this._utils.isScriptConfig(data)) {
         this._source = new ScriptSource(data, this._context);
@@ -205,6 +202,17 @@ Object.defineProperty(Sound.prototype, 'volume', {
 
         if(this._data && this._data.volume !== undefined) {
             this._data.volume = value;
+        }
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'frequency', {
+    get: function() {
+        return this._source ? this._source.frequency : 0;
+    },
+    set: function(value) {
+        if(this._source) {
+            this._source.frequency = value;
         }
     }
 });

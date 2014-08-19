@@ -283,7 +283,13 @@ body {
   height: 100%;
   line-height: 1.5;
   margin: 0;
-  padding: 0;
+  padding: 2em;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 400;
 }
 
 /*! Components */
@@ -293,7 +299,6 @@ body {
   box-shadow: 1px 2px 2px rgba(0,0,0,.2);
   padding: 10px;
   width: 400px;
-  margin: 20px;
 }
 
 .Player-waveform {
@@ -342,8 +347,7 @@ body {
   margin-left: 20px;
 }
 
-.Player-pan,
-.Player-volume {
+.Player-slider-input {
   display: inline-block;
   width: 80px;
   margin: 2px;
@@ -355,5 +359,5 @@ body {
   display: inline-block;
   float: right;
   font-size: 1.25rem;
-  line-height: 26px;
+  line-height: 20px;
 }

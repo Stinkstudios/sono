@@ -1,31 +1,17 @@
 <!DOCTYPE html>
-<!--[if lt IE 9]><html lang="en" class="no-js old-ie"><![endif]-->
-<!--[if gt IE 9]><!--><html lang="en" class="no-js"><!--<![endif]-->
+<html lang="en">
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, minimal-ui">
-
-	<meta name="description" content="">
-    <meta name="idwords" content="">
-
-    <meta property="og:title" content="">
-    <meta property="og:site_name" content="">
-    <meta property="og:description" content="">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="">
-    <meta property="og:image" content="">
-    <link rel="image_src" href="">
-    <link rel="shortcut icon" href="favicon.ico">
-
-	<title></title>
+	<title>Sono</title>
 	<link href="css/styles.css" rel="stylesheet">
-	<script src="js/modernizr/modernizr.js"></script>
 </head>
 <body>
 	<h1>sono</h1>
 
     <ul>
+        <li><a href="player.html">Player</a></li>
         <li>Simple example</li>
         <li>WebAudio</li>
         <li>Audio el v Array Buffer</li>
@@ -33,6 +19,11 @@
         <li>Crazy ones like video texture in THREE.js (a TV?)</li>
         <li>Game e.g. different environments/rooms?</li>
     </ul>
+
+
+
+
+
 
     <h3>Player A</h3>
 
@@ -46,10 +37,10 @@
         <div class="Player-controls">
             <button class="Player-button">PLAY</button>
             <div class="Player-slider">
-                <span>0</span><input class="Player-volume" type="range" min="0" max="100" value="100" /><span>1</span>
+                <span>0</span><input class="Player-slider-input js-volume" type="range" min="0" max="100" value="100" /><span>1</span>
             </div>
             <div class="Player-slider">
-                <span>L</span><input class="Player-pan" type="range" min="-100" max="100" value="0" /><span>R</span>
+                <span>L</span><input class="Player-slider-input js-pan" type="range" min="-100" max="100" value="0" /><span>R</span>
             </div>
             <div class="Player-info"></div>
         </div>
@@ -67,10 +58,10 @@
         <div class="Player-controls">
             <button class="Player-button">PLAY</button>
             <div class="Player-slider">
-                <span>0</span><input class="Player-volume" type="range" min="0" max="100" value="100" /><span>1</span>
+                <span>0</span><input class="Player-slider-input js-volume" type="range" min="0" max="100" value="100" /><span>1</span>
             </div>
             <div class="Player-slider">
-                <span>L</span><input class="Player-pan" type="range" min="-100" max="100" value="0" /><span>R</span>
+                <span>L</span><input class="Player-slider-input js-pan" type="range" min="-100" max="100" value="0" /><span>R</span>
             </div>
             <div class="Player-info"></div>
         </div>
@@ -86,8 +77,6 @@
         //window.AudioContext = window.webkitAudioContext = undefined;
     </script>
 	<script src="../dist/sono.js"></script>
-    <script src="../bower_components/usfl/dist/usfl.js"></script>
-    <script src="../bower_components/usfl/src/lib/graphics.js"></script>
     <script>
         (function() {
             'use strict';
@@ -155,8 +144,8 @@
                     waveformFront = view.querySelector('.js-waveform-front'),
                     waveformProgress = view.querySelector('.js-waveform-progress'),
                     button = view.querySelector('.Player-button'),
-                    volumeSlider = view.querySelector('.Player-volume'),
-                    panSlider = view.querySelector('.Player-pan'),
+                    volumeSlider = view.querySelector('.js-volume'),
+                    panSlider = view.querySelector('.js-pan'),
                     info = view.querySelector('.Player-info');
 
                 // update time and waveform
