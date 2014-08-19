@@ -102,6 +102,10 @@ Utils.prototype.waveform = function(buffer, length) {
     return new Utils.Waveform(buffer, length);
 };
 
+Utils.prototype.microphone = function(connected, denied, error, thisArg) {
+    return new Utils.Microphone(connected, denied, error, thisArg);
+};
+
 /*
  * Pan
  */
@@ -250,7 +254,7 @@ Utils.Waveform.prototype = {
         context.fillStyle = bgColor;
         context.fillRect(0, 0, width, height);
         var x, y;
-        console.time('waveformCanvas');
+        //console.time('waveformCanvas');
         context.beginPath();
         for (var i = 0, l = this.data.length; i < l; i++) {
             x = i + 0.5;
@@ -259,12 +263,63 @@ Utils.Waveform.prototype = {
             context.lineTo(x, height);
         }
         context.stroke();
-        console.timeEnd('waveformCanvas');
+        //console.timeEnd('waveformCanvas');
         return canvas;
     }
 };
 
 
+/*
+ * Microphone
+ */
+
+Utils.Microphone = function(connected, denied, error, thisArg) {
+    navigator.getUserMedia_ = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+    this._isSupported = !!navigator.getUserMedia_;
+    this._stream = null;
+
+    this._onConnected = connected.bind(thisArg || this);
+    this._onDenied = denied ? denied.bind(thisArg || this) : function() {};
+    this._onError = error ? error.bind(thisArg || this) : function() {};
+};
+
+Utils.Microphone.prototype.connect = function() {
+    if(!this._isSupported) { return; }
+    var self = this;
+    navigator.getUserMedia_( {audio:true}, function(stream) {
+        self._stream = stream;
+        self._onConnected(stream);
+    }, function(e) {
+        if(e.name === 'PermissionDeniedError' || e === 'PERMISSION_DENIED') {
+            console.log('Permission denied. You can undo this by clicking the camera icon with the red cross in the address bar');
+            self._onDenied();
+        }
+        else {
+            self._onError(e.message || e);
+        }
+    });
+    return this;
+};
+
+Utils.Microphone.prototype.disconnect = function() {
+    if(this._stream) {
+        this._stream.stop();
+        this._stream = null;
+    }
+    return this;
+};
+
+Object.defineProperty(Utils.Microphone.prototype, 'stream', {
+    get: function() {
+        return this._stream;
+    }
+});
+
+Object.defineProperty(Utils.Microphone.prototype, 'isSupported', {
+    get: function() {
+        return this._isSupported;
+    }
+});
 
 
 
