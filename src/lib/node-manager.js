@@ -7,17 +7,6 @@ function NodeManager(context) {
     this._sourceNode = null;
 }
 
-NodeManager.prototype.setSource = function(node) {
-    this._sourceNode = node;
-    this._updateConnections();
-    return node;
-};
-
-NodeManager.prototype.setDestination = function(node) {
-    this._connectTo(node);
-    return node;
-};
-
 NodeManager.prototype.add = function(node) {
     this._nodeList.push(node);
     this._updateConnections();
@@ -408,6 +397,17 @@ NodeManager.prototype.createFakeContext = function() {
         createScriptProcessor: returnFakeNode,
         createWaveShaper: returnFakeNode
     };
+};
+
+NodeManager.prototype.setSource = function(node) {
+    this._sourceNode = node;
+    this._updateConnections();
+    return node;
+};
+
+NodeManager.prototype.setDestination = function(node) {
+    this._connectTo(node);
+    return node;
 };
 
 /*
