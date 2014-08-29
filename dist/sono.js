@@ -1047,17 +1047,6 @@ function NodeManager(context) {
     this._sourceNode = null;
 }
 
-NodeManager.prototype.setSource = function(node) {
-    this._sourceNode = node;
-    this._updateConnections();
-    return node;
-};
-
-NodeManager.prototype.setDestination = function(node) {
-    this._connectTo(node);
-    return node;
-};
-
 NodeManager.prototype.add = function(node) {
     this._nodeList.push(node);
     this._updateConnections();
@@ -1448,6 +1437,17 @@ NodeManager.prototype.createFakeContext = function() {
         createScriptProcessor: returnFakeNode,
         createWaveShaper: returnFakeNode
     };
+};
+
+NodeManager.prototype.setSource = function(node) {
+    this._sourceNode = node;
+    this._updateConnections();
+    return node;
+};
+
+NodeManager.prototype.setDestination = function(node) {
+    this._connectTo(node);
+    return node;
 };
 
 /*
@@ -2739,6 +2739,7 @@ Sono.prototype.loadMultiple = function(config, complete, progress, thisArg, asMe
         var file = config[i];
         var sound = this._queue(file.url, asMediaElement);
         if(file.id) { sound.id = file.id; }
+        sound.loop = !!file.loop;
         sounds.push(sound);
     }
     if(progress) {
@@ -2858,8 +2859,9 @@ Sono.prototype._handleTouchlock = function() {
     var unlock = function() {
         document.body.removeEventListener('touchstart', unlock);
         self._isTouchLocked = false;
-        this._loader.touchLocked = false;
-
+        if(self._loader) {
+            self._loader.touchLocked = false;
+        }
         if(self.context) {
             var buffer = self.context.createBuffer(1, 1, 22050);
             var unlockSource = self.context.createBufferSource();
