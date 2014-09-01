@@ -8,9 +8,21 @@ A JavaScript library for working with audio. WebAudio API with fallback to HTMLM
 
 * Try moving loader into sound - see if it simplifies things
 * ~~Refactor 'Web Audio Demos' project to use Sono~~
-* Bring in microphone code
+* ~~Bring in microphone code~~
 * Channel split/merge
 * ~~Add nodes to main output - maybe moving node manager into module~~
+
+## Features
+
+* Load, play and add effects to sounds
+* Abstracts differences across browsers (file types, Web Audio support)
+* Web Audio effects such as 3d positioning, reverb and frequency analysis
+* Handle inputs from sound files, microphone, video element, oscillators
+* Automatically handles fallback to Audio element for IE 11 and less
+* Handles pause and resume of audio on page visibility change
+* Handles touch to unlock media playback on mobile devices
+* Master volume/mute
+* Generates waveforms displays for sounds
 
 ## Installation
 
