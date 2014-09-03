@@ -18,6 +18,7 @@ function BufferSource(buffer, context) {
  */
 
 BufferSource.prototype.play = function(delay, offset) {
+    if(this._playing) { return; }
     if(delay === undefined) { delay = 0; }
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
@@ -36,7 +37,6 @@ BufferSource.prototype.play = function(delay, offset) {
     }
 
     this._pausedAt = 0;
-
     this._playing = true;
     this._paused = false;
 };
