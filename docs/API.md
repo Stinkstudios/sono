@@ -1,17 +1,17 @@
 ## Sono
 
 
-### Create Sound
+### Create a Sound instance
 
 [Sono.createSound(data)](Sono.md#createsound) // returns Sound
 
 
-### Destroy
+### Destroy a Sound instance
 
 [Sono.destroy(soundOrId)](Sono.md#destroy) // destroy sound instance or by id
 
 
-### Retrieve Sound by id
+### Retrieve a Sound instance by its id
 
 [Sono.getById(id)](Sono.md#getbyid) // returns Sound or null
 

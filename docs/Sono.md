@@ -27,6 +27,11 @@ navigator.getUserMedia({audio:true}, function(stream) {
 	var mic = Sono.createSound(stream);
 });
 
+var mic = Sono.utils.microphone(function(stream) {
+	var mic = Sono.createSound(stream);
+});
+mic.connect();
+
 // script processor
 var script = Sono.createSound({
 	bufferSize: 1024,
@@ -166,4 +171,79 @@ Sono.play('foo', 1000);
 Sono.pause('foo');
 // stop sound by id
 Sono.stop('foo');
+```
+
+## log
+
+>`Sono.log()`
+
+#### Examples
+
+```javascript
+Sono.log(); // Sono 0.0.0 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
+```
+
+## canPlay
+
+#### Examples
+
+```javascript
+Sono.canPlay.mp3; // boolean
+Sono.canPlay.ogg; // boolean
+```
+
+## context
+
+#### Examples
+
+```javascript
+Sono.context; // WebAudioContext
+```
+
+## hasWebAudio
+
+#### Examples
+
+```javascript
+Sono.hasWebAudio; // boolean
+```
+
+## isSupported
+
+#### Examples
+
+```javascript
+Sono.isSupported; // boolean
+```
+
+## masterGain
+
+#### Examples
+
+```javascript
+Sono.masterGain; // GainNode
+```
+
+## node
+
+#### Examples
+
+```javascript
+Sono.node.analyser();
+```
+
+## sounds
+
+#### Examples
+
+```javascript
+Sono.sounds; // array
+```
+
+## utils
+
+#### Examples
+
+```javascript
+Sono.utils.timeCode(13.7); // string
 ```
