@@ -3,6 +3,7 @@
 function MicrophoneSource(stream, context) {
     this.id = '';
     this._context = context;
+    this._ended = false;
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
@@ -28,10 +29,10 @@ MicrophoneSource.prototype.play = function(delay) {
         this._startedAt = this._context.currentTime;
     }
 
-    this._pausedAt = 0;
-
+    this._ended = false;
     this._playing = true;
     this._paused = false;
+    this._pausedAt = 0;
 };
 
 MicrophoneSource.prototype.pause = function() {
@@ -49,10 +50,11 @@ MicrophoneSource.prototype.stop = function() {
         } catch(e) {}
         this._sourceNode = null;
     }
-    this._startedAt = 0;
+    this._ended = true;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 /*
@@ -74,6 +76,12 @@ Object.defineProperty(MicrophoneSource.prototype, 'currentTime', {
 Object.defineProperty(MicrophoneSource.prototype, 'duration', {
     get: function() {
         return 0;
+    }
+});
+
+Object.defineProperty(MicrophoneSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 

@@ -3,6 +3,7 @@
 function OscillatorSource(type, context) {
     this.id = '';
     this._context = context;
+    this._ended = false;
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
@@ -29,10 +30,10 @@ OscillatorSource.prototype.play = function(delay) {
         this._startedAt = this._context.currentTime;
     }
 
-    this._pausedAt = 0;
-
+    this._ended = false;
     this._playing = true;
     this._paused = false;
+    this._pausedAt = 0;
 };
 
 OscillatorSource.prototype.pause = function() {
@@ -50,10 +51,11 @@ OscillatorSource.prototype.stop = function() {
         } catch(e) {}
         this._sourceNode = null;
     }
-    this._startedAt = 0;
+    this._ended = true;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 /*
@@ -87,6 +89,12 @@ Object.defineProperty(OscillatorSource.prototype, 'currentTime', {
 Object.defineProperty(OscillatorSource.prototype, 'duration', {
     get: function() {
         return 0;
+    }
+});
+
+Object.defineProperty(OscillatorSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 

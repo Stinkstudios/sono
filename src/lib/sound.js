@@ -149,6 +149,12 @@ Object.defineProperty(Sound.prototype, 'duration', {
     }
 });
 
+Object.defineProperty(Sound.prototype, 'ended', {
+    get: function() {
+        return this._source ? this._source.ended : false;
+    }
+});
+
 Object.defineProperty(Sound.prototype, 'gain', {
     get: function() {
         return this._gain;

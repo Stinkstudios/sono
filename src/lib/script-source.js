@@ -2,16 +2,16 @@
 
 function ScriptSource(data, context) {
     this.id = '';
+    this._bufferSize = data.bufferSize || 1024;
+    this._channels = data.channels || 1;
     this._context = context;
+    this._ended = false;
+    this._onProcess = data.callback.bind(data.thisArg || this);
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
     this._sourceNode = null; // ScriptSourceNode
     this._startedAt = 0;
-
-    this._bufferSize = data.bufferSize || 1024;
-    this._channels = data.channels || 1;
-    this._onProcess = data.callback.bind(data.thisArg || this);
 }
 
 /*
@@ -31,10 +31,10 @@ ScriptSource.prototype.play = function(delay) {
         this._startedAt = this._context.currentTime;
     }
 
-    this._pausedAt = 0;
-
-    this._playing = true;
+    this._ended = false;
     this._paused = false;
+    this._pausedAt = 0;
+    this._playing = true;
 };
 
 ScriptSource.prototype.pause = function() {
@@ -49,10 +49,11 @@ ScriptSource.prototype.stop = function() {
     if(this._sourceNode) {
         this._sourceNode.onaudioprocess = this._onPaused;
     }
-    this._startedAt = 0;
+    this._ended = true;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 ScriptSource.prototype._onPaused = function(event) {
@@ -84,6 +85,12 @@ Object.defineProperty(ScriptSource.prototype, 'currentTime', {
 Object.defineProperty(ScriptSource.prototype, 'duration', {
     get: function() {
         return 0;
+    }
+});
+
+Object.defineProperty(ScriptSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 

@@ -452,6 +452,7 @@ function BufferSource(buffer, context) {
     this.id = '';
     this._buffer = buffer; // ArrayBuffer
     this._context = context;
+    this._ended = false;
     this._endedCallback = null;
     this._loop = false;
     this._paused = false;
@@ -484,9 +485,10 @@ BufferSource.prototype.play = function(delay, offset) {
         this._startedAt = this._context.currentTime - offset;
     }
 
+    this._ended = false;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = true;
-    this._paused = false;
 };
 
 BufferSource.prototype.pause = function() {
@@ -505,10 +507,11 @@ BufferSource.prototype.stop = function() {
         } catch(e) {}
         this._sourceNode = null;
     }
-    this._startedAt = 0;
+
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 /*
@@ -521,6 +524,7 @@ BufferSource.prototype.onEnded = function(fn, context) {
 
 BufferSource.prototype._endedHandler = function() {
     this.stop();
+    this._ended = true;
     if(typeof this._endedCallback === 'function') {
         this._endedCallback(this);
     }
@@ -545,6 +549,12 @@ Object.defineProperty(BufferSource.prototype, 'currentTime', {
 Object.defineProperty(BufferSource.prototype, 'duration', {
     get: function() {
         return this._buffer ? this._buffer.duration : 0;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 
@@ -776,6 +786,7 @@ function MediaSource(el, context) {
     this.id = '';
     this._context = context;
     this._el = el; // HTMLMediaElement
+    this._ended = false;
     this._endedCallback = null;
     this._endedHandlerBound = this._endedHandler.bind(this);
     this._loop = false;
@@ -804,8 +815,9 @@ MediaSource.prototype.play = function(delay, offset) {
         this._el.play();
     }
 
-    this._playing = true;
+    this._ended = false;
     this._paused = false;
+    this._playing = true;
 
     this._el.removeEventListener('ended', this._endedHandlerBound);
     this._el.addEventListener('ended', this._endedHandlerBound, false);
@@ -847,8 +859,9 @@ MediaSource.prototype.onEnded = function(fn, context) {
 };
 
 MediaSource.prototype._endedHandler = function() {
-    this._playing = false;
+    this._ended = true;
     this._paused = false;
+    this._playing = false;
 
     if(this._loop) {
         this._el.currentTime = 0;
@@ -873,6 +886,12 @@ Object.defineProperty(MediaSource.prototype, 'currentTime', {
 Object.defineProperty(MediaSource.prototype, 'duration', {
     get: function() {
         return this._el ? this._el.duration : 0;
+    }
+});
+
+Object.defineProperty(MediaSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 
@@ -922,6 +941,7 @@ if (typeof module === 'object' && module.exports) {
 function MicrophoneSource(stream, context) {
     this.id = '';
     this._context = context;
+    this._ended = false;
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
@@ -947,10 +967,10 @@ MicrophoneSource.prototype.play = function(delay) {
         this._startedAt = this._context.currentTime;
     }
 
-    this._pausedAt = 0;
-
+    this._ended = false;
     this._playing = true;
     this._paused = false;
+    this._pausedAt = 0;
 };
 
 MicrophoneSource.prototype.pause = function() {
@@ -968,10 +988,11 @@ MicrophoneSource.prototype.stop = function() {
         } catch(e) {}
         this._sourceNode = null;
     }
-    this._startedAt = 0;
+    this._ended = true;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 /*
@@ -993,6 +1014,12 @@ Object.defineProperty(MicrophoneSource.prototype, 'currentTime', {
 Object.defineProperty(MicrophoneSource.prototype, 'duration', {
     get: function() {
         return 0;
+    }
+});
+
+Object.defineProperty(MicrophoneSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 
@@ -1464,6 +1491,7 @@ if (typeof module === 'object' && module.exports) {
 function OscillatorSource(type, context) {
     this.id = '';
     this._context = context;
+    this._ended = false;
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
@@ -1490,10 +1518,10 @@ OscillatorSource.prototype.play = function(delay) {
         this._startedAt = this._context.currentTime;
     }
 
-    this._pausedAt = 0;
-
+    this._ended = false;
     this._playing = true;
     this._paused = false;
+    this._pausedAt = 0;
 };
 
 OscillatorSource.prototype.pause = function() {
@@ -1511,10 +1539,11 @@ OscillatorSource.prototype.stop = function() {
         } catch(e) {}
         this._sourceNode = null;
     }
-    this._startedAt = 0;
+    this._ended = true;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 /*
@@ -1548,6 +1577,12 @@ Object.defineProperty(OscillatorSource.prototype, 'currentTime', {
 Object.defineProperty(OscillatorSource.prototype, 'duration', {
     get: function() {
         return 0;
+    }
+});
+
+Object.defineProperty(OscillatorSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 
@@ -1593,16 +1628,16 @@ if (typeof module === 'object' && module.exports) {
 
 function ScriptSource(data, context) {
     this.id = '';
+    this._bufferSize = data.bufferSize || 1024;
+    this._channels = data.channels || 1;
     this._context = context;
+    this._ended = false;
+    this._onProcess = data.callback.bind(data.thisArg || this);
     this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
     this._sourceNode = null; // ScriptSourceNode
     this._startedAt = 0;
-
-    this._bufferSize = data.bufferSize || 1024;
-    this._channels = data.channels || 1;
-    this._onProcess = data.callback.bind(data.thisArg || this);
 }
 
 /*
@@ -1622,10 +1657,10 @@ ScriptSource.prototype.play = function(delay) {
         this._startedAt = this._context.currentTime;
     }
 
-    this._pausedAt = 0;
-
-    this._playing = true;
+    this._ended = false;
     this._paused = false;
+    this._pausedAt = 0;
+    this._playing = true;
 };
 
 ScriptSource.prototype.pause = function() {
@@ -1640,10 +1675,11 @@ ScriptSource.prototype.stop = function() {
     if(this._sourceNode) {
         this._sourceNode.onaudioprocess = this._onPaused;
     }
-    this._startedAt = 0;
+    this._ended = true;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 ScriptSource.prototype._onPaused = function(event) {
@@ -1675,6 +1711,12 @@ Object.defineProperty(ScriptSource.prototype, 'currentTime', {
 Object.defineProperty(ScriptSource.prototype, 'duration', {
     get: function() {
         return 0;
+    }
+});
+
+Object.defineProperty(ScriptSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 
@@ -1862,6 +1904,12 @@ Object.defineProperty(Sound.prototype, 'data', {
 Object.defineProperty(Sound.prototype, 'duration', {
     get: function() {
         return this._source ? this._source.duration : 0;
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'ended', {
+    get: function() {
+        return this._source ? this._source.ended : false;
     }
 });
 

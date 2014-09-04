@@ -4,6 +4,7 @@ function BufferSource(buffer, context) {
     this.id = '';
     this._buffer = buffer; // ArrayBuffer
     this._context = context;
+    this._ended = false;
     this._endedCallback = null;
     this._loop = false;
     this._paused = false;
@@ -36,9 +37,10 @@ BufferSource.prototype.play = function(delay, offset) {
         this._startedAt = this._context.currentTime - offset;
     }
 
+    this._ended = false;
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = true;
-    this._paused = false;
 };
 
 BufferSource.prototype.pause = function() {
@@ -57,10 +59,11 @@ BufferSource.prototype.stop = function() {
         } catch(e) {}
         this._sourceNode = null;
     }
-    this._startedAt = 0;
+
+    this._paused = false;
     this._pausedAt = 0;
     this._playing = false;
-    this._paused = false;
+    this._startedAt = 0;
 };
 
 /*
@@ -73,6 +76,7 @@ BufferSource.prototype.onEnded = function(fn, context) {
 
 BufferSource.prototype._endedHandler = function() {
     this.stop();
+    this._ended = true;
     if(typeof this._endedCallback === 'function') {
         this._endedCallback(this);
     }
@@ -97,6 +101,12 @@ Object.defineProperty(BufferSource.prototype, 'currentTime', {
 Object.defineProperty(BufferSource.prototype, 'duration', {
     get: function() {
         return this._buffer ? this._buffer.duration : 0;
+    }
+});
+
+Object.defineProperty(BufferSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 

@@ -4,6 +4,7 @@ function MediaSource(el, context) {
     this.id = '';
     this._context = context;
     this._el = el; // HTMLMediaElement
+    this._ended = false;
     this._endedCallback = null;
     this._endedHandlerBound = this._endedHandler.bind(this);
     this._loop = false;
@@ -32,8 +33,9 @@ MediaSource.prototype.play = function(delay, offset) {
         this._el.play();
     }
 
-    this._playing = true;
+    this._ended = false;
     this._paused = false;
+    this._playing = true;
 
     this._el.removeEventListener('ended', this._endedHandlerBound);
     this._el.addEventListener('ended', this._endedHandlerBound, false);
@@ -75,8 +77,9 @@ MediaSource.prototype.onEnded = function(fn, context) {
 };
 
 MediaSource.prototype._endedHandler = function() {
-    this._playing = false;
+    this._ended = true;
     this._paused = false;
+    this._playing = false;
 
     if(this._loop) {
         this._el.currentTime = 0;
@@ -101,6 +104,12 @@ Object.defineProperty(MediaSource.prototype, 'currentTime', {
 Object.defineProperty(MediaSource.prototype, 'duration', {
     get: function() {
         return this._el ? this._el.duration : 0;
+    }
+});
+
+Object.defineProperty(MediaSource.prototype, 'ended', {
+    get: function() {
+        return this._ended;
     }
 });
 
