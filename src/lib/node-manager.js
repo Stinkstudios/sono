@@ -410,6 +410,26 @@ NodeManager.prototype.setDestination = function(node) {
     return node;
 };
 
+
+/*
+function EchoNode(context, delayTime, feedbackVolume){
+  this.delayTime.value = delayTime;
+  this.gainNode = context.createGainNode();
+  this.gainNode.gain.value = feedbackVolume;
+  this.connect(this.gainNode);
+  this.gainNode.connect(this);
+}
+
+function createEcho(context, delayTime, feedback){
+  var delay = context.createDelayNode(delayTime + 1);
+  FeedbackDelayNode.call(delay, context, delayTime, feedback);
+  return delay;
+}
+*/
+
+//http://stackoverflow.com/questions/13702733/creating-a-custom-echo-node-with-web-audio
+//http://stackoverflow.com/questions/19895442/implementing-a-javascript-audionode
+
 /*
  * Exports
  */
