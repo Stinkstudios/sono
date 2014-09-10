@@ -188,8 +188,11 @@ Sono.log(); // Sono 0.0.0 Supported:true WebAudioAPI:true TouchLocked:false Exte
 #### Examples
 
 ```javascript
-Sono.canPlay.mp3; // boolean
 Sono.canPlay.ogg; // boolean
+Sono.canPlay.mp3; // boolean
+Sono.canPlay.opus; // boolean
+Sono.canPlay.wav; // boolean
+Sono.canPlay.m4a; // boolean
 ```
 
 ## context
@@ -244,6 +247,37 @@ Sono.sounds; // array
 
 #### Examples
 
+Crossfade two sounds
+
 ```javascript
-Sono.utils.timeCode(13.7); // string
+Sono.utils.crossFade(soundA, SoundB, 1);
+```
+
+Get user microphone
+
+```javascript
+var mic = Sono.utils.microphone(function(stream) {
+    // user allowed mic - got stream
+	var micSound = Sono.createSound(stream);
+}, function() {
+	// user denied mic
+}, function(e) {
+	// error
+});
+mic.connect();
+```
+
+Convert currentTime seconds into time code string
+
+```javascript
+var timeCode = Sono.utils.timeCode(217.8); // '03:37'
+```
+
+Get a sound's waveform and draw it to a canvas element
+
+```javascript
+var canvasEl = document.querySelector('canvas');
+var wave = Sono.utils.waveform(sound._data, canvasEl.width);
+var canvas = wave.getCanvas(canvasEl.height, '#333333', '#DDDDDD', canvasEl);
+
 ```

@@ -4,14 +4,6 @@ A JavaScript library for working with audio. WebAudio API with fallback to HTMLM
 
 <http://prototypes.stinkdigital.com/webaudio/sono/examples/>
 
-### TODO
-
-* Try moving loader into sound - see if it simplifies things
-* ~~Refactor 'Web Audio Demos' project to use Sono~~
-* ~~Bring in microphone code~~
-* Channel split/merge
-* ~~Add nodes to main output - maybe moving node manager into module~~
-
 ## Features
 
 * Load, play and add effects to sounds
@@ -31,7 +23,7 @@ A JavaScript library for working with audio. WebAudio API with fallback to HTMLM
 
 ## Usage
 
-### Adding sounds to Sono:
+### Adding sounds to Sono
 
 New sounds are created through the `createSound` method. If you pass in an array of URLs, Sono will use the first one that matches the browser's capabilities:
 
@@ -89,7 +81,7 @@ var script = Sono.createSound({
 });
 ```
 
-### Loading multiple sounds:
+### Loading multiple sounds
 
 ```javascript
 Sono.load([
@@ -104,7 +96,7 @@ Sono.load([
 });
 ```
 
-### Adding effects:
+### Adding effects
 
 Reverb
 
