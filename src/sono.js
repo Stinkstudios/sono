@@ -31,7 +31,7 @@ function Sono() {
  * Create
  *
  * Accepted values for param data:
- * 
+ *
  * ArrayBuffer
  * HTMLMediaElement
  * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
@@ -322,29 +322,24 @@ Sono.prototype._handleVisibility = function() {
  * Log version & device support info
  */
 
-Sono.prototype.log = function(colorFull) {
+Sono.prototype.log = function() {
     var title = 'Sono ' + this.VERSION,
         info = 'Supported:' + this.isSupported +
                ' WebAudioAPI:' + this.hasWebAudio +
                ' TouchLocked:' + this._isTouchLocked +
                ' Extensions:' + this._support.extensions;
 
-    if(colorFull && navigator.userAgent.indexOf('Chrome') > -1) {
+    if(navigator.userAgent.indexOf('Chrome') > -1) {
         var args = [
-            '%c %c ' + title +
-            ' %c %c ' +
-            info +
-            ' %c ',
-            'background: #17d186',
-            'color: #000000; background: #d0f736; font-weight: bold',
-            'background: #17d186',
-            'background: #f7f94f',
-            'background: #17d186'
-        ];
+                '%c ♫ ' + title +
+                ' ♫ %c ' + info + ' ',
+                'color: #FFFFFF; background: #379F7A',
+                'color: #1F1C0D; background: #E0FBAC'
+            ];
         console.log.apply(console, args);
     }
     else if (window.console) {
-        console.log(title + ' ' + info);
+        console.log.call(console, title + ' ' + info);
     }
 };
 

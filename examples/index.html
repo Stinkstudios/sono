@@ -15,7 +15,7 @@
         <li><a href="oscillator.html">Oscillator</a></li>
         <li><a href="microphone.html">Microphone</a></li>
         <li><a href="video.html">Video</a></li>
-        
+
         <li>Simple example</li>
         <li>WebAudio</li>
         <li>Audio el v Array Buffer</li>
@@ -72,7 +72,7 @@
         </div>
     </div>
 
-    
+
 
     <h3>Master volume</h3>
     <div><input class="js-master-volume" type="range" min="0" max="100" value="100" /><div>
@@ -81,7 +81,7 @@
         // Test with no WebAudio
         //window.AudioContext = window.webkitAudioContext = undefined;
     </script>
-	<script src="../dist/sono.js"></script>
+	<script src="../dist/sono.min.js"></script>
     <script>
         (function() {
             'use strict';
@@ -165,7 +165,7 @@
                     if(sound.playing) {
                         window.requestAnimationFrame(update);
                     }
-                    
+
                     info.innerHTML = Sono.utils.timeCode(sound.currentTime) + ' / ' +
                                      Sono.utils.timeCode(sound.duration);
 
