@@ -6,15 +6,15 @@ A JavaScript library for working with audio. WebAudio API with fallback to HTMLM
 
 ## Features
 
-* Load, play and add effects to sounds
-* Abstracts differences across browsers (file types, Web Audio support)
+* Full audio management including loading, control, effects and processing
+* Abstracts differences across browsers such as file types and Web Audio support
 * Web Audio effects such as 3d positioning, reverb and frequency analysis
-* Handle inputs from sound files, microphone, video element, oscillators
-* Automatically handles fallback to Audio element for IE 11 and less
-* Handles pause and resume of audio on page visibility change
-* Handles touch to unlock media playback on mobile devices
-* Master volume/mute
-* Generates waveforms displays for sounds
+* Handles inputs from audio files, media elements, microphone, oscillators and scripts
+* Falls back to HTMLAudioElement where Web Audio is not supported (e.g. IE 11 and less)
+* Pauses and resumes audio playback on page visibility changes
+* Handles initial touch to unlock media playback on mobile devices
+* Master volume and mute control
+* Generates graphical waveform displays for sounds
 
 ## Installation
 
@@ -31,30 +31,36 @@ New sounds are created through the `createSound` method. If you pass in an array
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 ```
 
-You can also use your own loader and pass in the loaded sound data, or supply media elements.
+A sound can be assigned an `id` property which can be used to retrieve it later, without having a reference to the instance:
+
+```javascript
+var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+sound.id = 'foo';
+
+// somewhere else in your app:
+var foo = Sono.getById('foo');
+// or
+Sono.play('foo');
+```
+
+You can also use your own loader and pass in the loaded sound data, or supply media elements from the dom:
 
 ```javascript
 // media elements:
-var audio = document.querySelector('audio');
-var audioElSound = Sono.createSound(audio);
+var audioEl = document.querySelector('audio');
+var audioElSound = Sono.createSound(audioEl);
 
-var video = document.querySelector('video');
-var videoElSound = Sono.createSound(video);
+var videoEl = document.querySelector('video');
+var videoElSound = Sono.createSound(videoEl);
 
-// xhrResponse loaded outside of Sono:
+// xhrResponse (ArrayBuffer) loaded outside of Sono:
 var sound;
 Sono.context.decodeAudioData(xhrResponse, function(buffer) {
     sound = Sono.createSound(buffer);
 });
 ```
 
-Or create an oscillator:
-
-```javascript
-var sineWave = Sono.createSound('sine');
-```
-
-Or attach a microphone stream:
+The user's microphone stream can be used as a source:
 
 ```javascript
 var sound;
@@ -65,7 +71,14 @@ var mic = Sono.utils.microphone(onConnect);
 mic.connect();
 ```
 
-Or even generate a sound through Maths:
+Sound can be genrated with oscillators:
+
+```javascript
+var sineWave = Sono.createSound('sine');
+var squareWave = Sono.createSound('square');
+```
+
+Or from custom scripts:
 
 ```javascript
 var script = Sono.createSound({
@@ -83,29 +96,34 @@ var script = Sono.createSound({
 
 ### Loading multiple sounds
 
+Sono.load accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getById`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
+
 ```javascript
 Sono.load([
     { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
     { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true }
 ], function(sounds) {
-    // loading complete, sounds can be retrieved by id:
+    // loading complete, sound instances can be retrieved or controlled by id:
     var soundA = Sono.getById('a');
-    var soundB = Sono.getById('b');
+    Sono.play('b');
 }, function(progress) {
-    // update progress bar?
+    // update progress bar
 });
 ```
 
 ### Adding effects
 
-Reverb
+Effect and processing nodes can be added to individual sounds or to the overall mix:
+
+Apply a reverb effect to a specific sound:
 
 ```javascript
-var sound = Sono.sound(['audio/foo.ogg', 'audio/foo.mp3']);
-sound.play();
-// apply reverb to specific sound:
 var reverb = sound.node.reverb(2, 0.5);
-// apply reverb to all sounds:
+```
+
+Apply a reverb effect to all sounds:
+
+```javascript
 var reverb = Sono.node.reverb(2, 0.5);
 ```
 

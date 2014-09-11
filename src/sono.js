@@ -97,7 +97,7 @@ Sono.prototype.getById = function(id) {
 Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement) {
     // multiple
     if(url instanceof Array && url.length && typeof url[0] === 'object') {
-        this.loadMultiple(url, complete, progress, thisArg, asMediaElement);
+        this._loadMultiple(url, complete, progress, thisArg, asMediaElement);
         return;
     }
 
@@ -116,7 +116,7 @@ Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement)
     return sound;
 };
 
-Sono.prototype.loadMultiple = function(config, complete, progress, thisArg, asMediaElement) {
+Sono.prototype._loadMultiple = function(config, complete, progress, thisArg, asMediaElement) {
     var sounds = [];
     for (var i = 0, l = config.length; i < l; i++) {
         var file = config[i];

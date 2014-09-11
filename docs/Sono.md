@@ -10,29 +10,42 @@ Create a Sound object
 
 #### Examples
 
+Create and load:
+
 ```javascript
-// load
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 var sound = Sono.createSound('audio/foo.ogg');
+```
 
-// existing MediaElement or ArrayBuffer
+From existing HTMLMediaElement:
+
+```javascript
 var el = document.querySelector('video');
 var sound = Sono.createSound(el);
+```
 
-// oscillator
+Create an oscillator:
+
+```javascript
 var sineWave = Sono.createSound('sine');
+```
 
-// microphone stream
+User microphone stream:
+
+```javascript
 navigator.getUserMedia({audio:true}, function(stream) {
 	var mic = Sono.createSound(stream);
 });
-
+// or
 var mic = Sono.utils.microphone(function(stream) {
 	var mic = Sono.createSound(stream);
 });
 mic.connect();
+```
 
-// script processor
+Script processor:
+
+```javascript
 var script = Sono.createSound({
 	bufferSize: 1024,
 	channels: 1,
@@ -84,15 +97,19 @@ var sound = Sono.getById('bar');
 Load a sound and add to Sono
 
 >`Sono.load(url, complete, progress, thisArg, asMediaElement)` returns Sound  
-`Sono.loadMultiple(config, complete, progress, thisArg, asMediaElement)`
+`Sono.load(config, complete, progress, thisArg, asMediaElement)`
 
 #### Examples
 
-```javascript
-// array - load first file compatible with browser
-var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']);
+Array - load first file compatible with browser
 
-// multiple sounds
+```javascript
+var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']);
+```
+
+Multiple sounds
+
+```javascript
 Sono.load([
 	{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
 	{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'] }
@@ -103,38 +120,41 @@ Sono.load([
 }, function(progress) {
 	console.log('progress:', progress);
 });
+```
 
-// specific file
+Specific file:
+
+```javascript
 var sound = Sono.load('audio/foo.ogg');
+```
 
-// hashmap - load first file compatible with browser
+Hashmap - load first file compatible with browser:
+
+```javascript
 var sound = Sono.load({foo: 'audio/foo.ogg', bar: 'audio/foo.mp3'});
 
-// check support manually
+```
+
+Check file support manually:
+
+
+```javascript
+var extension = Sono.canPlay.ogg ? 'ogg' : 'mp3';
+var sound = Sono.load('audio/foo.' + extension);
+
 if(Sono.canPlay.mp3) {
 	var sound = Sono.load('audio/foo.mp3');
 }
 
-// add extension manually
-var sound = Sono.load('audio/foo' + Sono.getSupportedExtensions[0]);
+```
 
-// load and play immediately
+Load and play immediately:
+
+```javascript
 var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play();
 
 ```
 
-```javascript
-Sono.loadMultiple([
-	{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
-	{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'] }
-], function(sounds) {
-	console.log('complete:', sounds);
-	var soundA = Sono.getById('a');
-	var soundB = Sono.getById('b');
-}, function(progress) {
-	console.log('progress:', progress);
-});
-```
 
 ## controls
 
@@ -165,8 +185,8 @@ Sono.pauseAll();
 Sono.resumeAll();
 // stop all currently playing or paused
 Sono.stopAll();
-// play sound by id
-Sono.play('foo', 1000);
+// play sound by id after a 1 second delay
+Sono.play('foo', 1);
 // pause sound by id
 Sono.pause('foo');
 // stop sound by id
@@ -178,6 +198,8 @@ Sono.stop('foo');
 >`Sono.log()`
 
 #### Examples
+
+Log version number and browser audio support info to the console:
 
 ```javascript
 Sono.log(); // Sono 0.0.0 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
