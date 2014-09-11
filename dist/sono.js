@@ -2587,6 +2587,7 @@ Sono.prototype._loadMultiple = function(config, complete, progress, thisArg, asM
         var sound = this._queue(file.url, asMediaElement);
         if(file.id) { sound.id = file.id; }
         sound.loop = !!file.loop;
+        sound.volume = file.volume;
         sounds.push(sound);
     }
     if(progress) {

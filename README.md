@@ -71,7 +71,7 @@ var mic = Sono.utils.microphone(onConnect);
 mic.connect();
 ```
 
-Sound can be genrated with oscillators:
+Sound can be generated with oscillators:
 
 ```javascript
 var sineWave = Sono.createSound('sine');
@@ -101,7 +101,7 @@ Sono.load accepts an array of sound config objects. All the sounds will be loade
 ```javascript
 Sono.load([
     { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
-    { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true }
+    { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
 ], function(sounds) {
     // loading complete, sound instances can be retrieved or controlled by id:
     var soundA = Sono.getById('a');
