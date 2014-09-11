@@ -36,15 +36,16 @@ function buildJS(debug, minify) {
   return bundler.bundle({debug: debug, standalone: 'Sono'})
     .on('error', logError)
     .pipe(source(bundleName))
-    .pipe(gulpIf(minify, streamify(strip())))
+    .pipe(gulpIf(!debug, streamify(strip())))
     .pipe(gulpIf(minify, streamify(uglify())))
     .pipe(gulp.dest(dist))
     .pipe(browserSync.reload({ stream: true }));
 }
-gulp.task('bundle', function() {
+gulp.task('bundle-debug', function() {
   buildJS(true, false);
+  buildJS(true, true);
 });
-gulp.task('bundle-release', function() {
+gulp.task('bundle', function() {
   buildJS(false, false);
   buildJS(false, true);
 });
@@ -153,7 +154,7 @@ gulp.task('connect', function() {
 // watch
 gulp.task('watch', function() {
   gulp.watch(cssSrc+'**/*.css', ['css']);
-  gulp.watch(src+'**/*.js', ['jshint', 'bundle']);
+  gulp.watch(src+'**/*.js', ['jshint', 'bundle-debug']);
   gulp.watch('test/**/*.js', ['jshint']);
 });
 

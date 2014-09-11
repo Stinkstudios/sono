@@ -118,7 +118,7 @@ Object.defineProperty(OscillatorSource.prototype, 'progress', {
 
 Object.defineProperty(OscillatorSource.prototype, 'sourceNode', {
     get: function() {
-        if(!this._sourceNode) {
+        if(!this._sourceNode && this._context) {
             this._sourceNode = this._context.createOscillator();
             this._sourceNode.type = this._type;
             this._sourceNode.frequency.value = this._frequency;

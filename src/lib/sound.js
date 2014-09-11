@@ -26,8 +26,6 @@ function Sound(context, data, destination) {
         this._gain.connect(destination || this._context.destination);
     }
 
-    this._utils = new Utils(this._context);
-
     this.setData(data);
 }
 
@@ -35,19 +33,19 @@ Sound.prototype.setData = function(data) {
     if(!data) { return this; }
     this._data = data; // AudioBuffer, MediaElement, etc
 
-    if(this._utils.isAudioBuffer(data)) {
+    if(Utils.isAudioBuffer(data)) {
         this._source = new BufferSource(data, this._context);
     }
-    else if(this._utils.isMediaElement(data)) {
+    else if(Utils.isMediaElement(data)) {
         this._source = new MediaSource(data, this._context);
     }
-    else if(this._utils.isMediaStream(data)) {
+    else if(Utils.isMediaStream(data)) {
         this._source = new MicrophoneSource(data, this._context);
     }
-    else if(this._utils.isOscillatorType(data)) {
+    else if(Utils.isOscillatorType(data)) {
         this._source = new OscillatorSource(data, this._context);
     }
-    else if(this._utils.isScriptConfig(data)) {
+    else if(Utils.isScriptConfig(data)) {
         this._source = new ScriptSource(data, this._context);
     }
     else {

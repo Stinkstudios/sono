@@ -368,11 +368,20 @@ NodeManager.prototype.createFakeContext = function() {
         release: param,
         // distortion
         oversample: 0,
-        curve: 0
+        curve: 0,
+        // buffer
+        sampleRate: 1,
+        length: 0,
+        duration: 0,
+        numberOfChannels: 0,
+        getChannelData: function() { return []; },
+        copyFromChannel: fn,
+        copyToChannel: fn
     };
     var returnFakeNode = function(){ return fakeNode; };
     return {
         createAnalyser: returnFakeNode,
+        createBuffer: returnFakeNode,
         createBiquadFilter: returnFakeNode,
         createDynamicsCompressor: returnFakeNode,
         createConvolver: returnFakeNode,

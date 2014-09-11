@@ -11,6 +11,7 @@ function Sono() {
 
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this._context = window.AudioContext ? new window.AudioContext() : null;
+    Utils.setContext(this._context);
 
     this._node = new NodeManager(this._context);
     this._masterGain = this._node.gain();
@@ -42,7 +43,7 @@ function Sono() {
 
 Sono.prototype.createSound = function(data) {
     // try to load if data is Array or file string
-    if(this.utils.isFile(data)) {
+    if(Utils.isFile(data)) {
         return this.load(data);
     }
     // otherwise just return a new sound object
@@ -338,7 +339,7 @@ Sono.prototype.log = function() {
             ];
         console.log.apply(console, args);
     }
-    else if (window.console) {
+    else if (window.console && window.console.log.call) {
         console.log.call(console, title + ' ' + info);
     }
 };
@@ -391,10 +392,7 @@ Object.defineProperty(Sono.prototype, 'sounds', {
 
 Object.defineProperty(Sono.prototype, 'utils', {
     get: function() {
-        if(!this._utils) {
-            this._utils = new Utils(this._context);
-        }
-        return this._utils;
+        return Utils;
     }
 });
 
