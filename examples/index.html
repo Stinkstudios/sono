@@ -196,12 +196,12 @@
                     sound.volume = this.value / 100;
                 });
 
-                var panner = sound.node.panner();
-                var pan = Sono.utils.pan(panner);
+                var pan = sound.node.panner();
+                //var pan = Sono.utils.pan(panner);
 
                 // pan slider
                 panSlider.addEventListener('change', function() {
-                    pan.x(this.value / 100);
+                    pan.setX(this.value / 100);
                 });
 
                 // waveform display

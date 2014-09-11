@@ -100,10 +100,10 @@ Utils.microphone = function(connected, denied, error, thisArg) {
     return new Utils.Microphone(connected, denied, error, thisArg);
 };
 
-Utils.pan = function(panner) {
+/*Utils.pan = function(panner) {
     console.log('pan', this._context);
     return new Utils.Pan(this._context, panner);
-};
+};*/
 
 Utils.timeCode = function(seconds, delim) {
     if(delim === undefined) { delim = ':'; }
@@ -123,7 +123,7 @@ Utils.waveform = function(buffer, length) {
 /*
  * Pan
  */
-
+/*
 Utils.Pan = function(context, panner) {
     this._context = context;
     this._panner = panner;
@@ -205,7 +205,7 @@ Utils.Pan.prototype = {
         return vec3;
     }
 };
-
+*/
 /*
  * Waveform
  */

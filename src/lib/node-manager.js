@@ -1,5 +1,7 @@
 'use strict';
 
+var Panner = require('./panner.js');
+
 function NodeManager(context) {
     this._context = context || this.createFakeContext();
     this._destination = null;
@@ -239,6 +241,11 @@ NodeManager.prototype.gain = function(value) {
 };
 
 NodeManager.prototype.panner = function() {
+    var panner = new Panner(this._context);
+    this.add(panner.node);
+    return panner;
+};
+/*NodeManager.prototype.panner = function() {
     var node = this._context.createPanner();
     // Default for stereo is HRTF
     node.panningModel = 'HRTF'; // 'equalpower'
@@ -262,7 +269,7 @@ NodeManager.prototype.panner = function() {
     // normalised vec
     // node.setOrientation(vec.x, vec.y, vec.z);
     return this.add(node);
-};
+};*/
 
 NodeManager.prototype.reverb = function(seconds, decay, reverse, node) {
     // TODO: should prob be moved to utils:

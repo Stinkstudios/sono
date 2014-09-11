@@ -55,7 +55,7 @@ function Panner(context) {
         //
         node: node,
         // pan left to right with value from -1 to 1
-        x: function(value) {
+        setX: function(value) {
             // x from -Math.PI/4 to Math.PI/4 (-45 to 45 deg)
             var x = parseFloat(value, 10) * Math.PI / 4;
             var z = x + Math.PI / 2;
@@ -66,7 +66,7 @@ function Panner(context) {
             z = Math.sin(z);
             node.setPosition(x, 0, z);
         },
-        xyz: function(x, y, z) {
+        setXYZ: function(x, y, z) {
             x = x || 0;
             y = y || 0;
             z = z || 0;
@@ -114,3 +114,12 @@ function Panner(context) {
         }
     };
 };
+
+/*
+ * Exports
+ */
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = Panner;
+}
+
