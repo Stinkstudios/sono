@@ -1,5 +1,5 @@
 'use strict';
-
+/*
 function Filter(context, type, frequency, quality, gain) {
     // Frequency between 40Hz and half of the sampling rate
     var minFrequency = 40;
@@ -36,12 +36,10 @@ function Filter(context, type, frequency, quality, gain) {
         node: node,
         setByPercent: setByPercent,
         // map native methods of BiquadFilterNode
-        getFrequencyResponse: node.getFrequencyResponse,
-        setOrientation: node.setOrientation,
-        coneOuterGain: node.coneOuterGain,
+        getFrequencyResponse: node.getFrequencyResponse.bind(node),
         // map native methods of AudioNode
-        connect: node.connect,
-        disconnect: node.disconnect
+        connect: node.connect.bind(node),
+        disconnect: node.disconnect.bind(node)
     };
 
     // map native properties of BiquadFilterNode
@@ -71,6 +69,38 @@ function Filter(context, type, frequency, quality, gain) {
     });
 
     return Object.freeze(exports);
+}*/
+
+function Filter(context, type, frequency, quality, gain) {
+    // Frequency between 40Hz and half of the sampling rate
+    var minFrequency = 40;
+    var maxFrequency = context.sampleRate / 2;
+
+    var node = context.createBiquadFilter();
+    node.type = type;
+
+    if(frequency !== undefined) { node.frequency.value = frequency; }
+    if(quality !== undefined) { node.Q.value = quality; }
+    if(gain !== undefined) { node.gain.value = gain; }
+
+
+    var getFrequency = function(value) {
+        // Logarithm (base 2) to compute how many octaves fall in the range.
+        var numberOfOctaves = Math.log(maxFrequency / minFrequency) / Math.LN2;
+        // Compute a multiplier from 0 to 1 based on an exponential scale.
+        var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+        // Get back to the frequency value between min and max.
+        return maxFrequency * multiplier;
+    };
+
+    node.setByPercent = function(percent, quality, gain) {
+        // set filter frequency based on value from 0 to 1
+        node.frequency.value = getFrequency(percent);
+        if(quality !== undefined) { node.Q.value = quality; }
+        if(gain !== undefined) { node.gain.value = gain; }
+    };
+
+    return node;
 }
 
 /*

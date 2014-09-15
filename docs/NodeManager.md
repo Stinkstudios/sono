@@ -108,7 +108,7 @@ Sono.node.gain(value)
 
 Sono.node.panner()
 
-Sono.node.reverb(seconds, decay, reverse, node)
+Sono.node.reverb(seconds, decay, reverse)
 
 Sono.node.scriptProcessor(bufferSize, inputChannels, outputChannels, callback, thisArg)
 

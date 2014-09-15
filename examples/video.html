@@ -37,7 +37,6 @@
 
             var analyser = sound.node.analyser(2048);
 
-
             var waveform = document.querySelector('.js-waveform');
 
             new AnalyserDisplay(analyser, waveform);
@@ -52,32 +51,29 @@
                     var width = canvas.width,
                         height = canvas.height,
                         frequencyBinCount = analyserNode.frequencyBinCount,
+                        fftSize = analyserNode.fftSize,
                         barWidth = Math.max(1, Math.round(width/frequencyBinCount));
 
                         context.fillStyle = '#333333';
                         context.fillRect(0, 0, width, height);
 
 
-                    var waveByteData = new Uint8Array(frequencyBinCount);
+                    var freqByteData = analyserNode.getFrequencies();
 
-                    var freqByteData = new Uint8Array(frequencyBinCount);
-                    
-                    analyserNode.getByteFrequencyData(freqByteData);
-
-                    for (var i = 0; i < frequencyBinCount; i++) {
+                    for (var i = 0, l = freqByteData.length; i < l; i++) {
                         var magnitude = freqByteData[i];
                         var percent = magnitude / 256;
-                        var hue = i/frequencyBinCount * 360;
+                        var hue = i/l * 360;
                         context.fillStyle = 'hsl(' + hue + ', 100%, 30%)';
                         context.fillRect(barWidth * i, height, barWidth, 0 - height * percent);
                     }
 
-                    analyserNode.getByteTimeDomainData(waveByteData);
+                    var waveByteData = analyserNode.getWaveform();
 
-                    for (var i = 0; i < frequencyBinCount; i++) {
+                    for (i = 0, l = waveByteData.length; i < l; i++) {
                         var magnitude = waveByteData[i];
                         var percent = magnitude / 256;
-                        var hue = i/frequencyBinCount * 360;
+                        var hue = i/l * 360;
                         context.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
                         context.fillRect(barWidth * i, height - height * percent - 1, 2, 2);
                     }

@@ -55,8 +55,8 @@ function nodeManagerTest(node, name) {
             expect(node.reverb).to.be.a('function');
             expect(node.reverb()).to.be.an('object');
 
-            //expect(node.impulseResponse).to.be.a('function');
-            //expect(node.impulseResponse()).to.exist;
+            expect(node.echo).to.be.a('function');
+            expect(node.echo()).to.be.an('object');
 
             expect(node.analyser).to.be.a('function');
             expect(node.analyser()).to.be.an('object');

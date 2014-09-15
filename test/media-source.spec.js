@@ -1,7 +1,7 @@
 'use strict';
 
 var Sono = require('../src/sono.js');
-var MediaSource = require('../src/lib/media-source.js');
+var MediaSource = require('../src/lib/source/media-source.js');
 
 describe('Media Source', function() {
     var el = document.createElement('audio');

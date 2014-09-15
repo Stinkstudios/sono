@@ -125,6 +125,8 @@ Apply a reverb effect to all sounds:
 
 ```javascript
 var reverb = Sono.node.reverb(2, 0.5);
+// change the time and decay
+reverb.update(2, 0.5);
 ```
 
 ## API Documentation

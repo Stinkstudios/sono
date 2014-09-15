@@ -54,17 +54,17 @@
     return Object.freeze(exports);
 }*/
 
-function Reverb(context, seconds, decay, reverse) {
+function Reverb(context, time, decay, reverse) {
     var node = context.createConvolver();
 
-    node.update = function(seconds, decay, reverse) {
-        seconds = seconds || 1;
+    node.update = function(time, decay, reverse) {
+        time = time || 1;
         decay = decay || 5;
         reverse = !!reverse;
 
         var numChannels = 2,
             rate = context.sampleRate,
-            length = rate * seconds,
+            length = rate * time,
             impulseResponse = context.createBuffer(numChannels, length, rate),
             left = impulseResponse.getChannelData(0),
             right = impulseResponse.getChannelData(1),
@@ -80,7 +80,7 @@ function Reverb(context, seconds, decay, reverse) {
         this.buffer = impulseResponse;
     };
 
-    node.update(seconds, decay, reverse);
+    node.update(time, decay, reverse);
 
     return node;
 }

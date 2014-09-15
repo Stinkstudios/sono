@@ -1,7 +1,7 @@
 'use strict';
 
 //var Sono = require('../src/sono.js');
-var BufferSource = require('../src/lib/buffer-source.js');
+var BufferSource = require('../src/lib/source/buffer-source.js');
 
 describe('Buffer Source', function() {
     var source = new BufferSource();
