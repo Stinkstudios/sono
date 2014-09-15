@@ -243,11 +243,11 @@ Hero.prototype.preUpdate = function(deltaTime, elapsedTime) {
 };
 
 Hero.prototype.update = function() {
-    this.forward.x *= this.velocity.z;
-    this.forward.z *= this.velocity.z;
-
-    this.forward.y = this.velocity.y;
-    this.position.add(this.forward);
+    var fw = this.forward.clone();
+    fw.x *= this.velocity.z;
+    fw.z *= this.velocity.z;
+    fw.y = this.velocity.y;
+    this.position.add(fw);
 
     // quick collide with floor
 

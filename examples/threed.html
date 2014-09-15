@@ -21,30 +21,32 @@
 
                 var sound = Sono.createSound(['audio/DRUMS.ogg', 'audio/DRUMS.mp3']);
                 sound.loop = true;
+                
                 // add a panner node
                 var pan = sound.node.panner();
 
-                pan.node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
-                pan.node.refDistance = 1;
-                pan.node.maxDistance = 1000;
-                pan.node.rolloffFactor = 1;
+                pan.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
+                pan.refDistance = 1;
+                pan.maxDistance = 1000;
+                pan.rolloffFactor = 1;
 
-                /*panner.coneOuterGain = 0.5;
-                panner.coneOuterAngle = 180;
-                panner.coneInnerAngle = 0;*/
+                /*pan.coneOuterGain = 0.5;
+                pan.coneOuterAngle = 180;
+                pan.coneInnerAngle = 0;*/
                 
                 // set source position to the position vector of the speaker
                 pan.setSourcePosition(scene.speaker.position);
                 
                 // set source orientation to the normalised position vector of the speaker
-                var orientation = scene.speaker.position.clone().normalize();
-                pan.setSourceOrientation(orientation);
+                pan.setSourceOrientation(scene.speaker.position);
                 
                 // play
                 sound.play();
 
                 function update() {
                     window.requestAnimationFrame(update);
+                    
+                    // render Three.js scene
                     scene.render();
 
                     // set listener orientation to the forward vector of the hero
