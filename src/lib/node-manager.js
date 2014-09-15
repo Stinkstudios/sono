@@ -1,6 +1,11 @@
 'use strict';
 
-var Panner = require('./panner.js');
+var Analyser = require('./node/analyser.js'),
+    Distortion = require('./node/distortion.js'),
+    Echo = require('./node/echo.js'),
+    Filter = require('./node/filter.js'),
+    Panner = require('./node/panner.js'),
+    Reverb = require('./node/reverb.js');
 
 function NodeManager(context) {
     this._context = context || this.createFakeContext();
@@ -10,6 +15,7 @@ function NodeManager(context) {
 }
 
 NodeManager.prototype.add = function(node) {
+    console.log('NodeManager.add:', node);
     this._nodeList.push(node);
     this._updateConnections();
     return node;
@@ -38,9 +44,13 @@ NodeManager.prototype.removeAll = function() {
 NodeManager.prototype._connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
-        //console.log('connect:', this._nodeList[l - 1], 'to', node);
-        this._nodeList[l - 1].disconnect();
-        this._nodeList[l - 1].connect(node);
+        var n = this._nodeList[l - 1];
+        console.log('connect:', n, 'to', node);
+        n.disconnect();
+        n.connect(node);
+        if(typeof n.connected === 'function') {
+            n.connected();
+        }
     }
     else if(this._sourceNode) {
         //console.log(' x connect source to node:', node);
@@ -55,17 +65,23 @@ NodeManager.prototype._updateConnections = function() {
         return;
     }
     //console.log('_updateConnections');
-    var l = this._nodeList.length;
+    var l = this._nodeList.length,
+        n;
     for (var i = 0; i < l; i++) {
+        n = this._nodeList[i];
         if(i === 0) {
-            //console.log(' - connect source to node:', this._nodeList[i]);
+            console.log(' - connect source to node:', n);
             this._sourceNode.disconnect();
-            this._sourceNode.connect(this._nodeList[i]);
+            this._sourceNode.connect(n.node || n);
         }
         else {
-            //console.log('connect:', this._nodeList[i-1], 'to', this._nodeList[i]);
-            this._nodeList[i-1].disconnect();
-            this._nodeList[i-1].connect(this._nodeList[i]);
+            var prev = this._nodeList[i-1];
+            console.log('connect:', prev, 'to', n);
+            prev.disconnect();
+            prev.connect(n.node || n);
+            if(typeof prev.connected === 'function') {
+                prev.connected();
+            }
         }
     }
     //console.log(this._destination)
@@ -132,16 +148,9 @@ NodeManager.prototype._updateConnections = function() {
     this._connectTo(this._context.destination);
 };*/
 
-NodeManager.prototype.analyser = function(fftSize) {
-    fftSize = fftSize || 1024;
-    var node = this._context.createAnalyser();
-    node.smoothingTimeConstant = 0.85;
-    // resolution fftSize: 32 - 2048 (pow 2)
-    // frequencyBinCount will be half this value
-    node.fftSize = fftSize;
-    //node.minDecibels = -100;
-    //node.maxDecibels = -30;
-    return this.add(node);
+NodeManager.prototype.analyser = function(fftSize, smoothing, minDecibels, maxDecibels) {
+    var analyser = new Analyser(this._context, fftSize, smoothing, minDecibels, maxDecibels);
+    return this.add(analyser);
 };
 
 NodeManager.prototype.compressor = function() {
@@ -169,28 +178,20 @@ NodeManager.prototype.convolver = function(impulseResponse) {
     return this.add(node);
 };
 
-NodeManager.prototype.delay = function(input, time, gain) {
-    var delayNode = this._context.createDelay();
-    var gainNode = this._context.createGain();
-    gainNode.gain.value = gain || 0.5;
-    if(time !== undefined) {
-        delayNode.delayTime.value = time;
-    }
-    delayNode.connect(gainNode);
-    if(input) {
-        input.connect(delayNode);
-        gainNode.connect(input);
-    }
-    return delayNode;
-    // ?
-    /*return {
-      delayNode: delayNode,
-      gainNode: gainNode
-    };*/
+NodeManager.prototype.delay = function(time) {
+    var node = this._context.createDelay();
+    if(time !== undefined) { node.delayTime.value = time; }
+    return this.add(node);
 };
 
-NodeManager.prototype.distortion = function() {
-    var node = this._context.createWaveShaper();
+NodeManager.prototype.echo = function(time, gain) {
+    var echo = new Echo(this._context, time, gain);
+    this.add(echo);
+    return echo;
+};
+
+NodeManager.prototype.distortion = function(amount) {
+    var node = new Distortion(this._context, amount);
     // Float32Array defining curve (values are interpolated)
     //node.curve
     // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
@@ -198,38 +199,41 @@ NodeManager.prototype.distortion = function() {
     return this.add(node);
 };
 
-NodeManager.prototype.filter = function(type, frequency) {
-    var node = this._context.createBiquadFilter();
-    node.type = type;
-    if(frequency !== undefined) {
-        node.frequency.value = frequency;
-    }
-    return this.add(node);
+NodeManager.prototype.filter = function(type, frequency, quality, gain) {
+    var filter = new Filter(this._context, type, frequency, quality, gain);
+    return this.add(filter);
 };
 
-NodeManager.prototype.lowpass = function(frequency) {
-    return this.filter('lowpass', frequency);
+NodeManager.prototype.lowpass = function(frequency, quality, gain) {
+    return this.filter('lowpass', frequency, quality, gain);
 };
-NodeManager.prototype.highpass = function(frequency) {
-    return this.filter('highpass', frequency);
+
+NodeManager.prototype.highpass = function(frequency, quality, gain) {
+    return this.filter('highpass', frequency, quality, gain);
 };
-NodeManager.prototype.bandpass = function(frequency) {
-    return this.filter('bandpass', frequency);
+
+NodeManager.prototype.bandpass = function(frequency, quality, gain) {
+    return this.filter('bandpass', frequency, quality, gain);
 };
-NodeManager.prototype.lowshelf = function(frequency) {
-    return this.filter('lowshelf', frequency);
+
+NodeManager.prototype.lowshelf = function(frequency, quality, gain) {
+    return this.filter('lowshelf', frequency, quality, gain);
 };
-NodeManager.prototype.highshelf = function(frequency) {
-    return this.filter('highshelf', frequency);
+
+NodeManager.prototype.highshelf = function(frequency, quality, gain) {
+    return this.filter('highshelf', frequency, quality, gain);
 };
-NodeManager.prototype.peaking = function(frequency) {
-    return this.filter('peaking', frequency);
+
+NodeManager.prototype.peaking = function(frequency, quality, gain) {
+    return this.filter('peaking', frequency, quality, gain);
 };
-NodeManager.prototype.notch = function(frequency) {
-    return this.filter('notch', frequency);
+
+NodeManager.prototype.notch = function(frequency, quality, gain) {
+    return this.filter('notch', frequency, quality, gain);
 };
-NodeManager.prototype.allpass = function(frequency) {
-    return this.filter('allpass', frequency);
+
+NodeManager.prototype.allpass = function(frequency, quality, gain) {
+    return this.filter('allpass', frequency, quality, gain);
 };
 
 NodeManager.prototype.gain = function(value) {
@@ -242,61 +246,14 @@ NodeManager.prototype.gain = function(value) {
 
 NodeManager.prototype.panner = function() {
     var panner = new Panner(this._context);
-    this.add(panner.node);
+    this.add(panner);
     return panner;
 };
-/*NodeManager.prototype.panner = function() {
-    var node = this._context.createPanner();
-    // Default for stereo is HRTF
-    node.panningModel = 'HRTF'; // 'equalpower'
 
-    // Distance model and attributes
-    node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
-    node.refDistance = 1;
-    node.maxDistance = 1000;
-    node.rolloffFactor = 1;
-
-    // Uses a 3D cartesian coordinate system
-    // node.setPosition(0, 0, 0);
-    // node.setOrientation(1, 0, 0);
-    // node.setVelocity(0, 0, 0);
-
-    // Directional sound cone - The cone angles are in degrees and run from 0 to 360
-    // node.coneInnerAngle = 360;
-    // node.coneOuterAngle = 360;
-    // node.coneOuterGain = 0;
-
-    // normalised vec
-    // node.setOrientation(vec.x, vec.y, vec.z);
-    return this.add(node);
-};*/
-
-NodeManager.prototype.reverb = function(seconds, decay, reverse, node) {
-    // TODO: should prob be moved to utils:
-    seconds = seconds || 1;
-    decay = decay || 5;
-    reverse = !!reverse;
-
-    var numChannels = 2,
-        rate = this._context.sampleRate,
-        length = rate * seconds,
-        impulseResponse = this._context.createBuffer(numChannels, length, rate),
-        left = impulseResponse.getChannelData(0),
-        right = impulseResponse.getChannelData(1),
-        n;
-
-    for (var i = 0; i < length; i++) {
-        n = reverse ? length - 1 : i;
-        left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
-        right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
-    }
-    if(node) {
-        node.buffer = impulseResponse;
-    }
-    else {
-        return this.convolver(impulseResponse);
-    }
-    return node;
+NodeManager.prototype.reverb = function(seconds, decay, reverse) {
+    var reverb = new Reverb(this._context, seconds, decay, reverse);
+    this.add(reverb);
+    return reverb;
 };
 
 NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outputChannels, callback, thisArg) {

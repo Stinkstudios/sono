@@ -11,20 +11,6 @@ Utils.crossFade = function(fromSound, toSound, duration) {
     toSound.gain.gain.linearRampToValueAtTime(1, this._context.currentTime + duration);
 };
 
-Utils.distort = function(value) {
-    // create waveShaper distortion curve from 0 to 1
-    var k = value * 100,
-        n = 22050,
-        curve = new Float32Array(n),
-        deg = Math.PI / 180;
-
-    for (var i = 0; i < n; i++) {
-        var x = i * 2 / n - 1;
-        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
-    }
-    return curve;
-};
-
 Utils.fadeFrom = function(sound, value, duration) {
     var toValue = sound.gain.gain.value;
     sound.gain.gain.value = value;
@@ -33,17 +19,6 @@ Utils.fadeFrom = function(sound, value, duration) {
 
 Utils.fadeTo = function(sound, value, duration) {
     sound.gain.gain.linearRampToValueAtTime(value, this._context.currentTime + duration);
-};
-
-Utils.filter = function(filterNode, freqPercent, quality, gain) {
-    // set filter frequency based on value from 0 to 1
-    if(isNaN(freqPercent)) { freqPercent = 0.5; }
-    if(isNaN(quality)) { quality = 0; }
-    if(isNaN(gain)) { gain = 0; }
-    // Get back to the frequency value between min and max.
-    filterNode.frequency.value = this.getFrequency(freqPercent);
-    filterNode.Q.value = quality; // range of 0.0001 to 1000
-    filterNode.gain.value = gain; // -40 to 40
 };
 
 Utils.getFrequency = function(value) {

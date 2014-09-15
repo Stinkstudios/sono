@@ -10,6 +10,9 @@ function Panner(context) {
     node.refDistance = 1;
     node.maxDistance = 1000;
     node.rolloffFactor = 1;
+    node.coneInnerAngle = 360;
+    node.coneOuterAngle = 0;
+    node.coneOuterGain = 0;
     
     // simple vec3 object pool
     var VecPool = {
@@ -152,16 +155,16 @@ function Panner(context) {
         setListenerOrientation: setListenerOrientation,
         setListenerVelocity: setListenerVelocity,
         calculateVelocity: calculateVelocity,
-        // map native methods to PannerNode
+        // map native methods of PannerNode
         setPosition: node.setPosition,
         setOrientation: node.setOrientation,
-        coneOuterGain: node.coneOuterGain,
-        // map native methods to AudioNode
-        connect: node.connect,
-        disconnect: node.disconnect
+        setVelocity: node.setVelocity,
+        // map native methods of AudioNode
+        connect: node.connect.bind(node),
+        disconnect: node.disconnect.bind(node)
     };
 
-    // map native properties to PannerNode
+    // map native properties of PannerNode
     Object.defineProperties(exports, {
         'panningModel': {
             get: function() { return node.panningModel; },

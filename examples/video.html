@@ -27,6 +27,9 @@
             'use strict';
 
             var video = document.querySelector('video');
+            setTimeout(function() {
+                video.play();
+            }, 1000);
 
             var sound = Sono.createSound(video);
 

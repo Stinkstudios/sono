@@ -72,7 +72,8 @@
             // distort slider
             var distortSlider = document.querySelector('.js-distort');
             distortSlider.addEventListener('change', function() {
-                distort.curve = Sono.utils.distort(this.value / 100);
+                //distort.update(this.value / 100);
+                distort.amount = this.value / 100;
             });
 
             new AnalyserDisplay(analyser, waveform);

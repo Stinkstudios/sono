@@ -1,11 +1,11 @@
 'use strict';
 
-var BufferSource = require('./buffer-source.js'),
-    MediaSource = require('./media-source.js'),
+var BufferSource = require('./source/buffer-source.js'),
+    MediaSource = require('./source/media-source.js'),
+    MicrophoneSource = require('./source/microphone-source.js'),
     NodeManager = require('./node-manager.js'),
-    MicrophoneSource = require('./microphone-source.js'),
-    OscillatorSource = require('./oscillator-source.js'),
-    ScriptSource = require('./script-source.js'),
+    OscillatorSource = require('./source/oscillator-source.js'),
+    ScriptSource = require('./source/script-source.js'),
     Utils = require('./utils.js');
 
 function Sound(context, data, destination) {

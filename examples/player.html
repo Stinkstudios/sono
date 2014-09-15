@@ -97,11 +97,10 @@
 
                 // panner node and controls util
                 var panner = sound.node.panner();
-                var pan = Sono.utils.pan(panner);
 
                 // pan slider
                 panSlider.addEventListener('change', function() {
-                    pan.x(this.value / 100);
+                    panner.setX(this.value / 100);
                 });
 
                 // waveform display
