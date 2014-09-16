@@ -93,6 +93,15 @@ NodeManager.prototype._updateConnections = function() {
     }*/
 };
 
+Object.defineProperty(NodeManager.prototype, 'panning', {
+    get: function() {
+        if(!this._panning) {
+            this._panning = new Panner(this._context);
+        }
+        return this._panning;
+    }
+});
+
 // or setter for destination?
 /*NodeManager.prototype._connectTo = function(node) {
     var l = this._nodeList.length;

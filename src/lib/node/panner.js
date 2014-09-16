@@ -205,17 +205,18 @@ function Panner(context) {
 */
 function Panner(context) {
     var node = context.createPanner();
-    // Default for stereo is HRTF
-    node.panningModel = 'HRTF'; // 'equalpower'
+    // Default for stereo is 'HRTF' can also be 'equalpower'
+    node.panningModel = Panner.defaults.panningModel;
 
     // Distance model and attributes
-    node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
-    node.refDistance = 1;
-    node.maxDistance = 1000;
-    node.rolloffFactor = 1;
-    node.coneInnerAngle = 360;
-    node.coneOuterAngle = 0;
-    node.coneOuterGain = 0;
+    // Can be 'linear' 'inverse' 'exponential'
+    node.distanceModel = Panner.defaults.distanceModel;
+    node.refDistance = Panner.defaults.refDistance;
+    node.maxDistance = Panner.defaults.maxDistance;
+    node.rolloffFactor = Panner.defaults.rolloffFactor;
+    node.coneInnerAngle = Panner.defaults.coneInnerAngle;
+    node.coneOuterAngle = Panner.defaults.coneOuterAngle;
+    node.coneOuterGain = Panner.defaults.coneOuterGain;
     
     // simple vec3 object pool
     var VecPool = {
@@ -348,8 +349,25 @@ function Panner(context) {
         return VecPool.get(dx / deltaTime, dy / deltaTime, dz / deltaTime);
     };
 
+    node.setDefaults = function(defaults) {
+        Object.keys(defaults).forEach(function(key) {
+            Panner.defaults[key] = defaults[key];
+        });
+    };
+
     return node;
 }
+
+Panner.defaults = {
+    panningModel: 'HRTF',
+    distanceModel: 'linear',
+    refDistance: 1,
+    maxDistance: 1000,
+    rolloffFactor: 1,
+    coneInnerAngle: 360,
+    coneOuterAngle: 0,
+    coneOuterGain: 0
+};
 
 /*
  * Exports

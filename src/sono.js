@@ -95,8 +95,10 @@ Sono.prototype.getById = function(id) {
  */
 
 Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement) {
-    // multiple
+    if(!url) { return; }
+
     if(url instanceof Array && url.length && typeof url[0] === 'object') {
+        // multiple
         this._loadMultiple(url, complete, progress, thisArg, asMediaElement);
         return;
     }
