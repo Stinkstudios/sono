@@ -93,6 +93,15 @@ function Filter(context, type, frequency, quality, gain) {
         return maxFrequency * multiplier;
     };
 
+    node.update = function(frequency, gain) {
+        if(frequency !== undefined) {
+            this.frequency.value = frequency;
+        }
+        if(gain !== undefined) {
+            this.gain.value = gain;
+        }
+    };
+
     node.setByPercent = function(percent, quality, gain) {
         // set filter frequency based on value from 0 to 1
         node.frequency.value = getFrequency(percent);
@@ -110,4 +119,3 @@ function Filter(context, type, frequency, quality, gain) {
 if (typeof module === 'object' && module.exports) {
     module.exports = Filter;
 }
-

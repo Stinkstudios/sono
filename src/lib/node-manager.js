@@ -162,21 +162,21 @@ NodeManager.prototype.analyser = function(fftSize, smoothing, minDecibels, maxDe
     return this.add(analyser);
 };
 
-NodeManager.prototype.compressor = function() {
+NodeManager.prototype.compressor = function(threshold, knee, ratio, reduction, attack, release) {
     // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
     var node = this._context.createDynamicsCompressor();
     // min decibels to start compressing at from -100 to 0
-    node.threshold.value = -24;
+    node.threshold.value = threshold !== undefined ? threshold : -24;
     // decibel value to start curve to compressed value from 0 to 40
-    node.knee.value = 30;
+    node.knee.value = knee !== undefined ? knee : 30;
     // amount of change per decibel from 1 to 20
-    node.ratio.value = 12;
+    node.ratio.value = ratio !== undefined ? ratio : 12;
     // gain reduction currently applied by compressor from -20 to 0
-    // node.reduction.value
+    node.reduction.value = reduction !== undefined ? reduction : -10;
     // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
-    node.attack.value = 0.0003;
+    node.attack.value = attack !== undefined ? attack : 0.0003;
     // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
-    node.release.value = 0.25;
+    node.release.value = release !== undefined ? release : 0.25;
     return this.add(node);
 };
 

@@ -94,9 +94,22 @@ var script = Sono.createSound({
 });
 ```
 
-### Loading multiple sounds
+### Loading sounds
 
-Sono.load accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getById`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
+You can load sounds and specify callbacks for completion and progress:
+
+```javascript
+var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3'], onComplete, onProgress, this);
+var sound = Sono.load('audio/foo.ogg');
+var sound = Sono.load({
+    id: 'foo',
+    url: ['audio/foo.ogg', 'audio/foo.mp3'],
+    loop: true,
+    volume: 0.2
+});
+```
+
+Sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getById`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
 
 ```javascript
 Sono.load([
@@ -113,15 +126,11 @@ Sono.load([
 
 ### Adding effects
 
-Effect and processing nodes can be added to individual sounds or to the overall mix:
+Effect and processing nodes can be chained to individual sounds or to the overall mix, via Sono.node or sound.node.
 
-Apply a reverb effect to a specific sound:
+Sono extends native Web Audio nodes to add capabilities and make them easy to work with.
 
-```javascript
-var reverb = sound.node.reverb(2, 0.5);
-```
-
-Apply a reverb effect to all sounds:
+For example, apply a reverb effect to all sounds:
 
 ```javascript
 var reverb = Sono.node.reverb(2, 0.5);
@@ -129,9 +138,102 @@ var reverb = Sono.node.reverb(2, 0.5);
 reverb.update(2, 0.5);
 ```
 
-## API Documentation
+Or apply a reverb effect to a specific sound:
 
-[docs/API.md](docs/API.md)
+```javascript
+var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var reverb = sound.node.reverb(2, 0.5);
+```
+
+Pan a sound across 3d space:
+
+```javascript
+var panner = sound.node.panner();
+// pan full left
+panner.setX(-1);
+//
+panner.setSourcePosition(x, y, z);
+panner.setSourcePosition(vec3);
+//
+panner.setSourceOrientation(x, y, z);
+panner.setSourceOrientation(vec3);
+
+```
+
+Analyser
+
+
+Distortion
+
+
+Echo
+
+```javascript
+var echo = sound.node.echo(delayTime, gainValue);
+```
+
+Filters
+
+```javascript
+var lowpass = sound.node.lowpass();
+```
+
+### Visualisation
+
+Sono can produce visualisation data and graphics
+
+TODO: add images
+
+Get a sound's waveform and draw it to a canvas element
+
+```javascript
+var canvasEl = document.querySelector('canvas');
+var wave = Sono.utils.waveform(sound._data, canvasEl.width);
+var canvas = wave.getCanvas(canvasEl.height, '#333333', '#DDDDDD', canvasEl);
+
+```
+
+
+### Utils
+
+Fade a sound in or out
+
+```javascript
+Sono.utils.fadeTo(sound, value, duration);
+Sono.utils.fadeFrom(sound, value, duration);
+```
+
+Crossfade two sounds
+
+```javascript
+Sono.utils.crossFade(soundA, SoundB, 1);
+```
+
+Get user microphone
+
+```javascript
+var mic = Sono.utils.microphone(function(stream) {
+    // user allowed mic - got stream
+    var micSound = Sono.createSound(stream);
+}, function() {
+    // user denied mic
+}, function(e) {
+    // error
+});
+mic.connect();
+```
+
+Convert currentTime seconds into time code string
+
+```javascript
+var timeCode = Sono.utils.timeCode(217.8); // '03:37'
+```
+
+## Further documentation
+
+[API documentation](docs/API.md)
+
+[More examples](docs/Sono.md)
 
 
 ## Dev setup

@@ -24,7 +24,7 @@
     var exports = {
         node: delay,
         // map native methods of EchoNode
-        
+
         // map native methods of AudioNode
         connect: connect,
         disconnect: disconnect
@@ -56,12 +56,18 @@ function Echo(context, delayTime, gainValue) {
     gain.gain.value = gainValue || 0.5;
     if(delayTime !== undefined) { delay.delayTime.value = delayTime; }
 
-    //delay.connect(gain);
-    //gain.connect(delay);
-
     delay.connected = function() {
         delay.connect(gain);
         gain.connect(delay);
+    };
+
+    delay.update = function(delayTime, gainValue) {
+        if(delayTime !== undefined) {
+            this.delayTime.value = delayTime;
+        }
+        if(gainValue !== undefined) {
+            gain.gain.value = gainValue;
+        }
     };
 
     return delay;
@@ -74,4 +80,3 @@ function Echo(context, delayTime, gainValue) {
 if (typeof module === 'object' && module.exports) {
     module.exports = Echo;
 }
-
