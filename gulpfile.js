@@ -151,11 +151,16 @@ gulp.task('connect', function() {
   });
 });
 
+gulp.task('reload', function() {
+  browserSync.reload({ stream: false });
+});
+
 // watch
 gulp.task('watch', function() {
   gulp.watch(cssSrc+'**/*.css', ['css']);
   gulp.watch(src+'**/*.js', ['jshint', 'bundle-debug']);
   gulp.watch('test/**/*.js', ['jshint']);
+  gulp.watch('examples/**/*.html', ['reload']);
 });
 
 // default

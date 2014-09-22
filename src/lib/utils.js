@@ -6,6 +6,29 @@ Utils.setContext = function(context) {
     this._context = context;
 };
 
+/*
+ * audio buffer
+ */
+
+Utils.cloneBuffer = function(buffer) {
+    var cloned = this._context.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+
+    for (var i = 0; i < buffer.numberOfChannels; i++){
+        cloned.getChannelData(i).set(buffer.getChannelData(i));
+        //cloned.getChannelData(i).set(new Float32Array(buffer.getChannelData(i)));
+    }
+    return cloned;
+};
+
+Utils.reverseBuffer = function(buffer) {
+    Array.prototype.reverse.call(buffer.getChannelData(0));
+    Array.prototype.reverse.call(buffer.getChannelData(1));
+};
+
+/*
+ * fade gain
+ */
+
 Utils.crossFade = function(fromSound, toSound, duration) {
     fromSound.gain.gain.linearRampToValueAtTime(0, this._context.currentTime + duration);
     toSound.gain.gain.linearRampToValueAtTime(1, this._context.currentTime + duration);
@@ -21,6 +44,10 @@ Utils.fadeTo = function(sound, value, duration) {
     sound.gain.gain.linearRampToValueAtTime(value, this._context.currentTime + duration);
 };
 
+/*
+ * get frequency from min to max by passing 0 to 1
+ */
+
 Utils.getFrequency = function(value) {
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
@@ -34,6 +61,10 @@ Utils.getFrequency = function(value) {
     // Get back to the frequency value between min and max.
     return maxValue * multiplier;
 };
+
+/*
+ * detect file types
+ */
 
 Utils.isAudioBuffer = function(data) {
     return !!(data &&
@@ -70,6 +101,10 @@ Utils.isFile = function(data) {
     return !!(data && (data instanceof Array ||
               (typeof data === 'string' && data.indexOf('.') > -1)));
 };
+
+/*
+ * microphone util
+ */
 
 Utils.microphone = function(connected, denied, error, thisArg) {
     return new Utils.Microphone(connected, denied, error, thisArg);

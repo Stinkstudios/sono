@@ -100,8 +100,7 @@ Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement)
 
     if(url instanceof Array && url.length && typeof url[0] === 'object') {
         // multiple
-        this._loadMultiple(url, complete, progress, thisArg, asMediaElement);
-        return;
+        return this._loadMultiple(url, complete, progress, thisArg, asMediaElement);
     }
 
     var sound = this._queue(url, asMediaElement);
@@ -140,6 +139,8 @@ Sono.prototype._loadMultiple = function(config, complete, progress, thisArg, asM
         });
     }
     this._loader.start();
+
+    return sounds[0];
 };
 
 Sono.prototype._initLoader = function() {
@@ -1195,21 +1196,21 @@ NodeManager.prototype.analyser = function(fftSize, smoothing, minDecibels, maxDe
     return this.add(analyser);
 };
 
-NodeManager.prototype.compressor = function() {
+NodeManager.prototype.compressor = function(threshold, knee, ratio, reduction, attack, release) {
     // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
     var node = this._context.createDynamicsCompressor();
     // min decibels to start compressing at from -100 to 0
-    node.threshold.value = -24;
+    node.threshold.value = threshold !== undefined ? threshold : -24;
     // decibel value to start curve to compressed value from 0 to 40
-    node.knee.value = 30;
+    node.knee.value = knee !== undefined ? knee : 30;
     // amount of change per decibel from 1 to 20
-    node.ratio.value = 12;
+    node.ratio.value = ratio !== undefined ? ratio : 12;
     // gain reduction currently applied by compressor from -20 to 0
-    // node.reduction.value
+    node.reduction.value = reduction !== undefined ? reduction : -10;
     // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
-    node.attack.value = 0.0003;
+    node.attack.value = attack !== undefined ? attack : 0.0003;
     // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
-    node.release.value = 0.25;
+    node.release.value = release !== undefined ? release : 0.25;
     return this.add(node);
 };
 
@@ -1691,7 +1692,7 @@ if (typeof module === 'object' && module.exports) {
     var exports = {
         node: delay,
         // map native methods of EchoNode
-        
+
         // map native methods of AudioNode
         connect: connect,
         disconnect: disconnect
@@ -1723,12 +1724,18 @@ function Echo(context, delayTime, gainValue) {
     gain.gain.value = gainValue || 0.5;
     if(delayTime !== undefined) { delay.delayTime.value = delayTime; }
 
-    //delay.connect(gain);
-    //gain.connect(delay);
-
     delay.connected = function() {
         delay.connect(gain);
         gain.connect(delay);
+    };
+
+    delay.update = function(delayTime, gainValue) {
+        if(delayTime !== undefined) {
+            this.delayTime.value = delayTime;
+        }
+        if(gainValue !== undefined) {
+            gain.gain.value = gainValue;
+        }
     };
 
     return delay;
@@ -1741,7 +1748,6 @@ function Echo(context, delayTime, gainValue) {
 if (typeof module === 'object' && module.exports) {
     module.exports = Echo;
 }
-
 
 },{}],8:[function(require,module,exports){
 'use strict';
@@ -1839,6 +1845,15 @@ function Filter(context, type, frequency, quality, gain) {
         return maxFrequency * multiplier;
     };
 
+    node.update = function(frequency, gain) {
+        if(frequency !== undefined) {
+            this.frequency.value = frequency;
+        }
+        if(gain !== undefined) {
+            this.gain.value = gain;
+        }
+    };
+
     node.setByPercent = function(percent, quality, gain) {
         // set filter frequency based on value from 0 to 1
         node.frequency.value = getFrequency(percent);
@@ -1856,7 +1871,6 @@ function Filter(context, type, frequency, quality, gain) {
 if (typeof module === 'object' && module.exports) {
     module.exports = Filter;
 }
-
 
 },{}],9:[function(require,module,exports){
 'use strict';
@@ -3386,6 +3400,29 @@ Utils.setContext = function(context) {
     this._context = context;
 };
 
+/*
+ * audio buffer
+ */
+
+Utils.cloneBuffer = function(buffer) {
+    var cloned = this._context.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+
+    for (var i = 0; i < buffer.numberOfChannels; i++){
+        cloned.getChannelData(i).set(buffer.getChannelData(i));
+        //cloned.getChannelData(i).set(new Float32Array(buffer.getChannelData(i)));
+    }
+    return cloned;
+};
+
+Utils.reverseBuffer = function(buffer) {
+    Array.prototype.reverse.call(buffer.getChannelData(0));
+    Array.prototype.reverse.call(buffer.getChannelData(1));
+};
+
+/*
+ * fade gain
+ */
+
 Utils.crossFade = function(fromSound, toSound, duration) {
     fromSound.gain.gain.linearRampToValueAtTime(0, this._context.currentTime + duration);
     toSound.gain.gain.linearRampToValueAtTime(1, this._context.currentTime + duration);
@@ -3401,6 +3438,10 @@ Utils.fadeTo = function(sound, value, duration) {
     sound.gain.gain.linearRampToValueAtTime(value, this._context.currentTime + duration);
 };
 
+/*
+ * get frequency from min to max by passing 0 to 1
+ */
+
 Utils.getFrequency = function(value) {
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
@@ -3414,6 +3455,10 @@ Utils.getFrequency = function(value) {
     // Get back to the frequency value between min and max.
     return maxValue * multiplier;
 };
+
+/*
+ * detect file types
+ */
 
 Utils.isAudioBuffer = function(data) {
     return !!(data &&
@@ -3450,6 +3495,10 @@ Utils.isFile = function(data) {
     return !!(data && (data instanceof Array ||
               (typeof data === 'string' && data.indexOf('.') > -1)));
 };
+
+/*
+ * microphone util
+ */
 
 Utils.microphone = function(connected, denied, error, thisArg) {
     return new Utils.Microphone(connected, denied, error, thisArg);
