@@ -11,18 +11,20 @@ Utils.setContext = function(context) {
  */
 
 Utils.cloneBuffer = function(buffer) {
-    var cloned = this._context.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
-
-    for (var i = 0; i < buffer.numberOfChannels; i++){
+    var numChannels = buffer.numberOfChannels,
+        cloned = this._context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+    for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i));
-        //cloned.getChannelData(i).set(new Float32Array(buffer.getChannelData(i)));
     }
     return cloned;
 };
 
 Utils.reverseBuffer = function(buffer) {
-    Array.prototype.reverse.call(buffer.getChannelData(0));
-    Array.prototype.reverse.call(buffer.getChannelData(1));
+    var numChannels = buffer.numberOfChannels;
+    for (var i = 0; i < numChannels; i++) {
+        Array.prototype.reverse.call(buffer.getChannelData(i));
+    }
+    return buffer;
 };
 
 /*
