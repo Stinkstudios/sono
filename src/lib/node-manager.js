@@ -29,7 +29,8 @@ NodeManager.prototype.remove = function(node) {
             this._nodeList.splice(i, 1);
         }
     }
-    node.disconnect();
+    var out = node._out || node;
+    out.disconnect();
     this._updateConnections();
     return node;
 };
