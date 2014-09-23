@@ -93,25 +93,17 @@
                 console.log('all loaded:', loaded)
 
                 var a = Sono.getById('a');
-                var b = Sono.getById('b');
+                //var b = Sono.getById('b');
 
                 console.log(Sono.getById(sounds[0].id) === a, a);
-                console.log(Sono.getById(sounds[1].id) === b, b);
+                //console.log(Sono.getById(sounds[1].id) === b, b);
 
                 new Player(a, document.querySelector('.js-playerA'));
-                new Player(b, document.querySelector('.js-playerB'));
+                //new Player(b, document.querySelector('.js-playerB'));
 
-                //Sono.getById('a').node.reverb(4, 10);
-                //var delay = Sono.node.delay(Sono.getById('b')._gain, 0.5, 0.5);
-                //Sono.node.delay(delay, 2, 0.2)
-
-                //var delay = Sono.node.delay(Sono.masterGain, 0.5, 0.5);
-                //var delay = a.node.delay(a.gain, 0.2, 0.5);
-                var delay = a.node.echo(0.2, 0.5);
-                //var reverb = a.node.reverb(0.5, 0.5);
-                //delay.disconnect();
-
-                //Sono.node.reverb(4, 10);
+                //var delay = a.node.echo(0.2, 0.5);
+                a.node.phaser();
+                //b.node.phaser();
 
             }, function(progress) {
                 console.log('progress:', progress);

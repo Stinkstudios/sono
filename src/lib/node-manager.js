@@ -5,6 +5,7 @@ var Analyser = require('./node/analyser.js'),
     Echo = require('./node/echo.js'),
     Filter = require('./node/filter.js'),
     Panner = require('./node/panner.js'),
+    Phaser = require('./node/phaser.js'),
     Reverb = require('./node/reverb.js');
 
 function NodeManager(context) {
@@ -15,7 +16,7 @@ function NodeManager(context) {
 }
 
 NodeManager.prototype.add = function(node) {
-    console.log('NodeManager.add:', node);
+    //console.log('NodeManager.add:', node);
     this._nodeList.push(node);
     this._updateConnections();
     return node;
@@ -45,7 +46,7 @@ NodeManager.prototype._connectTo = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
         var n = this._nodeList[l - 1];
-        console.log('connect:', n, 'to', node);
+        //console.log('connect:', n, 'to', node);
         n.disconnect();
         n.connect(node);
         if(typeof n.connected === 'function') {
@@ -70,18 +71,21 @@ NodeManager.prototype._updateConnections = function() {
     for (var i = 0; i < l; i++) {
         n = this._nodeList[i];
         if(i === 0) {
-            console.log(' - connect source to node:', n);
+            //console.log(' - connect source to node:', n);
             this._sourceNode.disconnect();
-            this._sourceNode.connect(n.node || n);
+            this._sourceNode.connect(n._input || n);
         }
         else {
             var prev = this._nodeList[i-1];
-            console.log('connect:', prev, 'to', n);
+            //console.log('connect:', prev, 'to', n);
             prev.disconnect();
-            prev.connect(n.node || n);
-            if(typeof prev.connected === 'function') {
-                prev.connected();
+            prev.connect(n._output || n);
+            if(typeof prev._connected === 'function') {
+                prev._connected();
             }
+        }
+        if(typeof n._connected === 'function') {
+            n._connected();
         }
     }
     //console.log(this._destination)
@@ -257,6 +261,12 @@ NodeManager.prototype.panner = function() {
     var panner = new Panner(this._context);
     this.add(panner);
     return panner;
+};
+
+NodeManager.prototype.phaser = function() {
+    var phaser = new Phaser(this._context);
+    this.add(phaser);
+    return phaser;
 };
 
 NodeManager.prototype.reverb = function(seconds, decay, reverse) {

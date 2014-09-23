@@ -98,8 +98,10 @@ Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement)
     if(!url) { return; }
 
     if(url instanceof Array && url.length && typeof url[0] === 'object') {
-        // multiple
         return this._loadMultiple(url, complete, progress, thisArg, asMediaElement);
+    }
+    else if(typeof url === 'object' && url.url) {
+        return this._loadMultiple([url], complete, progress, thisArg, asMediaElement);   
     }
 
     var sound = this._queue(url, asMediaElement);

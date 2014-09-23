@@ -10,13 +10,10 @@
 <body>
     <h1>Reverse sound</h1>
 
-
     <h3>Forwards</h3>
-
     <div class="js-playerA"></div>
 
     <h3>Reversed</h3>
-
     <div class="js-playerB"></div>
 
     <script>
@@ -32,6 +29,7 @@
             Sono.log();
 
             Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], function(sound) {
+
                 var buffer = sound.data;
 
                 var cloned = Sono.utils.cloneBuffer(buffer);
