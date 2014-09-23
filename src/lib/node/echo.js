@@ -56,7 +56,7 @@ function Echo(context, delayTime, gainValue) {
     gain.gain.value = gainValue || 0.5;
     if(delayTime !== undefined) { delay.delayTime.value = delayTime; }
 
-    delay.connected = function() {
+    delay._connected = function() {
         delay.connect(gain);
         gain.connect(delay);
     };
