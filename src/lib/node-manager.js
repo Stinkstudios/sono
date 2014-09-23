@@ -42,23 +42,22 @@ NodeManager.prototype.removeAll = function() {
     return this;
 };
 
-NodeManager.prototype._connectTo = function(node) {
-    var l = this._nodeList.length;
-    if(l > 0) {
-        var n = this._nodeList[l - 1];
-        //console.log('connect:', n, 'to', node);
-        n.disconnect();
-        n.connect(node);
-        if(typeof n.connected === 'function') {
-            n.connected();
-        }
+NodeManager.prototype._connect = function(a, b) {
+    var out = a._out || a;
+    out.disconnect();
+    out.connect(b._in || b);
+    if(typeof a._connected === 'function') {
+        a._connected.call(a);
     }
-    else if(this._sourceNode) {
-        //console.log(' x connect source to node:', node);
-        this._sourceNode.disconnect();
-        this._sourceNode.connect(node);
+};
+
+NodeManager.prototype._connectTo = function(destination) {
+    var l = this._nodeList.length,
+        lastNode = l ? this._nodeList[l - 1] : this._sourceNode;
+    if(lastNode) {
+        this._connect(lastNode, destination);
     }
-    this._destination = node;
+    this._destination = destination;
 };
 
 NodeManager.prototype._updateConnections = function() {
@@ -72,29 +71,17 @@ NodeManager.prototype._updateConnections = function() {
         n = this._nodeList[i];
         if(i === 0) {
             //console.log(' - connect source to node:', n);
-            this._sourceNode.disconnect();
-            this._sourceNode.connect(n._input || n);
+            this._connect(this._sourceNode, n);
         }
         else {
-            var prev = this._nodeList[i-1];
             //console.log('connect:', prev, 'to', n);
-            prev.disconnect();
-            prev.connect(n._output || n);
-            if(typeof prev._connected === 'function') {
-                prev._connected();
-            }
-        }
-        if(typeof n._connected === 'function') {
-            n._connected();
+            var prev = this._nodeList[i-1];
+            this._connect(prev, n);
         }
     }
-    //console.log(this._destination)
     if(this._destination) {
         this._connectTo(this._destination);
     }
-    /*else {
-        this._connectTo(this._gain);
-    }*/
 };
 
 Object.defineProperty(NodeManager.prototype, 'panning', {
