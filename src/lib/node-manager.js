@@ -6,6 +6,7 @@ var Analyser = require('./node/analyser.js'),
     Filter = require('./node/filter.js'),
     Panner = require('./node/panner.js'),
     Phaser = require('./node/phaser.js'),
+    Recorder = require('./node/recorder.js'),
     Reverb = require('./node/reverb.js');
 
 function NodeManager(context) {
@@ -255,6 +256,12 @@ NodeManager.prototype.phaser = function() {
     var phaser = new Phaser(this._context);
     this.add(phaser);
     return phaser;
+};
+
+NodeManager.prototype.recorder = function(passThrough) {
+    var recorder = new Recorder(this._context, passThrough);
+    this.add(recorder);
+    return recorder;
 };
 
 NodeManager.prototype.reverb = function(seconds, decay, reverse) {

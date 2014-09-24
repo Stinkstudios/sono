@@ -41,6 +41,11 @@
     text-align: center;
 }
 
+.Player-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .Player-button:focus {
     outline: 0;
 }
