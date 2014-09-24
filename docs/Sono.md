@@ -444,6 +444,7 @@ lowpass.update(600, 1);
 #### Examples
 
 ```javascript
+
 ```
 
 ## panner
@@ -496,6 +497,54 @@ Sono.node.panning.setDefaults({
 // update global listener position and orientation to 3d camera Vectors
 Sono.node.panning.setListenerOrientation(camera.forward);
 Sono.node.panning.setListenerPosition(camera.position);
+```
+
+## phaser
+
+>`Sono.node.phaser()` returns Phaser  
+
+#### Examples
+
+```javascript
+
+```
+
+## recorder
+
+Record audio from the mix or microphone to a new audio buffer
+
+>`Sono.node.recorder(passThrough)` returns Recorder  
+`Sound.node.recorder(passThrough)` returns Recorder  
+
+Controls
+
+>`recorder.start()`  
+`recorder.stop()` returns AudioBuffer  
+`recorder.getDuration()` returns number  
+
+#### Examples
+
+Record a microphone stream
+
+```javascript
+var recorder;
+
+var onMicConnected = function(stream) {
+	var micSound = Sono.createSound(stream);
+	// add recorder, setting passThrough to false
+	// to avoid feedback loop between mic and speakers
+	recorder = micSound.node.recorder(false);
+	recorder.start();
+};
+
+stopButton.addEventListener('click', function() {
+	var buffer = recorder.stop();
+	var recordedSound = Sono.createSound(buffer);
+	recordedSound.play();
+});
+
+var mic = Sono.utils.microphone(onMicConnected);
+mic.connect();
 ```
 
 ## reverb
@@ -551,7 +600,19 @@ Get a sound's waveform and draw it to a canvas element
 
 ```javascript
 var canvasEl = document.querySelector('canvas');
-var wave = Sono.utils.waveform(sound._data, canvasEl.width);
+var wave = Sono.utils.waveform(sound.data, canvasEl.width);
 var canvas = wave.getCanvas(canvasEl.height, '#333333', '#DDDDDD', canvasEl);
 
+```
+
+Clone an AudioBuffer
+
+```javascript
+var cloned = Sono.utils.cloneBuffer(sound.data);
+```
+
+Reverse an AudioBuffer
+
+```javascript
+var reversed = Sono.utils.reverseBuffer(sound.data);
 ```

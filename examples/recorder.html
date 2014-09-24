@@ -40,21 +40,27 @@
                 analyser.maxDecibels = -60;
                 context = canvas.getContext('2d');
                 recorder = sound.node.recorder(false);
-                button.disabled = false;
                 update();
+
+                recorder.start();
             };
             var mic = Sono.utils.microphone(onConnect);
-            mic.connect();
 
+            button.disabled = false;
             button.addEventListener('click', function() {
-                if(recorder.isRecording) {
+                if(recorder && recorder.isRecording) {
                     recordingCount++;
                     var recording = recorder.stop();
                     createPlayer(recording);
                     this.innerHTML = 'RECORD';
                 }
                 else {
-                    recorder.start();
+                    if(mic.stream) {
+                        recorder.start();
+                    }
+                    else {
+                        mic.connect();
+                    }
                     this.innerHTML = 'STOP';
                 }
             });
@@ -85,7 +91,7 @@
                 var waveByteData = new Uint8Array(frequencyBinCount);
 
                 var freqByteData = new Uint8Array(frequencyBinCount);
-                
+
                 analyser.getByteFrequencyData(freqByteData);
 
                 for (var i = 0; i < frequencyBinCount; i++) {
