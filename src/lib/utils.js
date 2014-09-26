@@ -32,18 +32,28 @@ Utils.reverseBuffer = function(buffer) {
  */
 
 Utils.crossFade = function(fromSound, toSound, duration) {
-    fromSound.gain.gain.linearRampToValueAtTime(0, this._context.currentTime + duration);
-    toSound.gain.gain.linearRampToValueAtTime(1, this._context.currentTime + duration);
+    var from = this.isAudioParam(fromSound) ? fromSound : fromSound.gain.gain;
+    var to = this.isAudioParam(toSound) ? toSound : toSound.gain.gain;
+
+    from.setValueAtTime(from.value, 0);
+    from.linearRampToValueAtTime(0, this._context.currentTime + duration);
+    to.setValueAtTime(to.value, 0);
+    to.linearRampToValueAtTime(1, this._context.currentTime + duration);
 };
 
 Utils.fadeFrom = function(sound, value, duration) {
-    var toValue = sound.gain.gain.value;
-    sound.gain.gain.value = value;
-    sound.gain.gain.linearRampToValueAtTime(toValue, this._context.currentTime + duration);
+    var param = this.isAudioParam(sound) ? sound : sound.gain.gain;
+    var toValue = param.value;
+
+    param.setValueAtTime(value, 0);
+    param.linearRampToValueAtTime(toValue, this._context.currentTime + duration);
 };
 
 Utils.fadeTo = function(sound, value, duration) {
-    sound.gain.gain.linearRampToValueAtTime(value, this._context.currentTime + duration);
+    var param = this.isAudioParam(sound) ? sound : sound.gain.gain;
+
+    param.setValueAtTime(param.value, 0);
+    param.linearRampToValueAtTime(value, this._context.currentTime + duration);
 };
 
 /*
@@ -102,6 +112,10 @@ Utils.isScriptConfig = function(data) {
 Utils.isFile = function(data) {
     return !!(data && (data instanceof Array ||
               (typeof data === 'string' && data.indexOf('.') > -1)));
+};
+
+Utils.isAudioParam = function(data) {
+    return !!(data && window.AudioParam && data instanceof window.AudioParam);
 };
 
 /*
