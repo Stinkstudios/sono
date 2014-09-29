@@ -20,14 +20,13 @@ Support.prototype._init = function() {
     this._extensions = [];
     this._canPlay = {};
 
-    for (var i = 0; i < tests.length; i++) {
-        var test = tests[i];
+    tests.forEach(function(test) {
         var canPlayType = !!el.canPlayType(test.type);
         if(canPlayType) {
             this._extensions.push(test.ext);
         }
         this._canPlay[test.ext] = canPlayType;
-    }
+    }, this);
 };
 
 Support.prototype.getFileExtension = function(url) {
@@ -42,28 +41,26 @@ Support.prototype.getFileExtension = function(url) {
 };
 
 Support.prototype.getSupportedFile = function(fileNames) {
-    // if array get the first one that works
+    var name;
+
     if(fileNames instanceof Array) {
-        for (var i = 0; i < fileNames.length; i++) {
-            var ext = this.getFileExtension(fileNames[i]);
-            var ind = this._extensions.indexOf(ext);
-            if(ind > -1) {
-                return fileNames[i];
-            }
-        }
+        // if array get the first one that works
+        fileNames.some(function(item) {
+            name = item;
+            var ext = this.getFileExtension(item);
+            return this._extensions.indexOf(ext) > -1;
+        }, this);
     }
-    // if not array and is object
     else if(fileNames instanceof Object) {
-        for(var key in fileNames) {
-            var extension = this.getFileExtension(fileNames[key]);
-            var index = this._extensions.indexOf(extension);
-            if(index > -1) {
-                return fileNames[key];
-            }
-        }
+        // if not array and is object
+        Object.keys(fileNames).some(function(key) {
+            name = fileNames[key];
+            var ext = this.getFileExtension(name);
+            return this._extensions.indexOf(ext) > -1;
+        }, this);
     }
     // if string just return
-    return fileNames;
+    return name || fileNames;
 };
 
 /*

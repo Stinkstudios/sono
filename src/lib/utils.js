@@ -110,8 +110,14 @@ Utils.isScriptConfig = function(data) {
 };
 
 Utils.isFile = function(data) {
-    return !!(data && (data instanceof Array ||
-              (typeof data === 'string' && data.indexOf('.') > -1)));
+    return !!(data && (this.isURL(data) ||
+        (data instanceof Array && this.isURL(data[0])) ||
+        (typeof data === 'object' && this.isURL(data.url))
+    ));
+};
+
+Utils.isURL = function(data) {
+    return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
 };
 
 Utils.isAudioParam = function(data) {

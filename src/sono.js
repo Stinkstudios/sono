@@ -25,7 +25,6 @@ function Sono() {
 
     this._handleTouchlock();
     this._handleVisibility();
-    //this.log();
 }
 
 /*
@@ -41,13 +40,20 @@ function Sono() {
  * Object (ScriptProcessor config: { bufferSize: 1024, channels: 1, callback: fn, thisArg: self })
  */
 
-Sono.prototype.createSound = function(data) {
+Sono.prototype.createSound = function(config) {
     // try to load if data is Array or file string
-    if(Utils.isFile(data)) {
-        return this.load(data);
+    if(Utils.isFile(config)) {
+        return this.load(config);
     }
+    var isConfigObject = typeof config === 'object' && config.data;
+    var data = isConfigObject ? config.data : config;
     // otherwise just return a new sound object
     var sound = new Sound(this._context, data, this._masterGain);
+    if(isConfigObject) {
+        sound.id = config.id || '';
+        sound.loop = !!config.loop;
+        sound.volume = config.volume;
+    }
     this._sounds.push(sound);
 
     return sound;
@@ -58,23 +64,19 @@ Sono.prototype.createSound = function(data) {
  */
 
 Sono.prototype.destroy = function(soundOrId) {
-    var sound;
-    for (var i = 0, l = this._sounds.length; i < l; i++) {
-        sound = this._sounds[i];
+    this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
-            break;
+            console.log.apply(console, ['destroy:'+sound]);
+            sounds.splice(index, 1);
+            if(sound.loader) {
+                sound.loader.cancel();
+            }
+            try {
+                sound.stop();
+            } catch(e) {}
+            return true;
         }
-    }
-    if(sound !== undefined) {
-        this._sounds.splice(i, 1);
-
-        if(sound.loader) {
-            sound.loader.cancel();
-        }
-        try {
-            sound.stop();
-        } catch(e) {}
-    }
+    });
 };
 
 /*
@@ -82,12 +84,12 @@ Sono.prototype.destroy = function(soundOrId) {
  */
 
 Sono.prototype.getById = function(id) {
-    for (var i = 0, l = this._sounds.length; i < l; i++) {
-        if(this._sounds[i].id === id) {
-            return this._sounds[i];
-        }
-    }
-    return null;
+    var sound = null;
+    this._sounds.some(function(item) {
+        sound = item;
+        return sound.id === id;
+    });
+    return sound;
 };
 
 /*
@@ -121,53 +123,50 @@ Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement)
 
 Sono.prototype._loadMultiple = function(config, complete, progress, thisArg, asMediaElement) {
     var sounds = [];
-    for (var i = 0, l = config.length; i < l; i++) {
-        var file = config[i];
-        var sound = this._queue(file.url, asMediaElement);
-        if(file.id) { sound.id = file.id; }
+    var group = new Loader();
+    group.touchLocked = this._isTouchLocked;
+    group.webAudioContext = this._context;
+
+    config.forEach(function(file) {
+        var sound = this._queue(file.url, asMediaElement, group);
+        sound.id = file.id || '';
         sound.loop = !!file.loop;
         sound.volume = file.volume;
         sounds.push(sound);
-    }
+    }, this);
     if(progress) {
-        this._loader.onProgress.add(function(p) {
-            progress.call(thisArg || this, p);
-        });
+        group.onProgress.add(function(value) {
+            progress.call(thisArg || this, value);
+        }, this);
     }
     if(complete) {
-        this._loader.onComplete.addOnce(function() {
+        group.onComplete.addOnce(function() {
             complete.call(thisArg || this, sounds);
-        });
+        }, this);
     }
-    this._loader.start();
+    group.start();
 
-    return sounds[0];
+    return sounds;
 };
 
 Sono.prototype._initLoader = function() {
     this._loader = new Loader();
     this._loader.touchLocked = this._isTouchLocked;
     this._loader.webAudioContext = this._context;
-    this._loader.crossOrigin = true;
 };
 
-Sono.prototype._queue = function(url, asMediaElement) {
-    if(!this._loader) {
-        this._initLoader();
-    }
-
+Sono.prototype._queue = function(url, asMediaElement, group) {
     url = this._support.getSupportedFile(url);
 
     var sound = this.createSound();
-
-    sound.loader = this._loader.add(url);
-    sound.loader.onBeforeComplete.addOnce(function(buffer) {
-        sound.setData(buffer);
+    var loader = group ? group.add(url) : new Loader.File(url);
+    loader.webAudioContext = asMediaElement ? null : this._context;
+    loader.touchLocked = this._isTouchLocked;
+    loader.webAudioContext = this._context;
+    loader.onBeforeComplete.addOnce(function(data) {
+        sound.setData(data);
     });
-
-    if(asMediaElement) {
-        sound.loader.webAudioContext = null;
-    }
+    sound.loader = loader;
 
     return sound;
 };
@@ -195,33 +194,33 @@ Object.defineProperty(Sono.prototype, 'volume', {
         this._masterGain.gain.value = value;
 
         if(!this.hasWebAudio) {
-            for (var i = 0, l = this._sounds.length; i < l; i++) {
-                this._sounds[i].volume = value;
-            }
+            this._sounds.forEach(function(sound) {
+                sound.volume = value;
+            });
         }
     }
 });
 
 Sono.prototype.pauseAll = function() {
-    for (var i = 0, l = this._sounds.length; i < l; i++) {
-        if(this._sounds[i].playing) {
-            this._sounds[i].pause();
+    this._sounds.forEach(function(sound) {
+        if(sound.playing) {
+            sound.pause();
         }
-    }
+    });
 };
 
 Sono.prototype.resumeAll = function() {
-    for (var i = 0, l = this._sounds.length; i < l; i++) {
-        if(this._sounds[i].paused) {
-            this._sounds[i].play();
+    this._sounds.forEach(function(sound) {
+        if(sound.paused) {
+            sound.play();
         }
-    }
+    });
 };
 
 Sono.prototype.stopAll = function() {
-    for (var i = 0, l = this._sounds.length; i < l; i++) {
-        this._sounds[i].stop();
-    }
+    this._sounds.forEach(function(sound) {
+        sound.stop();
+    });
 };
 
 Sono.prototype.play = function(id, delay, offset) {
@@ -248,9 +247,12 @@ Sono.prototype._handleTouchlock = function() {
     var unlock = function() {
         document.body.removeEventListener('touchstart', unlock);
         self._isTouchLocked = false;
-        if(self._loader) {
-            self._loader.touchLocked = false;
-        }
+        self._sounds.forEach(function(sound) {
+            if(sound.loader) {
+                sound.loader.touchLocked = false;
+            }
+        });
+
         if(self.context) {
             var buffer = self.context.createBuffer(1, 1, 22050);
             var unlockSource = self.context.createBufferSource();
@@ -294,14 +296,12 @@ Sono.prototype._handleVisibility = function() {
 
     // pause currently playing sounds and store refs
     function onHidden() {
-        var l = sounds.length;
-        for (var i = 0; i < l; i++) {
-            var sound = sounds[i];
+        sounds.forEach(function(sound) {
             if(sound.playing) {
                 sound.pause();
                 pageHiddenPaused.push(sound);
             }
-        }
+        });
     }
 
     // play sounds that got paused when page was hidden

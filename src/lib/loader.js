@@ -8,7 +8,6 @@ function Loader() {
     this.onProgress = new signals.Signal();
     this.onError = new signals.Signal();
 
-    this.crossOrigin = false;
     this.loaded = false;
     this.loaders = {};
     this.loading = false;
@@ -22,7 +21,6 @@ function Loader() {
 Loader.prototype.add = function(url) {
     var loader = new Loader.File(url);
     loader.webAudioContext = this.webAudioContext;
-    loader.crossOrigin = this.crossOrigin;
     loader.touchLocked = this.touchLocked;
     this.queue.push(loader);
     this.loaders[loader.url] = loader;
@@ -91,7 +89,6 @@ Loader.File = function(url) {
     this.onError = new signals.Signal();
 
     this.webAudioContext = null;
-    this.crossOrigin = false;
     this.touchLocked = false;
     this.progress = 0;
 };
