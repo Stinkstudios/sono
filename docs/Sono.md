@@ -6,7 +6,7 @@
 
 Create a Sound object
 
->`Sono.createSound(data)` returns Sound
+>`Sono.createSound(config)` returns Sound
 
 #### Examples
 
@@ -15,6 +15,12 @@ Create and load:
 ```javascript
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 var sound = Sono.createSound('audio/foo.ogg');
+var sound = Sono.createSound({
+	id: 'foo',
+	url: ['audio/foo.ogg', 'audio/foo.mp3'],
+	loop: true,
+	volume: 0.5
+});
 ```
 
 From existing HTMLMediaElement:

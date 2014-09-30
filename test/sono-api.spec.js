@@ -46,9 +46,8 @@ describe('Sono API', function() {
     });
 
     it('should have expected members (loading)', function() {
-        expect(Sono._initLoader).to.be.a('function');
         expect(Sono.load).to.be.a('function');
-        expect(Sono.load.length).to.eql(5);
+        expect(Sono.load.length).to.eql(2);
     });
 
     it('should have expected members (support, setup)', function() {

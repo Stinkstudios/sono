@@ -21,7 +21,6 @@ function Sono() {
     }
 
     this._sounds = [];
-    this._support = new Support();
 
     this._handleTouchlock();
     this._handleVisibility();
@@ -30,26 +29,26 @@ function Sono() {
 /*
  * Create
  *
- * Accepted values for param data:
+ * Accepted values for param config:
  *
  * ArrayBuffer
  * HTMLMediaElement
  * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
  * String (filename e.g. 'foo.ogg')
+ * Object config e.g. { id:'foo', url:['foo.ogg', 'foo.mp3'] }
  * String (Oscillator type i.e. 'sine', 'square', 'sawtooth', 'triangle')
  * Object (ScriptProcessor config: { bufferSize: 1024, channels: 1, callback: fn, thisArg: self })
  */
 
 Sono.prototype.createSound = function(config) {
-    // try to load if data is Array or file string
-    if(Utils.isFile(config)) {
+    // try to load if config contains URLs
+    if(Support.containsURL(config)) {
         return this.load(config);
     }
-    var isConfigObject = typeof config === 'object' && config.data;
-    var data = isConfigObject ? config.data : config;
     // otherwise just return a new sound object
-    var sound = new Sound(this._context, data, this._masterGain);
-    if(isConfigObject) {
+    var sound = new Sound(this._context, this._masterGain);
+    if(config) {
+        sound.setData(config.data || config);
         sound.id = config.id || '';
         sound.loop = !!config.loop;
         sound.volume = config.volume;
@@ -64,9 +63,9 @@ Sono.prototype.createSound = function(config) {
  */
 
 Sono.prototype.destroy = function(soundOrId) {
+    if(!soundOrId) { return; }
     this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
-            console.log.apply(console, ['destroy:'+sound]);
             sounds.splice(index, 1);
             if(sound.loader) {
                 sound.loader.cancel();
@@ -96,77 +95,60 @@ Sono.prototype.getById = function(id) {
  * Loading
  */
 
-Sono.prototype.load = function(url, complete, progress, thisArg, asMediaElement) {
-    if(!url) { return; }
+//Sono.prototype.load = function(config, onComplete, onProgress, thisArg, asMediaElement) {
+Sono.prototype.load = function(config, options) {
+    options = options || {};
 
-    if(url instanceof Array && url.length && typeof url[0] === 'object') {
-        return this._loadMultiple(url, complete, progress, thisArg, asMediaElement);
+    var asMediaElement = !!options.asMediaElement,
+        onProgress = options.onProgress,
+        onComplete = options.onComplete,
+        thisArg = options.thisArg || options.context || this;
+
+    var sound,
+        loader;
+
+    if(Array.isArray(config) && config[0].hasOwnProperty('url')) {
+        sound = [];
+        loader = new Loader.Group();
+
+        config.forEach(function(file) {
+            sound.push(this._queue(file, asMediaElement, loader));
+        }, this);
     }
-    else if(typeof url === 'object' && url.url) {
-        return this._loadMultiple([url], complete, progress, thisArg, asMediaElement);   
+    else {
+        sound = this._queue(config, asMediaElement);
+        loader = sound.loader;
     }
 
-    var sound = this._queue(url, asMediaElement);
-
-    if(progress) {
-        sound.loader.onProgress.add(progress, thisArg || this);
+    if(onProgress) {
+        loader.onProgress.add(onProgress, thisArg);
     }
-    if(complete) {
-        sound.loader.onComplete.addOnce(function() {
-            complete.call(thisArg || this, sound);
+    if(onComplete) {
+        loader.onComplete.addOnce(function() {
+            onComplete.call(thisArg, sound);
         });
     }
-    sound.loader.start();
+    loader.start();
 
     return sound;
 };
 
-Sono.prototype._loadMultiple = function(config, complete, progress, thisArg, asMediaElement) {
-    var sounds = [];
-    var group = new Loader();
-    group.touchLocked = this._isTouchLocked;
-    group.webAudioContext = this._context;
-
-    config.forEach(function(file) {
-        var sound = this._queue(file.url, asMediaElement, group);
-        sound.id = file.id || '';
-        sound.loop = !!file.loop;
-        sound.volume = file.volume;
-        sounds.push(sound);
-    }, this);
-    if(progress) {
-        group.onProgress.add(function(value) {
-            progress.call(thisArg || this, value);
-        }, this);
-    }
-    if(complete) {
-        group.onComplete.addOnce(function() {
-            complete.call(thisArg || this, sounds);
-        }, this);
-    }
-    group.start();
-
-    return sounds;
-};
-
-Sono.prototype._initLoader = function() {
-    this._loader = new Loader();
-    this._loader.touchLocked = this._isTouchLocked;
-    this._loader.webAudioContext = this._context;
-};
-
-Sono.prototype._queue = function(url, asMediaElement, group) {
-    url = this._support.getSupportedFile(url);
-
+Sono.prototype._queue = function(config, asMediaElement, group) {
+    var url = Support.getSupportedFile(config.url || config);
     var sound = this.createSound();
-    var loader = group ? group.add(url) : new Loader.File(url);
-    loader.webAudioContext = asMediaElement ? null : this._context;
-    loader.touchLocked = this._isTouchLocked;
-    loader.webAudioContext = this._context;
+    sound.id = config.id || '';
+    sound.loop = !!config.loop;
+    sound.volume = config.volume;
+
+    var loader = new Loader(url);
+    loader.audioContext = asMediaElement ? null : this._context;
+    loader.isTouchLocked = this._isTouchLocked;
     loader.onBeforeComplete.addOnce(function(data) {
         sound.setData(data);
     });
+    // keep a ref so can call sound.loader.cancel()
     sound.loader = loader;
+    if(group) { group.add(loader); }
 
     return sound;
 };
@@ -334,7 +316,7 @@ Sono.prototype.log = function() {
         info = 'Supported:' + this.isSupported +
                ' WebAudioAPI:' + this.hasWebAudio +
                ' TouchLocked:' + this._isTouchLocked +
-               ' Extensions:' + this._support.extensions;
+               ' Extensions:' + Support.extensions;
 
     if(navigator.userAgent.indexOf('Chrome') > -1) {
         var args = [
@@ -356,7 +338,7 @@ Sono.prototype.log = function() {
 
 Object.defineProperty(Sono.prototype, 'canPlay', {
     get: function() {
-        return this._support.canPlay;
+        return Support.canPlay;
     }
 });
 
@@ -374,7 +356,7 @@ Object.defineProperty(Sono.prototype, 'hasWebAudio', {
 
 Object.defineProperty(Sono.prototype, 'isSupported', {
     get: function() {
-        return this._support.extensions.length > 0;
+        return Support.extensions.length > 0;
     }
 });
 
@@ -406,6 +388,4 @@ Object.defineProperty(Sono.prototype, 'utils', {
  * Exports
  */
 
-if (typeof module === 'object' && module.exports) {
-    module.exports = new Sono();
-}
+module.exports = new Sono();

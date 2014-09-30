@@ -1,11 +1,8 @@
 'use strict';
 
-//var Sono = require('../src/sono.js');
-var Support = require('../src/lib/support.js');
+var support = require('../src/lib/support.js');
 
 describe('Support', function() {
-
-    var support = new Support();
 
     it('should get file extension', function() {
         expect(support.getFileExtension).to.be.a('function');

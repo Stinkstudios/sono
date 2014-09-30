@@ -8,7 +8,7 @@ var BufferSource = require('./source/buffer-source.js'),
     ScriptSource = require('./source/script-source.js'),
     Utils = require('./utils.js');
 
-function Sound(context, data, destination) {
+function Sound(context, destination) {
     this.id = '';
     this._context = context;
     this._data = null;
@@ -25,8 +25,6 @@ function Sound(context, data, destination) {
         this._node.setDestination(this._gain);
         this._gain.connect(destination || this._context.destination);
     }
-
-    this.setData(data);
 }
 
 Sound.prototype.setData = function(data) {

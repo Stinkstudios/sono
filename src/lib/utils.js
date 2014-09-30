@@ -109,17 +109,6 @@ Utils.isScriptConfig = function(data) {
               data.bufferSize && data.channels && data.callback);
 };
 
-Utils.isFile = function(data) {
-    return !!(data && (this.isURL(data) ||
-        (data instanceof Array && this.isURL(data[0])) ||
-        (typeof data === 'object' && this.isURL(data.url))
-    ));
-};
-
-Utils.isURL = function(data) {
-    return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
-};
-
 Utils.isAudioParam = function(data) {
     return !!(data && window.AudioParam && data instanceof window.AudioParam);
 };

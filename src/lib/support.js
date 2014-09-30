@@ -1,12 +1,11 @@
 'use strict';
 
 function Support() {
-    this._init();
-}
+    var extensions = [],
+        canPlay = {},
+        el = document.createElement('audio');
 
-Support.prototype._init = function() {
-    var el = document.createElement('audio');
-    if(!el) { return []; }
+    if(!el) { return; }
 
     var tests = [
         { ext: 'ogg', type: 'audio/ogg; codecs="vorbis"' },
@@ -17,72 +16,66 @@ Support.prototype._init = function() {
         { ext: 'm4a', type: 'audio/aac;' }
     ];
 
-    this._extensions = [];
-    this._canPlay = {};
-
     tests.forEach(function(test) {
         var canPlayType = !!el.canPlayType(test.type);
         if(canPlayType) {
-            this._extensions.push(test.ext);
+            extensions.push(test.ext);
         }
-        this._canPlay[test.ext] = canPlayType;
-    }, this);
-};
+        canPlay[test.ext] = canPlayType;
+    });
 
-Support.prototype.getFileExtension = function(url) {
-    url = url.split('?')[0];
-    url = url.substr(url.lastIndexOf('/') + 1);
+    var getFileExtension = function(url) {
+        url = url.split('?')[0];
+        url = url.substr(url.lastIndexOf('/') + 1);
 
-    var a = url.split('.');
-    if(a.length === 1 || (a[0] === '' && a.length === 2)) {
-        return '';
-    }
-    return a.pop().toLowerCase();
-};
+        var a = url.split('.');
+        if(a.length === 1 || (a[0] === '' && a.length === 2)) {
+            return '';
+        }
+        return a.pop().toLowerCase();
+    };
 
-Support.prototype.getSupportedFile = function(fileNames) {
-    var name;
+    var getSupportedFile = function(fileNames) {
+        var name;
 
-    if(fileNames instanceof Array) {
-        // if array get the first one that works
-        fileNames.some(function(item) {
-            name = item;
-            var ext = this.getFileExtension(item);
-            return this._extensions.indexOf(ext) > -1;
-        }, this);
-    }
-    else if(fileNames instanceof Object) {
-        // if not array and is object
-        Object.keys(fileNames).some(function(key) {
-            name = fileNames[key];
-            var ext = this.getFileExtension(name);
-            return this._extensions.indexOf(ext) > -1;
-        }, this);
-    }
-    // if string just return
-    return name || fileNames;
-};
+        if(Array.isArray(fileNames)) {
+            // if array get the first one that works
+            fileNames.some(function(item) {
+                name = item;
+                var ext = getFileExtension(item);
+                return extensions.indexOf(ext) > -1;
+            }, this);
+        }
+        else if(typeof fileNames === 'object') {
+            // if not array and is object
+            Object.keys(fileNames).some(function(key) {
+                name = fileNames[key];
+                var ext = getFileExtension(name);
+                return extensions.indexOf(ext) > -1;
+            }, this);
+        }
+        // if string just return
+        return name || fileNames;
+    };
 
-/*
- * Getters & Setters
- */
+    var containsURL = function(config) {
+        if(!config) { return false; }
+        // string, array or object with url property that is string or array
+        var url = config.url || config;
+        return isURL(url) || (Array.isArray(url) && isURL(url[0]));
+    };
 
-Object.defineProperty(Support.prototype, 'extensions', {
-    get: function() {
-        return this._extensions;
-    }
-});
+    var isURL = function(data) {
+        return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
+    };
 
-Object.defineProperty(Support.prototype, 'canPlay', {
-    get: function() {
-        return this._canPlay;
-    }
-});
-
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Support;
+    return Object.freeze({
+        extensions: extensions,
+        canPlay: canPlay,
+        getFileExtension: getFileExtension,
+        getSupportedFile: getSupportedFile,
+        containsURL: containsURL
+    });
 }
+
+module.exports = new Support();

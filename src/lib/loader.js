@@ -2,169 +2,189 @@
 
 var signals = require('signals');
 
-function Loader() {
-    this.onChildComplete = new signals.Signal();
-    this.onComplete = new signals.Signal();
-    this.onProgress = new signals.Signal();
-    this.onError = new signals.Signal();
+function Loader(url) {
+    var onProgress = new signals.Signal(),
+        onBeforeComplete = new signals.Signal(),
+        onComplete = new signals.Signal(),
+        onError = new signals.Signal(),
+        progress = 0,
+        audioContext,
+        isTouchLocked,
+        request,
+        data;
 
-    this.loaded = false;
-    this.loaders = {};
-    this.loading = false;
-    this.numLoaded = 0;
-    this.numTotal = 0;
-    this.queue = [];
-    this.touchLocked = false;
-    this.webAudioContext = null;
+    var start = function() {
+        if(audioContext) {
+            loadArrayBuffer();
+        } else {
+            loadAudioElement();
+        }
+    };
+
+    var loadArrayBuffer = function() {
+        request = new XMLHttpRequest();
+        request.open('GET', url, true);
+        request.responseType = 'arraybuffer';
+        request.onprogress = function(event) {
+            if (event.lengthComputable) {
+                progress = event.loaded / event.total;
+                onProgress.dispatch(progress);
+            }
+        };
+        request.onload = function() {
+            audioContext.decodeAudioData(
+                request.response,
+                function(buffer) {
+                    data = buffer;
+                    progress = 1;
+                    onProgress.dispatch(1);
+                    onBeforeComplete.dispatch(buffer);
+                    onComplete.dispatch(buffer);
+                },
+                function(e) {
+                    onError.dispatch(e);
+                }
+            );
+        };
+        request.onerror = function(e) {
+            onError.dispatch(e);
+        };
+        request.send();
+    };
+
+    var loadAudioElement = function() {
+        data = new Audio();
+        data.name = url;
+        data.preload = 'auto';
+        data.src = url;
+
+        if (!!isTouchLocked) {
+            onProgress.dispatch(1);
+            onBeforeComplete.dispatch(data);
+            onComplete.dispatch(data);
+        }
+        else {
+            var timeout;
+            var readyHandler = function() {
+                data.removeEventListener('canplaythrough', readyHandler);
+                window.clearTimeout(timeout);
+                progress = 1;
+                onProgress.dispatch(1);
+                onBeforeComplete.dispatch(data);
+                onComplete.dispatch(data);
+            };
+            // timeout because sometimes canplaythrough doesn't fire
+            timeout = window.setTimeout(readyHandler, 4000);
+            data.addEventListener('canplaythrough', readyHandler, false);
+            data.onerror = function(e) {
+                window.clearTimeout(timeout);
+                onError.dispatch(e);
+            };
+            data.load();
+        }
+    };
+
+    var cancel = function() {
+      if(request && request.readyState !== 4) {
+          request.abort();
+      }
+    };
+
+    var api = {
+        start: start,
+        cancel: cancel,
+        onProgress: onProgress,
+        onComplete: onComplete,
+        onBeforeComplete: onBeforeComplete,
+        onError: onError
+    };
+
+    Object.defineProperty(api, 'data', {
+        get: function() {
+            return data;
+        }
+    });
+
+    Object.defineProperty(api, 'progress', {
+        get: function() {
+            return progress;
+        }
+    });
+
+    Object.defineProperty(api, 'audioContext', {
+        set: function(value) {
+            audioContext = value;
+        }
+    });
+
+    Object.defineProperty(api, 'isTouchLocked', {
+        set: function(value) {
+            isTouchLocked = value;
+        }
+    });
+
+    return Object.freeze(api);
 }
 
-Loader.prototype.add = function(url) {
-    var loader = new Loader.File(url);
-    loader.webAudioContext = this.webAudioContext;
-    loader.touchLocked = this.touchLocked;
-    this.queue.push(loader);
-    this.loaders[loader.url] = loader;
-    this.numTotal++;
-    return loader;
-};
+Loader.Group = function() {
+    var queue = [],
+        numLoaded = 0,
+        numTotal = 0,
+        onComplete = new signals.Signal(),
+        onProgress = new signals.Signal(),
+        onError = new signals.Signal();
 
-Loader.prototype.start = function() {
-    this.numTotal = this.queue.length;
-    if(!this.loading) {
-        this.loading = true;
-        this.next();
-    }
-};
+    var add = function(loader) {
+        queue.push(loader);
+        numTotal++;
+        return loader;
+    };
 
-Loader.prototype.next = function() {
-    if(this.queue.length === 0) {
-        this.loaded = true;
-        this.loading = false;
-        this.onComplete.dispatch(this.loaders);
-        return;
-    }
-    var loader = this.queue.pop();
-    var self = this;
+    var start = function() {
+        numTotal = queue.length;
+        next();
+    };
+
+    var next = function() {
+        if(queue.length === 0) {
+            onComplete.dispatch();
+            return;
+        }
+
+        var loader = queue.pop();
+        loader.onProgress.add(progressHandler);
+        loader.onBeforeComplete.addOnce(completeHandler);
+        loader.onError.addOnce(errorHandler);
+        loader.start();
+    };
+
     var progressHandler = function(progress) {
-        var numLoaded = self.numLoaded + progress;
-        if(self.onProgress.getNumListeners() > 0) {
-            self.onProgress.dispatch(numLoaded/self.numTotal);
+        var numLoaded = numLoaded + progress;
+        if(onProgress.getNumListeners() > 0) {
+            onProgress.dispatch(numLoaded / numTotal);
         }
     };
-    loader.onProgress.add(progressHandler);
-    var completeHandler = function(){
-        loader.onProgress.remove(progressHandler);
-        self.numLoaded++;
-        if(self.onProgress.getNumListeners() > 0) {
-            self.onProgress.dispatch(self.numLoaded/self.numTotal);
+
+    var completeHandler = function() {
+        numLoaded++;
+        if(onProgress.getNumListeners() > 0) {
+            onProgress.dispatch(numLoaded / numTotal);
         }
-        self.onChildComplete.dispatch(loader);
-        self.next();
+        next();
     };
-    loader.onBeforeComplete.addOnce(completeHandler);
-    var errorHandler = function(){
-        self.onError.dispatch(loader);
-        self.next();
+
+    var errorHandler = function(e) {
+        onError.dispatch(e);
+        next();
     };
-    loader.onError.addOnce(errorHandler);
-    loader.start();
-};
 
-/*Loader.prototype.addMultiple = function(array) {
-    for (var i = 0; i < array.length; i++) {
-        this.add(array[i]);
-    }
-};
-
-Loader.prototype.get = function(url) {
-    return this.loaders[url];
-};*/
-
-Loader.File = function(url) {
-    this.url = url;
-
-    this.onProgress = new signals.Signal();
-    this.onBeforeComplete = new signals.Signal();
-    this.onComplete = new signals.Signal();
-    this.onError = new signals.Signal();
-
-    this.webAudioContext = null;
-    this.touchLocked = false;
-    this.progress = 0;
-};
-
-Loader.File.prototype.start = function() {
-    if(this.webAudioContext) {
-        this.loadArrayBuffer(this.webAudioContext);
-    } else {
-        this.loadAudioElement(this.touchLocked);
-    }
-};
-
-Loader.File.prototype.loadArrayBuffer = function(webAudioContext) {
-    var request = new XMLHttpRequest();
-    request.open('GET', this.url, true);
-    request.responseType = 'arraybuffer';
-    var self = this;
-    request.onprogress = function(event) {
-        if (event.lengthComputable) {
-            self.progress = event.loaded / event.total;
-            self.onProgress.dispatch(self.progress);
-        }
-    };
-    request.onload = function() {
-        webAudioContext.decodeAudioData(request.response, function(buffer) {
-            self.data = buffer;
-            self.progress = 1;
-            self.onProgress.dispatch(1);
-            self.onBeforeComplete.dispatch(buffer);
-            self.onComplete.dispatch(buffer);
-        }, function() {
-            self.onError.dispatch();
-        });
-    };
-    request.onerror = function(e) {
-        self.onError.dispatch(e);
-    };
-    request.send();
-    this.request = request;
-};
-
-Loader.File.prototype.loadAudioElement = function(touchLocked) {
-    var request = new Audio();
-    this.data = request;
-    request.name = this.url;
-    request.preload = 'auto';
-    var self = this;
-    request.src = this.url;
-    if (!!touchLocked) {
-        this.onProgress.dispatch(1);
-        this.onComplete.dispatch(this.data);
-    }
-    else {
-        var ready = function(){
-            request.removeEventListener('canplaythrough', ready);
-            clearTimeout(timeout);
-            self.progress = 1;
-            self.onProgress.dispatch(1);
-            self.onBeforeComplete.dispatch(self.data);
-            self.onComplete.dispatch(self.data);
-        };
-        // timeout because sometimes canplaythrough doesn't fire
-        var timeout = setTimeout(ready, 2000);
-        request.addEventListener('canplaythrough', ready, false);
-        request.onerror = function() {
-            clearTimeout(timeout);
-            self.onError.dispatch();
-        };
-        request.load();
-    }
-};
-
-Loader.File.prototype.cancel = function() {
-  if(this.request && this.request.readyState !== 4) {
-      this.request.abort();
-  }
+    return Object.freeze({
+        add: add,
+        start: start,
+        onProgress: onProgress,
+        onComplete: onComplete,
+        onError: onError
+    });
 };
 
 module.exports = Loader;
