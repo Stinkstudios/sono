@@ -3,7 +3,7 @@
 
 ### Create a Sound instance
 
-[Sono.createSound(data)](Sono.md#createsound) // returns Sound
+[Sono.createSound(config)](Sono.md#createsound) // returns Sound
 
 
 ### Destroy a Sound instance
@@ -18,9 +18,7 @@
 
 ### Load
 
-[Sono.load(url, complete, progress, thisArg, asMediaElement)](Sono.md#load) // returns Sound
-
-[Sono.loadMultiple(config, complete, progress, thisArg, asMediaElement)](Sono.md#load)
+[Sono.load(url, options)](Sono.md#load) // returns Sound
 
 
 ### Controls
@@ -124,15 +122,9 @@ Sono.node.scriptProcessor(bufferSize, inputChannels, outputChannels, callback, t
 
 Sono.utils.crossFade(fromSound, toSound, duration)
 
-Sono.utils.distort(value)
-
 Sono.utils.fadeFrom(sound, value, duration)
 
 Sono.utils.fadeTo(sound, value, duration)
-
-Sono.utils.filter(filterNode, value, quality, gain)
-
-Sono.utils.getFrequency(value) // return a freq value by passing 0-1
 
 Sono.utils.isAudioBuffer(data)
 
@@ -144,11 +136,7 @@ Sono.utils.isOscillatorType(data)
 
 Sono.utils.isScriptConfig(data)
 
-Sono.utils.isFile(data)
-
 Sono.utils.microphone(connected, denied, error, thisArg)
-
-Sono.utils.pan(panner)
 
 Sono.utils.timeCode(seconds, delim)
 

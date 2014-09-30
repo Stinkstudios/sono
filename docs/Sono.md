@@ -119,12 +119,16 @@ Multiple sounds
 Sono.load([
 	{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
 	{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'] }
-], function(sounds) {
-	console.log('complete:', sounds);
-	var soundA = Sono.getById('a');
-	var soundB = Sono.getById('b');
-}, function(progress) {
-	console.log('progress:', progress);
+],
+{
+	onComplete: function(sounds) {
+		console.log('complete:', sounds);
+		var soundA = Sono.getById('a');
+		var soundB = Sono.getById('b');
+	},
+	onProgress: function(progress) {
+		console.log('progress:', progress);
+	}
 });
 ```
 

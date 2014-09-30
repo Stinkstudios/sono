@@ -37,6 +37,11 @@ A sound can be assigned an `id` property which can be used to retrieve it later,
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 sound.id = 'foo';
 
+var sound = Sono.createSound({
+    id: 'foo',
+    url: ['audio/foo.ogg', 'audio/foo.mp3']
+});
+
 // somewhere else in your app:
 var foo = Sono.getById('foo');
 // or
@@ -99,7 +104,14 @@ var script = Sono.createSound({
 You can load sounds and specify callbacks for completion and progress:
 
 ```javascript
-var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3'], onComplete, onProgress, this);
+var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3'], {
+    onComplete: function() {
+
+    },
+    onProgress: function(progress) {
+
+    }
+});
 var sound = Sono.load('audio/foo.ogg');
 var sound = Sono.load({
     id: 'foo',
@@ -115,12 +127,16 @@ Sono.load also accepts an array of sound config objects. All the sounds will be 
 Sono.load([
     { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
     { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
-], function(sounds) {
-    // loading complete, sound instances can be retrieved or controlled by id:
-    var soundA = Sono.getById('a');
-    Sono.play('b');
-}, function(progress) {
-    // update progress bar
+],
+{
+    onComplete: function(sounds) {
+        // loading complete, sound instances can be retrieved or controlled by id:
+        var soundA = Sono.getById('a');
+        Sono.play('b');
+    },
+    onProgress: function(progress) {
+        // update progress bar
+    }
 });
 ```
 
