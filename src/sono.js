@@ -97,6 +97,10 @@ Sono.prototype.getById = function(id) {
 
 //Sono.prototype.load = function(config, onComplete, onProgress, thisArg, asMediaElement) {
 Sono.prototype.load = function(config, options) {
+    if(!config) {
+        throw new Error('ArgumentException: Sono.load: param config is undefined');
+    }
+
     options = options || {};
 
     var asMediaElement = !!options.asMediaElement,

@@ -159,17 +159,13 @@ Loader.Group = function() {
     };
 
     var progressHandler = function(progress) {
-        var numLoaded = numLoaded + progress;
-        if(onProgress.getNumListeners() > 0) {
-            onProgress.dispatch(numLoaded / numTotal);
-        }
+        var loaded = numLoaded + progress;
+        onProgress.dispatch(loaded / numTotal);
     };
 
     var completeHandler = function() {
         numLoaded++;
-        if(onProgress.getNumListeners() > 0) {
-            onProgress.dispatch(numLoaded / numTotal);
-        }
+        onProgress.dispatch(numLoaded / numTotal);
         next();
     };
 
