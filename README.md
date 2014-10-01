@@ -6,7 +6,7 @@ A JavaScript library for working with audio. WebAudio API with fallback to HTMLM
 
 ## Features
 
-* Full audio management including loading, control, effects and processing
+* Full audio management including loading, playback, effects and processing
 * Abstracts differences across browsers such as file types and Web Audio support
 * Web Audio effects such as 3d positioning, reverb and frequency analysis
 * Handles inputs from audio files, media elements, microphone, oscillators and scripts
@@ -34,6 +34,7 @@ var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 A sound can be assigned an `id` property which can be used to retrieve it later, without having a reference to the instance:
 
 ```javascript
+// create a sound with an id:
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 sound.id = 'foo';
 
@@ -42,13 +43,14 @@ var sound = Sono.createSound({
     url: ['audio/foo.ogg', 'audio/foo.mp3']
 });
 
-// somewhere else in your app:
+// then somewhere else in your app:
 var foo = Sono.getById('foo');
+foo.play();
 // or
 Sono.play('foo');
 ```
 
-You can also use your own loader and pass in the loaded sound data, or supply media elements from the dom:
+You can also use your own loader and pass in the loaded sound data, or supply media elements from the DOM:
 
 ```javascript
 // media elements:
@@ -58,7 +60,7 @@ var audioElSound = Sono.createSound(audioEl);
 var videoEl = document.querySelector('video');
 var videoElSound = Sono.createSound(videoEl);
 
-// xhrResponse (ArrayBuffer) loaded outside of Sono:
+// XHR arraybuffer loaded outside of Sono:
 var sound;
 Sono.context.decodeAudioData(xhrResponse, function(buffer) {
     sound = Sono.createSound(buffer);
@@ -104,33 +106,40 @@ var script = Sono.createSound({
 You can load sounds and specify callbacks for completion and progress:
 
 ```javascript
-var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3'], {
-    onComplete: function() {
-
+var sound = Sono.load({
+    url: ['audio/foo.ogg', 'audio/foo.mp3'],
+    onComplete: function(sound) {
+        // do something
     },
     onProgress: function(progress) {
-
+        // update progress
     }
 });
-var sound = Sono.load('audio/foo.ogg');
+
 var sound = Sono.load({
     id: 'foo',
     url: ['audio/foo.ogg', 'audio/foo.mp3'],
     loop: true,
-    volume: 0.2
+    volume: 0.2,
+    onComplete: this.soundLoaded,
+    context: this
 });
 ```
 
 Sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getById`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
 
 ```javascript
-Sono.load([
-    { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
-    { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
-],
-{
+var sounds = Sono.load({
+    url: [
+        { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
+        { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
+    ],
     onComplete: function(sounds) {
-        // loading complete, sound instances can be retrieved or controlled by id:
+        // loading complete
+        sounds.forEach(function(sound) {
+            console.log(sound.id);
+        });
+        // sound instances can be retrieved or controlled by id:
         var soundA = Sono.getById('a');
         Sono.play('b');
     },
@@ -159,40 +168,12 @@ Or apply a reverb effect to a specific sound:
 ```javascript
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 var reverb = sound.node.reverb(2, 0.5);
+// change the time and decay
+reverb.update(2, 0.5);
 ```
 
-Pan a sound across 3d space:
+[See full list of effects and processing](docs/Sono.md#nodemanager)
 
-```javascript
-var panner = sound.node.panner();
-// pan full left
-panner.setX(-1);
-//
-panner.setSourcePosition(x, y, z);
-panner.setSourcePosition(vec3);
-//
-panner.setSourceOrientation(x, y, z);
-panner.setSourceOrientation(vec3);
-
-```
-
-Analyser
-
-
-Distortion
-
-
-Echo
-
-```javascript
-var echo = sound.node.echo(delayTime, gainValue);
-```
-
-Filters
-
-```javascript
-var lowpass = sound.node.lowpass();
-```
 
 ### Visualisation
 

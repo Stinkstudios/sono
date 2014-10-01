@@ -28,16 +28,19 @@
 
             Sono.log();
 
-            Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], function(sound) {
+            Sono.load({
+                url: ['audio/TEST.ogg', 'audio/TEST.mp3'],
+                onComplete: function(sound) {
 
-                var buffer = sound.data;
+                    var buffer = sound.data;
 
-                var cloned = Sono.utils.cloneBuffer(buffer);
-                Sono.utils.reverseBuffer(cloned);
-                var reversed = Sono.createSound(cloned);
+                    var cloned = Sono.utils.cloneBuffer(buffer);
+                    Sono.utils.reverseBuffer(cloned);
+                    var reversed = Sono.createSound(cloned);
 
-                new Player(sound, document.querySelector('.js-playerA'));
-                new Player(reversed, document.querySelector('.js-playerB'));
+                    new Player(sound, document.querySelector('.js-playerA'));
+                    new Player(reversed, document.querySelector('.js-playerB'));
+                }
 
             });
 

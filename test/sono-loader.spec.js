@@ -6,14 +6,14 @@ describe('Sono loader', function() {
 
     describe('single', function() {
         var sound,
-            progress = 0,
-            single = [
-                'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
-                'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
-            ];
+            progress = 0;
 
         beforeEach(function(done) {
-            Sono.load(single, {
+            Sono.load({
+                url: [
+                    'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
+                    'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
+                ],
                 onComplete: function(loadedSound) {
                     sound = loadedSound;
                     sound.id = 'single';
@@ -58,7 +58,8 @@ describe('Sono loader', function() {
             ];
 
         beforeEach(function(done) {
-            Sono.load(multiple, {
+            Sono.load({
+                url: multiple,
                 onComplete: function(loadedSounds) {
                     sounds = loadedSounds;
                     done();
@@ -91,7 +92,8 @@ describe('Sono loader', function() {
 
         beforeEach(function(done) {
             var self = this;
-            Sono.load(el, {
+            Sono.load({
+                url: el,
                 onComplete: function(loadedSound) {
                     sound = loadedSound;
                     sound.id = 'audioEl';
@@ -120,19 +122,17 @@ describe('Sono loader', function() {
 
     describe('audio config', function() {
         var sound,
-            progress = 0,
-            ob = {
+            progress = 0;
+
+        beforeEach(function(done) {
+            Sono.load({
                 id: 'hit',
                 url: [
                     'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
                     'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
                 ],
                 loop: true,
-                volume: 0.5
-            };
-
-        beforeEach(function(done) {
-            Sono.load(ob, {
+                volume: 0.5,
                 onComplete: function(loadedSound) {
                     sound = loadedSound;
                     done();

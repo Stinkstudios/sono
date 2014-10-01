@@ -95,33 +95,31 @@ Sono.prototype.getById = function(id) {
  * Loading
  */
 
-//Sono.prototype.load = function(config, onComplete, onProgress, thisArg, asMediaElement) {
-Sono.prototype.load = function(config, options) {
+Sono.prototype.load = function(config) {
     if(!config) {
         throw new Error('ArgumentException: Sono.load: param config is undefined');
     }
 
-    options = options || {};
-
-    var asMediaElement = !!options.asMediaElement,
-        onProgress = options.onProgress,
-        onComplete = options.onComplete,
-        thisArg = options.thisArg || options.context || this;
+    var asMediaElement = !!config.asMediaElement,
+        onProgress = config.onProgress,
+        onComplete = config.onComplete,
+        thisArg = config.thisArg || config.context || this,
+        url = config.url || config;
 
     var sound,
         loader;
 
-    if(Array.isArray(config) && config[0].hasOwnProperty('url')) {
+    if(Support.containsURL(url)) {
+        sound = this._queue(config, asMediaElement);
+        loader = sound.loader;
+    }
+    else if(Array.isArray(url) && Support.containsURL(url[0].url) ) {
         sound = [];
         loader = new Loader.Group();
 
-        config.forEach(function(file) {
+        url.forEach(function(file) {
             sound.push(this._queue(file, asMediaElement, loader));
         }, this);
-    }
-    else {
-        sound = this._queue(config, asMediaElement);
-        loader = sound.loader;
     }
 
     if(onProgress) {
@@ -343,6 +341,12 @@ Sono.prototype.log = function() {
 Object.defineProperty(Sono.prototype, 'canPlay', {
     get: function() {
         return Support.canPlay;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'extensions', {
+    get: function() {
+        return Support.extensions;
     }
 });
 

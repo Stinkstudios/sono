@@ -18,7 +18,7 @@
 
 ### Load
 
-[Sono.load(url, options)](Sono.md#load) // returns Sound
+[Sono.load(config)](Sono.md#load) // returns Sound
 
 
 ### Controls
@@ -141,19 +141,3 @@ Sono.utils.microphone(connected, denied, error, thisArg)
 Sono.utils.timeCode(seconds, delim)
 
 Sono.utils.waveform(buffer, length)
-
-
-
-pan.x(value)
-
-pan.xyz(x, y, z)
-
-pan.setSourcePosition(panner, positionVec)
-
-pan.setSourceOrientation(forwardVec)
-
-pan.setListenerPosition(positionVec)
-
-pan.setListenerOrientation(forwardVec)
-
-pan.doppler(x, y, z, deltaX, deltaY, deltaZ, deltaTime)

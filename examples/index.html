@@ -55,7 +55,7 @@
             var info = '<li>Audio Support: ' + Sono.isSupported + '</li>' +
                        '<li>WebAudio API: ' + Sono.hasWebAudio + '</li>' +
                        '<li>Touch Locked: ' + Sono._isTouchLocked + '</li>' +
-                       '<li>Extensions: ' + Sono._support.extensions.join(', ') + '</li>';
+                       '<li>Extensions: ' + Sono.extensions.join(', ') + '</li>';
             support.innerHTML = info;
 
             /*var soundA = Sono.load(['audio/VOX.ogg', 'audio/VOX.mp3'], function(sound) {
@@ -83,24 +83,28 @@
                 { id: 'b', url: ['audio/VOX.ogg', 'audio/VOX.mp3'] }
             ];
 
-            Sono.load(sounds, function(loaded) {
-                console.log('all loaded:', loaded)
+            Sono.load({
+                url: sounds,
+                onComplete: function(loaded) {
+                    console.log('all loaded:', loaded)
 
-                var a = Sono.getById('a');
-                //var b = Sono.getById('b');
+                    var a = Sono.getById('a');
+                    //var b = Sono.getById('b');
 
-                console.log(Sono.getById(sounds[0].id) === a, a);
-                //console.log(Sono.getById(sounds[1].id) === b, b);
+                    console.log(Sono.getById(sounds[0].id) === a, a);
+                    //console.log(Sono.getById(sounds[1].id) === b, b);
 
-                new Player(a, document.querySelector('.js-playerA'));
-                //new Player(b, document.querySelector('.js-playerB'));
+                    new Player(a, document.querySelector('.js-playerA'));
+                    //new Player(b, document.querySelector('.js-playerB'));
 
-                //var delay = a.node.echo(0.2, 0.5);
-                a.node.phaser();
-                //b.node.phaser();
+                    //var delay = a.node.echo(0.2, 0.5);
+                    a.node.phaser();
+                    //b.node.phaser();
 
-            }, function(progress) {
-                console.log('progress:', progress);
+                },
+                onProgress: function(progress) {
+                    console.log('progress:', progress);
+                }
             });
 
         }());

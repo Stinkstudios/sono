@@ -32,11 +32,7 @@ describe('Sono playback', function() {
     });
 
     describe('play and end', function() {
-        var files = [
-                'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
-                'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
-            ],
-            sound,
+        var sound,
             ended = false;
 
         beforeEach(function(done) {
@@ -48,7 +44,11 @@ describe('Sono playback', function() {
                 });
                 sound.play();
             };
-            Sono.load(files, {
+            Sono.load({
+                url: [
+                    'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
+                    'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
+                ],
                 onComplete: onComplete
             });
         });

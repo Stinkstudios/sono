@@ -96,33 +96,31 @@ Sono.prototype.getById = function(id) {
  * Loading
  */
 
-//Sono.prototype.load = function(config, onComplete, onProgress, thisArg, asMediaElement) {
-Sono.prototype.load = function(config, options) {
+Sono.prototype.load = function(config) {
     if(!config) {
         throw new Error('ArgumentException: Sono.load: param config is undefined');
     }
 
-    options = options || {};
-
-    var asMediaElement = !!options.asMediaElement,
-        onProgress = options.onProgress,
-        onComplete = options.onComplete,
-        thisArg = options.thisArg || options.context || this;
+    var asMediaElement = !!config.asMediaElement,
+        onProgress = config.onProgress,
+        onComplete = config.onComplete,
+        thisArg = config.thisArg || config.context || this,
+        url = config.url || config;
 
     var sound,
         loader;
 
-    if(Array.isArray(config) && config[0].hasOwnProperty('url')) {
+    if(Support.containsURL(url)) {
+        sound = this._queue(config, asMediaElement);
+        loader = sound.loader;
+    }
+    else if(Array.isArray(url) && Support.containsURL(url[0].url) ) {
         sound = [];
         loader = new Loader.Group();
 
-        config.forEach(function(file) {
+        url.forEach(function(file) {
             sound.push(this._queue(file, asMediaElement, loader));
         }, this);
-    }
-    else {
-        sound = this._queue(config, asMediaElement);
-        loader = sound.loader;
     }
 
     if(onProgress) {
@@ -344,6 +342,12 @@ Sono.prototype.log = function() {
 Object.defineProperty(Sono.prototype, 'canPlay', {
     get: function() {
         return Support.canPlay;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'extensions', {
+    get: function() {
+        return Support.extensions;
     }
 });
 
@@ -1461,71 +1465,6 @@ if (typeof module === 'object' && module.exports) {
 },{"./node/analyser.js":5,"./node/distortion.js":6,"./node/echo.js":7,"./node/filter.js":8,"./node/panner.js":9,"./node/phaser.js":10,"./node/recorder.js":11,"./node/reverb.js":12}],5:[function(require,module,exports){
 'use strict';
 
-/*function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
-    var node = context.createAnalyser();
-    node.fftSize = fftSize; // frequencyBinCount will be half this value
-
-    if(smoothing !== undefined) { node.smoothingTimeConstant = smoothing; }
-    if(minDecibels !== undefined) { node.minDecibels = minDecibels; }
-    if(maxDecibels !== undefined) { node.maxDecibels = maxDecibels; }
-
-    var method = function() {
-        
-    };
-
-    // public methods
-    var exports = {
-        node: node,
-        method: method,
-        // map native methods of AnalyserNode
-        getByteFrequencyData: node.getByteFrequencyData.bind(node),
-        getByteTimeDomainData: node.getByteTimeDomainData.bind(node),
-        // map native methods of AudioNode
-        connect: node.connect.bind(node),
-        disconnect: node.disconnect.bind(node)
-    };
-
-    // map native properties of AnalyserNode
-    Object.defineProperties(exports, {
-        'fftSize': {
-            // 32 to 2048 (must be pow 2)
-            get: function() { return node.fftSize; },
-            set: function(value) { node.fftSize = value; }
-        },
-        'smoothing': {
-            // 0 to 1
-            get: function() { return node.smoothingTimeConstant; },
-            set: function(value) { node.smoothingTimeConstant = value; }
-        },
-        'smoothingTimeConstant': {
-            // 0 to 1
-            get: function() { return node.smoothingTimeConstant; },
-            set: function(value) { node.smoothingTimeConstant = value; }
-        },
-        'minDecibels': {
-            // 0 to 1
-            get: function() { return node.minDecibels; },
-            set: function(value) {
-                if(value > -30) { value = -30; }
-                node.minDecibels = value;
-            }
-        },
-        'maxDecibels': {
-            // 0 to 1 (makes the transition between values over time smoother)
-            get: function() { return node.maxDecibels; },
-            set: function(value) {
-                if(value > -99) { value = -99; }
-                node.maxDecibels = value;
-            }
-        },
-        'frequencyBinCount': {
-            get: function() { return node.frequencyBinCount; }
-        }
-    });
-
-    return Object.freeze(exports);
-}*/
-
 function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
     fftSize = fftSize || 32;
     var waveformData, frequencyData;
@@ -1582,51 +1521,6 @@ if (typeof module === 'object' && module.exports) {
 },{}],6:[function(require,module,exports){
 'use strict';
 
-/*function Distortion(context, delayTime, gainValue) {
-    var delay = context.createDelay();
-    var gain = context.createGain();
-
-    gain.gain.value = gainValue || 0.5;
-    if(delayTime !== undefined) { delay.delayTime.value = delayTime; }
-
-
-    var connect = function(node) {
-        disconnect();
-        delay.connect(gain);
-        gain.connect(delay);
-        delay.connect(node);
-    };
-
-    var disconnect = function() {
-        delay.disconnect();
-        gain.disconnect();
-    };
-
-    // public methods
-    var exports = {
-        node: delay,
-        // map native methods of DistortionNode
-        
-        // map native methods of AudioNode
-        connect: connect,
-        disconnect: disconnect
-    };
-
-    // map native properties of DistortionNode
-    Object.defineProperties(exports, {
-        'delayTime': {
-            get: function() { return delay.delayTime.value; },
-            set: function(value) { delay.delayTime.value = value; }
-        },
-        'gainValue': {
-            get: function() { return gain.gain.value; },
-            set: function(value) { gain.gain.value = value; }
-        }
-    });
-
-    return Object.freeze(exports);
-}*/
-
 function Distortion(context, amount) {
     var node = context.createWaveShaper();
 
@@ -1672,55 +1566,6 @@ if (typeof module === 'object' && module.exports) {
 },{}],7:[function(require,module,exports){
 'use strict';
 
-/*function Echo(context, delayTime, gainValue) {
-    var delay = context.createDelay();
-    var gain = context.createGain();
-
-    gain.gain.value = gainValue || 0.5;
-    if(delayTime !== undefined) { delay.delayTime.value = delayTime; }
-
-
-    var connect = function(node) {
-        disconnect();
-        delay.connect(gain);
-        gain.connect(delay);
-        delay.connect(node);
-    };
-
-    var disconnect = function() {
-        delay.disconnect();
-        gain.disconnect();
-    };
-
-    // public methods
-    var exports = {
-        node: delay,
-        // map native methods of EchoNode
-
-        // map native methods of AudioNode
-        connect: connect,
-        disconnect: disconnect
-    };
-
-    // map native properties of EchoNode
-    Object.defineProperties(exports, {
-        'delayTime': {
-            get: function() { return delay.delayTime.value; },
-            set: function(value) { delay.delayTime.value = value; }
-        },
-        'gainValue': {
-            get: function() { return gain.gain.value; },
-            set: function(value) { gain.gain.value = value; }
-        }
-    });
-
-    return Object.freeze(exports);
-}*/
-
-/*
- * This way is more concise but requires 'connected' to be called in node manager
- */
-
 function Echo(context, delayTime, gainValue) {
     var delay = context.createDelay();
     var gain = context.createGain();
@@ -1755,77 +1600,6 @@ if (typeof module === 'object' && module.exports) {
 
 },{}],8:[function(require,module,exports){
 'use strict';
-/*
-function Filter(context, type, frequency, quality, gain) {
-    // Frequency between 40Hz and half of the sampling rate
-    var minFrequency = 40;
-    var maxFrequency = context.sampleRate / 2;
-
-    console.log('maxFrequency:', maxFrequency);
-
-    var node = context.createBiquadFilter();
-    node.type = type;
-
-    if(frequency !== undefined) { node.frequency.value = frequency; }
-    if(quality !== undefined) { node.Q.value = quality; }
-    if(gain !== undefined) { node.gain.value = gain; }
-
-
-    var getFrequency = function(value) {
-        // Logarithm (base 2) to compute how many octaves fall in the range.
-        var numberOfOctaves = Math.log(maxFrequency / minFrequency) / Math.LN2;
-        // Compute a multiplier from 0 to 1 based on an exponential scale.
-        var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-        // Get back to the frequency value between min and max.
-        return maxFrequency * multiplier;
-    };
-
-    var setByPercent = function(percent, quality, gain) {
-        // set filter frequency based on value from 0 to 1
-        node.frequency.value = getFrequency(percent);
-        if(quality !== undefined) { node.Q.value = quality; }
-        if(gain !== undefined) { node.gain.value = gain; }
-    };
-
-    // public methods
-    var exports = {
-        node: node,
-        setByPercent: setByPercent,
-        // map native methods of BiquadFilterNode
-        getFrequencyResponse: node.getFrequencyResponse.bind(node),
-        // map native methods of AudioNode
-        connect: node.connect.bind(node),
-        disconnect: node.disconnect.bind(node)
-    };
-
-    // map native properties of BiquadFilterNode
-    Object.defineProperties(exports, {
-        'type': {
-            get: function() { return node.type; },
-            set: function(value) { node.type = value; }
-        },
-        'frequency': {
-            get: function() { return node.frequency.value; },
-            set: function(value) { node.frequency.value = value; }
-        },
-        'detune': {
-            get: function() { return node.detune.value; },
-            set: function(value) { node.detune.value = value; }
-        },
-        'quality': {
-            // 0.0001 to 1000
-            get: function() { return node.Q.value; },
-            set: function(value) { node.Q.value = value; }
-        },
-        'gain': {
-            // -40 to 40
-            get: function() { return node.gain.value; },
-            set: function(value) { node.gain.value = value; }
-        }
-    });
-
-    return Object.freeze(exports);
-}*/
 
 function Filter(context, type, frequency, quality, gain) {
     // Frequency between 40Hz and half of the sampling rate
@@ -1878,210 +1652,7 @@ if (typeof module === 'object' && module.exports) {
 
 },{}],9:[function(require,module,exports){
 'use strict';
-/*
-function Panner(context) {
-    var node = context.createPanner();
-    // Default for stereo is HRTF
-    node.panningModel = 'HRTF'; // 'equalpower'
 
-    // Distance model and attributes
-    node.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
-    node.refDistance = 1;
-    node.maxDistance = 1000;
-    node.rolloffFactor = 1;
-    node.coneInnerAngle = 360;
-    node.coneOuterAngle = 0;
-    node.coneOuterGain = 0;
-    
-    // simple vec3 object pool
-    var VecPool = {
-        pool: [],
-        get: function(x, y, z) {
-            var v = this.pool.length ? this.pool.pop() : { x: 0, y: 0, z: 0 };
-            // check if a vector has been passed in
-            if(x !== undefined && isNaN(x) && 'x' in x && 'y' in x && 'z' in x) {
-                v.x = x.x || 0;
-                v.y = x.y || 0;
-                v.z = x.z || 0;
-            }
-            else {
-                v.x = x || 0;
-                v.y = y || 0;
-                v.z = z || 0;    
-            }
-            return v;
-        },
-        dispose: function(instance) {
-            this.pool.push(instance);
-        }
-    };
-
-    var globalUp = VecPool.get(0, 1, 0);
-
-    var setOrientation = function(node, fw) {
-        // set the orientation of the source (where the audio is coming from)
-
-        // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-        var up = VecPool.get(fw.x, fw.y, fw.z);
-        cross(up, globalUp);
-        cross(up, fw);
-        normalize(up);
-        normalize(fw);
-
-        // set the audio context's listener position to match the camera position
-        node.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-
-        // return the vecs to the pool
-        VecPool.dispose(fw);
-        VecPool.dispose(up);
-    };
-
-    var setPosition = function(node, vec) {
-        node.setPosition(vec.x, vec.y, vec.z);
-        VecPool.dispose(vec);
-    };
-
-    var setVelocity = function(node, vec) {
-        node.setVelocity(vec.x, vec.y, vec.z);
-        VecPool.dispose(vec);
-    };
-
-    var calculateVelocity = function(currentPosition, lastPosition, deltaTime) {
-        var dx = currentPosition.x - lastPosition.x;
-        var dy = currentPosition.y - lastPosition.y;
-        var dz = currentPosition.z - lastPosition.z;
-        return VecPool.get(dx / deltaTime, dy / deltaTime, dz / deltaTime);
-    };
-
-    // cross product of 2 vectors
-    var cross = function ( a, b ) {
-        var ax = a.x, ay = a.y, az = a.z;
-        var bx = b.x, by = b.y, bz = b.z;
-        a.x = ay * bz - az * by;
-        a.y = az * bx - ax * bz;
-        a.z = ax * by - ay * bx;
-    };
-
-    // normalise to unit vector
-    var normalize = function (vec3) {
-        if(vec3.x === 0 && vec3.y === 0 && vec3.z === 0) {
-            return vec3;
-        }
-        var length = Math.sqrt( vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z );
-        var invScalar = 1 / length;
-        vec3.x *= invScalar;
-        vec3.y *= invScalar;
-        vec3.z *= invScalar;
-        return vec3;
-    };
-
-    // pan left to right with value from -1 to 1
-    // creates a nice curve with z
-    var setX = function(value) {
-        var deg45 = Math.PI / 4,
-            deg90 = deg45 * 2,
-            x = value * deg45,
-            z = x + deg90;
-
-        if (z > deg90) {
-            z = Math.PI - z;
-        }
-
-        x = Math.sin(x);
-        z = Math.sin(z);
-
-        node.setPosition(x, 0, z);
-    };
-
-    // set the position the audio is coming from)
-    var setSourcePosition = function(x, y, z) {
-        setPosition(node, VecPool.get(x, y, z));
-    };
-
-    // set the direction the audio is coming from)
-    var setSourceOrientation = function(x, y, z) {
-        setOrientation(node, VecPool.get(x, y, z));
-    };
-
-    // set the veloicty of the audio source (if moving)
-    var setSourceVelocity = function(x, y, z) {
-        setVelocity(node, VecPool.get(x, y, z));
-    };
-
-    // set the position of who or what is hearing the audio (could be camera or some character)
-    var setListenerPosition = function(x, y, z) {
-        setPosition(context.listener, VecPool.get(x, y, z));
-    };
-
-    // set the position of who or what is hearing the audio (could be camera or some character)
-    var setListenerOrientation = function(x, y, z) {
-        setOrientation(context.listener, VecPool.get(x, y, z));
-    };
-
-    // set the velocity (if moving) of who or what is hearing the audio (could be camera or some character)
-    var setListenerVelocity = function(x, y, z) {
-        setVelocity(context.listener, VecPool.get(x, y, z));
-    };
-
-    // public methods
-    var exports = {
-        node: node,
-        setX: setX,
-        setSourcePosition: setSourcePosition,
-        setSourceOrientation: setSourceOrientation,
-        setSourceVelocity: setSourceVelocity,
-        setListenerPosition: setListenerPosition,
-        setListenerOrientation: setListenerOrientation,
-        setListenerVelocity: setListenerVelocity,
-        calculateVelocity: calculateVelocity,
-        // map native methods of PannerNode
-        setPosition: node.setPosition.bind(node),
-        setOrientation: node.setOrientation.bind(node),
-        setVelocity: node.setVelocity.bind(node),
-        // map native methods of AudioNode
-        connect: node.connect.bind(node),
-        disconnect: node.disconnect.bind(node)
-    };
-
-    // map native properties of PannerNode
-    Object.defineProperties(exports, {
-        'panningModel': {
-            get: function() { return node.panningModel; },
-            set: function(value) { node.panningModel = value; }
-        },
-        'distanceModel': {
-            get: function() { return node.distanceModel; },
-            set: function(value) { node.distanceModel = value; }
-        },
-        'refDistance': {
-            get: function() { return node.refDistance; },
-            set: function(value) { node.refDistance = value; }
-        },
-        'maxDistance': {
-            get: function() { return node.maxDistance; },
-            set: function(value) { node.maxDistance = value; }
-        },
-        'rolloffFactor': {
-            get: function() { return node.rolloffFactor; },
-            set: function(value) { node.rolloffFactor = value; }
-        },
-        'coneInnerAngle': {
-            get: function() { return node.coneInnerAngle; },
-            set: function(value) { node.coneInnerAngle = value; }
-        },
-        'coneOuterAngle': {
-            get: function() { return node.coneOuterAngle; },
-            set: function(value) { node.coneOuterAngle = value; }
-        },
-        'coneOuterGain': {
-            get: function() { return node.coneOuterGain; },
-            set: function(value) { node.coneOuterGain = value; }
-        }
-    });
-
-    return Object.freeze(exports);
-}
-*/
 function Panner(context) {
     var node = context.createPanner();
     // Default for stereo is 'HRTF' can also be 'equalpower'
@@ -2189,6 +1760,20 @@ function Panner(context) {
 
         node.setPosition(x, 0, z);
     };
+
+    /*var x = 0,
+        y = 0,
+        z = 0;
+
+    Object.defineProperties(node, {
+        'x': {
+            get: function() { return x; },
+            set: function(value) {
+                x = value;
+                node.setPosition(x, y, z);
+            }
+        }
+    });*/
 
     // set the position the audio is coming from)
     node.setSourcePosition = function(x, y, z) {
@@ -2384,60 +1969,6 @@ module.exports = Recorder;
 
 },{}],12:[function(require,module,exports){
 'use strict';
-
-/*function Reverb(context, seconds, decay, reverse) {
-    var node = context.createConvolver();
-
-    var update = function(seconds, decay, reverse) {
-        seconds = seconds || 1;
-        decay = decay || 5;
-        reverse = !!reverse;
-
-        var numChannels = 2,
-            rate = context.sampleRate,
-            length = rate * seconds,
-            impulseResponse = context.createBuffer(numChannels, length, rate),
-            left = impulseResponse.getChannelData(0),
-            right = impulseResponse.getChannelData(1),
-            n, e;
-
-        for (var i = 0; i < length; i++) {
-            n = reverse ? length - 1 : i;
-            e = Math.pow(1 - n / length, decay);
-            left[i] = (Math.random() * 2 - 1) * e;
-            right[i] = (Math.random() * 2 - 1) * e;
-        }
-
-        node.buffer = impulseResponse;
-    };
-
-    update(seconds, decay, reverse);
-
-    // public methods
-    var exports = {
-        node: node,
-        update: update,
-        // map native methods of ConvolverNode
-        connect: node.connect.bind(node),
-        disconnect: node.disconnect.bind(node)
-    };
-
-    // map native properties of ReverbNode
-    Object.defineProperties(exports, {
-        'buffer': {
-            // true or false
-            get: function() { return node.buffer; },
-            set: function(value) { node.buffer = value; }
-        },
-        'normalize': {
-            // true or false
-            get: function() { return node.normalize; },
-            set: function(value) { node.normalize = value; }
-        }
-    });
-
-    return Object.freeze(exports);
-}*/
 
 function Reverb(context, time, decay, reverse) {
     var node = context.createConvolver();

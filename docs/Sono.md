@@ -102,25 +102,37 @@ var sound = Sono.getById('bar');
 
 Load a sound and add to Sono
 
->`Sono.load(url, complete, progress, thisArg, asMediaElement)` returns Sound  
-`Sono.load(config, complete, progress, thisArg, asMediaElement)`
+>`Sono.load(config)` returns Sound  
 
 #### Examples
 
-Array - load first file compatible with browser
+Load first file compatible with browser from an array
 
 ```javascript
 var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']);
 ```
 
+Load sound with config options and callbacks
+
+```javascript
+var sound = Sono.load({
+	id: 'foo',
+	url: ['audio/foo.ogg', 'audio/foo.mp3'],
+	loop: true,
+	volume: 0.2,
+	onComplete: this.soundLoaded,
+	context: this
+});
+```
+
 Multiple sounds
 
 ```javascript
-Sono.load([
-	{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
-	{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'] }
-],
-{
+Sono.load({
+	url: [
+		{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
+		{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'] }
+	],
 	onComplete: function(sounds) {
 		console.log('complete:', sounds);
 		var soundA = Sono.getById('a');
@@ -136,13 +148,6 @@ Specific file:
 
 ```javascript
 var sound = Sono.load('audio/foo.ogg');
-```
-
-Hashmap - load first file compatible with browser:
-
-```javascript
-var sound = Sono.load({foo: 'audio/foo.ogg', bar: 'audio/foo.mp3'});
-
 ```
 
 Check file support manually:
