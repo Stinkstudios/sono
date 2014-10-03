@@ -44,7 +44,7 @@ var sound = Sono.createSound({
 });
 
 // then somewhere else in your app:
-var foo = Sono.getById('foo');
+var foo = Sono.getSound('foo');
 foo.play();
 // or
 Sono.play('foo');
@@ -126,7 +126,7 @@ var sound = Sono.load({
 });
 ```
 
-Sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getById`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
+Sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getSound`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
 
 ```javascript
 var sounds = Sono.load({
@@ -140,7 +140,7 @@ var sounds = Sono.load({
             console.log(sound.id);
         });
         // sound instances can be retrieved or controlled by id:
-        var soundA = Sono.getById('a');
+        var soundA = Sono.getSound('a');
         Sono.play('b');
     },
     onProgress: function(progress) {

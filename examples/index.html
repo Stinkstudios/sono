@@ -88,11 +88,11 @@
                 onComplete: function(loaded) {
                     console.log('all loaded:', loaded)
 
-                    var a = Sono.getById('a');
-                    //var b = Sono.getById('b');
+                    var a = Sono.getSound('a');
+                    //var b = Sono.getSound('b');
 
-                    console.log(Sono.getById(sounds[0].id) === a, a);
-                    //console.log(Sono.getById(sounds[1].id) === b, b);
+                    console.log(Sono.getSound(sounds[0].id) === a, a);
+                    //console.log(Sono.getSound(sounds[1].id) === b, b);
 
                     new Player(a, document.querySelector('.js-playerA'));
                     //new Player(b, document.querySelector('.js-playerB'));

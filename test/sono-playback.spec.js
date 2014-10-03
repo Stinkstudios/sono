@@ -23,7 +23,7 @@ describe('Sono playback', function() {
         });
 
         afterEach(function() {
-            Sono.destroy(sound.id);
+            Sono.destroySound(sound.id);
         });
 
         it('should get ended callback', function(){
@@ -54,7 +54,7 @@ describe('Sono playback', function() {
         });
 
         afterEach(function() {
-            Sono.destroy(sound.id);
+            Sono.destroySound(sound.id);
         });
 
         it('should get ended callback', function(){

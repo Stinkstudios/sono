@@ -24,7 +24,9 @@ BufferSource.prototype.play = function(delay, offset) {
     if(delay > 0) { delay = this._context.currentTime + delay; }
 
     if(offset === undefined) { offset = 0; }
-    if(this._pausedAt > 0) { offset = offset + this._pausedAt; }
+    if(offset > 0) { this._pausedAt = 0; }
+    if(this._pausedAt > 0) { offset = this._pausedAt; }
+    
     console.log.apply(console, ['1 offset:', offset]);
     while(offset > this.duration) { offset = offset % this.duration; }
     console.log.apply(console, ['2 offset:', offset]);

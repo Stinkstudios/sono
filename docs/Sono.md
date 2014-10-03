@@ -65,11 +65,11 @@ var script = Sono.createSound({
 });
 ```
 
-## destroy
+## destroySound
 
 Remove a sound from Sono
 
->`Sono.destroy(soundOrId)`
+>`Sono.destroySound(soundOrId)`
 
 #### Examples
 
@@ -78,14 +78,14 @@ var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 sound.id = 'bar';
 
 // either will work
-Sono.destroy(sound);
-Sono.destroy('bar');
+Sono.destroySound(sound);
+Sono.destroySound('bar');
 ```
 
 
-## getById
+## getSound
 
->`Sono.getById(id)`
+>`Sono.getSound(id)`
 
 #### Examples
 
@@ -94,7 +94,7 @@ var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 sound.id = 'bar';
 
 // somewhere else
-var sound = Sono.getById('bar');
+var sound = Sono.getSound('bar');
 ```
 
 
@@ -135,8 +135,8 @@ Sono.load({
 	],
 	onComplete: function(sounds) {
 		console.log('complete:', sounds);
-		var soundA = Sono.getById('a');
-		var soundB = Sono.getById('b');
+		var soundA = Sono.getSound('a');
+		var soundB = Sono.getSound('b');
 	},
 	onProgress: function(progress) {
 		console.log('progress:', progress);

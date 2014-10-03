@@ -8,12 +8,12 @@
 
 ### Destroy a Sound instance
 
-[Sono.destroy(soundOrId)](Sono.md#destroy) // destroy sound instance or by id
+[Sono.destroySound(soundOrId)](Sono.md#destroy) // destroy sound instance or by id
 
 
 ### Retrieve a Sound instance by its id
 
-[Sono.getById(id)](Sono.md#getbyid) // returns Sound or null
+[Sono.getSound(id)](Sono.md#getsound) // returns Sound or null
 
 
 ### Load

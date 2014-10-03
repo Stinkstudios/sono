@@ -28,12 +28,12 @@ describe('Sono loader', function() {
         it('should have loaded sound', function(){
             expect(sound).to.exist;
             expect(progress).to.eql(1);
-            expect(Sono.getById(sound.id)).to.exist;
+            expect(Sono.getSound(sound.id)).to.exist;
             expect(sound.loader).to.exist;
             expect(sound.loader.data).to.exist;
             expect(sound.play).to.be.a('function');
-            Sono.destroy(sound);
-            expect(Sono.getById(sound.id)).to.not.exist;
+            Sono.destroySound(sound);
+            expect(Sono.getSound(sound.id)).to.not.exist;
         });
     });
 
@@ -74,11 +74,11 @@ describe('Sono loader', function() {
             expect(sounds).to.exist;
             expect(progress).to.eql(1);
             expect(sounds.length).to.eql(2);
-            expect(Sono.getById(multiple[0].id)).to.exist;
-            expect(Sono.getById(multiple[1].id)).to.exist;
+            expect(Sono.getSound(multiple[0].id).id).to.eql(multiple[0].id);
+            expect(Sono.getSound(multiple[1].id).id).to.eql(multiple[1].id);
             expect(sounds[0].play).to.be.a('function');
-            Sono.destroy(sounds[0]);
-            Sono.destroy(sounds[1]);
+            Sono.destroySound(sounds[0]);
+            Sono.destroySound(sounds[1]);
         });
     });
 
@@ -110,13 +110,13 @@ describe('Sono loader', function() {
         it('should have loaded sound', function(){
             expect(sound).to.exist;
             expect(progress).to.eql(1);
-            expect(Sono.getById(sound.id)).to.exist;
+            expect(Sono.getSound(sound.id)).to.exist;
             expect(sound.loader).to.exist;
             expect(sound.loader.data).to.exist;
             expect(sound.play).to.be.a('function');
             expect(sound.data).to.be.an.instanceof(window.HTMLMediaElement);
-            Sono.destroy(sound);
-            expect(Sono.getById(sound.id)).to.not.exist;
+            Sono.destroySound(sound);
+            expect(Sono.getSound(sound.id)).to.not.exist;
         });
     });
 
@@ -146,15 +146,15 @@ describe('Sono loader', function() {
         it('should have loaded sound', function(){
             expect(sound).to.exist;
             expect(progress).to.eql(1);
-            expect(Sono.getById(sound.id)).to.exist;
+            expect(Sono.getSound(sound.id)).to.exist;
             expect(sound.id).to.eql('hit');
             expect(sound.loop).to.be.true;
             expect(sound.volume).to.eql(0.5);
             expect(sound.loader).to.exist;
             expect(sound.loader.data).to.exist;
             expect(sound.play).to.be.a('function');
-            Sono.destroy(sound);
-            expect(Sono.getById(sound.id)).to.not.exist;
+            Sono.destroySound(sound);
+            expect(Sono.getSound(sound.id)).to.not.exist;
         });
     });
 

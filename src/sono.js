@@ -62,7 +62,7 @@ Sono.prototype.createSound = function(config) {
  * Destroy
  */
 
-Sono.prototype.destroy = function(soundOrId) {
+Sono.prototype.destroySound = function(soundOrId) {
     if(!soundOrId) { return; }
     this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
@@ -82,11 +82,13 @@ Sono.prototype.destroy = function(soundOrId) {
  * Get Sound by id
  */
 
-Sono.prototype.getById = function(id) {
+Sono.prototype.getSound = function(id) {
     var sound = null;
     this._sounds.some(function(item) {
-        sound = item;
-        return sound.id === id;
+        if(item.id === id) {
+            sound = item;
+            return true;
+        }
     });
     return sound;
 };
@@ -208,15 +210,15 @@ Sono.prototype.stopAll = function() {
 };
 
 Sono.prototype.play = function(id, delay, offset) {
-    this.getById(id).play(delay, offset);
+    this.getSound(id).play(delay, offset);
 };
 
 Sono.prototype.pause = function(id) {
-    this.getById(id).pause();
+    this.getSound(id).pause();
 };
 
 Sono.prototype.stop = function(id) {
-    this.getById(id).stop();
+    this.getSound(id).stop();
 };
 
 /*
