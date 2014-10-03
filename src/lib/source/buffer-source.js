@@ -98,7 +98,11 @@ Object.defineProperty(BufferSource.prototype, 'currentTime', {
             return this._pausedAt;
         }
         if(this._startedAt) {
-            return this._context.currentTime - this._startedAt;
+            var time = this._context.currentTime - this._startedAt;
+            if(time > this.duration) {
+                time = time % this.duration;
+            }
+            return time;
         }
         return 0;
     }
