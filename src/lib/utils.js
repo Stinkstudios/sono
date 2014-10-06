@@ -154,8 +154,8 @@ Utils.Waveform.prototype = {
         if(!window.Float32Array || !Utils.isAudioBuffer(buffer)) {
             return [];
         }
-        console.log('-------------------');
-        console.time('waveformData');
+        //console.log('-------------------');
+        //console.time('waveformData');
         var waveform = new Float32Array(length),
             chunk = Math.floor(buffer.length / length),
             //chunk = buffer.length / length,
@@ -193,7 +193,7 @@ Utils.Waveform.prototype = {
         for (i = 0; i < len; i++) {
             waveform[i] *= scale;
         }
-        console.timeEnd('waveformData');
+        //console.timeEnd('waveformData');
         return waveform;
     },
     getCanvas: function(height, color, bgColor, canvasEl) {

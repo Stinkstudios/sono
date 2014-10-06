@@ -24,10 +24,4 @@ function Echo(context, delayTime, gainValue) {
     return delay;
 }
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Echo;
-}
+module.exports = Echo;

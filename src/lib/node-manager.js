@@ -4,6 +4,7 @@ var Analyser = require('./node/analyser.js'),
     Distortion = require('./node/distortion.js'),
     Echo = require('./node/echo.js'),
     Filter = require('./node/filter.js'),
+    Flanger = require('./node/flanger.js'),
     Panner = require('./node/panner.js'),
     Phaser = require('./node/phaser.js'),
     Recorder = require('./node/recorder.js'),
@@ -45,11 +46,12 @@ NodeManager.prototype.removeAll = function() {
 };
 
 NodeManager.prototype._connect = function(a, b) {
+    console.log('> connect', (a.name || a.constructor.name), 'to', (b.name || b.constructor.name));
     var out = a._out || a;
     out.disconnect();
     out.connect(b._in || b);
     if(typeof a._connected === 'function') {
-        a._connected.call(a);
+        a._connected.call(a, b);
     }
 };
 
@@ -66,17 +68,15 @@ NodeManager.prototype._updateConnections = function() {
     if(!this._sourceNode) {
         return;
     }
-    //console.log('_updateConnections');
+    console.log('updateConnections:');
     var l = this._nodeList.length,
         n;
     for (var i = 0; i < l; i++) {
         n = this._nodeList[i];
         if(i === 0) {
-            //console.log(' - connect source to node:', n);
             this._connect(this._sourceNode, n);
         }
         else {
-            //console.log('connect:', prev, 'to', n);
             var prev = this._nodeList[i-1];
             this._connect(prev, n);
         }
@@ -236,6 +236,12 @@ NodeManager.prototype.notch = function(frequency, quality, gain) {
 
 NodeManager.prototype.allpass = function(frequency, quality, gain) {
     return this.filter('allpass', frequency, quality, gain);
+};
+
+NodeManager.prototype.flanger = function() {
+    var node = new Flanger(this._context);
+    this.add(node);
+    return node;
 };
 
 NodeManager.prototype.gain = function(value) {
