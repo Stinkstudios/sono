@@ -128,10 +128,6 @@ function StereoFlanger(context, config) {
         }
     });
 
-    node._connected = function(to) {
-        console.log.apply(console, ['flanger connected to', (to.name || to.constructor.name)]);
-    };
-
     return node;
 }
 

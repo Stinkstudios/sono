@@ -51,12 +51,8 @@ NodeManager.prototype._connect = function(a, b) {
     var output = a._output || a;
     output.disconnect();
     console.log('> disconnected output: ', (a.name || a.constructor.name));
-    output.connect(b._input || b);
+    output.connect(b);
     console.log('> connected output: ', (a.name || a.constructor.name), 'to input:', (b.name || b.constructor.name));
-
-    if(typeof a._connected === 'function') {
-        a._connected.call(a, b);
-    }
 };
 
 NodeManager.prototype._connectToDestination = function(destination) {
@@ -98,60 +94,9 @@ Object.defineProperty(NodeManager.prototype, 'panning', {
     }
 });
 
-// or setter for destination?
-/*NodeManager.prototype._connectToDestination = function(node) {
-    var l = this._nodeList.length;
-    if(l > 0) {
-      console.log('connect:', this._nodeList[l - 1], 'to', node);
-        this._nodeList[l - 1].disconnect();
-        this._nodeList[l - 1].connect(node);
-    }
-    else {
-        console.log(' x connect source to node:', node);
-        this._gain.disconnect();
-        this._gain.connect(node);
-    }
-    this._destination = node;
-};*/
-
-// should source be item 0 in nodelist and desination last
-// prob is addNode needs to add before destination
-// + should it be called chain or something nicer?
-// feels like node list could be a linked list??
-// if list.last is destination addbefore
-
-/*NodeManager.prototype._updateConnections = function() {
-    if(!this._sourceNode) {
-        return;
-    }
-    var l = this._nodeList.length;
-    for (var i = 1; i < l; i++) {
-      this._nodeList[i-1].connect(this._nodeList[i]);
-    }
-};*/
-/*NodeManager.prototype._updateConnections = function() {
-    if(!this._sourceNode) {
-        return;
-    }
-    console.log('_updateConnections');
-    this._sourceNode.disconnect();
-    this._sourceNode.connect(this._gain);
-    var l = this._nodeList.length;
-
-    for (var i = 0; i < l; i++) {
-        if(i === 0) {
-            console.log(' - connect source to node:', this._nodeList[i]);
-            this._gain.disconnect();
-            this._gain.connect(this._nodeList[i]);
-        }
-        else {
-            console.log('connect:', this._nodeList[i-1], 'to', this._nodeList[i]);
-            this._nodeList[i-1].disconnect();
-            this._nodeList[i-1].connect(this._nodeList[i]);
-        }
-    }
-    this._connectToDestination(this._context.destination);
-};*/
+/*
+ * Effects
+ */
 
 NodeManager.prototype.analyser = function(fftSize, smoothing, minDecibels, maxDecibels) {
     var analyser = new Analyser(this._context, fftSize, smoothing, minDecibels, maxDecibels);

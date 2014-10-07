@@ -64,10 +64,6 @@ function Phaser(context, config) {
         }
     });
 
-    node._connected = function(to) {
-        console.log.apply(console, ['phaser connected to', (to.name || to.constructor.name)]);
-    };
-
     return node;
 }
 

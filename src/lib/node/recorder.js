@@ -1,19 +1,29 @@
 'use strict';
 
 function Recorder(context, passThrough) {
-    var node = context.createScriptProcessor(4096, 2, 2),
-        buffersL = [],
+    var buffersL = [],
         buffersR = [],
         startedAt = 0,
         stoppedAt = 0;
 
-    if(passThrough === undefined) {
-        passThrough = true;
-    }
+    var input = context.createGain();
+    var output = context.createGain();
+    var script = context.createScriptProcessor(4096, 2, 2);
+    
+    input.connect(script);
+    script.connect(context.destination);
+    script.connect(output);
+
+    var node = input;
+    node.name = 'Recorder';
+    node._output = output;
 
     node.isRecording = false;
 
     var getBuffer = function() {
+        if(!buffersL.length) {
+            return context.createBuffer(2, 4096, context.sampleRate);
+        }
         var buffer = context.createBuffer(2, buffersL.length, context.sampleRate);
         buffer.getChannelData(0).set(buffersL);
         buffer.getChannelData(1).set(buffersR);
@@ -41,7 +51,7 @@ function Recorder(context, passThrough) {
         return context.currentTime - startedAt;
     };
 
-    node.onaudioprocess = function (event) {
+    script.onaudioprocess = function (event) {
         var inputL = event.inputBuffer.getChannelData(0),
             inputR = event.inputBuffer.getChannelData(0),
             outputL = event.outputBuffer.getChannelData(0),
@@ -52,16 +62,12 @@ function Recorder(context, passThrough) {
             outputR.set(inputR);
         }
 
-        if(this.isRecording) {
+        if(node.isRecording) {
             for (var i = 0; i < inputL.length; i++) {
                 buffersL.push(inputL[i]);
                 buffersR.push(inputR[i]);
             }
         }
-    };
-
-    node._connected = function() {
-        this.connect(context.destination);
     };
 
     return node;
