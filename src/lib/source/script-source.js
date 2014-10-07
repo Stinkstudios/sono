@@ -121,10 +121,4 @@ Object.defineProperty(ScriptSource.prototype, 'sourceNode', {
     }
 });
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = ScriptSource;
-}
+module.exports = ScriptSource;

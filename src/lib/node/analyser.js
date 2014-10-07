@@ -44,11 +44,4 @@ function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
     return node;
 }
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Analyser;
-}
-
+module.exports = Analyser;

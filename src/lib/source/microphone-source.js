@@ -117,11 +117,4 @@ Object.defineProperty(MicrophoneSource.prototype, 'sourceNode', {
     }
 });
 
-
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = MicrophoneSource;
-}
+module.exports = MicrophoneSource;

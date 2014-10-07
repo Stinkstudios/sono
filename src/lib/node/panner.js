@@ -180,11 +180,4 @@ Panner.defaults = {
     coneOuterGain: 0
 };
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Panner;
-}
-
+module.exports = Panner;

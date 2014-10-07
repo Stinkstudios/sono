@@ -33,11 +33,4 @@ function Distortion(context, amount) {
     return node;
 }
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Distortion;
-}
-
+module.exports = Distortion;

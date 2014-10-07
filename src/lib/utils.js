@@ -274,10 +274,4 @@ Object.defineProperty(Utils.Microphone.prototype, 'isSupported', {
     }
 });
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Utils;
-}
+module.exports = Utils;

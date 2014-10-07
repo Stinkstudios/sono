@@ -157,11 +157,4 @@ Object.defineProperty(BufferSource.prototype, 'sourceNode', {
     }
 });
 
-
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = BufferSource;
-}
+module.exports = BufferSource;

@@ -31,11 +31,4 @@ function Reverb(context, time, decay, reverse) {
     return node;
 }
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Reverb;
-}
-
+module.exports = Reverb;

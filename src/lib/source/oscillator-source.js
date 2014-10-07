@@ -127,10 +127,4 @@ Object.defineProperty(OscillatorSource.prototype, 'sourceNode', {
     }
 });
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = OscillatorSource;
-}
+module.exports = OscillatorSource;

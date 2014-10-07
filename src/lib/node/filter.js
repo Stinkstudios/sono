@@ -41,10 +41,4 @@ function Filter(context, type, frequency, quality, gain) {
     return node;
 }
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Filter;
-}
+module.exports = Filter;

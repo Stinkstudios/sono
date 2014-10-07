@@ -149,6 +149,4 @@ Object.defineProperty(MediaSource.prototype, 'sourceNode', {
     }
 });
 
-if (typeof module === 'object' && module.exports) {
-    module.exports = MediaSource;
-}
+module.exports = MediaSource;

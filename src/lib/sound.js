@@ -221,10 +221,4 @@ Object.defineProperty(Sound.prototype, 'frequency', {
     }
 });
 
-/*
- * Exports
- */
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = Sound;
-}
+module.exports = Sound;
