@@ -31,8 +31,8 @@ NodeManager.prototype.remove = function(node) {
             this._nodeList.splice(i, 1);
         }
     }
-    var out = node._out || node;
-    out.disconnect();
+    var output = node._output || node;
+    output.disconnect();
     this._updateConnections();
     return node;
 };
@@ -46,43 +46,46 @@ NodeManager.prototype.removeAll = function() {
 };
 
 NodeManager.prototype._connect = function(a, b) {
-    console.log('> connect', (a.name || a.constructor.name), 'to', (b.name || b.constructor.name));
-    var out = a._out || a;
-    out.disconnect();
-    out.connect(b._in || b);
+    //console.log('> connect', (a.name || a.constructor.name), 'to', (b.name || b.constructor.name));
+
+    var output = a._output || a;
+    output.disconnect();
+    console.log('> disconnected output: ', (a.name || a.constructor.name));
+    output.connect(b._input || b);
+    console.log('> connected output: ', (a.name || a.constructor.name), 'to input:', (b.name || b.constructor.name));
+
     if(typeof a._connected === 'function') {
         a._connected.call(a, b);
     }
 };
 
-NodeManager.prototype._connectTo = function(destination) {
+NodeManager.prototype._connectToDestination = function(destination) {
     var l = this._nodeList.length,
         lastNode = l ? this._nodeList[l - 1] : this._sourceNode;
+
     if(lastNode) {
         this._connect(lastNode, destination);
     }
+
     this._destination = destination;
 };
 
 NodeManager.prototype._updateConnections = function() {
-    if(!this._sourceNode) {
-        return;
-    }
+    if(!this._sourceNode) { return; }
+
     console.log('updateConnections:');
-    var l = this._nodeList.length,
-        n;
-    for (var i = 0; i < l; i++) {
-        n = this._nodeList[i];
-        if(i === 0) {
-            this._connect(this._sourceNode, n);
-        }
-        else {
-            var prev = this._nodeList[i-1];
-            this._connect(prev, n);
-        }
+
+    var node,
+        prev;
+
+    for (var i = 0; i < this._nodeList.length; i++) {
+        node = this._nodeList[i];
+        prev = i === 0 ? this._sourceNode : this._nodeList[i - 1];
+        this._connect(prev, node);
     }
+
     if(this._destination) {
-        this._connectTo(this._destination);
+        this._connectToDestination(this._destination);
     }
 };
 
@@ -96,7 +99,7 @@ Object.defineProperty(NodeManager.prototype, 'panning', {
 });
 
 // or setter for destination?
-/*NodeManager.prototype._connectTo = function(node) {
+/*NodeManager.prototype._connectToDestination = function(node) {
     var l = this._nodeList.length;
     if(l > 0) {
       console.log('connect:', this._nodeList[l - 1], 'to', node);
@@ -147,7 +150,7 @@ Object.defineProperty(NodeManager.prototype, 'panning', {
             this._nodeList[i-1].connect(this._nodeList[i]);
         }
     }
-    this._connectTo(this._context.destination);
+    this._connectToDestination(this._context.destination);
 };*/
 
 NodeManager.prototype.analyser = function(fftSize, smoothing, minDecibels, maxDecibels) {
@@ -187,9 +190,8 @@ NodeManager.prototype.delay = function(time) {
 };
 
 NodeManager.prototype.echo = function(time, gain) {
-    var echo = new Echo(this._context, time, gain);
-    this.add(echo);
-    return echo;
+    var node = new Echo(this._context, time, gain);
+    return this.add(node);
 };
 
 NodeManager.prototype.distortion = function(amount) {
@@ -238,10 +240,9 @@ NodeManager.prototype.allpass = function(frequency, quality, gain) {
     return this.filter('allpass', frequency, quality, gain);
 };
 
-NodeManager.prototype.flanger = function() {
-    var node = new Flanger(this._context);
-    this.add(node);
-    return node;
+NodeManager.prototype.flanger = function(isStereo) {
+    var node = new Flanger(this._context, isStereo);
+    return this.add(node);
 };
 
 NodeManager.prototype.gain = function(value) {
@@ -253,27 +254,23 @@ NodeManager.prototype.gain = function(value) {
 };
 
 NodeManager.prototype.panner = function() {
-    var panner = new Panner(this._context);
-    this.add(panner);
-    return panner;
+    var node = new Panner(this._context);
+    return this.add(node);
 };
 
 NodeManager.prototype.phaser = function() {
-    var phaser = new Phaser(this._context);
-    this.add(phaser);
-    return phaser;
+    var node = new Phaser(this._context);
+    return this.add(node);
 };
 
 NodeManager.prototype.recorder = function(passThrough) {
-    var recorder = new Recorder(this._context, passThrough);
-    this.add(recorder);
-    return recorder;
+    var node = new Recorder(this._context, passThrough);
+    return this.add(node);
 };
 
 NodeManager.prototype.reverb = function(seconds, decay, reverse) {
-    var reverb = new Reverb(this._context, seconds, decay, reverse);
-    this.add(reverb);
-    return reverb;
+    var node = new Reverb(this._context, seconds, decay, reverse);
+    return this.add(node);
 };
 
 NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outputChannels, callback, thisArg) {
@@ -399,7 +396,7 @@ NodeManager.prototype.setSource = function(node) {
 };
 
 NodeManager.prototype.setDestination = function(node) {
-    this._connectTo(node);
+    this._connectToDestination(node);
     return node;
 };
 

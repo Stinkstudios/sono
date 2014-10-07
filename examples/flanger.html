@@ -55,22 +55,22 @@
 
             var delay = document.querySelector('.js-delay');
             delay.addEventListener('change', function() {
-                flanger.delay.value = this.value;
+                flanger.delay = this.value;
             });
             
             var lfoGain = document.querySelector('.js-lfo-gain');
             lfoGain.addEventListener('change', function() {
-                flanger.lfoGain.value = this.value;
+                flanger.lfoGain = this.value;
             });
 
             var lfoFreq = document.querySelector('.js-lfo-freq');
             lfoFreq.addEventListener('change', function() {
-                flanger.lfoFrequency.value = this.value;
+                flanger.lfoFrequency = this.value;
             });
 
             var feedback = document.querySelector('.js-feedback');
             feedback.addEventListener('change', function() {
-                flanger.feedback.value = this.value / 100;
+                flanger.feedback = this.value / 100;
             });
 
             Sono.load({
@@ -88,7 +88,7 @@
                 onComplete: function(sounds) {
 
                     original = Sono.getSound('original');
-                    flanger = original.node.flanger();
+                    flanger = original.node.flanger(false);
 
                     new Player(original, document.querySelector('.js-playerA'));
                     new Player(Sono.getSound('phasing'), document.querySelector('.js-playerB'));

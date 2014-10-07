@@ -38,7 +38,7 @@ function Phaser(context, gain) {
     var first = filters[0];
     var last = filters[filters.length - 1];
     //node.passThrough = true;
-    //node._out = last;
+    //node._output = last;
 
     node._connected = function(to) {
         //console.log.apply(console, ['phaser connected to', (to.name || to.constructor.name)]);
