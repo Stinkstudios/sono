@@ -8,26 +8,21 @@
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Flanger</h1>
+    <h1>Phaser</h1>
 
-    <h3>Flanging webaudio</h3>
+    <h3>Phasing webaudio</h3>
     <div class="js-playerA"></div>
 
     <div style="padding: 4px;"></div>
 
     <form class="Player-slider" oninput="output.value=range.value">
-        <h4>Delay <output name="output" for="range"></output></h4>
-        <span>0.005</span><input class="Player-slider-input js-delay" name="range" type="range" min="0.005" max="0.025" step="0.001" value="0.005" /><span>0.025</span>
-    </form>
-
-    <form class="Player-slider" oninput="output.value=range.value">
         <h4>LFO gain <output name="output" for="range"></output></h4>
-        <span>0.0005</span><input class="Player-slider-input js-lfo-gain" name="range" type="range" min="0.0005" max="0.005" step="0.00025" value="0.002" /><span>0.005</span>
+        <span>0.0005</span><input class="Player-slider-input js-lfo-gain" name="range" type="range" min="0.0005" max="1000" step="0.00025" value="0.005" /><span>0.010</span>
     </form>
 
     <form class="Player-slider" oninput="output.value=range.value">
         <h4>LFO frequency <output name="output" for="range"></output></h4>
-        <span>0.05</span><input class="Player-slider-input js-lfo-freq" name="range" type="range" min="0.05" max="5" step="0.05" value="0.25" /><span>5</span>
+        <span>0.05</span><input class="Player-slider-input js-lfo-freq" name="range" type="range" min="0.05" max="40" step="0.05" value="0.5" /><span>5</span>
     </form>
 
     <form class="Player-slider" oninput="output.value=range.value/100">
@@ -35,7 +30,9 @@
         <span>0</span><input class="Player-slider-input js-feedback" name="range" type="range" min="0" max="90" value="50" /><span>0.9</span>
     </form>
 
-    <h3>Flanging pre-recorded</h3>
+    <button class="Player-button" data-js="TOGGLE">OFF</button>
+
+    <h3>Phasing pre-recorded</h3>
     <div class="js-playerB"></div>
 
     <script>
@@ -45,32 +42,39 @@
     <script src="../dist/sono.js"></script>
     <script src="js/player.js"></script>
     <script>
-        (function() {
+        document.addEventListener('DOMContentLoaded', function() {
             'use strict';
 
             Sono.log();
 
             var original,
-                flanger;
-
-            var delay = document.querySelector('.js-delay');
-            delay.addEventListener('change', function() {
-                flanger.delay = this.value;
-            });
+                phaser;
             
             var lfoGain = document.querySelector('.js-lfo-gain');
             lfoGain.addEventListener('change', function() {
-                flanger.lfoGain = this.value;
+                phaser.lfoGain = this.value;
             });
 
             var lfoFreq = document.querySelector('.js-lfo-freq');
             lfoFreq.addEventListener('change', function() {
-                flanger.lfoFrequency = this.value;
+                phaser.lfoFrequency = this.value;
             });
 
             var feedback = document.querySelector('.js-feedback');
             feedback.addEventListener('change', function() {
-                flanger.feedback = this.value / 100;
+                phaser.feedback = this.value / 100;
+            });
+
+            var btnToggle = document.querySelector('[data-js="TOGGLE"]');
+            btnToggle.addEventListener('click', function() {
+                if(this.innerHTML === 'OFF') {
+                    this.innerHTML = 'ON'
+                    original.node.remove(phaser);
+                }
+                else {
+                    this.innerHTML = 'OFF'
+                    original.node.add(phaser);
+                }
             });
 
             Sono.load({
@@ -81,16 +85,13 @@
                     },
                     {
                         id: 'phasing',
-                        url: ['audio/Flanging.ogg', 'audio/Flanging.mp3']
-                        //url: ['audio/Phasing.ogg', 'audio/Phasing.mp3']
+                        url: ['audio/Phasing.ogg', 'audio/Phasing.mp3']
                     }
                 ],
                 onComplete: function(sounds) {
 
                     original = Sono.getSound('original');
-                    flanger = original.node.flanger({
-                        stereo: true
-                    });
+                    phaser = original.node.phaser();
 
                     new Player(original, document.querySelector('.js-playerA'));
                     new Player(Sono.getSound('phasing'), document.querySelector('.js-playerB'));
@@ -98,7 +99,7 @@
 
             });
 
-        }());
+        });
     </script>
 </body>
 </html>

@@ -240,8 +240,8 @@ NodeManager.prototype.allpass = function(frequency, quality, gain) {
     return this.filter('allpass', frequency, quality, gain);
 };
 
-NodeManager.prototype.flanger = function(isStereo) {
-    var node = new Flanger(this._context, isStereo);
+NodeManager.prototype.flanger = function(config) {
+    var node = new Flanger(this._context, config);
     return this.add(node);
 };
 
@@ -258,8 +258,8 @@ NodeManager.prototype.panner = function() {
     return this.add(node);
 };
 
-NodeManager.prototype.phaser = function() {
-    var node = new Phaser(this._context);
+NodeManager.prototype.phaser = function(config) {
+    var node = new Phaser(this._context, config);
     return this.add(node);
 };
 
