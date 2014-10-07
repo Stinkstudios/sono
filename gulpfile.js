@@ -146,13 +146,13 @@ gulp.task('connect', function() {
     server: {
       baseDir: './',
       startPath: 'examples/index.html'
-    }
-
+    },
+    reloadDelay: 5000
   });
 });
 
 gulp.task('reload', function() {
-  browserSync.reload({ stream: false });
+  browserSync.reload();
 });
 
 // watch
