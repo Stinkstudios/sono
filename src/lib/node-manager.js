@@ -1,6 +1,7 @@
 'use strict';
 
-var Analyser = require('./node/analyser.js'),
+var ADT = require('./node/adt.js'),
+    Analyser = require('./node/analyser.js'),
     Distortion = require('./node/distortion.js'),
     Echo = require('./node/echo.js'),
     Filter = require('./node/filter.js'),
@@ -101,6 +102,11 @@ Object.defineProperty(NodeManager.prototype, 'panning', {
 /*
  * Effects
  */
+
+NodeManager.prototype.adt = function(config) {
+    var node = new ADT(this._context, config);
+    return this.add(node);
+};
 
 NodeManager.prototype.analyser = function(fftSize, smoothing, minDecibels, maxDecibels) {
     var analyser = new Analyser(this._context, fftSize, smoothing, minDecibels, maxDecibels);
