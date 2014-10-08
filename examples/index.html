@@ -8,10 +8,12 @@
 	<link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
-	<h1>sono</h1>
+	<h1>Sono</h1>
 
+    <h2>Examples</h2>
     <ul>
         <li><a href="player.html">Player</a></li>
+        <li><a href="effects.html">Effects</a></li>
         <li><a href="oscillator.html">Oscillator</a></li>
         <li><a href="microphone.html">Microphone</a></li>
         <li><a href="video.html">Video</a></li>
@@ -21,7 +23,7 @@
     </ul>
 
 
-    <h3>Browser support</h3>
+    <h2>Browser support</h2>
     <ul class="js-support"></ul>
 
 
@@ -53,7 +55,7 @@
 
             var support = document.querySelector('.js-support');
             var info = '<li>Audio Support: ' + Sono.isSupported + '</li>' +
-                       '<li>WebAudio API: ' + Sono.hasWebAudio + '</li>' +
+                       '<li>Web Audio API: ' + Sono.hasWebAudio + '</li>' +
                        '<li>Touch Locked: ' + Sono._isTouchLocked + '</li>' +
                        '<li>Extensions: ' + Sono.extensions.join(', ') + '</li>';
             support.innerHTML = info;

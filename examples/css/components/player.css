@@ -41,6 +41,11 @@
     text-align: center;
 }
 
+.Player-button.is-selected {
+    background-color: #444;
+    color: #ddd;
+}
+
 .Player-button:disabled {
   cursor: default;
   opacity: 0.5;
@@ -53,14 +58,32 @@
 .Player-slider {
     display: inline-block;
     font-size: 1rem;
-    margin-left: 20px;
+    position: relative;
+}
+
+.Player-slider--margin {
+    margin-left: 10px;
 }
 
 .Player-slider-input {
     display: inline-block;
-    width: 80px;
+    width: 100px;
     margin: 2px;
     vertical-align: middle;
+}
+
+.Player-slider-input--wide {
+    width: 200px;
+}
+
+.Player-slider-output {
+    display: inline-block;
+    padding: 0 8px;
+}
+
+.Player-slider-limit {
+    display: inline-block;
+    min-width: 36px;
 }
 
 .Player-info {
@@ -69,4 +92,14 @@
     float: right;
     font-size: 1.25rem;
     line-height: 20px;
+}
+
+.Player-effect-panel {
+    display: none;
+    margin: 10px 0;
+    width: 400px;
+}
+
+.Player-effect-panel.is-visible {
+    display: block;
 }

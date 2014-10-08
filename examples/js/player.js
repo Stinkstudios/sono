@@ -9,10 +9,10 @@ function Player(sound, el) {
         '</div>' +
         '<div class="Player-controls">' +
             '<button class="Player-button">PLAY</button>' +
-            '<div class="Player-slider">' +
+            '<div class="Player-slider Player-slider--margin">' +
                 '<span>0</span><input class="Player-slider-input js-volume" type="range" min="0" max="100" value="100" /><span>1</span>' +
             '</div>' +
-            '<div class="Player-slider">' +
+            '<div class="Player-slider Player-slider--margin">' +
                 '<span>L</span><input class="Player-slider-input js-pan" type="range" min="-100" max="100" value="0" /><span>R</span>' +
             '</div>' +
             '<div class="Player-info"></div>' +
@@ -71,21 +71,30 @@ function Player(sound, el) {
         panner.setX(this.value / 100);
     });
 
-    // waveform display
-    var wave = Sono.utils.waveform(sound._data, waveformBack.width);
-    var height = waveformBack.height;
-    wave.getCanvas(height, '#333333', '#dddddd', waveformBack);
-    //Sono.utils.waveformCanvas(waveformData, height, '#00ffff', '#444444', waveformFront);
-    wave.getCanvas(height, '#dddddd', '#333333', waveformFront);
+    function displayWaveform() {
+        var wave = Sono.utils.waveform(sound.data, waveformBack.width);
+        var height = waveformBack.height;
+        wave.getCanvas(height, '#333333', '#dddddd', waveformBack);
+        //Sono.utils.waveformCanvas(waveformData, height, '#00ffff', '#444444', waveformFront);
+        wave.getCanvas(height, '#dddddd', '#333333', waveformFront);
 
-    // click waveform to seek
-    waveform.addEventListener('click', function(event) {
-        var rect = waveform.getBoundingClientRect();
-        //console.log('click waveform', event.clientX - rect.left, rect.width);
-        var percent = (event.clientX - rect.left) / rect.width;
-        sound.seek(percent);
+        // click waveform to seek
+        waveform.addEventListener('click', function(event) {
+            var rect = waveform.getBoundingClientRect();
+            //console.log('click waveform', event.clientX - rect.left, rect.width);
+            var percent = (event.clientX - rect.left) / rect.width;
+            sound.seek(percent);
 
-        button.innerHTML = 'PAUSE';
-        update();
-    });
+            button.innerHTML = 'PAUSE';
+            update();
+        });
+    }
+
+    if(sound.data) {
+        displayWaveform();
+    }
+    else if(sound.loader) {
+        sound.loader.onComplete.add(displayWaveform);
+    }
+    
 }

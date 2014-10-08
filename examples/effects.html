@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, minimal-ui">
+    <title>Sono</title>
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <h1>Effects</h1>
+
+    <div data-js="buttons"></div>
+
+    <div data-js="player"></div>
+
+    <div data-js="controls"></div>
+
+    <h2>Reference</h2>
+
+    <script>
+        // Test with no WebAudio
+        //window.AudioContext = window.webkitAudioContext = undefined;
+    </script>
+    <script src="../dist/sono.js"></script>
+    <script src="js/player.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            Sono.log();
+
+            var sound = Sono.createSound(['audio/Original.ogg', 'audio/Original.mp3']);
+            new Player(sound, document.querySelector('[data-js="player"]'));
+
+            var effects = {
+                'Phaser': sound.node.phaser({
+                    stereo: true
+                }),
+                'Flanger': sound.node.flanger(),
+                'Echo': sound.node.echo(0.5, 0.15)
+            };
+
+            var controls = document.querySelector('[data-js="controls"]');
+            var buttons = document.querySelector('[data-js="buttons"]');
+
+            Object.keys(effects).forEach(function(key) {
+                sound.node.remove(effects[key]);
+
+                var button = document.createElement('button');
+                button.className = 'Player-button';
+                button.setAttribute('data-effect', key);
+                button.innerHTML = key;
+                buttons.appendChild(button);
+
+                var panel = document.createElement('div');
+                panel.className = 'Player-effect-panel';
+                panel.setAttribute('data-panel', key);
+                var header = document.createElement('h3');
+                header.innerHTML = key;
+                panel.appendChild(header);
+                controls.appendChild(panel);
+            });
+
+            var removeEffects = function() {
+                Object.keys(effects).forEach(function(key) {
+                    sound.node.remove(effects[key]);
+                });
+            };
+            removeEffects();
+
+            var addEffect = function(effect) {
+                removeEffects();
+                sound.node.add(effects[effect]);
+
+
+                var refs = document.querySelectorAll('[data-ref]');
+                [].forEach.call(refs, function(ref) {
+                    var id = ref.getAttribute('data-ref');
+                    ref.style.display = id === effect ? 'block' : 'none';
+                });
+            };
+
+            var btns = document.querySelectorAll('[data-effect]');
+            [].forEach.call(btns, function(btn) {
+                btn.addEventListener('click', function() {
+                    var isSelected = this.classList.contains('is-selected');
+                    var effect = isSelected ? null : this.getAttribute('data-effect');
+                    var panels = document.querySelectorAll('[data-panel]');
+                    [].forEach.call(panels, function(panel) {
+                        var panelId = panel.getAttribute('data-panel');
+                        panel.classList.toggle('is-visible', panelId === effect);
+                    });
+                    [].forEach.call(btns, function(btn) {
+                        var btnId = btn.getAttribute('data-effect');
+                        btn.classList.toggle('is-selected', btnId === effect); 
+                    });
+                    addEffect(effect);
+                });
+            });
+
+            // phaser
+            
+            (function() {
+                var el = document.querySelector('[data-panel="Phaser"]');
+                var phaser = effects['Phaser'];
+
+                new Slider({
+                    parent: el,
+                    label: 'LFO gain',
+                    min: 0.0005,
+                    max: 1000,
+                    step: 0.00025,
+                    value: phaser.lfoGain,
+                    callback: function() {
+                        phaser.lfoGain = this.value;
+                    }
+                });
+
+                new Slider({
+                    parent: el,
+                    label: 'LFO frequency',
+                    min: 0.05,
+                    max: 40,
+                    step: 0.05,
+                    value: phaser.lfoFrequency,
+                    callback: function() {
+                        phaser.lfoFrequency = this.value;
+                    }
+                });
+
+                new Slider({
+                    parent: el,
+                    label: 'Feedback',
+                    min: 0.0,
+                    max: 0.9,
+                    step: 0.001,
+                    value: phaser.feedback,
+                    callback: function() {
+                        phaser.feedback = this.value;
+                    }
+                });
+
+            }());
+
+            // flanger
+
+            (function() {
+                var el = document.querySelector('[data-panel="Flanger"]');
+                var flanger = effects['Flanger'];
+
+                new Slider({
+                    parent: el,
+                    label: 'Delay',
+                    min: 0.005,
+                    max: 0.025,
+                    step: 0.001,
+                    value: flanger.delay,
+                    callback: function() {
+                        flanger.delay = this.value;  
+                    }
+                });
+
+                new Slider({
+                    parent: el,
+                    label: 'LFO gain',
+                    min: 0.0005,
+                    max: 0.005,
+                    step: 0.00025,
+                    value: flanger.lfoGain,
+                    callback: function() {
+                        flanger.lfoGain = this.value;
+                    }
+                });
+
+                new Slider({
+                    parent: el,
+                    label: 'LFO frequency',
+                    min: 0.05,
+                    max: 5.0,
+                    step: 0.05,
+                    value: flanger.lfoFrequency,
+                    callback: function() {
+                        flanger.lfoFrequency = this.value;
+                    }
+                });
+
+                new Slider({
+                    parent: el,
+                    label: 'Feedback',
+                    min: 0.0,
+                    max: 0.9,
+                    step: 0.001,
+                    value: 0.5,
+                    callback: function() {
+                        flanger.feedback = this.value;
+                    }
+                });
+
+            }());
+
+            (function() {
+                var el = document.querySelector('[data-panel="Echo"]');
+                var echo = effects['Echo'];
+
+                new Slider({
+                    parent: el,
+                    label: 'Delay',
+                    min: 0.0,
+                    max: 10.0,
+                    step: 0.01,
+                    value: echo.delay,
+                    callback: function() {
+                        echo.delay = this.value;  
+                    }
+                });
+
+                new Slider({
+                    parent: el,
+                    label: 'Feedback',
+                    min: 0.0,
+                    max: 0.99,
+                    step: 0.01,
+                    value: echo.feedback,
+                    callback: function() {
+                        echo.feedback = this.value;
+                    }
+                });
+
+            }());
+
+            function Slider(config) {
+                config.min = config.min || 0;
+                config.max = config.max || 1;
+                config.step = config.step || 0.01;
+                config.value = config.value || 0;
+
+                var lbl = document.createElement('h4');
+                    lbl.innerHTML = config.label || '';
+                var min = document.createElement('span');
+                    min.className = 'Player-slider-limit';
+                    min.innerHTML = config.min;
+                var max = document.createElement('span');
+                    max.className = 'Player-slider-limit';
+                    max.innerHTML = config.max;
+                var input = document.createElement('input');
+                    input.className = 'Player-slider-input Player-slider-input--wide';
+                    input.setAttribute('type', 'range');
+                    input.setAttribute('min', config.min);
+                    input.setAttribute('max', config.max);
+                    input.setAttribute('step', config.step);
+                    input.setAttribute('value', config.value);
+                if(typeof config.callback === 'function') {
+                    var onChange = function() {
+                        config.callback.call(config.context || this, this.value);
+                    };
+                    input.addEventListener('change', onChange);
+                }
+                var output = document.createElement('span');
+                    output.className = 'Player-slider-output';
+                    output.innerHTML = input.value;
+                var form = document.createElement('form');
+                    form.className = 'Player-slider';
+                    form.addEventListener('input', function() {
+                        output.innerHTML = input.value;
+                    });
+                    form.appendChild(lbl);
+                    lbl.appendChild(output);
+                    form.appendChild(min);
+                    form.appendChild(input);
+                    form.appendChild(max);
+                if(config.parent) {
+                    config.parent.appendChild(form);
+                }
+                this.input = input;
+                this.el = form;
+            }
+
+            var sounds = [
+                {
+                    id: 'Phaser',
+                    url: ['audio/Phasing.ogg', 'audio/Phasing.mp3']
+                },
+                {
+                    id: 'Flanger',
+                    url: ['audio/Flanging.ogg', 'audio/Flanging.mp3']
+                },
+                {
+                    id: 'ADT',
+                    url: ['audio/ADT.ogg', 'audio/ADT.mp3']
+                },
+                {
+                    id: 'Speed_Down',
+                    url: ['audio/Speed_Down.ogg', 'audio/Speed_Down.mp3']
+                },
+                {
+                    id: 'Speed_Up',
+                    url: ['audio/ADT.ogg', 'audio/Speed_Up.mp3']
+                },
+                {
+                    id: 'Echo',
+                    url: ['audio/Tape_Delay.ogg', 'audio/Tape_Delay.mp3']
+                },
+                {
+                    id: 'Tape_Saturation',
+                    url: ['audio/Tape_Saturation.ogg', 'audio/Tape_Saturation.mp3']
+                }
+            ];
+
+            sounds.forEach(function(item) {
+                var sound = Sono.createSound(item.url);
+                var playerEl = document.createElement('div');
+                new Player(sound, playerEl);
+                var headerEl = document.createElement('h3');
+                headerEl.innerHTML = item.id;
+                var el = document.createElement('div');
+                el.appendChild(headerEl);
+                el.appendChild(playerEl);
+                el.setAttribute('data-ref', item.id);
+                document.body.appendChild(el);
+            });
+
+        }());
+    </script>
+</body>
+</html>
