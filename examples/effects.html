@@ -71,8 +71,10 @@
 
             var addEffect = function(effect) {
                 removeEffects();
-                sound.node.add(effects[effect]);
 
+                if(effect) {
+                    sound.node.add(effects[effect]);
+                }
 
                 var refs = document.querySelectorAll('[data-ref]');
                 [].forEach.call(refs, function(ref) {

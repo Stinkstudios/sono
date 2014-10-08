@@ -4,6 +4,8 @@ var Sono = require('../src/sono.js');
 
 describe('Sono loader', function() {
 
+    var baseURL = 'http://ianmcgregor.me/prototypes/assets/audio/';
+
     describe('single', function() {
         var sound,
             progress = 0;
@@ -11,8 +13,8 @@ describe('Sono loader', function() {
         beforeEach(function(done) {
             Sono.load({
                 url: [
-                    'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
-                    'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
+                    baseURL + 'hit.ogg',
+                    baseURL + 'hit.mp3'
                 ],
                 onComplete: function(loadedSound) {
                     sound = loadedSound;
@@ -44,15 +46,15 @@ describe('Sono loader', function() {
                 {
                     id: 'bullet',
                     url: [
-                        'http://ianmcgregor.me/prototypes/assets/audio/bullet.ogg',
-                        'http://ianmcgregor.me/prototypes/assets/audio/bullet.mp3'
+                        baseURL + 'bullet.ogg',
+                        baseURL + 'bullet.mp3'
                     ]
                 },
                 {
                     id: 'collect',
                     url: [
-                        'http://ianmcgregor.me/prototypes/assets/audio/collect.ogg',
-                        'http://ianmcgregor.me/prototypes/assets/audio/collect.mp3'
+                        baseURL + 'collect.ogg',
+                        baseURL + 'collect.mp3'
                     ]
                 }
             ];
@@ -86,8 +88,8 @@ describe('Sono loader', function() {
         var sound,
             progress = 0,
             el = [
-                'http://ianmcgregor.me/prototypes/assets/audio/select.ogg',
-                'http://ianmcgregor.me/prototypes/assets/audio/select.mp3'
+                baseURL + 'select.ogg',
+                baseURL + 'select.mp3'
             ];
 
         beforeEach(function(done) {
@@ -128,8 +130,8 @@ describe('Sono loader', function() {
             Sono.load({
                 id: 'hit',
                 url: [
-                    'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
-                    'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
+                    baseURL + 'hit.ogg',
+                    baseURL + 'hit.mp3'
                 ],
                 loop: true,
                 volume: 0.5,

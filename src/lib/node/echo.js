@@ -10,9 +10,10 @@ function Echo(context, delayTime, gainValue) {
     delay.delayTime.value = delayTime || 0.5;
 
     input.connect(delay);
+    input.connect(output);
     delay.connect(gain);
     gain.connect(delay);
-    delay.connect(output);
+    gain.connect(output);
 
     var node = input;
     node.name = 'Echo';

@@ -18,6 +18,7 @@ function NodeManager(context) {
 }
 
 NodeManager.prototype.add = function(node) {
+    if(!node) { return; }
     //console.log('NodeManager.add:', node);
     this._nodeList.push(node);
     this._updateConnections();
@@ -29,6 +30,7 @@ NodeManager.prototype.remove = function(node) {
     for (var i = 0; i < l; i++) {
         if(node === this._nodeList[i]) {
             this._nodeList.splice(i, 1);
+            break;
         }
     }
     var output = node._output || node;
@@ -49,10 +51,10 @@ NodeManager.prototype._connect = function(a, b) {
     //console.log('> connect', (a.name || a.constructor.name), 'to', (b.name || b.constructor.name));
 
     var output = a._output || a;
+    //console.log('> disconnect output: ', (a.name || a.constructor.name));
     output.disconnect();
-    console.log('> disconnected output: ', (a.name || a.constructor.name));
+    //console.log('> connect output: ', (a.name || a.constructor.name), 'to input:', (b.name || b.constructor.name));
     output.connect(b);
-    console.log('> connected output: ', (a.name || a.constructor.name), 'to input:', (b.name || b.constructor.name));
 };
 
 NodeManager.prototype._connectToDestination = function(destination) {
@@ -69,13 +71,14 @@ NodeManager.prototype._connectToDestination = function(destination) {
 NodeManager.prototype._updateConnections = function() {
     if(!this._sourceNode) { return; }
 
-    console.log('updateConnections:');
+    //console.log('updateConnections:', this._nodeList.length);
 
     var node,
         prev;
 
     for (var i = 0; i < this._nodeList.length; i++) {
         node = this._nodeList[i];
+        //console.log(i, node);
         prev = i === 0 ? this._sourceNode : this._nodeList[i - 1];
         this._connect(prev, node);
     }
@@ -218,13 +221,18 @@ NodeManager.prototype.reverb = function(seconds, decay, reverse) {
     return this.add(node);
 };
 
-NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outputChannels, callback, thisArg) {
+NodeManager.prototype.scriptProcessor = function(config) {
+    config = config || {};
     // bufferSize 256 - 16384 (pow 2)
-    bufferSize = bufferSize || 1024;
-    inputChannels = inputChannels === undefined ? 0 : inputChannels;
-    outputChannels = outputChannels === undefined ? 1 : outputChannels;
+    var bufferSize = config.bufferSize || 1024;
+    var inputChannels = config.inputChannels === undefined ? 0 : inputChannels;
+    var outputChannels = config.outputChannels === undefined ? 1 : outputChannels;
+    
     var node = this._context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
-    //node.onaudioprocess = callback.bind(callbackContext|| node);
+    
+    var callback = config.callback || function() {};
+    var thisArg = config.thisArg || config.context || node;
+
     node.onaudioprocess = function (event) {
         // available props:
         /*
@@ -240,7 +248,7 @@ NodeManager.prototype.scriptProcessor = function(bufferSize, inputChannels, outp
             output[i] = Math.random();
         }
         */
-        callback.call(thisArg || this, event);
+        callback.call(thisArg, event);
     };
     return this.add(node);
 };

@@ -4,12 +4,14 @@ var Sono = require('../src/sono.js');
 
 describe('Sono playback', function() {
 
+    var baseURL = 'http://ianmcgregor.me/prototypes/assets/audio/';
+
     describe('create', function() {
         var config = {
                 id: 'foo',
                 url: [
-                    'http://ianmcgregor.me/prototypes/assets/audio/bullet.ogg',
-                    'http://ianmcgregor.me/prototypes/assets/audio/bullet.mp3'
+                    baseURL + 'bullet.ogg',
+                    baseURL + 'bullet.mp3'
                 ]
             },
             sound;
@@ -46,8 +48,8 @@ describe('Sono playback', function() {
             };
             Sono.load({
                 url: [
-                    'http://ianmcgregor.me/prototypes/assets/audio/hit.ogg',
-                    'http://ianmcgregor.me/prototypes/assets/audio/hit.mp3'
+                    baseURL + 'hit.ogg',
+                    baseURL + 'hit.mp3'
                 ],
                 onComplete: onComplete
             });

@@ -6,13 +6,25 @@ var NodeManager = require('../src/lib/node-manager.js');
 function nodeManagerTest(node, name) {
 
     describe('Node Manager ' + name, function() {
-
         var audioNode = window.AudioNode;
+
+        describe('initialization', function() {
+            it('should be able to set source and destination', function() {
+                node.setSource(Sono.context.createGain());
+                node.setDestination(Sono.context.destination);
+            });
+        });
 
         describe('add', function() {
             it('should have expected api', function() {
                 expect(node.add).to.be.a('function');
                 expect(node.add.length).to.eql(1);
+            });
+            it('should add a node', function() {
+                var panner = node.add(Sono.context.createPanner());
+                expect(panner).to.be.an.instanceof(audioNode);
+                expect(node._nodeList.length).to.eql(1);
+                node.remove(panner);
             });
         });
 
@@ -21,12 +33,25 @@ function nodeManagerTest(node, name) {
                 expect(node.remove).to.be.a('function');
                 expect(node.remove.length).to.eql(1);
             });
+            it('should remove a node', function() {
+                var panner = node.add(Sono.context.createPanner());
+                expect(node._nodeList.length).to.eql(1);
+                node.remove(panner);
+                expect(node._nodeList.length).to.eql(0);
+            });
         });
 
         describe('removeAll', function() {
             it('should have expected api', function() {
                 expect(node.removeAll).to.be.a('function');
                 expect(node.removeAll.length).to.eql(0);
+            });
+            it('should remove all nodes', function() {
+                node.add(Sono.context.createPanner());
+                node.add(Sono.context.createGain());
+                expect(node._nodeList.length).to.eql(2);
+                node.removeAll();
+                expect(node._nodeList.length).to.eql(0);
             });
         });
 
@@ -85,6 +110,14 @@ function nodeManagerTest(node, name) {
                 expect(node.echo).to.be.a('function');
                 expect(node.echo.length).to.eql(2);
                 expect(node.echo()).to.be.an.instanceof(audioNode);
+            });
+            it('should add and remove node', function() {
+                node.removeAll();
+                var echo = node.echo();
+                expect(echo).to.be.an.instanceof(audioNode);
+                expect(node._nodeList).to.include(echo);
+                node.remove(echo);
+                expect(node._nodeList).to.not.include(echo);
             });
         });
 
