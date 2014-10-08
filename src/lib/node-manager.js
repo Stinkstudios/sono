@@ -8,7 +8,8 @@ var Analyser = require('./node/analyser.js'),
     Panner = require('./node/panner.js'),
     Phaser = require('./node/phaser.js'),
     Recorder = require('./node/recorder.js'),
-    Reverb = require('./node/reverb.js');
+    Reverb = require('./node/reverb.js'),
+    Saturation = require('./node/saturation.js');
 
 function NodeManager(context) {
     this._context = context || this.createFakeContext();
@@ -218,6 +219,11 @@ NodeManager.prototype.recorder = function(passThrough) {
 
 NodeManager.prototype.reverb = function(seconds, decay, reverse) {
     var node = new Reverb(this._context, seconds, decay, reverse);
+    return this.add(node);
+};
+
+NodeManager.prototype.saturation = function() {
+    var node = new Saturation(this._context);
     return this.add(node);
 };
 
