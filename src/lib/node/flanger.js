@@ -103,7 +103,7 @@ function StereoFlanger(context, config) {
     lfo.connect(lfoGainR);
     lfoGainL.connect(delayL.delayTime);
     lfoGainR.connect(delayR.delayTime);
-    lfo.start();
+    lfo.start(0);
 
     var node = input;
     node.name = 'StereoFlanger';
