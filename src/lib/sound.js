@@ -130,6 +130,10 @@ Object.defineProperty(Sound.prototype, 'context', {
 Object.defineProperty(Sound.prototype, 'currentTime', {
     get: function() {
         return this._source ? this._source.currentTime : 0;
+    },
+    set: function(value) {
+        this.stop();
+        this.play(0, value);
     }
 });
 
