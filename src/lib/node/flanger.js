@@ -28,7 +28,7 @@ function MonoFlanger(context, config) {
 
     lfo.connect(gain);
     gain.connect(delay.delayTime);
-    lfo.start();
+    lfo.start(0);
     
     var node = input;
     node.name = 'Flanger';

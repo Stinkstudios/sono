@@ -43,7 +43,7 @@ function Phaser(context, config) {
     last.connect(feedback);
     feedback.connect(first);
     lfo.connect(lfoGain);
-    lfo.start();
+    lfo.start(0);
 
     var node = input;
     node.name = 'Phaser';
