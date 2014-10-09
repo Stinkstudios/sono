@@ -104,134 +104,178 @@
             });
 
             // phaser
-            
-            (function() {
-                var el = document.querySelector('[data-panel="Phaser"]');
-                var phaser = effects['Phaser'];
 
-                new Slider({
-                    parent: el,
-                    label: 'LFO gain',
-                    min: 0.0005,
-                    max: 1000,
-                    step: 0.00025,
-                    value: phaser.lfoGain,
-                    callback: function() {
-                        phaser.lfoGain = this.value;
+            createControls({
+                effect: 'Phaser',
+                params: [
+                    {
+                        label: 'LFO gain',
+                        min: 0.0005,
+                        max: 1000,
+                        step: 0.00025,
+                        prop: 'lfoGain'
+                    },
+                    {
+                        label: 'LFO frequency',
+                        min: 0.05,
+                        max: 5.0,
+                        step: 0.05,
+                        prop: 'lfoFrequency'
+                    },
+                    {
+                        label: 'Feedback',
+                        min: 0.0,
+                        max: 0.9,
+                        step: 0.001,
+                        prop: 'feedback'
                     }
-                });
-
-                new Slider({
-                    parent: el,
-                    label: 'LFO frequency',
-                    min: 0.05,
-                    max: 40,
-                    step: 0.05,
-                    value: phaser.lfoFrequency,
-                    callback: function() {
-                        phaser.lfoFrequency = this.value;
-                    }
-                });
-
-                new Slider({
-                    parent: el,
-                    label: 'Feedback',
-                    min: 0.0,
-                    max: 0.9,
-                    step: 0.001,
-                    value: phaser.feedback,
-                    callback: function() {
-                        phaser.feedback = this.value;
-                    }
-                });
-
-            }());
+                ]
+            });
 
             // flanger
 
-            (function() {
-                var el = document.querySelector('[data-panel="Flanger"]');
-                var flanger = effects['Flanger'];
-
-                new Slider({
-                    parent: el,
-                    label: 'Delay',
-                    min: 0.005,
-                    max: 0.025,
-                    step: 0.001,
-                    value: flanger.delay,
-                    callback: function() {
-                        flanger.delay = this.value;  
+            createControls({
+                effect: 'Flanger',
+                params: [
+                    {
+                        label: 'Delay',
+                        min: 0.005,
+                        max: 0.05,
+                        step: 0.001,
+                        prop: 'delay'
+                    },
+                    {
+                        label: 'LFO gain',
+                        min: 0.0005,
+                        max: 0.005,
+                        step: 0.00025,
+                        prop: 'lfoGain'
+                    },
+                    {
+                        label: 'LFO frequency',
+                        min: 0.05,
+                        max: 5.0,
+                        step: 0.05,
+                        prop: 'lfoFrequency'
+                    },
+                    {
+                        label: 'Feedback',
+                        min: 0.0,
+                        max: 0.9,
+                        step: 0.001,
+                        prop: 'feedback'
                     }
-                });
+                ]
+            });
 
-                new Slider({
-                    parent: el,
-                    label: 'LFO gain',
-                    min: 0.0005,
-                    max: 0.005,
-                    step: 0.00025,
-                    value: flanger.lfoGain,
-                    callback: function() {
-                        flanger.lfoGain = this.value;
+            // echo
+
+            createControls({
+                effect: 'Echo',
+                params: [
+                    {
+                        label: 'Delay',
+                        min: 0.0,
+                        max: 10.0,
+                        step: 0.01,
+                        prop: 'delay'
+                    },
+                    {
+                        label: 'Feedback',
+                        min: 0.0,
+                        max: 0.99,
+                        step: 0.001,
+                        prop: 'feedback'
                     }
-                });
+                ]
+            });
 
-                new Slider({
-                    parent: el,
-                    label: 'LFO frequency',
-                    min: 0.05,
-                    max: 5.0,
-                    step: 0.05,
-                    value: flanger.lfoFrequency,
-                    callback: function() {
-                        flanger.lfoFrequency = this.value;
+            // adt
+
+            createControls({
+                effect: 'ADT',
+                params: [
+                    {
+                        label: 'Delay',
+                        min: 0.005,
+                        max: 0.05,
+                        step: 0.001,
+                        prop: 'delay'
+                    },
+                    {
+                        label: 'LFO gain',
+                        min: 0.0005,
+                        max: 0.005,
+                        step: 0.00025,
+                        prop: 'lfoGain'
+                    },
+                    {
+                        label: 'LFO frequency',
+                        min: 0.05,
+                        max: 5.0,
+                        step: 0.05,
+                        prop: 'lfoFrequency'
                     }
-                });
+                ]
+            });
 
-                new Slider({
-                    parent: el,
-                    label: 'Feedback',
-                    min: 0.0,
-                    max: 0.9,
-                    step: 0.001,
-                    value: 0.5,
-                    callback: function() {
-                        flanger.feedback = this.value;
+            // saturation
+
+            createControls({
+                effect: 'Saturation',
+                params: [
+                    {
+                        label: 'Distortion',
+                        min: 0.0,
+                        max: 1.0,
+                        step: 0.01,
+                        prop: 'distortion'
+                    },
+                    {
+                        label: 'Gain',
+                        min: 0.0,
+                        max: 1.0,
+                        step: 0.01,
+                        prop: 'gain'
+                    },
+                    {
+                        label: 'Highpass',
+                        min: 0.0,
+                        max: 400,
+                        step: 1,
+                        prop: 'highpass'
+                    },
+                    {
+                        label: 'Lowpass',
+                        min: 4000,
+                        max: Sono.context.sampleRate / 2,
+                        step: 1,
+                        prop: 'lowpass'
                     }
+                ]
+            });
+
+            function createControls(config) {
+                var effect = config.effect;
+                var params = config.params;
+
+                var el = document.querySelector('[data-panel="' + effect + '"]');
+                var node = effects[effect];
+
+                params.forEach(function(param) {
+                    new Slider({
+                        parent: el,
+                        label: param.label,
+                        min: param.min,
+                        max: param.max,
+                        step: param.step,
+                        value: node[param.prop],
+                        callback: function() {
+                            node[param.prop] = this.value;  
+                        }
+                    });
                 });
-
-            }());
-
-            (function() {
-                var el = document.querySelector('[data-panel="Echo"]');
-                var echo = effects['Echo'];
-
-                new Slider({
-                    parent: el,
-                    label: 'Delay',
-                    min: 0.0,
-                    max: 10.0,
-                    step: 0.01,
-                    value: echo.delay,
-                    callback: function() {
-                        echo.delay = this.value;  
-                    }
-                });
-
-                new Slider({
-                    parent: el,
-                    label: 'Feedback',
-                    min: 0.0,
-                    max: 0.99,
-                    step: 0.01,
-                    value: echo.feedback,
-                    callback: function() {
-                        echo.feedback = this.value;
-                    }
-                });
-
-            }());
+            }
 
             function Slider(config) {
                 config.min = config.min || 0;
