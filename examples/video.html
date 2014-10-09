@@ -27,19 +27,20 @@
             'use strict';
 
             var video = document.querySelector('video');
-            setTimeout(function() {
-                video.play();
-            }, 1000);
+            video.addEventListener('canplaythrough', initSound, false);
+            video.play();
 
-            var sound = Sono.createSound(video);
+            function initSound() {
+                var sound = Sono.createSound(video);
 
-            var reverb = sound.node.reverb(5, 2);
+                var reverb = sound.node.reverb(5, 2);
 
-            var analyser = sound.node.analyser(2048);
+                var analyser = sound.node.analyser(2048);
 
-            var waveform = document.querySelector('.js-waveform');
+                var waveform = document.querySelector('.js-waveform');
 
-            new AnalyserDisplay(analyser, waveform);
+                new AnalyserDisplay(analyser, waveform);
+            }
 
             function AnalyserDisplay(analyserNode, canvas) {
 

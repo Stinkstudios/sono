@@ -32,7 +32,15 @@
                 new AnalyserDisplay(analyser, waveform);
             };
             var mic = Sono.utils.microphone(onConnect);
-            mic.connect();
+            if(mic.isSupported) {
+                mic.connect();    
+            }
+            else {
+                var p = document.createElement('p');
+                p.innerHTML = 'Microphone access not supported in this browser'
+                document.body.appendChild(p);
+            }
+            
 
             function AnalyserDisplay(analyserNode, canvas) {
 
