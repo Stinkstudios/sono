@@ -1,6 +1,6 @@
 # Sono
 
-A JavaScript library for working with audio. WebAudio API with fallback to HTMLMediaElement.
+A JavaScript library for working with audio
 
 <http://prototypes.stinkdigital.com/webaudio/sono/examples/>
 
@@ -13,8 +13,6 @@ A JavaScript library for working with audio. WebAudio API with fallback to HTMLM
 * Falls back to HTMLAudioElement where Web Audio is not supported (e.g. IE 11 and less)
 * Pauses and resumes audio playback on page visibility changes
 * Handles initial touch to unlock media playback on mobile devices
-* Master volume and mute control
-* Generates graphical waveform displays for sounds
 
 ## Installation
 
@@ -25,81 +23,26 @@ A JavaScript library for working with audio. WebAudio API with fallback to HTMLM
 
 ### Adding sounds to Sono
 
-New sounds are created through the `createSound` method. If you pass in an array of URLs, Sono will use the first one that matches the browser's capabilities:
+New sounds are created through the `createSound` method.
+
+If you pass in an array of URLs, Sono will use the first one that matches the browser's capabilities:
 
 ```javascript
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 ```
 
-A sound can be assigned an `id` property which can be used to retrieve it later, without having a reference to the instance:
+You can also supply media elements from the DOM:
 
 ```javascript
-// create a sound with an id:
-var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
-sound.id = 'foo';
-
-var sound = Sono.createSound({
-    id: 'foo',
-    url: ['audio/foo.ogg', 'audio/foo.mp3']
-});
-
-// then somewhere else in your app:
-var foo = Sono.getSound('foo');
-foo.play();
-// or
-Sono.play('foo');
-```
-
-You can also use your own loader and pass in the loaded sound data, or supply media elements from the DOM:
-
-```javascript
-// media elements:
 var audioEl = document.querySelector('audio');
 var audioElSound = Sono.createSound(audioEl);
 
 var videoEl = document.querySelector('video');
 var videoElSound = Sono.createSound(videoEl);
-
-// XHR arraybuffer loaded outside of Sono:
-var sound;
-Sono.context.decodeAudioData(xhrResponse, function(buffer) {
-    sound = Sono.createSound(buffer);
-});
 ```
 
-The user's microphone stream can be used as a source:
+[Further examples, covering all valid sound sources](docs/Sono.md#createsound)
 
-```javascript
-var sound;
-var onConnect = function(stream) {
-    sound = Sono.createSound(stream);
-};
-var mic = Sono.utils.microphone(onConnect);
-mic.connect();
-```
-
-Sound can be generated with oscillators:
-
-```javascript
-var sineWave = Sono.createSound('sine');
-var squareWave = Sono.createSound('square');
-```
-
-Or from custom scripts:
-
-```javascript
-var script = Sono.createSound({
-    bufferSize: 1024,
-    channels: 1,
-    callback: function(event) {
-        var output = event.outputBuffer.getChannelData(0);
-        var l = output.length;
-        for (var i = 0; i < l; i++) {
-            output[i] = Math.random();
-        }
-    }
-});
-```
 
 ### Loading sounds
 
@@ -107,6 +50,9 @@ You can load sounds and specify callbacks for completion and progress:
 
 ```javascript
 var sound = Sono.load({
+    id: 'foo',
+    loop: true,
+    volume: 0.2,
     url: ['audio/foo.ogg', 'audio/foo.mp3'],
     onComplete: function(sound) {
         // do something
@@ -116,38 +62,22 @@ var sound = Sono.load({
     }
 });
 
-var sound = Sono.load({
-    id: 'foo',
-    url: ['audio/foo.ogg', 'audio/foo.mp3'],
-    loop: true,
-    volume: 0.2,
-    onComplete: this.soundLoaded,
-    context: this
-});
-```
-
-Sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getSound`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
-
-```javascript
 var sounds = Sono.load({
     url: [
         { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
         { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
     ],
     onComplete: function(sounds) {
-        // loading complete
-        sounds.forEach(function(sound) {
-            console.log(sound.id);
-        });
-        // sound instances can be retrieved or controlled by id:
-        var soundA = Sono.getSound('a');
-        Sono.play('b');
+        // retrieve sound instances from array or by id
     },
     onProgress: function(progress) {
         // update progress bar
     }
 });
 ```
+
+[Further examples](docs/Sono.md#load)
+
 
 ### Adding effects
 
@@ -163,61 +93,33 @@ var reverb = Sono.node.reverb(2, 0.5);
 reverb.update(2, 0.5);
 ```
 
-Or apply a reverb effect to a specific sound:
+Or apply an echo effect to a specific sound:
 
 ```javascript
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
-var reverb = sound.node.reverb(2, 0.5);
-// change the time and decay
-reverb.update(2, 0.5);
+var echo = sound.node.echo(0.8, 0.5);
+// change the delay time and feedback amount:
+echo.delay = 0.5;
+echo.feedback = 0.9;
 ```
 
-[See full list of effects and processing](docs/Sono.md#nodemanager)
-
-
-### Visualisation
-
-Sono can produce visualisation data and graphics
-
-TODO: add images
-
-Get a sound's waveform and draw it to a canvas element
-
-```javascript
-var canvasEl = document.querySelector('canvas');
-var wave = Sono.utils.waveform(sound._data, canvasEl.width);
-var canvas = wave.getCanvas(canvasEl.height, '#333333', '#DDDDDD', canvasEl);
-
-```
+[Further examples and full list of effects](docs/Sono.md#effects)
 
 
 ### Utils
 
-Fade a sound in or out
+Get a sound's waveform as a canvas element
 
 ```javascript
-Sono.utils.fadeTo(sound, value, duration);
-Sono.utils.fadeFrom(sound, value, duration);
+var wave = Sono.utils.waveform(sound.data, width);
+var canvas = wave.getCanvas(height, '#333333', '#DDDDDD');
+
 ```
 
 Crossfade two sounds
 
 ```javascript
-Sono.utils.crossFade(soundA, SoundB, 1);
-```
-
-Get user microphone
-
-```javascript
-var mic = Sono.utils.microphone(function(stream) {
-    // user allowed mic - got stream
-    var micSound = Sono.createSound(stream);
-}, function() {
-    // user denied mic
-}, function(e) {
-    // error
-});
-mic.connect();
+Sono.utils.crossFade(soundA, soundB, 1);
 ```
 
 Convert currentTime seconds into time code string
@@ -226,11 +128,7 @@ Convert currentTime seconds into time code string
 var timeCode = Sono.utils.timeCode(217.8); // '03:37'
 ```
 
-## Further documentation
-
-[API documentation](docs/API.md)
-
-[More examples](docs/Sono.md)
+[Further examples and full list of utils](docs/Sono.md#utils)
 
 
 ## Dev setup

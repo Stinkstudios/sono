@@ -1,12 +1,14 @@
 # Sono
 
-[src/sono.js](../src/sono.js)
+[View source code](../src/sono.js)
 
 ## createSound
 
 Create a Sound object
 
 >`Sono.createSound(config)` returns Sound
+
+[View source code](../src/sono.js#L43-59)
 
 #### Examples
 
@@ -26,27 +28,35 @@ var sound = Sono.createSound({
 From existing HTMLMediaElement:
 
 ```javascript
-var el = document.querySelector('video');
-var sound = Sono.createSound(el);
+var audioEl = document.querySelector('audio');
+var audioElSound = Sono.createSound(audioEl);
+
+var videoEl = document.querySelector('video');
+var videoElSound = Sono.createSound(videoEl);
 ```
 
 Create an oscillator:
 
 ```javascript
 var sineWave = Sono.createSound('sine');
+
+var squareWave = Sono.createSound('square');
+squareWave.frequency = 200;
 ```
 
 User microphone stream:
 
 ```javascript
-navigator.getUserMedia({audio:true}, function(stream) {
-	var mic = Sono.createSound(stream);
-});
-// or
+// Use the [microphone utility](#utils):
 var mic = Sono.utils.microphone(function(stream) {
-	var mic = Sono.createSound(stream);
+	var micSound = Sono.createSound(stream);
 });
 mic.connect();
+
+// or your own implementation
+navigator.getUserMedia({audio:true}, function(stream) {
+	var micSound = Sono.createSound(stream);
+});
 ```
 
 Script processor:
@@ -65,11 +75,40 @@ var script = Sono.createSound({
 });
 ```
 
+XHR arraybuffer loaded outside of Sono:
+```javascript
+var sound;
+Sono.context.decodeAudioData(xhrResponse, function(buffer) {
+	sound = Sono.createSound(buffer);
+});
+```
+
+A sound can be assigned an `id` property which can be used to retrieve it later, without having a reference to the instance:
+
+```javascript
+// create a sound with an id:
+var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+sound.id = 'foo';
+
+var sound = Sono.createSound({
+	id: 'foo',
+	url: ['audio/foo.ogg', 'audio/foo.mp3']
+});
+
+// then somewhere else in your app:
+var foo = Sono.getSound('foo');
+foo.play();
+// or
+Sono.play('foo');
+```
+
 ## destroySound
 
 Remove a sound from Sono
 
 >`Sono.destroySound(soundOrId)`
+
+[View source code](../src/sono.js#L65-79)
 
 #### Examples
 
@@ -86,6 +125,8 @@ Sono.destroySound('bar');
 ## getSound
 
 >`Sono.getSound(id)`
+
+[View source code](../src/sono.js#L85-L94)
 
 #### Examples
 
@@ -104,6 +145,8 @@ Load a sound and add to Sono
 
 >`Sono.load(config)` returns Sound  
 
+[View source code](../src/sono.js#L100-138)
+
 #### Examples
 
 Load first file compatible with browser from an array
@@ -112,7 +155,7 @@ Load first file compatible with browser from an array
 var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']);
 ```
 
-Load sound with config options and callbacks
+Load a single sound with config options and callbacks
 
 ```javascript
 var sound = Sono.load({
@@ -120,26 +163,34 @@ var sound = Sono.load({
 	url: ['audio/foo.ogg', 'audio/foo.mp3'],
 	loop: true,
 	volume: 0.2,
-	onComplete: this.soundLoaded,
-	context: this
+	onComplete: function(sound) {
+		// do something
+	},
+	onProgress: function(progress) {
+		// update progress
+	}
 });
 ```
 
-Multiple sounds
+Sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getSound`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
 
 ```javascript
-Sono.load({
+var sounds = Sono.load({
 	url: [
 		{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
-		{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'] }
+		{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
 	],
 	onComplete: function(sounds) {
-		console.log('complete:', sounds);
+		// loading complete
+		sounds.forEach(function(sound) {
+			console.log(sound.id);
+		});
+		// sound instances can be retrieved or controlled by id:
 		var soundA = Sono.getSound('a');
-		var soundB = Sono.getSound('b');
+		Sono.play('b');
 	},
 	onProgress: function(progress) {
-		console.log('progress:', progress);
+		// update progress bar
 	}
 });
 ```
@@ -170,6 +221,17 @@ var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play();
 
 ```
 
+Bind to scope:
+
+```javascript
+var sound = Sono.load({
+	url: ['audio/foo.ogg', 'audio/foo.mp3'],
+	onComplete: this.onSoundLoaded,
+	onProgress: this.onSoundProgress,
+	context: this
+});
+```
+
 
 ## controls
 
@@ -182,6 +244,8 @@ var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play();
 `Sono.play(id, delay, offset)`  
 `Sono.pause(id)`  
 `Sono.stop(id)`
+
+[View source code](../src/sono.js#L164-222)
 
 #### Examples
 
@@ -211,6 +275,8 @@ Sono.stop('foo');
 ## log
 
 >`Sono.log()`
+
+[View source code](../src/sono.js#L318-337)
 
 #### Examples
 
@@ -261,18 +327,20 @@ Sono.sounds.forEach(function(sound) {
 });
 ```
 
-## Node Manager
+## Effects
+
+[View source code](../src/lib/node-manager.js)
 
 ## add
 
-Add a node
+Add an AudioNode
 
 >`Sono.add(node)` returns AudioNode  
 `Sound.add(node)` returns AudioNode  
 
-Remove a node
+Remove an AudioNode
 
->`Sono.node.remove(node)` returns AudioNode
+>`Sono.node.remove(node)` returns AudioNode  
 `Sound.node.remove(node)` returns AudioNode
 
 Remove all AudioNodes
@@ -329,6 +397,8 @@ Apply compression processing (lowers the volume of the loudest parts of the sign
 >`Sono.node.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
 >`Sound.node.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
 
+[View source code](../src/lib/node/compressor.js)
+
 #### Examples
 
 ```javascript
@@ -383,6 +453,8 @@ Create a distortion effect
 
 >`Sono.node.distortion(amount)` returns Distortion  
 >`Sono.node.distortion(amount)` returns Distortion  
+
+[View source code](../src/lib/node/distortion.js)
 
 Update the distortion amount
 
@@ -569,6 +641,9 @@ mic.connect();
 #### Examples
 
 ```javascript
+var reverb = Sono.node.reverb(2, 0.5);
+// change the time and decay
+reverb.update(2, 0.5);
 ```
 
 ## scriptProcessor
@@ -585,10 +660,17 @@ mic.connect();
 
 #### Examples
 
+Fade a sound in or out
+
+```javascript
+Sono.utils.fadeTo(sound, value, duration);
+Sono.utils.fadeFrom(sound, value, duration);
+```
+
 Crossfade two sounds
 
 ```javascript
-Sono.utils.crossFade(soundA, SoundB, 1);
+Sono.utils.crossFade(soundA, soundB, 1);
 ```
 
 Get user microphone
@@ -614,10 +696,13 @@ var timeCode = Sono.utils.timeCode(217.8); // '03:37'
 Get a sound's waveform and draw it to a canvas element
 
 ```javascript
+var wave = Sono.utils.waveform(sound.data, width);
+var canvas = wave.getCanvas(height, '#333333', '#DDDDDD');
+
+// or supply your own canvas el:
 var canvasEl = document.querySelector('canvas');
 var wave = Sono.utils.waveform(sound.data, canvasEl.width);
 var canvas = wave.getCanvas(canvasEl.height, '#333333', '#DDDDDD', canvasEl);
-
 ```
 
 Clone an AudioBuffer
