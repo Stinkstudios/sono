@@ -1,7 +1,7 @@
 'use strict';
 
-var Loader = require('./lib/loader.js'),
-    NodeManager = require('./lib/node-manager.js'),
+var Effect = require('./lib/effect.js'),
+    Loader = require('./lib/loader.js'),
     Sound = require('./lib/sound.js'),
     Support = require('./lib/support.js'),
     Utils = require('./lib/utils.js');
@@ -13,11 +13,11 @@ function Sono() {
     this._context = window.AudioContext ? new window.AudioContext() : null;
     Utils.setContext(this._context);
 
-    this._node = new NodeManager(this._context);
-    this._masterGain = this._node.gain();
+    this._effect = new Effect(this._context);
+    this._masterGain = this._effect.gain();
     if(this._context) {
-        this._node.setSource(this._masterGain);
-        this._node.setDestination(this._context.destination);
+        this._effect.setSource(this._masterGain);
+        this._effect.setDestination(this._context.destination);
     }
 
     this._sounds = [];
@@ -346,15 +346,21 @@ Object.defineProperty(Sono.prototype, 'canPlay', {
     }
 });
 
-Object.defineProperty(Sono.prototype, 'extensions', {
-    get: function() {
-        return Support.extensions;
-    }
-});
-
 Object.defineProperty(Sono.prototype, 'context', {
     get: function() {
         return this._context;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'effect', {
+    get: function() {
+        return this._effect;
+    }
+});
+
+Object.defineProperty(Sono.prototype, 'extensions', {
+    get: function() {
+        return Support.extensions;
     }
 });
 
@@ -373,12 +379,6 @@ Object.defineProperty(Sono.prototype, 'isSupported', {
 Object.defineProperty(Sono.prototype, 'masterGain', {
     get: function() {
         return this._masterGain;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'node', {
-    get: function() {
-        return this._node;
     }
 });
 

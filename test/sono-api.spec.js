@@ -114,11 +114,11 @@ describe('Sono API', function() {
     });
 
     describe('node', function() {
-        it('should have node module', function() {
-            expect(Sono.node).to.be.an('object');
+        it('should have effect module', function() {
+            expect(Sono.effect).to.be.an('object');
         });
-        it('should have get node', function() {
-            var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'node');
+        it('should have get effect', function() {
+            var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'effect');
             expect(desc.get).to.be.a('function');
             expect(desc.set).to.not.exist;
         });

@@ -28,14 +28,6 @@ function Saturation(context) {
     waveShaper.curve = curve(0.5);
     */
 
-    function update(value) {
-        saturation = value;
-
-        waveShaper.amount = value;
-
-        drive.gain.value = 1 - value * 0.8;
-    }
-
     highpass.type = 'highpass';
     highpass.frequency.value = 100;
     lowpass.type = 'lowpass';

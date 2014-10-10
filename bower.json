@@ -5,7 +5,7 @@
   "authors": [
     "Ian McGregor <ian@stinkdigital.com>"
   ],
-  "description": "A JavaScript library for working with audio. WebAudio API with fallback to HTMLMediaElement.",
+  "description": "A JavaScript library for working with audio",
   "main": "dist/sono.js",
   "moduleType": [
     "node",

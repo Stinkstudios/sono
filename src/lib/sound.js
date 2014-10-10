@@ -1,9 +1,9 @@
 'use strict';
 
 var BufferSource = require('./source/buffer-source.js'),
+    Effect = require('./effect.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
-    NodeManager = require('./node-manager.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
     ScriptSource = require('./source/script-source.js'),
     Utils = require('./utils.js');
@@ -19,10 +19,10 @@ function Sound(context, destination) {
     this._source = null;
     this._startedAt = 0;
 
-    this._node = new NodeManager(this._context);
-    this._gain = this._node.gain();
+    this._effect = new Effect(this._context);
+    this._gain = this._effect.gain();
     if(this._context) {
-        this._node.setDestination(this._gain);
+        this._effect.setDestination(this._gain);
         this._gain.connect(destination || this._context.destination);
     }
 }
@@ -50,7 +50,7 @@ Sound.prototype.setData = function(data) {
         throw new Error('Cannot detect data type: ' + data);
     }
 
-    this._node.setSource(this._source.sourceNode);
+    this._effect.setSource(this._source.sourceNode);
 
     if(typeof this._source.onEnded === 'function') {
         this._source.onEnded(this._endedHandler, this);
@@ -72,7 +72,7 @@ Sound.prototype.play = function(delay, offset) {
         this._playWhenReady = true;
         return this;
     }
-    this._node.setSource(this._source.sourceNode);
+    this._effect.setSource(this._source.sourceNode);
     this._source.loop = this._loop;
 
     // update volume needed for no webaudio
@@ -173,9 +173,9 @@ Object.defineProperty(Sound.prototype, 'loop', {
     }
 });
 
-Object.defineProperty(Sound.prototype, 'node', {
+Object.defineProperty(Sound.prototype, 'effect', {
     get: function() {
-        return this._node;
+        return this._effect;
     }
 });
 

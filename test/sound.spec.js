@@ -31,12 +31,12 @@ describe('Sound', function() {
         expect(sound.paused).to.be.a('boolean');
     });
 
-    it('should have expected members (nodes)', function() {
-        expect(sound.node).to.be.an('object');
-        expect(sound.node.setSource).to.be.a('function');
-        expect(sound.node.setDestination).to.be.a('function');
-        expect(sound.node.add).to.be.a('function');
-        expect(sound.node.remove).to.be.a('function');
+    it('should have expected members (effects)', function() {
+        expect(sound.effect).to.be.an('object');
+        expect(sound.effect.setSource).to.be.a('function');
+        expect(sound.effect.setDestination).to.be.a('function');
+        expect(sound.effect.add).to.be.a('function');
+        expect(sound.effect.remove).to.be.a('function');
     });
 
     it('should have chainable methods', function() {
