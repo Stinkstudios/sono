@@ -1,10 +1,10 @@
 'use strict';
 
 var Effect = require('./lib/effect.js'),
-    Loader = require('./lib/loader.js'),
+    Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
-    Support = require('./lib/support.js'),
-    Utils = require('./lib/utils.js');
+    Support = require('./lib/utils/support.js'),
+    Utils = require('./lib/utils/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.0';
@@ -245,11 +245,12 @@ Sono.prototype._handleTouchlock = function() {
  */
 
 Sono.prototype._handlePageVisibility = function() {
-    var pageHiddenPaused = [];
+    var pageHiddenPaused = [],
+        sounds = this._sounds;
 
     // pause currently playing sounds and store refs
     function onHidden() {
-        this._sounds.forEach(function(sound) {
+        sounds.forEach(function(sound) {
             if(sound.playing) {
                 sound.pause();
                 pageHiddenPaused.push(sound);

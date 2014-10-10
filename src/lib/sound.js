@@ -6,7 +6,7 @@ var BufferSource = require('./source/buffer-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
     ScriptSource = require('./source/script-source.js'),
-    Utils = require('./utils.js');
+    Utils = require('./utils/utils.js');
 
 function Sound(context, destination) {
     this.id = '';
