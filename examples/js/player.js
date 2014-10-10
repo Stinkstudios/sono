@@ -64,7 +64,7 @@ function Player(sound, el) {
         sound.volume = this.value / 100;
     });
 
-    var panner = sound.node.panner();
+    var panner = sound.effect.panner();
 
     // pan slider
     panSlider.addEventListener('change', function() {

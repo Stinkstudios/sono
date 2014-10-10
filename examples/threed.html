@@ -23,7 +23,7 @@
                 sound.loop = true;
                 
                 // add a panner node
-                var pan = sound.node.panner();
+                var pan = sound.effect.panner();
 
                 pan.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
                 pan.refDistance = 1;

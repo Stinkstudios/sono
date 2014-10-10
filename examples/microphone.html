@@ -25,8 +25,8 @@
 
             var onConnect = function(stream) {
                 sound = Sono.createSound(stream);
-                sound.node.delay(sound.gain, 1, 0.5);
-                var analyser = sound.node.analyser(2048);
+                sound.effect.delay(sound.gain, 1, 0.5);
+                var analyser = sound.effect.analyser(2048);
                 analyser.maxDecibels = -60;
                 var waveform = document.querySelector('.js-waveform');
                 new AnalyserDisplay(analyser, waveform);

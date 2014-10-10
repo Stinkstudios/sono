@@ -36,10 +36,10 @@
 
             var onConnect = function(stream) {
                 sound = Sono.createSound(stream);
-                analyser = sound.node.analyser(2048);
+                analyser = sound.effect.analyser(2048);
                 analyser.maxDecibels = -60;
                 context = canvas.getContext('2d');
-                recorder = sound.node.recorder(false);
+                recorder = sound.effect.recorder(false);
                 update();
 
                 recorder.start();

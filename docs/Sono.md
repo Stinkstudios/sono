@@ -293,7 +293,7 @@ Sono.log(); // Sono 0.0.0 Supported:true WebAudioAPI:true TouchLocked:false Exte
 `Sono.hasWebAudio` returns boolean  
 `Sono.isSupported` returns boolean  
 `Sono.masterGain` returns GainNode  
-`Sono.node` returns NodeManager  
+`Sono.effect` returns Effect  
 `Sono.sounds` returns Array  
 `Sono.utils` returns Utils  
 
@@ -342,30 +342,30 @@ Add an AudioNode
 
 Remove an AudioNode
 
->`Sono.node.remove(node)` returns AudioNode  
-`Sound.node.remove(node)` returns AudioNode
+>`Sono.effect.remove(node)` returns AudioNode  
+`Sound.effect.remove(node)` returns AudioNode
 
 Remove all AudioNodes
 
->`Sono.node.removeAll()`  
-`Sound.node.removeAll()`
+>`Sono.effect.removeAll()`  
+`Sound.effect.removeAll()`
 
 #### Examples
 
 ```javascript
-var echo = sound.node.echo(2, 0.5);
-sound.node.remove(echo);
-sound.node.add(echo);
-sound.node.distortion(0.5);
-sound.node.removeAll();
+var echo = sound.effect.echo(2, 0.5);
+sound.effect.remove(echo);
+sound.effect.add(echo);
+sound.effect.distortion(0.5);
+sound.effect.removeAll();
 ```
 
 ## analyser
 
 Create an AnalyserNode and add to chain
 
->`Sono.node.analyser(fftSize)`  
-`Sound.node.analyser(fftSize)`
+>`Sono.effect.analyser(fftSize)`  
+`Sound.effect.analyser(fftSize)`
 
 [View source code](../src/lib/node-manager.js)
 
@@ -374,7 +374,7 @@ Create an AnalyserNode and add to chain
 ```javascript
 var video = document.querySelector('video');
 var sound = Sono.createSound(video);
-var analyser = sound.node.analyser(2048);
+var analyser = sound.effect.analyser(2048);
 
 function draw() {
 	window.requestAnimationFrame(draw);
@@ -398,15 +398,15 @@ draw();
 
 Apply compression processing (lowers the volume of the loudest parts of the signal and raises the volume of the softest parts)
 
->`Sono.node.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
->`Sound.node.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
+>`Sono.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
+>`Sound.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
 
 [View source code](../src/lib/node-manager.js)
 
 #### Examples
 
 ```javascript
-var compressor = Sono.node.compressor();
+var compressor = Sono.effect.compressor();
 // min decibels to start compressing at from -100 to 0
 compressor.threshold.value = -24;
 // decibel value to start curve to compressed value from 0 to 40
@@ -425,15 +425,15 @@ compressor.release.value = 0.25;
 
 Create a reverb effect by passing an audio buffer of a pre-recorded reverb impulse
 
->`Sono.node.convolver(impulseResponse)` returns Convolver  
->`Sound.node.convolver(impulseResponse)` returns Convolver  
+>`Sono.effect.convolver(impulseResponse)` returns Convolver  
+>`Sound.effect.convolver(impulseResponse)` returns Convolver  
 
 [View source code](../src/lib/node-manager.js)
 
 #### Examples
 
 ```javascript
-var reverb = Sono.node.convolver();
+var reverb = Sono.effect.convolver();
 var applyImpulse = function(sound) {
 	reverb.buffer = sound.data;
 };
@@ -444,23 +444,23 @@ Sono.load(['impulse.ogg', 'impulse.mp3'], applyImpulse);
 
 Delay the sound playback
 
->`Sono.node.delay(time)` returns Delay  
->`Sound.node.delay(time)` returns Delay  
+>`Sono.effect.delay(time)` returns Delay  
+>`Sound.effect.delay(time)` returns Delay  
 
 [View source code](../src/lib/node-manager.js)
 
 #### Examples
 
 ```javascript
-var delay = sound.node.delay(1);
+var delay = sound.effect.delay(1);
 ```
 
 ## distortion
 
 Create a distortion effect
 
->`Sono.node.distortion(amount)` returns Distortion  
->`Sono.node.distortion(amount)` returns Distortion  
+>`Sono.effect.distortion(amount)` returns Distortion  
+>`Sono.effect.distortion(amount)` returns Distortion  
 
 [View source code](../src/lib/node/distortion.js)
 
@@ -468,7 +468,7 @@ Create a distortion effect
 #### Examples
 
 ```javascript
-var distortion = sound.node.distortion(0.5);
+var distortion = sound.effect.distortion(0.5);
 // update the amount of distortion:
 distortion.update(0.8); // [0,1]
 ```
@@ -477,15 +477,15 @@ distortion.update(0.8); // [0,1]
 
 Create a repeating echo or delay effect
 
->`Sono.node.echo(delayTime, gainValue)` returns Echo  
-`sound.node.echo(delayTime, gainValue)` returns Echo  
+>`Sono.effect.echo(delayTime, gainValue)` returns Echo  
+`sound.effect.echo(delayTime, gainValue)` returns Echo  
 
 [View source code](../src/lib/node/echo.js)
 
 #### Examples
 
 ```javascript
-var echo = sound.node.echo(2, 0.5);
+var echo = sound.effect.echo(2, 0.5);
 echo.update(3, 0.5); // [seconds, gain]
 ```
 
@@ -493,25 +493,25 @@ echo.update(3, 0.5); // [seconds, gain]
 
 Create a filter effect
 
->`Sono.node.filter(type, frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.lowpass(frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.highpass(frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.bandpass(frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.lowshelf(frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.highshelf(frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.peaking(frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.notch(frequency, quality, gain)` returns BiquadFilter  
-`Sono.node.allpass(frequency, quality, gain)` returns BiquadFilter  
+>`Sono.effect.filter(type, frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.lowpass(frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.highpass(frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.bandpass(frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.lowshelf(frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.highshelf(frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.peaking(frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.notch(frequency, quality, gain)` returns BiquadFilter  
+`Sono.effect.allpass(frequency, quality, gain)` returns BiquadFilter  
 
->`Sound.node.filter(type, frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.lowpass(frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.highpass(frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.bandpass(frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.lowshelf(frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.highshelf(frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.peaking(frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.notch(frequency, quality, gain)` returns BiquadFilter  
-`Sound.node.allpass(frequency, quality, gain)` returns BiquadFilter  
+>`Sound.effect.filter(type, frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.lowpass(frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.highpass(frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.bandpass(frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.lowshelf(frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.highshelf(frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.peaking(frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.notch(frequency, quality, gain)` returns BiquadFilter  
+`Sound.effect.allpass(frequency, quality, gain)` returns BiquadFilter  
 
 Update the filter node
 
@@ -523,7 +523,7 @@ Update the filter node
 #### Examples
 
 ```javascript
-var lowpass = sound.node.lowpass(800);
+var lowpass = sound.effect.lowpass(800);
 lowpass.frequency.value = 600;
 lowpass.gain.value = 600;
 lowpass.setByPercent(0.5);
@@ -532,14 +532,14 @@ lowpass.update(600, 1);
 
 ## gain
 
->`Sono.node.gain(value)` returns Gain  
+>`Sono.effect.gain(value)` returns Gain  
 
 [View source code](../src/lib/node-manager.js)
 
 #### Examples
 
 ```javascript
-var gain = Sono.node.gain();
+var gain = Sono.effect.gain();
 gain.gain.value = 0.5;
 ```
 
@@ -547,8 +547,8 @@ gain.gain.value = 0.5;
 
 Create a panner node
 
->`Sono.node.panner()` returns Panner  
-`sound.node.panner()` returns Panner  
+>`Sono.effect.panner()` returns Panner  
+`sound.effect.panner()` returns Panner  
 
 Update the panner node
 
@@ -563,10 +563,10 @@ Update the panner node
 
 Modify global values for panning
 
->`Sono.node.panning.setDefaults(object)`  
-`Sono.node.panning.setListenerPosition(x, y, z)`  
-`Sono.node.panning.setListenerOrientation(x, y, z)`  
-`Sono.node.panning.setListenerVelocity(x, y, z)`  
+>`Sono.effect.panning.setDefaults(object)`  
+`Sono.effect.panning.setListenerPosition(x, y, z)`  
+`Sono.effect.panning.setListenerOrientation(x, y, z)`  
+`Sono.effect.panning.setListenerVelocity(x, y, z)`  
 
 [View source code](../src/lib/node/panner.js)
 
@@ -574,7 +574,7 @@ Modify global values for panning
 
 ```javascript
 // create a panner for a sound
-var panner = sound.node.panner();
+var panner = sound.effect.panner();
 // pan full left
 panner.setX(-1);
 // update the 3d position (accepts xyz or a 3d vector)
@@ -585,7 +585,7 @@ panner.setSourceOrientation(x, y, z);
 panner.setSourceOrientation(vec3);
 
 // set defaults for all subsequent panner nodes:
-Sono.node.panning.setDefaults({
+Sono.effect.panning.setDefaults({
     distanceModel: 'linear',
     refDistance: 1,
     maxDistance: 1000,
@@ -593,20 +593,20 @@ Sono.node.panning.setDefaults({
 });
 
 // update global listener position and orientation to 3d camera Vectors
-Sono.node.panning.setListenerOrientation(camera.forward);
-Sono.node.panning.setListenerPosition(camera.position);
+Sono.effect.panning.setListenerOrientation(camera.forward);
+Sono.effect.panning.setListenerPosition(camera.position);
 ```
 
 ## phaser
 
->`Sono.node.phaser()` returns Phaser  
+>`Sono.effect.phaser()` returns Phaser  
 
 [View source code](../src/lib/node/phaser.js)
 
 #### Examples
 
 ```javascript
-var phaser = Sono.node.phaser({
+var phaser = Sono.effect.phaser({
 	stages: 4,
 	frequency: 0.5,
 	gain: 300,
@@ -618,8 +618,8 @@ var phaser = Sono.node.phaser({
 
 Record audio from the mix or microphone to a new audio buffer
 
->`Sono.node.recorder(passThrough)` returns Recorder  
-`Sound.node.recorder(passThrough)` returns Recorder  
+>`Sono.effect.recorder(passThrough)` returns Recorder  
+`Sound.effect.recorder(passThrough)` returns Recorder  
 
 Controls
 
@@ -640,7 +640,7 @@ var onMicConnected = function(stream) {
 	var micSound = Sono.createSound(stream);
 	// add recorder, setting passThrough to false
 	// to avoid feedback loop between mic and speakers
-	recorder = micSound.node.recorder(false);
+	recorder = micSound.effect.recorder(false);
 	recorder.start();
 };
 
@@ -656,21 +656,21 @@ mic.connect();
 
 ## reverb
 
->`Sono.node.reverb(seconds, decay, reverse)` returns Reverb  
+>`Sono.effect.reverb(seconds, decay, reverse)` returns Reverb  
 
 [View source code](../src/lib/node/reverb.js)
 
 #### Examples
 
 ```javascript
-var reverb = Sono.node.reverb(2, 0.5);
+var reverb = Sono.effect.reverb(2, 0.5);
 // change the time and decay
 reverb.update(2, 0.5);
 ```
 
 ## scriptProcessor
 
->`Sono.node.scriptProcessor(config)` returns ScriptProcessor  
+>`Sono.effect.scriptProcessor(config)` returns ScriptProcessor  
 
 [View source code](../src/lib/node-manager.js)
 
@@ -679,7 +679,7 @@ reverb.update(2, 0.5);
 White noise
 
 ```javascript
-var script = Sono.node.scriptProcessor({
+var script = Sono.effect.scriptProcessor({
 	bufferSize: 1024,
 	channels: 1,
 	callback: function(event) {

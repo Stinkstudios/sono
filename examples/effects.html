@@ -34,20 +34,19 @@
             new Player(sound, document.querySelector('[data-js="player"]'));
 
             var effects = {
-                Phaser: sound.node.phaser({
+                Phaser: sound.effect.phaser({
                     stereo: true
                 }),
-                Flanger: sound.node.flanger(),
-                Echo: sound.node.echo(0.5, 0.15),
-                Saturation: sound.node.saturation(),
-                ADT: sound.node.adt()
+                Flanger: sound.effect.flanger(),
+                Echo: sound.effect.echo(0.5, 0.15),
+                Saturation: sound.effect.saturation()
             };
 
             var controls = document.querySelector('[data-js="controls"]');
             var buttons = document.querySelector('[data-js="buttons"]');
 
             Object.keys(effects).forEach(function(key) {
-                sound.node.remove(effects[key]);
+                sound.effect.remove(effects[key]);
 
                 var button = document.createElement('button');
                 button.className = 'Player-button';
@@ -66,7 +65,7 @@
 
             var removeEffects = function() {
                 Object.keys(effects).forEach(function(key) {
-                    sound.node.remove(effects[key]);
+                    sound.effect.remove(effects[key]);
                 });
             };
             removeEffects();
@@ -75,7 +74,7 @@
                 removeEffects();
 
                 if(effect) {
-                    sound.node.add(effects[effect]);
+                    sound.effect.add(effects[effect]);
                 }
 
                 var refs = document.querySelectorAll('[data-ref]');
@@ -186,35 +185,6 @@
                         max: 0.99,
                         step: 0.001,
                         prop: 'feedback'
-                    }
-                ]
-            });
-
-            // adt
-
-            createControls({
-                effect: 'ADT',
-                params: [
-                    {
-                        label: 'Delay',
-                        min: 0.005,
-                        max: 0.05,
-                        step: 0.001,
-                        prop: 'delay'
-                    },
-                    {
-                        label: 'LFO gain',
-                        min: 0.0005,
-                        max: 0.005,
-                        step: 0.00025,
-                        prop: 'lfoGain'
-                    },
-                    {
-                        label: 'LFO frequency',
-                        min: 0.05,
-                        max: 5.0,
-                        step: 0.05,
-                        prop: 'lfoFrequency'
                     }
                 ]
             });

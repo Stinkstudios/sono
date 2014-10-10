@@ -67,8 +67,8 @@
                 console.log(progress);
             });*/
             //this.sound.loop = true;
-            //this.sound.node.reverb(0.2, 0.5);
-            //Sono.node.delay(soundA._gain, 0.5, 0.5);
+            //this.sound.effect.reverb(0.2, 0.5);
+            //Sono.effect.delay(soundA._gain, 0.5, 0.5);
 
             /*var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], function(sound) {
                 new Player(sound, '.js-playerB');
@@ -99,9 +99,9 @@
                     new Player(a, document.querySelector('.js-playerA'));
                     //new Player(b, document.querySelector('.js-playerB'));
 
-                    //var delay = a.node.echo(0.2, 0.5);
-                    a.node.echo();
-                    //b.node.phaser();
+                    //var delay = a.effect.echo(0.2, 0.5);
+                    a.effect.echo();
+                    //b.effect.phaser();
 
                 },
                 onProgress: function(progress) {

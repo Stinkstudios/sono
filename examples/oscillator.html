@@ -39,9 +39,9 @@
 
             var sineWave = Sono.createSound('sine');
 
-            var distort = sineWave.node.distortion();
+            var distort = sineWave.effect.distortion();
 
-            var analyser = sineWave.node.analyser(2048);
+            var analyser = sineWave.effect.analyser(2048);
 
             var waveform = document.querySelector('.js-waveform-back'),
                 info = document.querySelector('.Player-info');

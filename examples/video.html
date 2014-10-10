@@ -33,9 +33,9 @@
             function initSound() {
                 var sound = Sono.createSound(video);
 
-                var reverb = sound.node.reverb(5, 2);
+                var reverb = sound.effect.reverb(5, 2);
 
-                var analyser = sound.node.analyser(2048);
+                var analyser = sound.effect.analyser(2048);
 
                 var waveform = document.querySelector('.js-waveform');
 

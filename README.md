@@ -81,14 +81,14 @@ var sounds = Sono.load({
 
 ### Adding effects
 
-Effect and processing nodes can be chained to individual sounds or to the overall mix, via Sono.node or sound.node.
+Effect and processing nodes can be chained to individual sounds or to the overall mix, via Sono.effect or sound.effect.
 
 Sono extends native Web Audio nodes to add capabilities and make them easy to work with.
 
 For example, apply a reverb effect to all sounds:
 
 ```javascript
-var reverb = Sono.node.reverb(2, 0.5);
+var reverb = Sono.effect.reverb(2, 0.5);
 // change the time and decay
 reverb.update(2, 0.5);
 ```
@@ -97,7 +97,7 @@ Or apply an echo effect to a specific sound:
 
 ```javascript
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
-var echo = sound.node.echo(0.8, 0.5);
+var echo = sound.effect.echo(0.8, 0.5);
 // change the delay time and feedback amount:
 echo.delay = 0.5;
 echo.feedback = 0.9;
