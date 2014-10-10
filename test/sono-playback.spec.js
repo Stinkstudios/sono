@@ -65,4 +65,27 @@ describe('Sono playback', function() {
         });
     });
 
+    describe('play when ready', function() {
+        var sound,
+            ended = false;
+
+        beforeEach(function(done) {
+            sound = Sono.createSound({
+                url: [baseURL + 'select.ogg', baseURL + 'select.mp3']
+            }).onEnded(function() {
+                ended = true;
+                done();
+            }).play(0.1, 0.1);
+        });
+
+        afterEach(function() {
+            Sono.destroySound(sound);
+        });
+
+        it('should have played', function(){
+            expect(sound).to.exist;
+            expect(ended).to.be.true;
+        });
+    });
+
 });

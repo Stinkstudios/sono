@@ -48,7 +48,7 @@ Sono.prototype.createSound = function(config) {
     // otherwise just return a new sound object
     var sound = new Sound(this._context, this._masterGain);
     if(config) {
-        sound.setData(config.data || config);
+        sound.data = config.data || config;
         sound.id = config.id || '';
         sound.loop = !!config.loop;
         sound.volume = config.volume;
@@ -148,7 +148,7 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
     loader.audioContext = asMediaElement ? null : this._context;
     loader.isTouchLocked = this._isTouchLocked;
     loader.onBeforeComplete.addOnce(function(data) {
-        sound.setData(data);
+        sound.data = data;
     });
     // keep a ref so can call sound.loader.cancel()
     sound.loader = loader;

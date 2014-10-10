@@ -15,7 +15,7 @@ function Sound(context, destination) {
     this._endedCallback = null;
     this._loop = false;
     this._pausedAt = 0;
-    this._playWhenReady = false;
+    this._playWhenReady = null;
     this._source = null;
     this._startedAt = 0;
 
@@ -27,49 +27,15 @@ function Sound(context, destination) {
     }
 }
 
-Sound.prototype.setData = function(data) {
-    if(!data) { return this; }
-    this._data = data; // AudioBuffer, MediaElement, etc
-
-    if(Utils.isAudioBuffer(data)) {
-        this._source = new BufferSource(data, this._context);
-    }
-    else if(Utils.isMediaElement(data)) {
-        this._source = new MediaSource(data, this._context);
-    }
-    else if(Utils.isMediaStream(data)) {
-        this._source = new MicrophoneSource(data, this._context);
-    }
-    else if(Utils.isOscillatorType(data)) {
-        this._source = new OscillatorSource(data, this._context);
-    }
-    else if(Utils.isScriptConfig(data)) {
-        this._source = new ScriptSource(data, this._context);
-    }
-    else {
-        throw new Error('Cannot detect data type: ' + data);
-    }
-
-    this._effect.setSource(this._source.sourceNode);
-
-    if(typeof this._source.onEnded === 'function') {
-        this._source.onEnded(this._endedHandler, this);
-    }
-
-    // should this take account of delay and offset?
-    if(this._playWhenReady) {
-        this.play();
-    }
-    return this;
-};
-
 /*
  * Controls
  */
 
 Sound.prototype.play = function(delay, offset) {
     if(!this._source) {
-        this._playWhenReady = true;
+        this._playWhenReady = function() {
+            this.play(delay, offset);
+        }.bind(this);
         return this;
     }
     this._effect.setSource(this._source.sourceNode);
@@ -118,6 +84,43 @@ Sound.prototype._endedHandler = function() {
 };
 
 /*
+ * Create source
+ */
+
+Sound.prototype._createSource = function(data) {
+    if(Utils.isAudioBuffer(data)) {
+        this._source = new BufferSource(data, this._context);
+    }
+    else if(Utils.isMediaElement(data)) {
+        this._source = new MediaSource(data, this._context);
+    }
+    else if(Utils.isMediaStream(data)) {
+        this._source = new MicrophoneSource(data, this._context);
+    }
+    else if(Utils.isOscillatorType(data)) {
+        this._source = new OscillatorSource(data, this._context);
+    }
+    else if(Utils.isScriptConfig(data)) {
+        this._source = new ScriptSource(data, this._context);
+    }
+    else {
+        throw new Error('Cannot detect data type: ' + data);
+    }
+
+    this._effect.setSource(this._source.sourceNode);
+
+    if(typeof this._source.onEnded === 'function') {
+        this._source.onEnded(this._endedHandler, this);
+    }
+
+    // should this take account of delay and offset?
+    if(this._playWhenReady) {
+        this._playWhenReady();
+        this._playWhenReady = null;
+    }
+};
+
+/*
  * Getters & Setters
  */
 
@@ -140,6 +143,11 @@ Object.defineProperty(Sound.prototype, 'currentTime', {
 Object.defineProperty(Sound.prototype, 'data', {
     get: function() {
         return this._data;
+    },
+    set : function(value) {
+        if(!value) { return; }
+        this._data = value;
+        this._createSource(this._data);
     }
 });
 
