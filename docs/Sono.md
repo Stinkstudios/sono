@@ -734,13 +734,24 @@ var timeCode = Sono.utils.timeCode(217.8); // '03:37'
 Get a sound's waveform and draw it to a canvas element
 
 ```javascript
-var wave = Sono.utils.waveform(sound.data, width);
-var canvas = wave.getCanvas(height, '#333333', '#DDDDDD');
+var wave = Sono.utils.waveform();
+var canvas = wave.draw({
+    sound: sound,
+    width: 200,
+    height: 100,
+    color: '#333333',
+    bgColor: '#DDDDDD'
+});
 
 // or supply your own canvas el:
 var canvasEl = document.querySelector('canvas');
-var wave = Sono.utils.waveform(sound.data, canvasEl.width);
-var canvas = wave.getCanvas(canvasEl.height, '#333333', '#DDDDDD', canvasEl);
+var wave = Sono.utils.waveform();
+wave.draw({
+    sound: sound,
+    canvas: canvas,
+    color: '#333333',
+    bgColor: '#DDDDDD'
+});
 ```
 
 Clone an AudioBuffer

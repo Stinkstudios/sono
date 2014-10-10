@@ -111,9 +111,14 @@ echo.feedback = 0.9;
 Get a sound's waveform as a canvas element
 
 ```javascript
-var wave = Sono.utils.waveform(sound.data, width);
-var canvas = wave.getCanvas(height, '#333333', '#DDDDDD');
-
+var wave = Sono.utils.waveform();
+var canvas = wave.draw({
+    sound: sound,
+    width: 200,
+    height: 100,
+    color: '#333333',
+    bgColor: '#DDDDDD'
+});
 ```
 
 Crossfade two sounds

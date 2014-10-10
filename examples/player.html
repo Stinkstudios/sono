@@ -105,10 +105,20 @@
 
                 // waveform display
                 function displayWaveform() {
-                    var wave = Sono.utils.waveform(sound.data, waveformBack.width);
-                    var height = waveformBack.height;
-                    wave.getCanvas(height, '#333333', '#dddddd', waveformBack);
-                    wave.getCanvas(height, '#dddddd', '#333333', waveformFront);
+                    var wave = Sono.utils.waveform();
+                    wave.draw({
+                        canvas: waveformBack,
+                        buffer: sound.data,
+                        color: '#333333',
+                        bgColor: '#dddddd'
+                    });
+                    
+                    wave.draw({
+                        canvas: waveformFront,
+                        buffer: sound.data,
+                        color: '#dddddd',
+                        bgColor: '#333333'
+                    });
                 }
                 if(sound.data) {
                     displayWaveform();

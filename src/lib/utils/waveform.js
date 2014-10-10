@@ -1,14 +1,17 @@
 'use strict';
 
-function Waveform(buffer, length) {
-    this.data = this.getData(buffer, length);
-}
+function Waveform() {
 
-Waveform.prototype = {
-    getData: function(buffer, length) {
-        if(!window.Float32Array || !window.AudioBuffer) {
-            return [];
-        }
+    var audioBuffer,
+        waveformData;
+
+    var compute = function(buffer, length) {
+        if(!window.Float32Array || !window.AudioBuffer) { return []; }
+
+        var sameBuffer = buffer === audioBuffer;
+        var sameLength = waveformData && waveformData.length === length;
+        if(sameBuffer && sameLength) { return waveformData; }
+        
         //console.log('-------------------');
         //console.time('waveformData');
         var waveform = new Float32Array(length),
@@ -49,31 +52,44 @@ Waveform.prototype = {
             waveform[i] *= scale;
         }
         //console.timeEnd('waveformData');
+
+        // cache for repeated calls
+        audioBuffer = buffer;
+        waveformData = waveform;
+
         return waveform;
-    },
-    getCanvas: function(height, color, bgColor, canvasEl) {
-    //waveform: function(arr, width, height, color, bgColor, canvasEl) {
-        //var arr = this.waveformData(buffer, width);
-        var canvas = canvasEl || document.createElement('canvas');
-        var width = canvas.width = this.data.length;
-        canvas.height = height;
+    };
+
+    var draw = function(config) {
+        var x, y;
+        var canvas = config.canvas || document.createElement('canvas');
+        var width = config.width || canvas.width;
+        var height = config.height || canvas.height;
+        var color = config.color || '#333333';
+        var bgColor = config.bgColor || '#dddddd';
+        var buffer = config.sound ? config.sound.data : config.buffer || audioBuffer;
+        var data = this.compute(buffer, width);
+
         var context = canvas.getContext('2d');
         context.strokeStyle = color;
         context.fillStyle = bgColor;
         context.fillRect(0, 0, width, height);
-        var x, y;
-        //console.time('waveformCanvas');
         context.beginPath();
-        for (var i = 0, l = this.data.length; i < l; i++) {
+        for (var i = 0; i < data.length; i++) {
             x = i + 0.5;
-            y = height - Math.round(height * this.data[i]);
+            y = height - Math.round(height * data[i]);
             context.moveTo(x, y);
             context.lineTo(x, height);
         }
         context.stroke();
-        //console.timeEnd('waveformCanvas');
+
         return canvas;
-    }
-};
+    };
+    
+    return Object.freeze({
+        compute: compute,
+        draw: draw
+    });
+}
 
 module.exports = Waveform;
