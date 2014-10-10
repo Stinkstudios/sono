@@ -670,7 +670,7 @@ reverb.update(2, 0.5);
 
 ## scriptProcessor
 
->`Sono.node.scriptProcessor(bufferSize, inputChannels, outputChannels, callback, thisArg)` returns ScriptProcessor  
+>`Sono.node.scriptProcessor(config)` returns ScriptProcessor  
 
 [View source code](../src/lib/node-manager.js)
 
@@ -679,7 +679,7 @@ reverb.update(2, 0.5);
 White noise
 
 ```javascript
-var script = Sono.createSound({
+var script = Sono.node.scriptProcessor({
 	bufferSize: 1024,
 	channels: 1,
 	callback: function(event) {
