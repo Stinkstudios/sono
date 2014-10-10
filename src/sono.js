@@ -15,6 +15,7 @@ function Sono() {
 
     this._effect = new Effect(this._context);
     this._masterGain = this._effect.gain();
+
     if(this._context) {
         this._effect.setSource(this._masterGain);
         this._effect.setDestination(this._context.destination);
@@ -23,7 +24,7 @@ function Sono() {
     this._sounds = [];
 
     this._handleTouchlock();
-    this._handleVisibility();
+    this._handlePageVisibility();
 }
 
 /*
@@ -47,6 +48,7 @@ Sono.prototype.createSound = function(config) {
     }
     // otherwise just return a new sound object
     var sound = new Sound(this._context, this._masterGain);
+    sound.isTouchLocked = this._isTouchLocked;
     if(config) {
         sound.data = config.data || config;
         sound.id = config.id || '';
@@ -226,63 +228,28 @@ Sono.prototype.stop = function(id) {
  */
 
 Sono.prototype._handleTouchlock = function() {
-    var ua = navigator.userAgent,
-        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i),
-        self = this;
-
-    var unlock = function() {
-        document.body.removeEventListener('touchstart', unlock);
-        self._isTouchLocked = false;
-        self._sounds.forEach(function(sound) {
+    var onUnlock = function() {
+        this._isTouchLocked = false;
+        this._sounds.forEach(function(sound) {
+            sound.isTouchLocked = false;
             if(sound.loader) {
-                sound.loader.touchLocked = false;
+                sound.loader.isTouchLocked = false;
             }
         });
-
-        if(self.context) {
-            var buffer = self.context.createBuffer(1, 1, 22050);
-            var unlockSource = self.context.createBufferSource();
-            unlockSource.buffer = buffer;
-            unlockSource.connect(self.context.destination);
-            unlockSource.start(0);
-        }
     };
-    if(locked) {
-        document.body.addEventListener('touchstart', unlock, false);
-    }
-    this._isTouchLocked = locked;
+    this._isTouchLocked = Utils.handleTouchlock(onUnlock, this);
 };
 
 /*
  * Page visibility events
  */
 
-Sono.prototype._handleVisibility = function() {
-    var pageHiddenPaused = [],
-        sounds = this._sounds,
-        hidden,
-        visibilityChange;
-
-    if (typeof document.hidden !== 'undefined') {
-        hidden = 'hidden';
-        visibilityChange = 'visibilitychange';
-    }
-    else if (typeof document.mozHidden !== 'undefined') {
-        hidden = 'mozHidden';
-        visibilityChange = 'mozvisibilitychange';
-    }
-    else if (typeof document.msHidden !== 'undefined') {
-        hidden = 'msHidden';
-        visibilityChange = 'msvisibilitychange';
-    }
-    else if (typeof document.webkitHidden !== 'undefined') {
-        hidden = 'webkitHidden';
-        visibilityChange = 'webkitvisibilitychange';
-    }
+Sono.prototype._handlePageVisibility = function() {
+    var pageHiddenPaused = [];
 
     // pause currently playing sounds and store refs
     function onHidden() {
-        sounds.forEach(function(sound) {
+        this._sounds.forEach(function(sound) {
             if(sound.playing) {
                 sound.pause();
                 pageHiddenPaused.push(sound);
@@ -297,18 +264,7 @@ Sono.prototype._handleVisibility = function() {
         }
     }
 
-    function onChange() {
-        if (document[hidden]) {
-            onHidden();
-        }
-        else {
-            onShown();
-        }
-    }
-
-    if(visibilityChange !== undefined) {
-        document.addEventListener(visibilityChange, onChange, false);
-    }
+    Utils.handlePageVisibility(onHidden, onShown, this);
 };
 
 /*

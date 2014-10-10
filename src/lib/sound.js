@@ -13,6 +13,7 @@ function Sound(context, destination) {
     this._context = context;
     this._data = null;
     this._endedCallback = null;
+    this._isTouchLocked = false;
     this._loop = false;
     this._pausedAt = 0;
     this._playWhenReady = null;
@@ -32,12 +33,13 @@ function Sound(context, destination) {
  */
 
 Sound.prototype.play = function(delay, offset) {
-    if(!this._source) {
+    if(!this._source || this._isTouchLocked) {
         this._playWhenReady = function() {
             this.play(delay, offset);
         }.bind(this);
         return this;
     }
+    this._playWhenReady = null;
     this._effect.setSource(this._source.sourceNode);
     this._source.loop = this._loop;
 
@@ -113,10 +115,8 @@ Sound.prototype._createSource = function(data) {
         this._source.onEnded(this._endedHandler, this);
     }
 
-    // should this take account of delay and offset?
     if(this._playWhenReady) {
         this._playWhenReady();
-        this._playWhenReady = null;
     }
 };
 
@@ -166,6 +166,15 @@ Object.defineProperty(Sound.prototype, 'ended', {
 Object.defineProperty(Sound.prototype, 'gain', {
     get: function() {
         return this._gain;
+    }
+});
+
+Object.defineProperty(Sound.prototype, 'isTouchLocked', {
+    set: function(value) {
+        this._isTouchLocked = value;
+        if(!value && this._playWhenReady) {
+            this._playWhenReady();
+        }
     }
 });
 
