@@ -9,8 +9,7 @@ var Analyser = require('./effect/analyser.js'),
     Panner = require('./effect/panner.js'),
     Phaser = require('./effect/phaser.js'),
     Recorder = require('./effect/recorder.js'),
-    Reverb = require('./effect/reverb.js'),
-    Saturation = require('./effect/saturation.js');
+    Reverb = require('./effect/reverb.js');
 
 function Effect(context) {
     this._context = context || new FakeContext();
@@ -223,11 +222,6 @@ Effect.prototype.reverb = function(seconds, decay, reverse) {
     return this.add(node);
 };
 
-Effect.prototype.saturation = function() {
-    var node = new Saturation(this._context);
-    return this.add(node);
-};
-
 Effect.prototype.scriptProcessor = function(config) {
     config = config || {};
     // bufferSize 256 - 16384 (pow 2)
@@ -237,26 +231,25 @@ Effect.prototype.scriptProcessor = function(config) {
     
     var node = this._context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
     
-    var callback = config.callback || function() {};
     var thisArg = config.thisArg || config.context || node;
+    var callback = config.callback || function() {};
 
-    node.onaudioprocess = function (event) {
-        // available props:
-        /*
-        event.inputBuffer
-        event.outputBuffer
-        event.playbackTime
-        */
-        // Example: generate noise
-        /*
-        var output = event.outputBuffer.getChannelData(0);
-        var l = output.length;
-        for (var i = 0; i < l; i++) {
-            output[i] = Math.random();
-        }
-        */
-        callback.call(thisArg, event);
-    };
+    // available props:
+    /*
+    event.inputBuffer
+    event.outputBuffer
+    event.playbackTime
+    */
+    // Example: generate noise
+    /*
+    var output = event.outputBuffer.getChannelData(0);
+    var l = output.length;
+    for (var i = 0; i < l; i++) {
+        output[i] = Math.random();
+    }
+    */
+    node.onaudioprocess = callback.bind(thisArg);
+
     return this.add(node);
 };
 
