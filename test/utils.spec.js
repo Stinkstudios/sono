@@ -1,6 +1,6 @@
 'use strict';
 
-var Utils = require('../src/lib/utils.js');
+var Utils = require('../src/lib/utils/utils.js');
 
 describe('Support', function() {
 

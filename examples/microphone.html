@@ -41,43 +41,37 @@
                 document.body.appendChild(p);
             }
             
-
             function AnalyserDisplay(analyserNode, canvas) {
 
-                var context = canvas.getContext('2d');
+                var context = canvas.getContext('2d'),
+                    width = canvas.width,
+                    height = canvas.height,
+                    frequencyBinCount = analyserNode.frequencyBinCount,
+                    barWidth = Math.max(1, Math.round(width/frequencyBinCount)),
+                    frequencyData, waveformData, magnitude, percent, hue, i;
 
                 function draw() {
                     window.requestAnimationFrame(draw);
 
-                    var width = canvas.width,
-                        height = canvas.height,
-                        frequencyBinCount = analyserNode.frequencyBinCount,
-                        barWidth = Math.max(1, Math.round(width/frequencyBinCount));
+                    context.fillStyle = '#333333';
+                    context.fillRect(0, 0, width, height);
 
-                        context.fillStyle = '#333333';
-                        context.fillRect(0, 0, width, height);
+                    frequencyData = analyserNode.getFrequencies();
 
-
-                    var waveByteData = new Uint8Array(frequencyBinCount);
-
-                    var freqByteData = new Uint8Array(frequencyBinCount);
-                    
-                    analyserNode.getByteFrequencyData(freqByteData);
-
-                    for (var i = 0; i < frequencyBinCount; i++) {
-                        var magnitude = freqByteData[i];
-                        var percent = magnitude / 256;
-                        var hue = i/frequencyBinCount * 360;
+                    for (i = 0; i < frequencyData.length; i++) {
+                        magnitude = frequencyData[i];
+                        percent = magnitude / 256;
+                        hue = i/frequencyBinCount * 360;
                         context.fillStyle = 'hsl(' + hue + ', 100%, 30%)';
                         context.fillRect(barWidth * i, height, barWidth, 0 - height * percent);
                     }
 
-                    analyserNode.getByteTimeDomainData(waveByteData);
+                    waveformData = analyserNode.getWaveform();
 
-                    for (var i = 0; i < frequencyBinCount; i++) {
-                        var magnitude = waveByteData[i];
-                        var percent = magnitude / 256;
-                        var hue = i/frequencyBinCount * 360;
+                    for (i = 0; i < waveformData.length; i++) {
+                        magnitude = waveformData[i];
+                        percent = magnitude / 256;
+                        hue = i/frequencyBinCount * 360;
                         context.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
                         context.fillRect(barWidth * i, height - height * percent - 1, 2, 2);
                     }

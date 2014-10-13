@@ -1,6 +1,6 @@
 'use strict';
 
-var support = require('../src/lib/support.js');
+var support = require('../src/lib/utils/support.js');
 
 describe('Support', function() {
 
