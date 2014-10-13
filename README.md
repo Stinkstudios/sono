@@ -31,6 +31,17 @@ If you pass in an array of URLs, Sono will use the first one that matches the br
 var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 ```
 
+You can pass a configuration object:
+
+```javascript
+var sound = Sono.createSound({
+    id: 'foo',
+    url: ['audio/foo.ogg', 'audio/foo.mp3'],
+    volume: 0.5,
+    loop: true
+});
+```
+
 You can also supply media elements from the DOM:
 
 ```javascript

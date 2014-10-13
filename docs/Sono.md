@@ -8,7 +8,7 @@ Create a Sound object
 
 >`Sono.createSound(config)` returns Sound
 
-[View source code](../src/sono.js#L43-59)
+[View source code](../src/sono.js#L44-61)
 
 #### Examples
 
@@ -108,7 +108,7 @@ Remove a sound from Sono
 
 >`Sono.destroySound(soundOrId)`
 
-[View source code](../src/sono.js#L65-79)
+[View source code](../src/sono.js#L67-81)
 
 #### Examples
 
@@ -126,7 +126,7 @@ Sono.destroySound('bar');
 
 >`Sono.getSound(id)`
 
-[View source code](../src/sono.js#L85-L94)
+[View source code](../src/sono.js#L87-L96)
 
 #### Examples
 
@@ -145,7 +145,7 @@ Load a sound and add to Sono
 
 >`Sono.load(config)` returns Sound  
 
-[View source code](../src/sono.js#L100-138)
+[View source code](../src/sono.js#L102-140)
 
 #### Examples
 
@@ -245,7 +245,7 @@ var sound = Sono.load({
 `Sono.pause(id)`  
 `Sono.stop(id)`
 
-[View source code](../src/sono.js#L164-222)
+[View source code](../src/sono.js#L166-224)
 
 #### Examples
 
@@ -276,7 +276,7 @@ Sono.stop('foo');
 
 >`Sono.log()`
 
-[View source code](../src/sono.js#L318-337)
+[View source code](../src/sono.js#L275-294)
 
 #### Examples
 
@@ -297,7 +297,7 @@ Sono.log(); // Sono 0.0.0 Supported:true WebAudioAPI:true TouchLocked:false Exte
 `Sono.sounds` returns Array  
 `Sono.utils` returns Utils  
 
-[View source code](../src/sono.js#L343-395)
+[View source code](../src/sono.js#L300-352)
 
 #### Examples
 
@@ -331,24 +331,21 @@ Sono.sounds.forEach(function(sound) {
 
 ## Effects
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect.js)
 
-## add
+## add / remove
 
-Add an AudioNode
+Add and remove effects
 
 >`Sono.add(node)` returns AudioNode  
-`Sound.add(node)` returns AudioNode  
+`Sono.effect.remove(node)` returns AudioNode  
+`Sono.effect.removeAll()`  
 
-Remove an AudioNode
-
->`Sono.effect.remove(node)` returns AudioNode  
-`Sound.effect.remove(node)` returns AudioNode
-
-Remove all AudioNodes
-
->`Sono.effect.removeAll()`  
+>`Sound.add(node)` returns AudioNode  
+`Sound.effect.remove(node)` returns AudioNode  
 `Sound.effect.removeAll()`
+
+[View source code](../src/lib/effect.js#L22-50)
 
 #### Examples
 
@@ -367,7 +364,7 @@ Create an AnalyserNode and add to chain
 >`Sono.effect.analyser(fftSize)`  
 `Sound.effect.analyser(fftSize)`
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect/analyser.js)
 
 #### Examples
 
@@ -375,18 +372,24 @@ Create an AnalyserNode and add to chain
 var video = document.querySelector('video');
 var sound = Sono.createSound(video);
 var analyser = sound.effect.analyser(2048);
+var frequencies, waveform, magnitude, percent, i;
 
 function draw() {
 	window.requestAnimationFrame(draw);
 
-	var frequencyBinCount = analyserNode.frequencyBinCount;
-	var freqByteData = new Uint8Array(frequencyBinCount);
+	frequencies = analyser.getFrequencies();
 
-	analyser.getByteFrequencyData(freqByteData);
+	for (i = 0; i < frequencies.length; i++) {
+		magnitude = frequencies[i];
+		percent = magnitude / 256;
+		// draw some visualisation
+	}
 
-	for (var i = 0; i < frequencyBinCount; i++) {
-		var magnitude = freqByteData[i];
-		var percent = magnitude / 256;
+	waveform = analyser.getWaveform();
+
+	for (i = 0; i < waveform.length; i++) {
+		magnitude = waveform[i];
+		percent = magnitude / 256;
 		// draw some visualisation
 	}
 }
@@ -401,7 +404,7 @@ Apply compression processing (lowers the volume of the loudest parts of the sign
 >`Sono.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
 >`Sound.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect.js#L111-127)
 
 #### Examples
 
@@ -428,7 +431,7 @@ Create a reverb effect by passing an audio buffer of a pre-recorded reverb impul
 >`Sono.effect.convolver(impulseResponse)` returns Convolver  
 >`Sound.effect.convolver(impulseResponse)` returns Convolver  
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect.js#L129-134)
 
 #### Examples
 
@@ -447,7 +450,7 @@ Delay the sound playback
 >`Sono.effect.delay(time)` returns Delay  
 >`Sound.effect.delay(time)` returns Delay  
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect.js#L136-140)
 
 #### Examples
 
@@ -462,15 +465,14 @@ Create a distortion effect
 >`Sono.effect.distortion(amount)` returns Distortion  
 >`Sono.effect.distortion(amount)` returns Distortion  
 
-[View source code](../src/lib/node/distortion.js)
-
+[View source code](../src/lib/effect/distortion.js)
 
 #### Examples
 
 ```javascript
 var distortion = sound.effect.distortion(0.5);
 // update the amount of distortion:
-distortion.update(0.8); // [0,1]
+distortion.amount = 0.8; // [0,1]
 ```
 
 ## echo
@@ -480,7 +482,7 @@ Create a repeating echo or delay effect
 >`Sono.effect.echo(delayTime, gainValue)` returns Echo  
 `sound.effect.echo(delayTime, gainValue)` returns Echo  
 
-[View source code](../src/lib/node/echo.js)
+[View source code](../src/lib/effect/echo.js)
 
 #### Examples
 
@@ -518,7 +520,7 @@ Update the filter node
 >`BiquadFilter.setByPercent(percent, quality, gain)`  
 `BiquadFilter.update(frequency, gain)`
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect/filter.js)
 
 #### Examples
 
@@ -530,16 +532,34 @@ lowpass.setByPercent(0.5);
 lowpass.update(600, 1);
 ```
 
+## flanger
+
+>`Sono.effect.flanger()` returns Flanger  
+
+[View source code](../src/lib/effect/flanger.js)
+
+#### Examples
+
+```javascript
+var flanger = Sono.effect.flanger({
+	delay: 0.005,
+	frequency: 0.025,
+	gain: 0.002,
+	feedback: 0.5
+});
+```
+
 ## gain
 
 >`Sono.effect.gain(value)` returns Gain  
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect.js#L198-204)
 
 #### Examples
 
 ```javascript
 var gain = Sono.effect.gain();
+Sono.effect.add(gain);
 gain.gain.value = 0.5;
 ```
 
@@ -568,7 +588,7 @@ Modify global values for panning
 `Sono.effect.panning.setListenerOrientation(x, y, z)`  
 `Sono.effect.panning.setListenerVelocity(x, y, z)`  
 
-[View source code](../src/lib/node/panner.js)
+[View source code](../src/lib/effect/panner.js)
 
 #### Examples
 
@@ -601,7 +621,7 @@ Sono.effect.panning.setListenerPosition(camera.position);
 
 >`Sono.effect.phaser()` returns Phaser  
 
-[View source code](../src/lib/node/phaser.js)
+[View source code](../src/lib/effect/phaser.js)
 
 #### Examples
 
@@ -627,11 +647,11 @@ Controls
 `recorder.stop()` returns AudioBuffer  
 `recorder.getDuration()` returns number  
 
-[View source code](../src/lib/node/recorder.js)
+[View source code](../src/lib/effect/recorder.js)
 
 #### Examples
 
-Record a microphone stream
+Record a sound mix or microphone stream
 
 ```javascript
 var recorder;
@@ -658,7 +678,7 @@ mic.connect();
 
 >`Sono.effect.reverb(seconds, decay, reverse)` returns Reverb  
 
-[View source code](../src/lib/node/reverb.js)
+[View source code](../src/lib/effect/reverb.js)
 
 #### Examples
 
@@ -672,7 +692,7 @@ reverb.update(2, 0.5);
 
 >`Sono.effect.scriptProcessor(config)` returns ScriptProcessor  
 
-[View source code](../src/lib/node-manager.js)
+[View source code](../src/lib/effect.js#L231-261)
 
 #### Examples
 
