@@ -39,7 +39,12 @@
                 }),
                 Flanger: sound.effect.flanger(),
                 Echo: sound.effect.echo(0.5, 0.15),
-                Saturation: sound.effect.saturation()
+                Compressor: sound.effect.compressor(),
+                Convolver: sound.effect.convolver(),
+                Distortion: sound.effect.distortion(),
+                Lowpass: sound.effect.lowpass(),
+                Highpass: sound.effect.highpass(),
+                Reverb: sound.effect.reverb()
             };
 
             var controls = document.querySelector('[data-js="controls"]');
@@ -191,36 +196,85 @@
 
             // saturation
 
+            /*
+                Convolver: sound.effect.convolver(),
+                Distortion: sound.effect.distortion(),
+                Lowpass: sound.effect.lowpass(),
+                Highpass: sound.effect.highpass(),
+                Reverb: sound.effect.reverb()
+            */
+
             createControls({
-                effect: 'Saturation',
+                effect: 'Compressor',
                 params: [
                     {
-                        label: 'Distortion',
-                        min: 0.0,
-                        max: 1.0,
-                        step: 0.01,
-                        prop: 'distortion'
-                    },
-                    {
-                        label: 'Gain',
-                        min: 0.0,
-                        max: 1.0,
-                        step: 0.01,
-                        prop: 'gain'
-                    },
-                    {
-                        label: 'Highpass',
-                        min: 0.0,
-                        max: 400,
+                        label: 'Threshold',
+                        min: -100,
+                        max: 0,
                         step: 1,
-                        prop: 'highpass'
+                        prop: 'threshold'
                     },
                     {
-                        label: 'Lowpass',
-                        min: 4000,
-                        max: Sono.context.sampleRate / 2,
+                        label: 'Knee',
+                        min: 0,
+                        max: 40,
+                        step: 0.5,
+                        prop: 'knee'
+                    },
+                    {
+                        label: 'Ratio',
+                        min: 1,
+                        max: 20,
+                        step: 0.5,
+                        prop: 'ratio'
+                    },
+                    {
+                        label: 'Reduction',
+                        min: -20,
+                        max: 0,
+                        step: 0.5,
+                        prop: 'reduction'
+                    },
+                    {
+                        label: 'Attack',
+                        min: 0,
+                        max: 1,
+                        step: 0.05,
+                        prop: 'attack'
+                    },
+                    {
+                        label: 'Release',
+                        min: 0,
+                        max: 1,
+                        step: 0.05,
+                        prop: 'release'
+                    }
+                ]
+            });
+
+            createControls({
+                effect: 'Reverb',
+                params: [
+                    {
+                        label: 'Time',
+                        min: 0,
+                        max: 20,
+                        step: 0.1,
+                        prop: 'time'
+                    },
+                    {
+                        label: 'Decay',
+                        min: 0,
+                        max: 20,
+                        step: 0.1,
+                        prop: 'decay'
+                    },
+                    {
+                        label: 'Reverse',
+                        min: 0,
+                        max: 1,
                         step: 1,
-                        prop: 'lowpass'
+                        prop: 'reverse'
                     }
                 ]
             });
@@ -241,7 +295,12 @@
                         step: param.step,
                         value: node[param.prop],
                         callback: function() {
-                            node[param.prop] = this.value;  
+                            if(node[param.prop].hasOwnProperty('value')) {
+                                node[param.prop].value = this.value;
+                            }
+                            else {
+                                node[param.prop] = this.value;
+                            }
                         }
                     });
                 });

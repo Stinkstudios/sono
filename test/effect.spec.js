@@ -81,7 +81,7 @@ function effectTest(isWebAudio) {
         describe('compressor', function() {
             it('should have expected api', function() {
                 expect(effect.compressor).to.be.a('function');
-                expect(effect.compressor.length).to.eql(6);
+                expect(effect.compressor.length).to.eql(1);
                 expect(effect.compressor()).to.be.an.instanceof(audioNode);
             });
         });
@@ -192,10 +192,10 @@ function effectTest(isWebAudio) {
             });
         });
 
-        describe('scriptProcessor', function() {
+        describe('script', function() {
             it('should have expected api', function() {
-                expect(effect.scriptProcessor).to.be.a('function');
-                expect(effect.scriptProcessor()).to.be.an.instanceof(audioNode);
+                expect(effect.script).to.be.a('function');
+                expect(effect.script()).to.be.an.instanceof(audioNode);
             }); 
         });
        

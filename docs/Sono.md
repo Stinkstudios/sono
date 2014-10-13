@@ -688,9 +688,9 @@ var reverb = Sono.effect.reverb(2, 0.5);
 reverb.update(2, 0.5);
 ```
 
-## scriptProcessor
+## script
 
->`Sono.effect.scriptProcessor(config)` returns ScriptProcessor  
+>`Sono.effect.script(config)` returns ScriptProcessor  
 
 [View source code](../src/lib/effect.js#L231-261)
 
@@ -699,7 +699,7 @@ reverb.update(2, 0.5);
 White noise
 
 ```javascript
-var script = Sono.effect.scriptProcessor({
+var script = Sono.effect.script({
 	bufferSize: 1024,
 	channels: 1,
 	callback: function(event) {
