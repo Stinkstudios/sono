@@ -7,7 +7,7 @@ var Effect = require('./lib/effect.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
-    this.VERSION = '0.0.0';
+    this.VERSION = '0.0.5';
 
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this._context = window.AudioContext ? new window.AudioContext() : null;
@@ -124,6 +124,9 @@ Sono.prototype.load = function(config) {
         url.forEach(function(file) {
             sound.push(this._queue(file, asMediaElement, loader));
         }, this);
+    }
+    else {
+        return null;
     }
 
     if(onProgress) {

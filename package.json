@@ -1,6 +1,6 @@
 {
   "name": "sono",
-  "version": "0.0.0",
+  "version": "0.0.5",
   "description": "A JavaScript library for working with audio",
   "keywords": [
     "WebAudio",
@@ -12,13 +12,13 @@
     "js",
     "javascript"
   ],
-  "main": "dist/sono.js",
+  "main": "dist/sono.min.js",
   "scripts": {
     "test": "./node_modules/.bin/karma start --single-run --browsers Firefox"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Stinkdigital/sono-js"
+    "url": "https://github.com/Stinkdigital/sono"
   },
   "author": "ianmcgregor",
   "license": "MIT",
