@@ -6,23 +6,33 @@ function Reverb(context, config) {
     var time = config.time || 1,
         decay = config.decay || 5,
         reverse = !!config.reverse,
-        node = context.createConvolver(),
-        numChannels = 2,
         rate = context.sampleRate,
         length,
         impulseResponse;
+
+    var input = context.createGain();
+    var reverb = context.createConvolver();
+    var output = context.createGain();
+
+    input.connect(reverb);
+    input.connect(output);
+    reverb.connect(output);
+
+    var node = input;
+    node.name = 'Reverb';
+    node._output = output;
 
     node.update = function(config) {
         if(config.time !== undefined) {
             time = config.time;
             length = rate * time;
-            impulseResponse = context.createBuffer(numChannels, length, rate);
+            impulseResponse = context.createBuffer(2, length, rate);
         }
         if(config.decay !== undefined) {
             decay = config.decay;
         }
         if(config.reverse !== undefined) {
-            reverse = !!config.reverse;
+            reverse = config.reverse;
         }
 
         var left = impulseResponse.getChannelData(0),
@@ -36,7 +46,7 @@ function Reverb(context, config) {
             right[i] = (Math.random() * 2 - 1) * e;
         }
 
-        this.buffer = impulseResponse;
+        reverb.buffer = impulseResponse;
     };
 
     node.update({
@@ -51,7 +61,6 @@ function Reverb(context, config) {
             set: function(value) {
                 console.log('set time:', value);
                 if(value === time) { return; }
-                time = value;
                 this.update({time: time});
             }
         },
@@ -59,15 +68,14 @@ function Reverb(context, config) {
             get: function() { return decay; },
             set: function(value) {
                 if(value === decay) { return; }
-                decay = value;
                 this.update({decay: decay});
             }
         },
         reverse: {
             get: function() { return reverse; },
             set: function(value) {
-                reverse = value;
-                this.update({reverse: reverse});
+                if(value === reverse) { return; }
+                this.update({reverse: !!value});
             }
         }
     });

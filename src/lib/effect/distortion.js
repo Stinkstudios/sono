@@ -1,6 +1,9 @@
 'use strict';
 
 function Distortion(context, amount) {
+
+    amount = amount || 1;
+    
     var node = context.createWaveShaper();
 
     // create waveShaper distortion curve from 0 to 1

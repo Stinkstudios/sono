@@ -34,16 +34,14 @@
             new Player(sound, document.querySelector('[data-js="player"]'));
 
             var effects = {
-                Phaser: sound.effect.phaser({
-                    stereo: true
-                }),
-                Flanger: sound.effect.flanger(),
-                Echo: sound.effect.echo(0.5, 0.15),
                 Compressor: sound.effect.compressor(),
-                Convolver: sound.effect.convolver(),
                 Distortion: sound.effect.distortion(),
-                Lowpass: sound.effect.lowpass(),
-                Highpass: sound.effect.highpass(),
+                Echo: sound.effect.echo(0.5, 0.15),
+                Flanger: sound.effect.flanger(),
+                Highpass: sound.effect.highpass(2000),
+                Lowpass: sound.effect.lowpass(1000),
+                Phaser: sound.effect.phaser({ stereo: true }),
+                //Convolver: sound.effect.convolver(),
                 Reverb: sound.effect.reverb()
             };
 
@@ -107,101 +105,10 @@
                 });
             });
 
-            // phaser
-
-            createControls({
-                effect: 'Phaser',
-                params: [
-                    {
-                        label: 'LFO gain',
-                        min: 0.0005,
-                        max: 1000,
-                        step: 0.00025,
-                        prop: 'lfoGain'
-                    },
-                    {
-                        label: 'LFO frequency',
-                        min: 0.05,
-                        max: 5.0,
-                        step: 0.05,
-                        prop: 'lfoFrequency'
-                    },
-                    {
-                        label: 'Feedback',
-                        min: 0.0,
-                        max: 0.9,
-                        step: 0.001,
-                        prop: 'feedback'
-                    }
-                ]
-            });
-
-            // flanger
-
-            createControls({
-                effect: 'Flanger',
-                params: [
-                    {
-                        label: 'Delay',
-                        min: 0.005,
-                        max: 0.05,
-                        step: 0.001,
-                        prop: 'delay'
-                    },
-                    {
-                        label: 'LFO gain',
-                        min: 0.0005,
-                        max: 0.005,
-                        step: 0.00025,
-                        prop: 'lfoGain'
-                    },
-                    {
-                        label: 'LFO frequency',
-                        min: 0.05,
-                        max: 5.0,
-                        step: 0.05,
-                        prop: 'lfoFrequency'
-                    },
-                    {
-                        label: 'Feedback',
-                        min: 0.0,
-                        max: 0.9,
-                        step: 0.001,
-                        prop: 'feedback'
-                    }
-                ]
-            });
-
-            // echo
-
-            createControls({
-                effect: 'Echo',
-                params: [
-                    {
-                        label: 'Delay',
-                        min: 0.0,
-                        max: 10.0,
-                        step: 0.01,
-                        prop: 'delay'
-                    },
-                    {
-                        label: 'Feedback',
-                        min: 0.0,
-                        max: 0.99,
-                        step: 0.001,
-                        prop: 'feedback'
-                    }
-                ]
-            });
-
             // saturation
 
             /*
                 Convolver: sound.effect.convolver(),
-                Distortion: sound.effect.distortion(),
-                Lowpass: sound.effect.lowpass(),
-                Highpass: sound.effect.highpass(),
-                Reverb: sound.effect.reverb()
             */
 
             createControls({
@@ -253,6 +160,154 @@
             });
 
             createControls({
+                effect: 'Distortion',
+                params: [
+                    {
+                        label: 'Amount',
+                        min: 0,
+                        max: 1,
+                        step: 0.01,
+                        prop: 'amount'
+                    }
+                ]
+            });
+
+            createControls({
+                effect: 'Echo',
+                params: [
+                    {
+                        label: 'Delay',
+                        min: 0.0,
+                        max: 10.0,
+                        step: 0.01,
+                        prop: 'delay'
+                    },
+                    {
+                        label: 'Feedback',
+                        min: 0.0,
+                        max: 0.99,
+                        step: 0.001,
+                        prop: 'feedback'
+                    }
+                ]
+            });
+
+            createControls({
+                effect: 'Flanger',
+                params: [
+                    {
+                        label: 'Delay',
+                        min: 0.005,
+                        max: 0.05,
+                        step: 0.001,
+                        prop: 'delay'
+                    },
+                    {
+                        label: 'LFO gain',
+                        min: 0.0005,
+                        max: 0.005,
+                        step: 0.00025,
+                        prop: 'lfoGain'
+                    },
+                    {
+                        label: 'LFO frequency',
+                        min: 0.05,
+                        max: 5.0,
+                        step: 0.05,
+                        prop: 'lfoFrequency'
+                    },
+                    {
+                        label: 'Feedback',
+                        min: 0.0,
+                        max: 0.9,
+                        step: 0.001,
+                        prop: 'feedback'
+                    }
+                ]
+            });
+
+            createControls({
+                effect: 'Highpass',
+                params: [
+                    {
+                        label: 'Frequency',
+                        min: 40,
+                        max: Sono.context.sampleRate / 2,
+                        step: 1,
+                        prop: 'frequency'
+                    },
+                    {
+                        label: 'Quality',
+                        min: 0,
+                        max: 100,
+                        step: 1,
+                        prop: 'Q'
+                    },
+                    {
+                        label: 'Gain',
+                        min: -60,
+                        max: 60,
+                        step: 1,
+                        prop: 'gain'
+                    }
+                ]
+            });
+
+            createControls({
+                effect: 'Lowpass',
+                params: [
+                    {
+                        label: 'Frequency',
+                        min: 40,
+                        max: Sono.context.sampleRate / 2,
+                        step: 1,
+                        prop: 'frequency'
+                    },
+                    {
+                        label: 'Quality',
+                        min: 0,
+                        max: 100,
+                        step: 1,
+                        prop: 'Q'
+                    },
+                    {
+                        label: 'Gain',
+                        min: -60,
+                        max: 60,
+                        step: 1,
+                        prop: 'gain'
+                    }
+                ]
+            });
+
+            createControls({
+                effect: 'Phaser',
+                params: [
+                    {
+                        label: 'LFO gain',
+                        min: 0.0005,
+                        max: 1000,
+                        step: 0.00025,
+                        prop: 'lfoGain'
+                    },
+                    {
+                        label: 'LFO frequency',
+                        min: 0.05,
+                        max: 5.0,
+                        step: 0.05,
+                        prop: 'lfoFrequency'
+                    },
+                    {
+                        label: 'Feedback',
+                        min: 0.0,
+                        max: 0.9,
+                        step: 0.001,
+                        prop: 'feedback'
+                    }
+                ]
+            });
+
+            createControls({
                 effect: 'Reverb',
                 params: [
                     {
@@ -274,7 +329,8 @@
                         min: 0,
                         max: 1,
                         step: 1,
-                        prop: 'reverse'
+                        prop: 'reverse',
+                        type: 'boolean'
                     }
                 ]
             });
@@ -295,11 +351,15 @@
                         step: param.step,
                         value: node[param.prop],
                         callback: function() {
+                            var value = this.value;
+                            if(param.type === 'boolean') {
+                                value = !!parseInt(value);
+                            }
                             if(node[param.prop].hasOwnProperty('value')) {
-                                node[param.prop].value = this.value;
+                                node[param.prop].value = value;
                             }
                             else {
-                                node[param.prop] = this.value;
+                                node[param.prop] = value;
                             }
                         }
                     });
