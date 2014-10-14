@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title></title>
+    <title>Sono - Examples - Video</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
         <source src="video/chanel_intro.ogg" type="video/ogg">
     </video>
 
-    <canvas class="js-waveform" width="960", height="120"></canvas>
+    <canvas data-js="waveform" width="960", height="120"></canvas>
 
     <script>
         // Test with no WebAudio
@@ -31,50 +31,46 @@
             video.play();
 
             function initSound() {
-                var sound = Sono.createSound(video);
-
-                var reverb = sound.effect.reverb(5, 2);
-
-                var analyser = sound.effect.analyser(2048);
-
-                var waveform = document.querySelector('.js-waveform');
+                var sound = Sono.createSound(video),
+                    reverb = sound.effect.reverb(5, 2),
+                    analyser = sound.effect.analyser(2048),
+                    waveform = document.querySelector('[data-js="waveform"]');
 
                 new AnalyserDisplay(analyser, waveform);
             }
 
             function AnalyserDisplay(analyserNode, canvas) {
 
-                var context = canvas.getContext('2d');
+                var context = canvas.getContext('2d'),
+                    width = canvas.width,
+                    height = canvas.height,
+                    frequencyBinCount = analyserNode.frequencyBinCount,
+                    barWidth = Math.max(1, Math.round(width / frequencyBinCount)),
+                    freqByteData,
+                    waveByteData,
+                    magnitude,
+                    percent,
+                    hue;
 
                 function draw() {
                     window.requestAnimationFrame(draw);
 
-                    var width = canvas.width,
-                        height = canvas.height,
-                        frequencyBinCount = analyserNode.frequencyBinCount,
-                        fftSize = analyserNode.fftSize,
-                        barWidth = Math.max(1, Math.round(width/frequencyBinCount));
+                    context.fillStyle = '#333333';
+                    context.fillRect(0, 0, width, height);
 
-                        context.fillStyle = '#333333';
-                        context.fillRect(0, 0, width, height);
-
-
-                    var freqByteData = analyserNode.getFrequencies();
+                    freqByteData = analyserNode.getFrequencies();
+                    waveByteData = analyserNode.getWaveform();
 
                     for (var i = 0, l = freqByteData.length; i < l; i++) {
-                        var magnitude = freqByteData[i];
-                        var percent = magnitude / 256;
-                        var hue = i/l * 360;
+                        magnitude = freqByteData[i];
+                        percent = magnitude / 256;
+                        hue = i/l * 360;
                         context.fillStyle = 'hsl(' + hue + ', 100%, 30%)';
                         context.fillRect(barWidth * i, height, barWidth, 0 - height * percent);
-                    }
 
-                    var waveByteData = analyserNode.getWaveform();
-
-                    for (i = 0, l = waveByteData.length; i < l; i++) {
-                        var magnitude = waveByteData[i];
-                        var percent = magnitude / 256;
-                        var hue = i/l * 360;
+                        magnitude = waveByteData[i];
+                        percent = magnitude / 256;
+                        hue = i/l * 360;
                         context.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
                         context.fillRect(barWidth * i, height - height * percent - 1, 2, 2);
                     }

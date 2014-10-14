@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-	<title>Sono</title>
+	<title>Sono - Examples</title>
 	<link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -22,24 +22,8 @@
 		<li><a href="recorder.html">Recorder</a></li>
     </ul>
 
-
     <h2>Browser support</h2>
-    <ul class="js-support"></ul>
-
-
-
-    <h3>Player A</h3>
-
-    <div class="js-playerA"></div>
-
-    <h3>Player B</h3>
-
-    <div class="js-playerB"></div>
-
-
-
-    <h3>Master volume</h3>
-    <div><input class="js-master-volume" type="range" min="0" max="100" value="100" /><div>
+    <ul data-js="support"></ul>
 
     <script>
         // Test with no WebAudio
@@ -53,61 +37,12 @@
 
             Sono.log();
 
-            var support = document.querySelector('.js-support');
+            var support = document.querySelector('[data-js="support"]');
             var info = '<li>Audio Support: ' + Sono.isSupported + '</li>' +
                        '<li>Web Audio API: ' + Sono.hasWebAudio + '</li>' +
                        '<li>Touch Locked: ' + Sono._isTouchLocked + '</li>' +
                        '<li>Extensions: ' + Sono.extensions.join(', ') + '</li>';
             support.innerHTML = info;
-
-            /*var soundA = Sono.load(['audio/VOX.ogg', 'audio/VOX.mp3'], function(sound) {
-                new Player(sound, '.js-playerA');
-            });*/
-            /*soundA.loader.onProgress.add(function(progress) {
-                console.log(progress);
-            });*/
-            //this.sound.loop = true;
-            //this.sound.effect.reverb(0.2, 0.5);
-            //Sono.effect.delay(soundA._gain, 0.5, 0.5);
-
-            /*var soundB = Sono.load(['audio/TEST.ogg', 'audio/TEST.mp3'], function(sound) {
-                new Player(sound, '.js-playerB');
-            });*/
-
-            // master gain
-            var masterVolumeSlider = document.querySelector('.js-master-volume');
-            masterVolumeSlider.addEventListener('change', function() {
-                Sono.volume = this.value / 100;
-            });
-
-            var sounds = [
-                { id: 'a', url: ['audio/PIANO_MIC_1.ogg', 'audio/PIANO_MIC_1.mp3'] },
-                { id: 'b', url: ['audio/VOX.ogg', 'audio/VOX.mp3'] }
-            ];
-
-            Sono.load({
-                url: sounds,
-                onComplete: function(loaded) {
-                    console.log('all loaded:', loaded)
-
-                    var a = Sono.getSound('a');
-                    //var b = Sono.getSound('b');
-
-                    console.log(Sono.getSound(sounds[0].id) === a, a);
-                    //console.log(Sono.getSound(sounds[1].id) === b, b);
-
-                    new Player(a, document.querySelector('.js-playerA'));
-                    //new Player(b, document.querySelector('.js-playerB'));
-
-                    //var delay = a.effect.echo(0.2, 0.5);
-                    a.effect.echo();
-                    //b.effect.phaser();
-
-                },
-                onProgress: function(progress) {
-                    console.log('progress:', progress);
-                }
-            });
 
         }());
     </script>

@@ -4,138 +4,43 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Sono</title>
+    <title>Sono - Examples - Basic audio player</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Audio player</h1>
+    <h1>Basic audio player</h1>
 
-    <div class="Player js-player">
-        <div class="Player-waveform">
-            <canvas class="Player-waveform-inner js-waveform-back" width="400", height="80"></canvas>
-            <div class="Player-waveform-inner Player-waveform-clip js-waveform-progress">
-                <canvas class="js-waveform-front" width="400", height="80"></canvas>
-            </div>
-        </div>
-        <div class="Player-controls">
-            <button class="Player-button">PLAY</button>
-            <div class="Player-slider">
-                <span>0</span><input class="Player-slider-input js-volume" type="range" min="0" max="100" value="100" /><span>1</span>
-            </div>
-            <div class="Player-slider">
-                <span>L</span><input class="Player-slider-input js-pan" type="range" min="-100" max="100" value="0" /><span>R</span>
-            </div>
-            <div class="Player-info"></div>
-        </div>
-    </div>
+    <h3>Player A</h3>
+    <div data-js="playerA"></div>
+
+    <h3>Player B</h3>
+    <div data-js="playerB"></div>
+
+    <h3>Master volume</h3>
+    <div><input data-js="master-volume" type="range" min="0" max="1" step="0.01" value="1" /><div>
 
     <script>
         // Test with no WebAudio
         //window.AudioContext = window.webkitAudioContext = undefined;
     </script>
     <script src="../dist/sono.js"></script>
+    <script src="js/player.js"></script>
     <script>
         (function() {
             'use strict';
 
             Sono.log();
 
-            var sound = Sono.createSound(['audio/TEST.ogg', 'audio/TEST.mp3']);
-            var player = new Player(sound, '.js-player');
+            var soundA = Sono.createSound(['audio/TEST.ogg', 'audio/TEST.mp3']);
+            new Player(soundA, document.querySelector('[data-js="playerA"]'));
 
-            /*
-             * Player
-             */
+            var soundB = Sono.createSound(['audio/DRUMS.ogg', 'audio/DRUMS.mp3']);
+            new Player(soundB, document.querySelector('[data-js="playerB"]'));
 
-            function Player(sound, selector) {
-
-                var view = document.querySelector(selector),
-                    waveform = view.querySelector('.Player-waveform'),
-                    waveformBack = view.querySelector('.js-waveform-back'),
-                    waveformFront = view.querySelector('.js-waveform-front'),
-                    waveformProgress = view.querySelector('.js-waveform-progress'),
-                    button = view.querySelector('.Player-button'),
-                    volumeSlider = view.querySelector('.js-volume'),
-                    panSlider = view.querySelector('.js-pan'),
-                    info = view.querySelector('.Player-info');
-
-                // update time and waveform
-                function update() {
-                    if(sound.playing) {
-                        window.requestAnimationFrame(update);
-                    }
-                    
-                    info.innerHTML = Sono.utils.timeCode(sound.currentTime) + ' / ' +
-                                     Sono.utils.timeCode(sound.duration);
-
-                    waveformProgress.style.width = (sound.progress * 100).toFixed(1) + '%';
-                }
-                update();
-
-                // play/pause button
-                button.addEventListener('click', function() {
-                    if(sound.playing) {
-                        sound.pause();
-                        button.innerHTML = 'PLAY';
-                    }
-                    else {
-                        sound.play();
-                        button.innerHTML = 'PAUSE';
-                        update();
-                    }
-                });
-
-                // reset button when sound ended
-                sound.onEnded(function() {
-                    button.innerHTML = 'PLAY';
-                });
-
-                // volume slider
-                volumeSlider.addEventListener('change', function() {
-                    sound.volume = this.value / 100;
-                });
-
-                // panner node and controls util
-                var panner = sound.effect.panner();
-
-                // pan slider
-                panSlider.addEventListener('change', function() {
-                    panner.setX(this.value / 100);
-                });
-
-                // waveform display
-                function displayWaveform() {
-                    var wave = Sono.utils.waveform();
-                    wave.draw({
-                        canvas: waveformBack,
-                        buffer: sound.data,
-                        color: '#333333',
-                        bgColor: '#dddddd'
-                    });
-                    
-                    wave.draw({
-                        canvas: waveformFront,
-                        buffer: sound.data,
-                        color: '#dddddd',
-                        bgColor: '#333333'
-                    });
-                }
-                if(sound.data) {
-                    displayWaveform();
-                }
-                else {
-                    sound.loader.onComplete.add(displayWaveform);
-                }
-
-                // click waveform to seek
-                waveform.addEventListener('click', function(event) {
-                    var rect = waveform.getBoundingClientRect();
-                    var percent = (event.clientX - rect.left) / rect.width;
-                    sound.seek(percent);
-                    button.innerHTML = 'PAUSE';
-                    update();
-                });
-            }
+            var masterVolume = document.querySelector('[data-js="master-volume"]');
+            masterVolume.addEventListener('change', function() {
+                Sono.volume = this.value;
+            });
 
         }());
     </script>

@@ -43,7 +43,7 @@ ThreeBase.prototype.update = function(deltaTime, elapsedTime) {
     console.log('update', deltaTime, elapsedTime);
 };
 
-ThreeBase.prototype.size = function(width, height) {
+ThreeBase.prototype.size = function(width) {
     this.width = width || window.innerWidth - 80;
     this.height = this.width / 2;
     this.aspectRatio = this.width / this.height;

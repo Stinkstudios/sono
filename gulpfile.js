@@ -55,7 +55,8 @@ gulp.task('jshint', function() {
   return gulp.src([
       './gulpfile.js',
       src+'**/*.js',
-      'test/**/*.js'
+      'test/**/*.js',
+      'examples/**/*.js'
     ])
     .pipe(jshint({
       'node': true,
@@ -161,6 +162,7 @@ gulp.task('watch', function() {
   gulp.watch(src+'**/*.js', ['jshint', 'bundle-debug']);
   gulp.watch('test/**/*.js', ['jshint']);
   gulp.watch('examples/**/*.html', ['reload']);
+  gulp.watch('examples/**/*.js', ['reload']);
 });
 
 // default

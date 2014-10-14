@@ -1,6 +1,8 @@
+'use strict';
+
 function Player(sound, el) {
 
-    el.innerHTML = '<div class="Player">' +
+    var tpl = '<div class="Player">' +
         '<div class="Player-waveform" data-js="waveform">' +
             '<canvas class="Player-waveform-inner" data-js="waveform-back" width="400", height="80"></canvas>' +
             '<div class="Player-waveform-inner Player-waveform-clip" data-js="waveform-progress">' +
@@ -19,6 +21,8 @@ function Player(sound, el) {
         '</div>' +
     '</div>';
 
+    el.insertAdjacentHTML('beforeend', tpl);
+
     var waveform = el.querySelector('[data-js="waveform"]'),
         waveformBack = el.querySelector('[data-js="waveform-back"]'),
         waveformFront = el.querySelector('[data-js="waveform-front"]'),
@@ -27,19 +31,6 @@ function Player(sound, el) {
         volumeSlider = el.querySelector('[data-js="volume"]'),
         panSlider = el.querySelector('[data-js="pan"]'),
         info = el.querySelector('[data-js="info"]');
-
-    // update time and waveform
-    function update() {
-        if(sound.playing) {
-            window.requestAnimationFrame(update);
-        }
-
-        info.innerHTML = Sono.utils.timeCode(sound.currentTime) + ' / ' +
-                         Sono.utils.timeCode(sound.duration);
-
-        waveformProgress.style.width = (sound.progress * 100).toFixed(1) + '%';
-    }
-    update();
 
     // play/pause button
     button.addEventListener('click', function() {
@@ -64,13 +55,26 @@ function Player(sound, el) {
         sound.volume = this.value / 100;
     });
 
-    var panner = sound.effect.panner();
-
     // pan slider
+    var panner = sound.effect.panner();
     panSlider.addEventListener('change', function() {
         panner.setX(this.value / 100);
     });
 
+    // update time and waveform
+    function update() {
+        if(sound.playing) {
+            window.requestAnimationFrame(update);
+        }
+
+        info.innerHTML = Sono.utils.timeCode(sound.currentTime) + ' / ' +
+                         Sono.utils.timeCode(sound.duration);
+
+        waveformProgress.style.width = (sound.progress * 100).toFixed(1) + '%';
+    }
+    update();
+
+    // display waveform
     function displayWaveform() {
         var wave = Sono.utils.waveform();
         wave.draw({
@@ -90,7 +94,6 @@ function Player(sound, el) {
         // click waveform to seek
         waveform.addEventListener('click', function(event) {
             var rect = waveform.getBoundingClientRect();
-            //console.log('click waveform', event.clientX - rect.left, rect.width);
             var percent = (event.clientX - rect.left) / rect.width;
             sound.seek(percent);
 
@@ -99,11 +102,12 @@ function Player(sound, el) {
         });
     }
 
+    // wait for sound to be loaded to get waveform data
     if(sound.data) {
         displayWaveform();
     }
     else if(sound.loader) {
         sound.loader.onComplete.add(displayWaveform);
     }
-    
+
 }

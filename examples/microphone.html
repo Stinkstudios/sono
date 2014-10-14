@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title></title>
+    <title>Sono - Examples - Microphone</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
     <h1>Microphone</h1>
 
-    <canvas class="js-waveform" width="960", height="120"></canvas>
+    <canvas data-js="waveform" width="960" height="120"></canvas>
 
     <script>
         // Test with no WebAudio
@@ -21,26 +21,28 @@
         (function() {
             'use strict';
 
-            var sound;
+            var waveform = document.querySelector('[data-js="waveform"]'),
+                sound;
 
             var onConnect = function(stream) {
                 sound = Sono.createSound(stream);
                 sound.effect.delay(sound.gain, 1, 0.5);
                 var analyser = sound.effect.analyser(2048);
                 analyser.maxDecibels = -60;
-                var waveform = document.querySelector('.js-waveform');
                 new AnalyserDisplay(analyser, waveform);
             };
+
             var mic = Sono.utils.microphone(onConnect);
+
             if(mic.isSupported) {
                 mic.connect();    
             }
             else {
                 var p = document.createElement('p');
-                p.innerHTML = 'Microphone access not supported in this browser'
+                p.innerHTML = 'Microphone access not supported in this browser';
                 document.body.appendChild(p);
             }
-            
+
             function AnalyserDisplay(analyserNode, canvas) {
 
                 var context = canvas.getContext('2d'),

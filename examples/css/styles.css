@@ -398,7 +398,7 @@ h3 {
 .Player-effect-panel {
   display: none;
   margin: 10px 0;
-  width: 400px;
+  width: 420px;
 }
 
 .Player-effect-panel.is-visible {
