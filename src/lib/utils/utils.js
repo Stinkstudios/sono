@@ -37,25 +37,25 @@ Utils.crossFade = function(fromSound, toSound, duration) {
     var from = this.isAudioParam(fromSound) ? fromSound : fromSound.gain.gain;
     var to = this.isAudioParam(toSound) ? toSound : toSound.gain.gain;
 
-    from.setValueAtTime(from.value, 0);
-    from.linearRampToValueAtTime(0, this._context.currentTime + duration);
-    to.setValueAtTime(to.value, 0);
-    to.linearRampToValueAtTime(1, this._context.currentTime + duration);
+    this.ramp(from, from.value, 0, duration);
+    this.ramp(to, to.value, 1, duration);
 };
 
 Utils.fadeFrom = function(sound, value, duration) {
     var param = this.isAudioParam(sound) ? sound : sound.gain.gain;
-    var toValue = param.value;
-
-    param.setValueAtTime(value, 0);
-    param.linearRampToValueAtTime(toValue, this._context.currentTime + duration);
+    this.ramp(param, value, param.value, duration);
 };
 
 Utils.fadeTo = function(sound, value, duration) {
     var param = this.isAudioParam(sound) ? sound : sound.gain.gain;
+    this.ramp(param, param.value, value, duration);
+};
 
-    param.setValueAtTime(param.value, 0);
-    param.linearRampToValueAtTime(value, this._context.currentTime + duration);
+Utils.ramp = function(param, fromValue, toValue, duration) {
+    if(!this._context) { return; }
+
+    param.setValueAtTime(fromValue, this._context.currentTime);
+    param.linearRampToValueAtTime(toValue, this._context.currentTime + duration);
 };
 
 /*

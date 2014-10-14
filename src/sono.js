@@ -180,8 +180,11 @@ Object.defineProperty(Sono.prototype, 'volume', {
         if(isNaN(value)) { return; }
 
         this._masterGain.gain.value = value;
-        this._masterGain.gain.cancelScheduledValues(this._context.currentTime);
-        this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
+
+        if(this._context) {
+            this._masterGain.gain.cancelScheduledValues(this._context.currentTime);
+            this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
+        }
 
         if(!this.hasWebAudio) {
             this._sounds.forEach(function(sound) {

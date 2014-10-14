@@ -222,8 +222,11 @@ Object.defineProperty(Sound.prototype, 'volume', {
         if(isNaN(value)) { return; }
 
         this._gain.gain.value = value;
-        this._gain.gain.cancelScheduledValues(this._context.currentTime);
-        this._gain.gain.setValueAtTime(value, this._context.currentTime);
+
+        if(this._context) {
+            this._gain.gain.cancelScheduledValues(this._context.currentTime);
+            this._gain.gain.setValueAtTime(value, this._context.currentTime);
+        }
 
         if(this._data && this._data.volume !== undefined) {
             this._data.volume = value;
