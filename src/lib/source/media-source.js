@@ -92,6 +92,19 @@ MediaSource.prototype._endedHandler = function() {
 };
 
 /*
+ * Destroy
+ */
+
+MediaSource.prototype.destroy = function() {
+    this.stop();
+    this._el = null;
+    this._context = null;
+    this._endedCallback = null;
+    this._endedHandlerBound = null;
+    this._sourceNode = null;
+};
+
+/*
  * Getters & Setters
  */
 

@@ -60,6 +60,13 @@ function effectTest(isWebAudio) {
             });
         });
 
+        describe('destroy', function() {
+            it('should have expected api', function() {
+                expect(effect.destroy).to.be.a('function');
+                expect(effect.destroy.length).to.eql(0);
+            });
+        });
+
         describe('panning', function() {
             it('should have expected api', function() {
                 expect(effect.panning).to.be.an('object');

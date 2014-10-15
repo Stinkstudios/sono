@@ -86,6 +86,24 @@ Sound.prototype._endedHandler = function() {
 };
 
 /*
+ * Destroy
+ */
+
+Sound.prototype.destroy = function() {
+    //console.log.call(console, 'Sound.prototype.destroy');
+    if(this._source) { this._source.destroy(); }
+    if(this._effect) { this._effect.destroy(); }
+    if(this._gain) { this._gain.disconnect(); }
+    this._gain = null;
+    this._context = null;
+    this._data = null;
+    this._endedCallback = null;
+    this._playWhenReady = null;
+    this._source = null;
+    this._effect = null;
+};
+
+/*
  * Create source
  */
 

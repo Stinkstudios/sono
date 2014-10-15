@@ -67,6 +67,17 @@ ScriptSource.prototype._onPaused = function(event) {
 };
 
 /*
+ * Destroy
+ */
+
+ScriptSource.prototype.destroy = function() {
+    this.stop();
+    this._context = null;
+    this._onProcess = null;
+    this._sourceNode = null;
+};
+
+/*
  * Getters & Setters
  */
 
@@ -114,7 +125,7 @@ Object.defineProperty(ScriptSource.prototype, 'progress', {
 
 Object.defineProperty(ScriptSource.prototype, 'sourceNode', {
     get: function() {
-        if(!this._sourceNode) {
+        if(!this._sourceNode && this._context) {
             this._sourceNode = this._context.createScriptProcessor(this._bufferSize, 0, this._channels);
         }
         return this._sourceNode;

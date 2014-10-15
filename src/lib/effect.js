@@ -48,6 +48,13 @@ Effect.prototype.removeAll = function() {
     return this;
 };
 
+Effect.prototype.destroy = function() {
+    this._context = null;
+    this._destination = null;
+    this._nodeList = [];
+    this._sourceNode = null;
+};
+
 Effect.prototype._connect = function(a, b) {
     //console.log('> connect', (a.name || a.constructor.name), 'to', (b.name || b.constructor.name));
 

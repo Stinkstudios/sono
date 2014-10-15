@@ -85,14 +85,27 @@ function Loader(url) {
     };
 
     var cancel = function() {
-      if(request && request.readyState !== 4) {
+        if(request && request.readyState !== 4) {
           request.abort();
-      }
+        }
+    };
+
+    var destroy = function() {
+        //console.log.call(console, 'Loader.destroy');
+        cancel();
+        onProgress.removeAll();
+        onComplete.removeAll();
+        onBeforeComplete.removeAll();
+        onError.removeAll();
+        request = null;
+        data = null;
+        audioContext = null;
     };
 
     var api = {
         start: start,
         cancel: cancel,
+        destroy: destroy,
         onProgress: onProgress,
         onComplete: onComplete,
         onBeforeComplete: onBeforeComplete,

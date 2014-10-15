@@ -67,15 +67,15 @@ Sono.prototype.createSound = function(config) {
 
 Sono.prototype.destroySound = function(soundOrId) {
     if(!soundOrId) { return; }
+
     this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
             sounds.splice(index, 1);
             if(sound.loader) {
-                sound.loader.cancel();
+                sound.loader.destroy();
+                sound.loader = null;
             }
-            try {
-                sound.stop();
-            } catch(e) {}
+            sound.destroy();
             return true;
         }
     });
@@ -350,7 +350,7 @@ Object.defineProperty(Sono.prototype, 'masterGain', {
 
 Object.defineProperty(Sono.prototype, 'sounds', {
     get: function() {
-        return this._sounds;
+        return this._sounds.slice(0);
     }
 });
 
@@ -862,6 +862,13 @@ Effect.prototype.removeAll = function() {
     }
     this._updateConnections();
     return this;
+};
+
+Effect.prototype.destroy = function() {
+    this._context = null;
+    this._destination = null;
+    this._nodeList = [];
+    this._sourceNode = null;
 };
 
 Effect.prototype._connect = function(a, b) {
@@ -2050,6 +2057,24 @@ Sound.prototype._endedHandler = function() {
 };
 
 /*
+ * Destroy
+ */
+
+Sound.prototype.destroy = function() {
+    //console.log.call(console, 'Sound.prototype.destroy');
+    if(this._source) { this._source.destroy(); }
+    if(this._effect) { this._effect.destroy(); }
+    if(this._gain) { this._gain.disconnect(); }
+    this._gain = null;
+    this._context = null;
+    this._data = null;
+    this._endedCallback = null;
+    this._playWhenReady = null;
+    this._source = null;
+    this._effect = null;
+};
+
+/*
  * Create source
  */
 
@@ -2305,6 +2330,19 @@ BufferSource.prototype._endedHandler = function() {
 };
 
 /*
+ * Destroy
+ */
+
+BufferSource.prototype.destroy = function() {
+    //console.log.call(console, 'BufferSource.prototype.destroy');
+    this.stop();
+    this._buffer = null;
+    this._context = null;
+    this._endedCallback = null;
+    this._sourceNode = null;
+};
+
+/*
  * Getters & Setters
  */
 
@@ -2470,6 +2508,19 @@ MediaSource.prototype._endedHandler = function() {
 };
 
 /*
+ * Destroy
+ */
+
+MediaSource.prototype.destroy = function() {
+    this.stop();
+    this._el = null;
+    this._context = null;
+    this._endedCallback = null;
+    this._endedHandlerBound = null;
+    this._sourceNode = null;
+};
+
+/*
  * Getters & Setters
  */
 
@@ -2587,6 +2638,17 @@ MicrophoneSource.prototype.stop = function() {
     this._pausedAt = 0;
     this._playing = false;
     this._startedAt = 0;
+};
+
+/*
+ * Destroy
+ */
+
+MicrophoneSource.prototype.destroy = function() {
+    this.stop();
+    this._context = null;
+    this._sourceNode = null;
+    this._stream = null;
 };
 
 /*
@@ -2710,6 +2772,16 @@ OscillatorSource.prototype.stop = function() {
     this._pausedAt = 0;
     this._playing = false;
     this._startedAt = 0;
+};
+
+/*
+ * Destroy
+ */
+
+OscillatorSource.prototype.destroy = function() {
+    this.stop();
+    this._context = null;
+    this._sourceNode = null;
 };
 
 /*
@@ -2853,6 +2925,17 @@ ScriptSource.prototype._onPaused = function(event) {
 };
 
 /*
+ * Destroy
+ */
+
+ScriptSource.prototype.destroy = function() {
+    this.stop();
+    this._context = null;
+    this._onProcess = null;
+    this._sourceNode = null;
+};
+
+/*
  * Getters & Setters
  */
 
@@ -2900,7 +2983,7 @@ Object.defineProperty(ScriptSource.prototype, 'progress', {
 
 Object.defineProperty(ScriptSource.prototype, 'sourceNode', {
     get: function() {
-        if(!this._sourceNode) {
+        if(!this._sourceNode && this._context) {
             this._sourceNode = this._context.createScriptProcessor(this._bufferSize, 0, this._channels);
         }
         return this._sourceNode;
@@ -2997,14 +3080,27 @@ function Loader(url) {
     };
 
     var cancel = function() {
-      if(request && request.readyState !== 4) {
+        if(request && request.readyState !== 4) {
           request.abort();
-      }
+        }
+    };
+
+    var destroy = function() {
+        //console.log.call(console, 'Loader.destroy');
+        cancel();
+        onProgress.removeAll();
+        onComplete.removeAll();
+        onBeforeComplete.removeAll();
+        onError.removeAll();
+        request = null;
+        data = null;
+        audioContext = null;
     };
 
     var api = {
         start: start,
         cancel: cancel,
+        destroy: destroy,
         onProgress: onProgress,
         onComplete: onComplete,
         onBeforeComplete: onBeforeComplete,

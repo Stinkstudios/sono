@@ -89,6 +89,19 @@ BufferSource.prototype._endedHandler = function() {
 };
 
 /*
+ * Destroy
+ */
+
+BufferSource.prototype.destroy = function() {
+    //console.log.call(console, 'BufferSource.prototype.destroy');
+    this.stop();
+    this._buffer = null;
+    this._context = null;
+    this._endedCallback = null;
+    this._sourceNode = null;
+};
+
+/*
  * Getters & Setters
  */
 

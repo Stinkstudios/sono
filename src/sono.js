@@ -66,15 +66,15 @@ Sono.prototype.createSound = function(config) {
 
 Sono.prototype.destroySound = function(soundOrId) {
     if(!soundOrId) { return; }
+
     this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
             sounds.splice(index, 1);
             if(sound.loader) {
-                sound.loader.cancel();
+                sound.loader.destroy();
+                sound.loader = null;
             }
-            try {
-                sound.stop();
-            } catch(e) {}
+            sound.destroy();
             return true;
         }
     });
@@ -349,7 +349,7 @@ Object.defineProperty(Sono.prototype, 'masterGain', {
 
 Object.defineProperty(Sono.prototype, 'sounds', {
     get: function() {
-        return this._sounds;
+        return this._sounds.slice(0);
     }
 });
 

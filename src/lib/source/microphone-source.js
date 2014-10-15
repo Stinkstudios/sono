@@ -58,6 +58,17 @@ MicrophoneSource.prototype.stop = function() {
 };
 
 /*
+ * Destroy
+ */
+
+MicrophoneSource.prototype.destroy = function() {
+    this.stop();
+    this._context = null;
+    this._sourceNode = null;
+    this._stream = null;
+};
+
+/*
  * Getters & Setters
  */
 
