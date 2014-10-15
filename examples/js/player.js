@@ -1,3 +1,6 @@
+/*jshint unused: false*/
+/*global Sono:false */
+
 'use strict';
 
 function Player(sound, el) {

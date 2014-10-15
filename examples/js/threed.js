@@ -1,116 +1,57 @@
+/*global THREE:false */
+
 'use strict';
 
-function ThreeBase(fov, near, far) {
-    this.scene = new THREE.Scene();
-    this.clock = new THREE.Clock();
-    this.deltaTime = 0;
-    this.elapsedTime = 0;
-    this.fov = fov || 45;
-    this.aspectRatio = 1;
-    this.near = near || 0.1;
-    this.far = far || 10000;
+function KeyInput() {
+    var keys = [];
 
-    // camera
-    this.camera = new THREE.PerspectiveCamera(this.fov, this.aspectRatio, this.near, this.far);
-    this.camera.position.x = 0;
-    this.camera.position.y = 0;
-    this.camera.position.z = 0;
-    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-    // renderer
-    if (window.WebGLRenderingContext) {
-      this.renderer = new THREE.WebGLRenderer();
-    } else {
-      this.renderer = new THREE.CanvasRenderer();
-    }
-    document.body.appendChild(this.renderer.domElement);
-    this.size();
-    //this.render();
-
-    // resize
-    window.addEventListener( 'resize', this.size.bind(this), false );
-}
-
-ThreeBase.prototype.render = function() {
-    //window.requestAnimationFrame(this.render.bind(this));
-    this.deltaTime = this.clock.getDelta();
-    this.elapsedTime = this.clock.getElapsedTime();
-    this.update(this.deltaTime, this.elapsedTime);
-    this.renderer.render(this.scene, this.camera);
-};
-
-ThreeBase.prototype.update = function(deltaTime, elapsedTime) {
-    console.log('update', deltaTime, elapsedTime);
-};
-
-ThreeBase.prototype.size = function(width) {
-    this.width = width || window.innerWidth - 80;
-    this.height = this.width / 2;
-    this.aspectRatio = this.width / this.height;
-    this.camera.aspect = this.aspectRatio;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(this.width, this.height);
-};
-
-function ThreeScene() {
-    ThreeBase.call(this, 45);
-
-    this.createScene();
-    this.createLights();
-
-    this.camera.position.set(0, 80, 400);
-
-    this.render();
-}
-
-ThreeScene.prototype = Object.create(ThreeBase.prototype);
-ThreeScene.prototype.constructor = ThreeScene;
-
-ThreeScene.prototype.update = function(deltaTime, elapsedTime) {
-    this.hero.preUpdate(deltaTime, elapsedTime);
-
-    this.hero.collide(this.room.walls);
-
-    this.speaker.scale.x = this.speaker.scale.y = 2 + Math.sin(elapsedTime * 12)/4;
-
-    this.hero.update();
-};
-
-ThreeScene.prototype.createScene = function() {
-    this.room = new Room(512, 2048, 256);
-    this.scene.add(this.room);
-
-    var materials = [];
-    var faces = ['left', 'right', 'top', 'bottom', 'front', 'back'];
-    for ( var i = 0; i < faces.length; i ++ ) {
-        var tex = THREE.ImageUtils.loadTexture( 'img/' + faces[i] + '.png');
-        var mat = new THREE.MeshPhongMaterial({ map: tex });
-        materials.push(mat);
+    for (var i = 0; i < 256; i++) {
+        keys.push(false);
     }
 
-    this.hero = new Hero(materials);
-    this.hero.position.z = 64;
-    this.room.add(this.hero);
+    function onKeyDown(event) {
+        event.preventDefault();
+        keys[event.keyCode] = true;
+    }
 
-    this.speaker = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 16), new THREE.MeshPhongMaterial({ color: 0x22ee22 }));
-    this.speaker.position.set(-100, 24, 200);
-    this.room.add(this.speaker);
-};
+    function onKeyUp(event) {
+        event.preventDefault();
+        keys[event.keyCode] = false;
+    }
 
-ThreeScene.prototype.createLights = function() {
-    this.light = new THREE.PointLight(0xffffff, 1, 2000);
-    this.light.position.set(50, 64, 1024);
-    this.scene.add(this.light);
+    var self = {
+        on: function() {
+            document.addEventListener('keydown', onKeyDown, false);
+            document.addEventListener('keyup', onKeyUp, false);
+        },
+        off: function() {
+            document.removeEventListener('keydown', onKeyDown, false);
+            document.removeEventListener('keyup', onKeyUp, false);
+        },
+        isDown: function(key) {
+            return keys[key];
+        },
+        left: function() {
+            return keys[37];
+        },
+        right: function() {
+            return keys[39];
+        },
+        up: function() {
+            return keys[38];
+        },
+        down: function() {
+            return keys[40];
+        },
+        space: function() {
+            return keys[32];
+        }
+    };
 
-    this.scene.add(new THREE.PointLightHelper(this.light, 30));
+    self.on();
 
-    this.ambientLight = new THREE.AmbientLight(0x222200);
-    this.scene.add(this.ambientLight);
-
-    this.directionalLight = new THREE.DirectionalLight(0x444444);
-    this.directionalLight.position.set(1, 0, 1).normalize();
-    this.scene.add(this.directionalLight);
-};
+    return self;
+}
 
 function Room(width, depth, height) {
     THREE.Object3D.call(this);
@@ -160,7 +101,6 @@ Room.prototype.createWall = function(material, length, height) {
     mesh.position.y = height / 2;
     return mesh;
 };
-
 
 function Hero(materials) {
     var material = (materials instanceof Array) ? new THREE.MeshFaceMaterial(materials) : materials;
@@ -294,53 +234,114 @@ Hero.prototype.overlap = function(overlapMeshList) {
     return null;
 };
 
-var KeyInput = function () {
-    var keys = [];
+function ThreeBase(fov, near, far) {
+    this.scene = new THREE.Scene();
+    this.clock = new THREE.Clock();
+    this.deltaTime = 0;
+    this.elapsedTime = 0;
+    this.fov = fov || 45;
+    this.aspectRatio = 1;
+    this.near = near || 0.1;
+    this.far = far || 10000;
 
-    for (var i = 0; i < 256; i++) {
-        keys.push(false);
+    // camera
+    this.camera = new THREE.PerspectiveCamera(this.fov, this.aspectRatio, this.near, this.far);
+    this.camera.position.x = 0;
+    this.camera.position.y = 0;
+    this.camera.position.z = 0;
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    // renderer
+    if (window.WebGLRenderingContext) {
+      this.renderer = new THREE.WebGLRenderer();
+    } else {
+      this.renderer = new THREE.CanvasRenderer();
+    }
+    document.body.appendChild(this.renderer.domElement);
+    this.size();
+    //this.render();
+
+    // resize
+    window.addEventListener( 'resize', this.size.bind(this), false );
+}
+
+ThreeBase.prototype.render = function() {
+    //window.requestAnimationFrame(this.render.bind(this));
+    this.deltaTime = this.clock.getDelta();
+    this.elapsedTime = this.clock.getElapsedTime();
+    this.update(this.deltaTime, this.elapsedTime);
+    this.renderer.render(this.scene, this.camera);
+};
+
+ThreeBase.prototype.update = function(deltaTime, elapsedTime) {
+    console.log('update', deltaTime, elapsedTime);
+};
+
+ThreeBase.prototype.size = function(width) {
+    this.width = width || window.innerWidth - 80;
+    this.height = this.width / 2;
+    this.aspectRatio = this.width / this.height;
+    this.camera.aspect = this.aspectRatio;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(this.width, this.height);
+};
+
+function ThreeScene() {
+    ThreeBase.call(this, 45);
+
+    this.createScene();
+    this.createLights();
+
+    this.camera.position.set(0, 80, 400);
+
+    this.render();
+}
+
+ThreeScene.prototype = Object.create(ThreeBase.prototype);
+ThreeScene.prototype.constructor = ThreeScene;
+
+ThreeScene.prototype.update = function(deltaTime, elapsedTime) {
+    this.hero.preUpdate(deltaTime, elapsedTime);
+
+    this.hero.collide(this.room.walls);
+
+    this.speaker.scale.x = this.speaker.scale.y = 2 + Math.sin(elapsedTime * 12)/4;
+
+    this.hero.update();
+};
+
+ThreeScene.prototype.createScene = function() {
+    this.room = new Room(512, 2048, 256);
+    this.scene.add(this.room);
+
+    var materials = [];
+    var faces = ['left', 'right', 'top', 'bottom', 'front', 'back'];
+    for ( var i = 0; i < faces.length; i ++ ) {
+        var tex = THREE.ImageUtils.loadTexture( 'img/' + faces[i] + '.png');
+        var mat = new THREE.MeshPhongMaterial({ map: tex });
+        materials.push(mat);
     }
 
-    function onKeyDown(event) {
-        event.preventDefault();
-        keys[event.keyCode] = true;
-    }
+    this.hero = new Hero(materials);
+    this.hero.position.z = 64;
+    this.room.add(this.hero);
 
-    function onKeyUp(event) {
-        event.preventDefault();
-        keys[event.keyCode] = false;
-    }
+    this.speaker = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 16), new THREE.MeshPhongMaterial({ color: 0x22ee22 }));
+    this.speaker.position.set(-100, 24, 200);
+    this.room.add(this.speaker);
+};
 
-    var self = {
-        on: function() {
-            document.addEventListener('keydown', onKeyDown, false);
-            document.addEventListener('keyup', onKeyUp, false);
-        },
-        off: function() {
-            document.removeEventListener('keydown', onKeyDown, false);
-            document.removeEventListener('keyup', onKeyUp, false);
-        },
-        isDown: function(key) {
-            return keys[key];
-        },
-        left: function() {
-            return keys[37];
-        },
-        right: function() {
-            return keys[39];
-        },
-        up: function() {
-            return keys[38];
-        },
-        down: function() {
-            return keys[40];
-        },
-        space: function() {
-            return keys[32];
-        }
-    };
+ThreeScene.prototype.createLights = function() {
+    this.light = new THREE.PointLight(0xffffff, 1, 2000);
+    this.light.position.set(50, 64, 1024);
+    this.scene.add(this.light);
 
-    self.on();
+    this.scene.add(new THREE.PointLightHelper(this.light, 30));
 
-    return self;
+    this.ambientLight = new THREE.AmbientLight(0x222200);
+    this.scene.add(this.ambientLight);
+
+    this.directionalLight = new THREE.DirectionalLight(0x444444);
+    this.directionalLight.position.set(1, 0, 1).normalize();
+    this.scene.add(this.directionalLight);
 };
