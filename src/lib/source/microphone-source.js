@@ -66,65 +66,73 @@ MicrophoneSource.prototype.destroy = function() {
     this._context = null;
     this._sourceNode = null;
     this._stream = null;
+    window.mozHack = null;
 };
 
 /*
  * Getters & Setters
  */
 
-Object.defineProperty(MicrophoneSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
+Object.defineProperties(MicrophoneSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
+            }
+            if(this._startedAt) {
+                return this._context.currentTime - this._startedAt;
+            }
+            return 0;
         }
-        if(this._startedAt) {
-            return this._context.currentTime - this._startedAt;
+    },
+    'duration': {
+        get: function() {
+            return 0;
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'duration', {
-    get: function() {
-        return 0;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'progress', {
-  get: function() {
-    return 0;
-  }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode) {
-            this._sourceNode = this._context.createMediaStreamSource(this._stream);
-            // HACK: stops moz garbage collection killing the stream
-            // see https://support.mozilla.org/en-US/questions/984179
-            if(navigator.mozGetUserMedia) {
-                window.mozHack = this._sourceNode;
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'frequency': {
+        get: function() {
+            return this._frequency;
+        },
+        set: function(value) {
+            this._frequency = value;
+            if(this._sourceNode) {
+                this._sourceNode.frequency.value = value;
             }
         }
-        return this._sourceNode;
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode) {
+                this._sourceNode = this._context.createMediaStreamSource(this._stream);
+                // HACK: stops moz garbage collection killing the stream
+                // see https://support.mozilla.org/en-US/questions/984179
+                if(navigator.mozGetUserMedia) {
+                    window.mozHack = this._sourceNode;
+                }
+            }
+            return this._sourceNode;
+        }
     }
 });
 

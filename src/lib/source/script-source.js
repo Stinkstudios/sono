@@ -81,54 +81,50 @@ ScriptSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(ScriptSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
+Object.defineProperties(ScriptSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
+            }
+            if(this._startedAt) {
+                return this._context.currentTime - this._startedAt;
+            }
+            return 0;
         }
-        if(this._startedAt) {
-            return this._context.currentTime - this._startedAt;
+    },
+    'duration': {
+        get: function() {
+            return 0;
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'duration', {
-    get: function() {
-        return 0;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'progress', {
-  get: function() {
-    return 0;
-  }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createScriptProcessor(this._bufferSize, 0, this._channels);
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
         }
-        return this._sourceNode;
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode && this._context) {
+                this._sourceNode = this._context.createScriptProcessor(this._bufferSize, 0, this._channels);
+            }
+            return this._sourceNode;
+        }
     }
 });
 

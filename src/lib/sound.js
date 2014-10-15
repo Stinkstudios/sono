@@ -90,7 +90,6 @@ Sound.prototype._endedHandler = function() {
  */
 
 Sound.prototype.destroy = function() {
-    //console.log.call(console, 'Sound.prototype.destroy');
     if(this._source) { this._source.destroy(); }
     if(this._effect) { this._effect.destroy(); }
     if(this._gain) { this._gain.disconnect(); }

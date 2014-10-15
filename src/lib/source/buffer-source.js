@@ -93,7 +93,6 @@ BufferSource.prototype._endedHandler = function() {
  */
 
 BufferSource.prototype.destroy = function() {
-    //console.log.call(console, 'BufferSource.prototype.destroy');
     this.stop();
     this._buffer = null;
     this._context = null;
@@ -105,68 +104,63 @@ BufferSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(BufferSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
-        }
-        if(this._startedAt) {
-            var time = this._context.currentTime - this._startedAt;
-            if(time > this.duration) {
-                time = time % this.duration;
+Object.defineProperties(BufferSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
             }
-            return time;
+            if(this._startedAt) {
+                var time = this._context.currentTime - this._startedAt;
+                if(time > this.duration) {
+                    time = time % this.duration;
+                }
+                return time;
+            }
+            return 0;
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'duration', {
-    get: function() {
-        return this._buffer ? this._buffer.duration : 0;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'loop', {
-    get: function() {
-        return this._loop;
     },
-    set: function(value) {
-        this._loop = !!value;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'progress', {
-  get: function() {
-    return Math.min(this.currentTime / this.duration, 1);
-  }
-});
-
-Object.defineProperty(BufferSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode) {
-            this._sourceNode = this._context.createBufferSource();
-            this._sourceNode.buffer = this._buffer;
+    'duration': {
+        get: function() {
+            return this._buffer ? this._buffer.duration : 0;
         }
-        return this._sourceNode;
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this.duration ? this.currentTime / this.duration : 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode) {
+                this._sourceNode = this._context.createBufferSource();
+                this._sourceNode.buffer = this._buffer;
+            }
+            return this._sourceNode;
+        }
     }
 });
 

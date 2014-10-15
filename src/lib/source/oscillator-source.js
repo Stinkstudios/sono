@@ -72,68 +72,63 @@ OscillatorSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(OscillatorSource.prototype, 'frequency', {
-    get: function() {
-        return this._frequency;
+Object.defineProperties(OscillatorSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
+            }
+            if(this._startedAt) {
+                return this._context.currentTime - this._startedAt;
+            }
+            return 0;
+        }
     },
-    set: function(value) {
-        this._frequency = value;
-        if(this._sourceNode) {
-            this._sourceNode.frequency.value = value;
+    'duration': {
+        get: function() {
+            return 0;
         }
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
         }
-        if(this._startedAt) {
-            return this._context.currentTime - this._startedAt;
+    },
+    'frequency': {
+        get: function() {
+            return this._frequency;
+        },
+        set: function(value) {
+            this._frequency = value;
+            if(this._sourceNode) {
+                this._sourceNode.frequency.value = value;
+            }
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'duration', {
-    get: function() {
-        return 0;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'progress', {
-  get: function() {
-    return 0;
-  }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createOscillator();
-            this._sourceNode.type = this._type;
-            this._sourceNode.frequency.value = this._frequency;
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
         }
-        return this._sourceNode;
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode && this._context) {
+                this._sourceNode = this._context.createOscillator();
+                this._sourceNode.type = this._type;
+                this._sourceNode.frequency.value = this._frequency;
+            }
+            return this._sourceNode;
+        }
     }
 });
 

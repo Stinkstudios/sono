@@ -305,57 +305,51 @@ Sono.prototype.log = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(Sono.prototype, 'canPlay', {
-    get: function() {
-        return Support.canPlay;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'context', {
-    get: function() {
-        return this._context;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'effect', {
-    get: function() {
-        return this._effect;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'extensions', {
-    get: function() {
-        return Support.extensions;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'hasWebAudio', {
-    get: function() {
-        return !!this._context;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'isSupported', {
-    get: function() {
-        return Support.extensions.length > 0;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'masterGain', {
-    get: function() {
-        return this._masterGain;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'sounds', {
-    get: function() {
-        return this._sounds.slice(0);
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'utils', {
-    get: function() {
-        return Utils;
+Object.defineProperties(Sono.prototype, {
+    'canPlay': {
+        get: function() {
+            return Support.canPlay;
+        }
+    },
+    'context': {
+        get: function() {
+            return this._context;
+        }
+    },
+    'effect': {
+        get: function() {
+            return this._effect;
+        }
+    },
+    'extensions': {
+        get: function() {
+            return Support.extensions;
+        }
+    },
+    'hasWebAudio': {
+        get: function() {
+            return !!this._context;
+        }
+    },
+    'isSupported': {
+        get: function() {
+            return Support.extensions.length > 0;
+        }
+    },
+    'masterGain': {
+        get: function() {
+            return this._masterGain;
+        }
+    },
+    'sounds': {
+        get: function() {
+            return this._sounds.slice(0);
+        }
+    },
+    'utils': {
+        get: function() {
+            return Utils;
+        }
     }
 });
 

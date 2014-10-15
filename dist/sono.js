@@ -306,57 +306,51 @@ Sono.prototype.log = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(Sono.prototype, 'canPlay', {
-    get: function() {
-        return Support.canPlay;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'context', {
-    get: function() {
-        return this._context;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'effect', {
-    get: function() {
-        return this._effect;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'extensions', {
-    get: function() {
-        return Support.extensions;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'hasWebAudio', {
-    get: function() {
-        return !!this._context;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'isSupported', {
-    get: function() {
-        return Support.extensions.length > 0;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'masterGain', {
-    get: function() {
-        return this._masterGain;
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'sounds', {
-    get: function() {
-        return this._sounds.slice(0);
-    }
-});
-
-Object.defineProperty(Sono.prototype, 'utils', {
-    get: function() {
-        return Utils;
+Object.defineProperties(Sono.prototype, {
+    'canPlay': {
+        get: function() {
+            return Support.canPlay;
+        }
+    },
+    'context': {
+        get: function() {
+            return this._context;
+        }
+    },
+    'effect': {
+        get: function() {
+            return this._effect;
+        }
+    },
+    'extensions': {
+        get: function() {
+            return Support.extensions;
+        }
+    },
+    'hasWebAudio': {
+        get: function() {
+            return !!this._context;
+        }
+    },
+    'isSupported': {
+        get: function() {
+            return Support.extensions.length > 0;
+        }
+    },
+    'masterGain': {
+        get: function() {
+            return this._masterGain;
+        }
+    },
+    'sounds': {
+        get: function() {
+            return this._sounds.slice(0);
+        }
+    },
+    'utils': {
+        get: function() {
+            return Utils;
+        }
     }
 });
 
@@ -2061,7 +2055,6 @@ Sound.prototype._endedHandler = function() {
  */
 
 Sound.prototype.destroy = function() {
-    //console.log.call(console, 'Sound.prototype.destroy');
     if(this._source) { this._source.destroy(); }
     if(this._effect) { this._effect.destroy(); }
     if(this._gain) { this._gain.disconnect(); }
@@ -2334,7 +2327,6 @@ BufferSource.prototype._endedHandler = function() {
  */
 
 BufferSource.prototype.destroy = function() {
-    //console.log.call(console, 'BufferSource.prototype.destroy');
     this.stop();
     this._buffer = null;
     this._context = null;
@@ -2346,68 +2338,63 @@ BufferSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(BufferSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
-        }
-        if(this._startedAt) {
-            var time = this._context.currentTime - this._startedAt;
-            if(time > this.duration) {
-                time = time % this.duration;
+Object.defineProperties(BufferSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
             }
-            return time;
+            if(this._startedAt) {
+                var time = this._context.currentTime - this._startedAt;
+                if(time > this.duration) {
+                    time = time % this.duration;
+                }
+                return time;
+            }
+            return 0;
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'duration', {
-    get: function() {
-        return this._buffer ? this._buffer.duration : 0;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'loop', {
-    get: function() {
-        return this._loop;
     },
-    set: function(value) {
-        this._loop = !!value;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(BufferSource.prototype, 'progress', {
-  get: function() {
-    return Math.min(this.currentTime / this.duration, 1);
-  }
-});
-
-Object.defineProperty(BufferSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode) {
-            this._sourceNode = this._context.createBufferSource();
-            this._sourceNode.buffer = this._buffer;
+    'duration': {
+        get: function() {
+            return this._buffer ? this._buffer.duration : 0;
         }
-        return this._sourceNode;
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this.duration ? this.currentTime / this.duration : 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode) {
+                this._sourceNode = this._context.createBufferSource();
+                this._sourceNode.buffer = this._buffer;
+            }
+            return this._sourceNode;
+        }
     }
 });
 
@@ -2524,57 +2511,52 @@ MediaSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(MediaSource.prototype, 'currentTime', {
-    get: function() {
-        return this._el ? this._el.currentTime : 0;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'duration', {
-    get: function() {
-        return this._el ? this._el.duration : 0;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'loop', {
-    get: function() {
-        return this._loop;
-    },
-    set: function(value) {
-        this._loop = value;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'progress', {
-    get: function() {
-        return this.currentTime / this.duration;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createMediaElementSource(this._el);
+Object.defineProperties(MediaSource.prototype, {
+    'currentTime': {
+        get: function() {
+            return this._el ? this._el.currentTime : 0;
         }
-        return this._sourceNode;
+    },
+    'duration': {
+        get: function() {
+            return this._el ? this._el.duration : 0;
+        }
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this.duration ? this.currentTime / this.duration : 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode && this._context) {
+                this._sourceNode = this._context.createMediaElementSource(this._el);
+            }
+            return this._sourceNode;
+        }
     }
 });
 
@@ -2649,65 +2631,73 @@ MicrophoneSource.prototype.destroy = function() {
     this._context = null;
     this._sourceNode = null;
     this._stream = null;
+    window.mozHack = null;
 };
 
 /*
  * Getters & Setters
  */
 
-Object.defineProperty(MicrophoneSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
+Object.defineProperties(MicrophoneSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
+            }
+            if(this._startedAt) {
+                return this._context.currentTime - this._startedAt;
+            }
+            return 0;
         }
-        if(this._startedAt) {
-            return this._context.currentTime - this._startedAt;
+    },
+    'duration': {
+        get: function() {
+            return 0;
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'duration', {
-    get: function() {
-        return 0;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'progress', {
-  get: function() {
-    return 0;
-  }
-});
-
-Object.defineProperty(MicrophoneSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode) {
-            this._sourceNode = this._context.createMediaStreamSource(this._stream);
-            // HACK: stops moz garbage collection killing the stream
-            // see https://support.mozilla.org/en-US/questions/984179
-            if(navigator.mozGetUserMedia) {
-                window.mozHack = this._sourceNode;
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'frequency': {
+        get: function() {
+            return this._frequency;
+        },
+        set: function(value) {
+            this._frequency = value;
+            if(this._sourceNode) {
+                this._sourceNode.frequency.value = value;
             }
         }
-        return this._sourceNode;
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode) {
+                this._sourceNode = this._context.createMediaStreamSource(this._stream);
+                // HACK: stops moz garbage collection killing the stream
+                // see https://support.mozilla.org/en-US/questions/984179
+                if(navigator.mozGetUserMedia) {
+                    window.mozHack = this._sourceNode;
+                }
+            }
+            return this._sourceNode;
+        }
     }
 });
 
@@ -2788,68 +2778,63 @@ OscillatorSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(OscillatorSource.prototype, 'frequency', {
-    get: function() {
-        return this._frequency;
+Object.defineProperties(OscillatorSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
+            }
+            if(this._startedAt) {
+                return this._context.currentTime - this._startedAt;
+            }
+            return 0;
+        }
     },
-    set: function(value) {
-        this._frequency = value;
-        if(this._sourceNode) {
-            this._sourceNode.frequency.value = value;
+    'duration': {
+        get: function() {
+            return 0;
         }
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
         }
-        if(this._startedAt) {
-            return this._context.currentTime - this._startedAt;
+    },
+    'frequency': {
+        get: function() {
+            return this._frequency;
+        },
+        set: function(value) {
+            this._frequency = value;
+            if(this._sourceNode) {
+                this._sourceNode.frequency.value = value;
+            }
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'duration', {
-    get: function() {
-        return 0;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'progress', {
-  get: function() {
-    return 0;
-  }
-});
-
-Object.defineProperty(OscillatorSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createOscillator();
-            this._sourceNode.type = this._type;
-            this._sourceNode.frequency.value = this._frequency;
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
         }
-        return this._sourceNode;
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode && this._context) {
+                this._sourceNode = this._context.createOscillator();
+                this._sourceNode.type = this._type;
+                this._sourceNode.frequency.value = this._frequency;
+            }
+            return this._sourceNode;
+        }
     }
 });
 
@@ -2939,54 +2924,50 @@ ScriptSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(ScriptSource.prototype, 'currentTime', {
-    get: function() {
-        if(this._pausedAt) {
-            return this._pausedAt;
+Object.defineProperties(ScriptSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
+            }
+            if(this._startedAt) {
+                return this._context.currentTime - this._startedAt;
+            }
+            return 0;
         }
-        if(this._startedAt) {
-            return this._context.currentTime - this._startedAt;
+    },
+    'duration': {
+        get: function() {
+            return 0;
         }
-        return 0;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'duration', {
-    get: function() {
-        return 0;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'progress', {
-  get: function() {
-    return 0;
-  }
-});
-
-Object.defineProperty(ScriptSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createScriptProcessor(this._bufferSize, 0, this._channels);
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
         }
-        return this._sourceNode;
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode && this._context) {
+                this._sourceNode = this._context.createScriptProcessor(this._bufferSize, 0, this._channels);
+            }
+            return this._sourceNode;
+        }
     }
 });
 
@@ -3086,7 +3067,6 @@ function Loader(url) {
     };
 
     var destroy = function() {
-        //console.log.call(console, 'Loader.destroy');
         cancel();
         onProgress.removeAll();
         onComplete.removeAll();

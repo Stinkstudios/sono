@@ -91,7 +91,6 @@ function Loader(url) {
     };
 
     var destroy = function() {
-        //console.log.call(console, 'Loader.destroy');
         cancel();
         onProgress.removeAll();
         onComplete.removeAll();

@@ -108,57 +108,52 @@ MediaSource.prototype.destroy = function() {
  * Getters & Setters
  */
 
-Object.defineProperty(MediaSource.prototype, 'currentTime', {
-    get: function() {
-        return this._el ? this._el.currentTime : 0;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'duration', {
-    get: function() {
-        return this._el ? this._el.duration : 0;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'ended', {
-    get: function() {
-        return this._ended;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'loop', {
-    get: function() {
-        return this._loop;
-    },
-    set: function(value) {
-        this._loop = value;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'paused', {
-    get: function() {
-        return this._paused;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'playing', {
-    get: function() {
-        return this._playing;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'progress', {
-    get: function() {
-        return this.currentTime / this.duration;
-    }
-});
-
-Object.defineProperty(MediaSource.prototype, 'sourceNode', {
-    get: function() {
-        if(!this._sourceNode && this._context) {
-            this._sourceNode = this._context.createMediaElementSource(this._el);
+Object.defineProperties(MediaSource.prototype, {
+    'currentTime': {
+        get: function() {
+            return this._el ? this._el.currentTime : 0;
         }
-        return this._sourceNode;
+    },
+    'duration': {
+        get: function() {
+            return this._el ? this._el.duration : 0;
+        }
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this.duration ? this.currentTime / this.duration : 0;
+        }
+    },
+    'sourceNode': {
+        get: function() {
+            if(!this._sourceNode && this._context) {
+                this._sourceNode = this._context.createMediaElementSource(this._el);
+            }
+            return this._sourceNode;
+        }
     }
 });
 
