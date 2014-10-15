@@ -1,10 +1,11 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self),o.Sono=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-var Effect = require('./lib/effect.js'),
+var Browser = require('./lib/utils/browser.js'),
+    Effect = require('./lib/effect.js'),
+    File = require('./lib/utils/file.js'),
     Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
-    Support = require('./lib/utils/support.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
@@ -44,7 +45,7 @@ function Sono() {
 
 Sono.prototype.createSound = function(config) {
     // try to load if config contains URLs
-    if(Support.containsURL(config)) {
+    if(File.containsURL(config)) {
         return this.load(config);
     }
     // otherwise just return a new sound object
@@ -114,11 +115,11 @@ Sono.prototype.load = function(config) {
     var sound,
         loader;
 
-    if(Support.containsURL(url)) {
+    if(File.containsURL(url)) {
         sound = this._queue(config, asMediaElement);
         loader = sound.loader;
     }
-    else if(Array.isArray(url) && Support.containsURL(url[0].url) ) {
+    else if(Array.isArray(url) && File.containsURL(url[0].url) ) {
         sound = [];
         loader = new Loader.Group();
 
@@ -144,7 +145,7 @@ Sono.prototype.load = function(config) {
 };
 
 Sono.prototype._queue = function(config, asMediaElement, group) {
-    var url = Support.getSupportedFile(config.url || config);
+    var url = File.getSupportedFile(config.url || config);
     var sound = this.createSound();
     sound.id = config.id || '';
     sound.loop = !!config.loop;
@@ -246,7 +247,7 @@ Sono.prototype._handleTouchlock = function() {
             }
         });
     };
-    this._isTouchLocked = Utils.handleTouchlock(onUnlock, this);
+    this._isTouchLocked = Browser.handleTouchLock(onUnlock, this);
 };
 
 /*
@@ -274,7 +275,7 @@ Sono.prototype._handlePageVisibility = function() {
         }
     }
 
-    Utils.handlePageVisibility(onHidden, onShown, this);
+    Browser.handlePageVisibility(onHidden, onShown, this);
 };
 
 /*
@@ -286,7 +287,7 @@ Sono.prototype.log = function() {
         info = 'Supported:' + this.isSupported +
                ' WebAudioAPI:' + this.hasWebAudio +
                ' TouchLocked:' + this._isTouchLocked +
-               ' Extensions:' + Support.extensions;
+               ' Extensions:' + Utils.extensions;
 
     if(navigator.userAgent.indexOf('Chrome') > -1) {
         var args = [
@@ -309,7 +310,7 @@ Sono.prototype.log = function() {
 Object.defineProperties(Sono.prototype, {
     'canPlay': {
         get: function() {
-            return Support.canPlay;
+            return File.canPlay;
         }
     },
     'context': {
@@ -324,7 +325,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'extensions': {
         get: function() {
-            return Support.extensions;
+            return File.extensions;
         }
     },
     'hasWebAudio': {
@@ -334,7 +335,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'isSupported': {
         get: function() {
-            return Support.extensions.length > 0;
+            return File.extensions.length > 0;
         }
     },
     'masterGain': {
@@ -360,7 +361,7 @@ Object.defineProperties(Sono.prototype, {
 
 module.exports = new Sono();
 
-},{"./lib/effect.js":3,"./lib/sound.js":14,"./lib/utils/loader.js":20,"./lib/utils/support.js":22,"./lib/utils/utils.js":23}],2:[function(require,module,exports){
+},{"./lib/effect.js":3,"./lib/sound.js":14,"./lib/utils/browser.js":20,"./lib/utils/file.js":21,"./lib/utils/loader.js":22,"./lib/utils/utils.js":24}],2:[function(require,module,exports){
 /*jslint onevar:true, undef:true, newcap:true, regexp:true, bitwise:true, maxerr:50, indent:4, white:false, nomen:false, plusplus:false */
 /*global define:false, require:false, exports:false, module:false, signals:false */
 
@@ -1971,7 +1972,7 @@ var BufferSource = require('./source/buffer-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
     ScriptSource = require('./source/script-source.js'),
-    Utils = require('./utils/utils.js');
+    File = require('./utils/file.js');
 
 function Sound(context, destination) {
     this.id = '';
@@ -2072,19 +2073,19 @@ Sound.prototype.destroy = function() {
  */
 
 Sound.prototype._createSource = function(data) {
-    if(Utils.isAudioBuffer(data)) {
+    if(File.isAudioBuffer(data)) {
         this._source = new BufferSource(data, this._context);
     }
-    else if(Utils.isMediaElement(data)) {
+    else if(File.isMediaElement(data)) {
         this._source = new MediaSource(data, this._context);
     }
-    else if(Utils.isMediaStream(data)) {
+    else if(File.isMediaStream(data)) {
         this._source = new MicrophoneSource(data, this._context);
     }
-    else if(Utils.isOscillatorType(data)) {
+    else if(File.isOscillatorType(data)) {
         this._source = new OscillatorSource(data, this._context);
     }
-    else if(Utils.isScriptConfig(data)) {
+    else if(File.isScriptConfig(data)) {
         this._source = new ScriptSource(data, this._context);
     }
     else {
@@ -2218,7 +2219,7 @@ Object.defineProperties(Sound.prototype, {
 
 module.exports = Sound;
 
-},{"./effect.js":3,"./source/buffer-source.js":15,"./source/media-source.js":16,"./source/microphone-source.js":17,"./source/oscillator-source.js":18,"./source/script-source.js":19,"./utils/utils.js":23}],15:[function(require,module,exports){
+},{"./effect.js":3,"./source/buffer-source.js":15,"./source/media-source.js":16,"./source/microphone-source.js":17,"./source/oscillator-source.js":18,"./source/script-source.js":19,"./utils/file.js":21}],15:[function(require,module,exports){
 'use strict';
 
 function BufferSource(buffer, context) {
@@ -2963,6 +2964,195 @@ module.exports = ScriptSource;
 },{}],20:[function(require,module,exports){
 'use strict';
 
+var Browser = {};
+
+Browser.handlePageVisibility = function(onHidden, onShown, thisArg) {
+    var hidden,
+        visibilityChange;
+
+    if (typeof document.hidden !== 'undefined') {
+        hidden = 'hidden';
+        visibilityChange = 'visibilitychange';
+    }
+    else if (typeof document.mozHidden !== 'undefined') {
+        hidden = 'mozHidden';
+        visibilityChange = 'mozvisibilitychange';
+    }
+    else if (typeof document.msHidden !== 'undefined') {
+        hidden = 'msHidden';
+        visibilityChange = 'msvisibilitychange';
+    }
+    else if (typeof document.webkitHidden !== 'undefined') {
+        hidden = 'webkitHidden';
+        visibilityChange = 'webkitvisibilitychange';
+    }
+
+    function onChange() {
+        if (document[hidden]) {
+            onHidden.call(thisArg);
+        }
+        else {
+            onShown.call(thisArg);
+        }
+    }
+
+    if(visibilityChange !== undefined) {
+        document.addEventListener(visibilityChange, onChange, false);
+    }
+};
+
+Browser.handleTouchLock = function(onUnlock, thisArg) {
+    var ua = navigator.userAgent,
+        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i);
+
+    var unlock = function() {
+        document.body.removeEventListener('touchstart', unlock);
+
+        if(this._context) {
+            var buffer = this._context.createBuffer(1, 1, 22050);
+            var unlockSource = this._context.createBufferSource();
+            unlockSource.buffer = buffer;
+            unlockSource.connect(this._context.destination);
+            unlockSource.start(0);
+        }
+
+        onUnlock.call(thisArg);
+
+    }.bind(this);
+
+    if(locked) {
+        document.body.addEventListener('touchstart', unlock, false);
+    }
+    return locked;
+};
+
+module.exports = Browser;
+
+},{}],21:[function(require,module,exports){
+'use strict';
+
+var File = {
+    extensions: [],
+    canPlay: {}
+};
+
+/*
+ * Initial tests
+ */
+
+var tests = [
+    { ext: 'ogg', type: 'audio/ogg; codecs="vorbis"' },
+    { ext: 'mp3', type: 'audio/mpeg;' },
+    { ext: 'opus', type: 'audio/ogg; codecs="opus"' },
+    { ext: 'wav', type: 'audio/wav; codecs="1"' },
+    { ext: 'm4a', type: 'audio/x-m4a;' },
+    { ext: 'm4a', type: 'audio/aac;' }
+];
+
+var el = document.createElement('audio');
+if(el) {
+    tests.forEach(function(test) {
+        var canPlayType = !!el.canPlayType(test.type);
+        if(canPlayType) {
+            File.extensions.push(test.ext);
+        }
+        File.canPlay[test.ext] = canPlayType;
+    });
+}
+
+/*
+ * find a supported file
+ */
+
+File.getFileExtension = function(url) {
+    url = url.split('?')[0];
+    url = url.substr(url.lastIndexOf('/') + 1);
+
+    var a = url.split('.');
+    if(a.length === 1 || (a[0] === '' && a.length === 2)) {
+        return '';
+    }
+    return a.pop().toLowerCase();
+};
+
+File.getSupportedFile = function(fileNames) {
+    var name;
+
+    if(Array.isArray(fileNames)) {
+        // if array get the first one that works
+        fileNames.some(function(item) {
+            name = item;
+            var ext = this.getFileExtension(item);
+            return this.extensions.indexOf(ext) > -1;
+        }, this);
+    }
+    else if(typeof fileNames === 'object') {
+        // if not array and is object
+        Object.keys(fileNames).some(function(key) {
+            name = fileNames[key];
+            var ext = this.getFileExtension(name);
+            return this.extensions.indexOf(ext) > -1;
+        }, this);
+    }
+    // if string just return
+    return name || fileNames;
+};
+
+/*
+ * infer file types
+ */
+
+File.isAudioBuffer = function(data) {
+    return !!(data &&
+              window.AudioBuffer &&
+              data instanceof window.AudioBuffer);
+};
+
+File.isMediaElement = function(data) {
+    return !!(data &&
+              window.HTMLMediaElement &&
+              data instanceof window.HTMLMediaElement);
+};
+
+File.isMediaStream = function(data) {
+    return !!(data &&
+              typeof data.getAudioTracks === 'function' &&
+              data.getAudioTracks().length &&
+              window.MediaStreamTrack &&
+              data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
+};
+
+File.isOscillatorType = function(data) {
+    return !!(data && typeof data === 'string' &&
+             (data === 'sine' || data === 'square' ||
+              data === 'sawtooth' || data === 'triangle'));
+};
+
+File.isScriptConfig = function(data) {
+    return !!(data && typeof data === 'object' &&
+              data.bufferSize && data.channels && data.callback);
+};
+
+File.isAudioParam = function(data) {
+    return !!(data && window.AudioParam && data instanceof window.AudioParam);
+};
+
+File.isURL = function(data) {
+    return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
+};
+
+File.containsURL = function(config) {
+    if(!config) { return false; }
+    // string, array or object with url property that is string or array
+    var url = config.url || config;
+    return this.isURL(url) || (Array.isArray(url) && this.isURL(url[0]));
+};
+
+module.exports = File;
+
+},{}],22:[function(require,module,exports){
+'use strict';
+
 var signals = require('signals');
 
 function Loader(url) {
@@ -3159,7 +3349,7 @@ Loader.Group = function() {
 
 module.exports = Loader;
 
-},{"signals":2}],21:[function(require,module,exports){
+},{"signals":2}],23:[function(require,module,exports){
 'use strict';
 
 function Microphone(connected, denied, error, thisArg) {
@@ -3198,109 +3388,32 @@ Microphone.prototype.disconnect = function() {
     return this;
 };
 
-Object.defineProperty(Microphone.prototype, 'stream', {
-    get: function() {
-        return this._stream;
-    }
-});
-
-Object.defineProperty(Microphone.prototype, 'isSupported', {
-    get: function() {
-        return this._isSupported;
+Object.defineProperties(Microphone.prototype, {
+    'stream': {
+        get: function() {
+            return this._stream;
+        }
+    },
+    'isSupported': {
+        get: function() {
+            return this._isSupported;
+        }
     }
 });
 
 module.exports = Microphone;
 
-},{}],22:[function(require,module,exports){
-'use strict';
-
-function Support() {
-    var extensions = [],
-        canPlay = {},
-        el = document.createElement('audio');
-
-    if(!el) { return; }
-
-    var tests = [
-        { ext: 'ogg', type: 'audio/ogg; codecs="vorbis"' },
-        { ext: 'mp3', type: 'audio/mpeg;' },
-        { ext: 'opus', type: 'audio/ogg; codecs="opus"' },
-        { ext: 'wav', type: 'audio/wav; codecs="1"' },
-        { ext: 'm4a', type: 'audio/x-m4a;' },
-        { ext: 'm4a', type: 'audio/aac;' }
-    ];
-
-    tests.forEach(function(test) {
-        var canPlayType = !!el.canPlayType(test.type);
-        if(canPlayType) {
-            extensions.push(test.ext);
-        }
-        canPlay[test.ext] = canPlayType;
-    });
-
-    var getFileExtension = function(url) {
-        url = url.split('?')[0];
-        url = url.substr(url.lastIndexOf('/') + 1);
-
-        var a = url.split('.');
-        if(a.length === 1 || (a[0] === '' && a.length === 2)) {
-            return '';
-        }
-        return a.pop().toLowerCase();
-    };
-
-    var getSupportedFile = function(fileNames) {
-        var name;
-
-        if(Array.isArray(fileNames)) {
-            // if array get the first one that works
-            fileNames.some(function(item) {
-                name = item;
-                var ext = getFileExtension(item);
-                return extensions.indexOf(ext) > -1;
-            }, this);
-        }
-        else if(typeof fileNames === 'object') {
-            // if not array and is object
-            Object.keys(fileNames).some(function(key) {
-                name = fileNames[key];
-                var ext = getFileExtension(name);
-                return extensions.indexOf(ext) > -1;
-            }, this);
-        }
-        // if string just return
-        return name || fileNames;
-    };
-
-    var containsURL = function(config) {
-        if(!config) { return false; }
-        // string, array or object with url property that is string or array
-        var url = config.url || config;
-        return isURL(url) || (Array.isArray(url) && isURL(url[0]));
-    };
-
-    var isURL = function(data) {
-        return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
-    };
-
-    return Object.freeze({
-        extensions: extensions,
-        canPlay: canPlay,
-        getFileExtension: getFileExtension,
-        getSupportedFile: getSupportedFile,
-        containsURL: containsURL
-    });
-}
-
-module.exports = new Support();
-
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var Microphone = require('./microphone.js'),
-    Waveform = require('./waveform.js'),
-    Utils = {};
+    Waveform = require('./waveform.js');
+
+var Utils = {};
+
+/*
+ * audio context
+ */    
 
 Utils.setContext = function(context) {
     this._context = context;
@@ -3375,51 +3488,16 @@ Utils.getFrequency = function(value) {
 };
 
 /*
- * detect file types
- */
-
-Utils.isAudioBuffer = function(data) {
-    return !!(data &&
-              window.AudioBuffer &&
-              data instanceof window.AudioBuffer);
-};
-
-Utils.isMediaElement = function(data) {
-    return !!(data &&
-              window.HTMLMediaElement &&
-              data instanceof window.HTMLMediaElement);
-};
-
-Utils.isMediaStream = function(data) {
-    return !!(data &&
-              typeof data.getAudioTracks === 'function' &&
-              data.getAudioTracks().length &&
-              window.MediaStreamTrack &&
-              data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
-};
-
-Utils.isOscillatorType = function(data) {
-    return !!(data && typeof data === 'string' &&
-             (data === 'sine' || data === 'square' ||
-              data === 'sawtooth' || data === 'triangle'));
-};
-
-Utils.isScriptConfig = function(data) {
-    return !!(data && typeof data === 'object' &&
-              data.bufferSize && data.channels && data.callback);
-};
-
-Utils.isAudioParam = function(data) {
-    return !!(data && window.AudioParam && data instanceof window.AudioParam);
-};
-
-/*
  * microphone util
  */
 
 Utils.microphone = function(connected, denied, error, thisArg) {
     return new Microphone(connected, denied, error, thisArg);
 };
+
+/*
+ * Format seconds as timecode string
+ */
 
 Utils.timeCode = function(seconds, delim) {
     if(delim === undefined) { delim = ':'; }
@@ -3432,81 +3510,17 @@ Utils.timeCode = function(seconds, delim) {
     return hr + mn + sc;
 };
 
+/*
+ * waveform
+ */
+
 Utils.waveform = function(buffer, length) {
     return new Waveform(buffer, length);
 };
 
-/*
- * Page visibility
- */
-
-Utils.handlePageVisibility = function(onHidden, onShown, thisArg) {
-    var hidden,
-        visibilityChange;
-
-    if (typeof document.hidden !== 'undefined') {
-        hidden = 'hidden';
-        visibilityChange = 'visibilitychange';
-    }
-    else if (typeof document.mozHidden !== 'undefined') {
-        hidden = 'mozHidden';
-        visibilityChange = 'mozvisibilitychange';
-    }
-    else if (typeof document.msHidden !== 'undefined') {
-        hidden = 'msHidden';
-        visibilityChange = 'msvisibilitychange';
-    }
-    else if (typeof document.webkitHidden !== 'undefined') {
-        hidden = 'webkitHidden';
-        visibilityChange = 'webkitvisibilitychange';
-    }
-
-    function onChange() {
-        if (document[hidden]) {
-            onHidden.call(thisArg);
-        }
-        else {
-            onShown.call(thisArg);
-        }
-    }
-
-    if(visibilityChange !== undefined) {
-        document.addEventListener(visibilityChange, onChange, false);
-    }
-};
-
-/*
- * Touch lock
- */
-
-Utils.handleTouchlock = function(onUnlock, thisArg) {
-    var ua = navigator.userAgent,
-        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i);
-
-    var unlock = function() {
-        document.body.removeEventListener('touchstart', unlock);
-
-        if(this._context) {
-            var buffer = this._context.createBuffer(1, 1, 22050);
-            var unlockSource = this._context.createBufferSource();
-            unlockSource.buffer = buffer;
-            unlockSource.connect(this._context.destination);
-            unlockSource.start(0);
-        }
-
-        onUnlock.call(thisArg);
-
-    }.bind(this);
-
-    if(locked) {
-        document.body.addEventListener('touchstart', unlock, false);
-    }
-    return locked;
-};
-
 module.exports = Utils;
 
-},{"./microphone.js":21,"./waveform.js":24}],24:[function(require,module,exports){
+},{"./microphone.js":23,"./waveform.js":25}],25:[function(require,module,exports){
 'use strict';
 
 function Waveform() {

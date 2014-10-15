@@ -6,7 +6,7 @@ var BufferSource = require('./source/buffer-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
     ScriptSource = require('./source/script-source.js'),
-    Utils = require('./utils/utils.js');
+    File = require('./utils/file.js');
 
 function Sound(context, destination) {
     this.id = '';
@@ -107,19 +107,19 @@ Sound.prototype.destroy = function() {
  */
 
 Sound.prototype._createSource = function(data) {
-    if(Utils.isAudioBuffer(data)) {
+    if(File.isAudioBuffer(data)) {
         this._source = new BufferSource(data, this._context);
     }
-    else if(Utils.isMediaElement(data)) {
+    else if(File.isMediaElement(data)) {
         this._source = new MediaSource(data, this._context);
     }
-    else if(Utils.isMediaStream(data)) {
+    else if(File.isMediaStream(data)) {
         this._source = new MicrophoneSource(data, this._context);
     }
-    else if(Utils.isOscillatorType(data)) {
+    else if(File.isOscillatorType(data)) {
         this._source = new OscillatorSource(data, this._context);
     }
-    else if(Utils.isScriptConfig(data)) {
+    else if(File.isScriptConfig(data)) {
         this._source = new ScriptSource(data, this._context);
     }
     else {

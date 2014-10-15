@@ -36,15 +36,16 @@ Microphone.prototype.disconnect = function() {
     return this;
 };
 
-Object.defineProperty(Microphone.prototype, 'stream', {
-    get: function() {
-        return this._stream;
-    }
-});
-
-Object.defineProperty(Microphone.prototype, 'isSupported', {
-    get: function() {
-        return this._isSupported;
+Object.defineProperties(Microphone.prototype, {
+    'stream': {
+        get: function() {
+            return this._stream;
+        }
+    },
+    'isSupported': {
+        get: function() {
+            return this._isSupported;
+        }
     }
 });
 

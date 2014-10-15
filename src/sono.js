@@ -1,9 +1,10 @@
 'use strict';
 
-var Effect = require('./lib/effect.js'),
+var Browser = require('./lib/utils/browser.js'),
+    Effect = require('./lib/effect.js'),
+    File = require('./lib/utils/file.js'),
     Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
-    Support = require('./lib/utils/support.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
@@ -43,7 +44,7 @@ function Sono() {
 
 Sono.prototype.createSound = function(config) {
     // try to load if config contains URLs
-    if(Support.containsURL(config)) {
+    if(File.containsURL(config)) {
         return this.load(config);
     }
     // otherwise just return a new sound object
@@ -113,11 +114,11 @@ Sono.prototype.load = function(config) {
     var sound,
         loader;
 
-    if(Support.containsURL(url)) {
+    if(File.containsURL(url)) {
         sound = this._queue(config, asMediaElement);
         loader = sound.loader;
     }
-    else if(Array.isArray(url) && Support.containsURL(url[0].url) ) {
+    else if(Array.isArray(url) && File.containsURL(url[0].url) ) {
         sound = [];
         loader = new Loader.Group();
 
@@ -143,7 +144,7 @@ Sono.prototype.load = function(config) {
 };
 
 Sono.prototype._queue = function(config, asMediaElement, group) {
-    var url = Support.getSupportedFile(config.url || config);
+    var url = File.getSupportedFile(config.url || config);
     var sound = this.createSound();
     sound.id = config.id || '';
     sound.loop = !!config.loop;
@@ -245,7 +246,7 @@ Sono.prototype._handleTouchlock = function() {
             }
         });
     };
-    this._isTouchLocked = Utils.handleTouchlock(onUnlock, this);
+    this._isTouchLocked = Browser.handleTouchLock(onUnlock, this);
 };
 
 /*
@@ -273,7 +274,7 @@ Sono.prototype._handlePageVisibility = function() {
         }
     }
 
-    Utils.handlePageVisibility(onHidden, onShown, this);
+    Browser.handlePageVisibility(onHidden, onShown, this);
 };
 
 /*
@@ -285,7 +286,7 @@ Sono.prototype.log = function() {
         info = 'Supported:' + this.isSupported +
                ' WebAudioAPI:' + this.hasWebAudio +
                ' TouchLocked:' + this._isTouchLocked +
-               ' Extensions:' + Support.extensions;
+               ' Extensions:' + Utils.extensions;
 
     if(navigator.userAgent.indexOf('Chrome') > -1) {
         var args = [
@@ -308,7 +309,7 @@ Sono.prototype.log = function() {
 Object.defineProperties(Sono.prototype, {
     'canPlay': {
         get: function() {
-            return Support.canPlay;
+            return File.canPlay;
         }
     },
     'context': {
@@ -323,7 +324,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'extensions': {
         get: function() {
-            return Support.extensions;
+            return File.extensions;
         }
     },
     'hasWebAudio': {
@@ -333,7 +334,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'isSupported': {
         get: function() {
-            return Support.extensions.length > 0;
+            return File.extensions.length > 0;
         }
     },
     'masterGain': {

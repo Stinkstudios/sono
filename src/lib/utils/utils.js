@@ -1,8 +1,13 @@
 'use strict';
 
 var Microphone = require('./microphone.js'),
-    Waveform = require('./waveform.js'),
-    Utils = {};
+    Waveform = require('./waveform.js');
+
+var Utils = {};
+
+/*
+ * audio context
+ */    
 
 Utils.setContext = function(context) {
     this._context = context;
@@ -77,51 +82,16 @@ Utils.getFrequency = function(value) {
 };
 
 /*
- * detect file types
- */
-
-Utils.isAudioBuffer = function(data) {
-    return !!(data &&
-              window.AudioBuffer &&
-              data instanceof window.AudioBuffer);
-};
-
-Utils.isMediaElement = function(data) {
-    return !!(data &&
-              window.HTMLMediaElement &&
-              data instanceof window.HTMLMediaElement);
-};
-
-Utils.isMediaStream = function(data) {
-    return !!(data &&
-              typeof data.getAudioTracks === 'function' &&
-              data.getAudioTracks().length &&
-              window.MediaStreamTrack &&
-              data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
-};
-
-Utils.isOscillatorType = function(data) {
-    return !!(data && typeof data === 'string' &&
-             (data === 'sine' || data === 'square' ||
-              data === 'sawtooth' || data === 'triangle'));
-};
-
-Utils.isScriptConfig = function(data) {
-    return !!(data && typeof data === 'object' &&
-              data.bufferSize && data.channels && data.callback);
-};
-
-Utils.isAudioParam = function(data) {
-    return !!(data && window.AudioParam && data instanceof window.AudioParam);
-};
-
-/*
  * microphone util
  */
 
 Utils.microphone = function(connected, denied, error, thisArg) {
     return new Microphone(connected, denied, error, thisArg);
 };
+
+/*
+ * Format seconds as timecode string
+ */
 
 Utils.timeCode = function(seconds, delim) {
     if(delim === undefined) { delim = ':'; }
@@ -134,76 +104,12 @@ Utils.timeCode = function(seconds, delim) {
     return hr + mn + sc;
 };
 
+/*
+ * waveform
+ */
+
 Utils.waveform = function(buffer, length) {
     return new Waveform(buffer, length);
-};
-
-/*
- * Page visibility
- */
-
-Utils.handlePageVisibility = function(onHidden, onShown, thisArg) {
-    var hidden,
-        visibilityChange;
-
-    if (typeof document.hidden !== 'undefined') {
-        hidden = 'hidden';
-        visibilityChange = 'visibilitychange';
-    }
-    else if (typeof document.mozHidden !== 'undefined') {
-        hidden = 'mozHidden';
-        visibilityChange = 'mozvisibilitychange';
-    }
-    else if (typeof document.msHidden !== 'undefined') {
-        hidden = 'msHidden';
-        visibilityChange = 'msvisibilitychange';
-    }
-    else if (typeof document.webkitHidden !== 'undefined') {
-        hidden = 'webkitHidden';
-        visibilityChange = 'webkitvisibilitychange';
-    }
-
-    function onChange() {
-        if (document[hidden]) {
-            onHidden.call(thisArg);
-        }
-        else {
-            onShown.call(thisArg);
-        }
-    }
-
-    if(visibilityChange !== undefined) {
-        document.addEventListener(visibilityChange, onChange, false);
-    }
-};
-
-/*
- * Touch lock
- */
-
-Utils.handleTouchlock = function(onUnlock, thisArg) {
-    var ua = navigator.userAgent,
-        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i);
-
-    var unlock = function() {
-        document.body.removeEventListener('touchstart', unlock);
-
-        if(this._context) {
-            var buffer = this._context.createBuffer(1, 1, 22050);
-            var unlockSource = this._context.createBufferSource();
-            unlockSource.buffer = buffer;
-            unlockSource.connect(this._context.destination);
-            unlockSource.start(0);
-        }
-
-        onUnlock.call(thisArg);
-
-    }.bind(this);
-
-    if(locked) {
-        document.body.addEventListener('touchstart', unlock, false);
-    }
-    return locked;
 };
 
 module.exports = Utils;
