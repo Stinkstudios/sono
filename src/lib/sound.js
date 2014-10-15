@@ -141,125 +141,112 @@ Sound.prototype._createSource = function(data) {
  * Getters & Setters
  */
 
-Object.defineProperty(Sound.prototype, 'context', {
-    get: function() {
-        return this._context;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'currentTime', {
-    get: function() {
-        return this._source ? this._source.currentTime : 0;
-    },
-    set: function(value) {
-        this.stop();
-        this.play(0, value);
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'data', {
-    get: function() {
-        return this._data;
-    },
-    set : function(value) {
-        if(!value) { return; }
-        this._data = value;
-        this._createSource(this._data);
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'duration', {
-    get: function() {
-        return this._source ? this._source.duration : 0;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'ended', {
-    get: function() {
-        return this._source ? this._source.ended : false;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'gain', {
-    get: function() {
-        return this._gain;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'isTouchLocked', {
-    set: function(value) {
-        this._isTouchLocked = value;
-        if(!value && this._playWhenReady) {
-            this._playWhenReady();
+Object.defineProperties(Sound.prototype, {
+    'context': {
+        get: function() {
+            return this._context;
         }
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'loop', {
-    get: function() {
-        return this._loop;
     },
-    set: function(value) {
-        this._loop = !!value;
-        if(this._source) {
-          this._source.loop = this._loop;
+    'currentTime': {
+        get: function() {
+            return this._source ? this._source.currentTime : 0;
+        },
+        set: function(value) {
+            this.stop();
+            this.play(0, value);
         }
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'effect', {
-    get: function() {
-        return this._effect;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'paused', {
-    get: function() {
-        return this._source ? this._source.paused : false;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'playing', {
-    get: function() {
-        return this._source ? this._source.playing : false;
-    }
-});
-
-Object.defineProperty(Sound.prototype, 'progress', {
-  get: function() {
-    return this._source ? this._source.progress : 0;
-  }
-});
-
-Object.defineProperty(Sound.prototype, 'volume', {
-    get: function() {
-        return this._gain.gain.value;
     },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-
-        this._gain.gain.value = value;
-
-        if(this._context) {
-            this._gain.gain.cancelScheduledValues(this._context.currentTime);
-            this._gain.gain.setValueAtTime(value, this._context.currentTime);
+    'data': {
+        get: function() {
+            return this._data;
+        },
+        set : function(value) {
+            if(!value) { return; }
+            this._data = value;
+            this._createSource(this._data);
         }
-
-        if(this._data && this._data.volume !== undefined) {
-            this._data.volume = value;
-        }
-    }
-});
-
-// for oscillator
-
-Object.defineProperty(Sound.prototype, 'frequency', {
-    get: function() {
-        return this._source ? this._source.frequency : 0;
     },
-    set: function(value) {
-        if(this._source) {
-            this._source.frequency = value;
+    'duration': {
+        get: function() {
+            return this._source ? this._source.duration : 0;
+        }
+    },
+    'effect': {
+        get: function() {
+            return this._effect;
+        }
+    },
+    'ended': {
+        get: function() {
+            return this._source ? this._source.ended : false;
+        }
+    },
+    'frequency': {
+        get: function() {
+            return this._source ? this._source.frequency : 0;
+        },
+        set: function(value) {
+            if(this._source) {
+                this._source.frequency = value;
+            }
+        }
+    },
+    'gain': {
+        get: function() {
+            return this._gain;
+        }
+    },
+    'isTouchLocked': {
+        set: function(value) {
+            this._isTouchLocked = value;
+            if(!value && this._playWhenReady) {
+                this._playWhenReady();
+            }
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+            if(this._source) {
+              this._source.loop = this._loop;
+            }
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._source ? this._source.paused : false;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._source ? this._source.playing : false;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this._source ? this._source.progress : 0;
+        }
+    },
+    'volume': {
+        get: function() {
+            return this._gain.gain.value;
+        },
+        set: function(value) {
+            if(isNaN(value)) { return; }
+
+            this._gain.gain.value = value;
+
+            if(this._context) {
+                this._gain.gain.cancelScheduledValues(this._context.currentTime);
+                this._gain.gain.setValueAtTime(value, this._context.currentTime);
+            }
+
+            if(this._data && this._data.volume !== undefined) {
+                this._data.volume = value;
+            }
         }
     }
 });

@@ -111,27 +111,26 @@ function Loader(url) {
         onError: onError
     };
 
-    Object.defineProperty(api, 'data', {
-        get: function() {
-            return data;
-        }
-    });
-
-    Object.defineProperty(api, 'progress', {
-        get: function() {
-            return progress;
-        }
-    });
-
-    Object.defineProperty(api, 'audioContext', {
-        set: function(value) {
-            audioContext = value;
-        }
-    });
-
-    Object.defineProperty(api, 'isTouchLocked', {
-        set: function(value) {
-            isTouchLocked = value;
+    Object.defineProperties(api, {
+        'data': {
+            get: function() {
+                return data;
+            }
+        },
+        'progress': {
+            get: function() {
+                return progress;
+            }
+        },
+        'audioContext': {
+            set: function(value) {
+                audioContext = value;
+            }
+        },
+        'isTouchLocked': {
+            set: function(value) {
+                isTouchLocked = value;
+            }
         }
     });
 
