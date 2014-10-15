@@ -145,7 +145,7 @@ Load a sound and add to Sono
 
 >`Sono.load(config)` returns Sound  
 
-[View source code](../src/sono.js#L102-140)
+[View source code](../src/sono.js#L102-143)
 
 #### Examples
 
@@ -245,7 +245,7 @@ var sound = Sono.load({
 `Sono.pause(id)`  
 `Sono.stop(id)`
 
-[View source code](../src/sono.js#L166-224)
+[View source code](../src/sono.js#L169-232)
 
 #### Examples
 
@@ -276,14 +276,14 @@ Sono.stop('foo');
 
 >`Sono.log()`
 
-[View source code](../src/sono.js#L275-294)
+[View source code](../src/sono.js#L283-302)
 
 #### Examples
 
 Log version number and browser audio support info to the console:
 
 ```javascript
-Sono.log(); // Sono 0.0.0 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
+Sono.log(); // Sono 0.0.5 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
 ```
 
 ## getters
@@ -297,7 +297,7 @@ Sono.log(); // Sono 0.0.0 Supported:true WebAudioAPI:true TouchLocked:false Exte
 `Sono.sounds` returns Array  
 `Sono.utils` returns Utils  
 
-[View source code](../src/sono.js#L300-352)
+[View source code](../src/sono.js#L308-354)
 
 #### Examples
 
