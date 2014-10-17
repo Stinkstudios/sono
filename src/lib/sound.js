@@ -2,11 +2,11 @@
 
 var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
+    File = require('./utils/file.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
-    ScriptSource = require('./source/script-source.js'),
-    File = require('./utils/file.js');
+    ScriptSource = require('./source/script-source.js');
 
 function Sound(context, destination) {
     this.id = '';

@@ -32,12 +32,11 @@ function Sono() {
  * Create
  *
  * Accepted values for param config:
- *
+ * Object config e.g. { id:'foo', url:['foo.ogg', 'foo.mp3'] }
+ * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
  * ArrayBuffer
  * HTMLMediaElement
- * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
  * String (filename e.g. 'foo.ogg')
- * Object config e.g. { id:'foo', url:['foo.ogg', 'foo.mp3'] }
  * String (Oscillator type i.e. 'sine', 'square', 'sawtooth', 'triangle')
  * Object (ScriptProcessor config: { bufferSize: 1024, channels: 1, callback: fn, thisArg: self })
  */

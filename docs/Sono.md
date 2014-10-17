@@ -345,7 +345,7 @@ Add and remove effects
 `Sound.effect.remove(node)` returns AudioNode  
 `Sound.effect.removeAll()`
 
-[View source code](../src/lib/effect.js#L22-50)
+[View source code](../src/lib/effect.js#L21-48)
 
 #### Examples
 
@@ -404,7 +404,7 @@ Apply compression processing (lowers the volume of the loudest parts of the sign
 >`Sono.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
 >`Sound.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor  
 
-[View source code](../src/lib/effect.js#L111-127)
+[View source code](../src/lib/effect.js#L116-140)
 
 #### Examples
 
@@ -431,7 +431,7 @@ Create a reverb effect by passing an audio buffer of a pre-recorded reverb impul
 >`Sono.effect.convolver(impulseResponse)` returns Convolver  
 >`Sound.effect.convolver(impulseResponse)` returns Convolver  
 
-[View source code](../src/lib/effect.js#L129-134)
+[View source code](../src/lib/effect.js#L142-147)
 
 #### Examples
 
@@ -450,7 +450,7 @@ Delay the sound playback
 >`Sono.effect.delay(time)` returns Delay  
 >`Sound.effect.delay(time)` returns Delay  
 
-[View source code](../src/lib/effect.js#L136-140)
+[View source code](../src/lib/effect.js#L149-153)
 
 #### Examples
 
@@ -553,7 +553,7 @@ var flanger = Sono.effect.flanger({
 
 >`Sono.effect.gain(value)` returns Gain  
 
-[View source code](../src/lib/effect.js#L198-204)
+[View source code](../src/lib/effect.js#L211-217)
 
 #### Examples
 
@@ -692,7 +692,7 @@ reverb.update(2, 0.5);
 
 >`Sono.effect.script(config)` returns ScriptProcessor  
 
-[View source code](../src/lib/effect.js#L231-261)
+[View source code](../src/lib/effect.js#L239-268)
 
 #### Examples
 

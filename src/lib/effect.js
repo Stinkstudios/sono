@@ -20,7 +20,6 @@ function Effect(context) {
 
 Effect.prototype.add = function(node) {
     if(!node) { return; }
-    //console.log('Effect.add:', node);
     this._nodeList.push(node);
     this._updateConnections();
     return node;
@@ -114,49 +113,28 @@ Effect.prototype.analyser = function(fftSize, smoothing, minDecibels, maxDecibel
     return this.add(analyser);
 };
 
+// lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
 Effect.prototype.compressor = function(config) {
     config = config || {};
-    // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
-    var node = this._context.createDynamicsCompressor();
-    // min decibels to start compressing at from -100 to 0
-    node.threshold.value = config.threshold !== undefined ? config.threshold : -24;
-    // decibel value to start curve to compressed value from 0 to 40
-    node.knee.value = config.knee !== undefined ? config.knee : 30;
-    // amount of change per decibel from 1 to 20
-    node.ratio.value = config.ratio !== undefined ? config.ratio : 12;
-    // gain reduction currently applied by compressor from -20 to 0
-    node.reduction.value = config.reduction !== undefined ? config.reduction : -10;
-    // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
-    node.attack.value = config.attack !== undefined ? config.attack : 0.0003;
-    // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
-    node.release.value = config.release !== undefined ? config.release : 0.25;
 
-    /*Object.defineProperties(node, {
-        threshold: {
-            get: function() { return node.threshold.value; },
-            set: function(value) { node.threshold.value = value; }
-        },
-        knee: {
-            get: function() { return node.knee.value; },
-            set: function(value) { node.knee.value = value; }
-        },
-        ratio: {
-            get: function() { return node.ratio.value; },
-            set: function(value) { node.ratio.value = value; }
-        },
-        reduction: {
-            get: function() { return node.reduction.value; },
-            set: function(value) { node.reduction.value = value; }
-        },
-        attack: {
-            get: function() { return node.attack.value; },
-            set: function(value) { node.attack.value = value; }
-        },
-        release: {
-            get: function() { return node.release.value; },
-            set: function(value) { node.release.value = value; }
-        }
-    });*/
+    var node = this._context.createDynamicsCompressor();
+
+    node.update = function(config) {
+        // min decibels to start compressing at from -100 to 0
+        node.threshold.value = config.threshold !== undefined ? config.threshold : -24;
+        // decibel value to start curve to compressed value from 0 to 40
+        node.knee.value = config.knee !== undefined ? config.knee : 30;
+        // amount of change per decibel from 1 to 20
+        node.ratio.value = config.ratio !== undefined ? config.ratio : 12;
+        // gain reduction currently applied by compressor from -20 to 0
+        node.reduction.value = config.reduction !== undefined ? config.reduction : -10;
+        // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
+        node.attack.value = config.attack !== undefined ? config.attack : 0.0003;
+        // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
+        node.release.value = config.release !== undefined ? config.release : 0.25;
+    };
+
+    node.update(config);
 
     return this.add(node);
 };
