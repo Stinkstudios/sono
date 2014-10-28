@@ -17,6 +17,14 @@ function FakeContext() {
         disconnect:fn,
         // analyser
         frequencyBinCount: 0,
+        smoothingTimeConstant: 0,
+        fftSize: 0,
+        minDecibels: 0,
+        maxDecibels: 0,
+        getByteTimeDomainData: fn,
+        getByteFrequencyData: fn,
+        getFloatTimeDomainData: fn,
+        getFloatFrequencyData: fn,
         // gain
         gain:{value: 1},
         // panner
@@ -38,11 +46,6 @@ function FakeContext() {
         delayTime: param,
         // convolver
         buffer: 0,
-        // analyser
-        smoothingTimeConstant: 0,
-        fftSize: 0,
-        minDecibels: 0,
-        maxDecibels: 0,
         // compressor
         threshold: param,
         knee: param,
