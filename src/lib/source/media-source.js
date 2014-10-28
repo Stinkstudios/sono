@@ -9,6 +9,7 @@ function MediaSource(el, context) {
     this._endedHandlerBound = this._endedHandler.bind(this);
     this._loop = false;
     this._paused = false;
+    this._playbackRate = 1;
     this._playing = false;
     this._sourceNode = null; // MediaElementSourceNode
 }
@@ -21,6 +22,7 @@ MediaSource.prototype.play = function(delay, offset) {
     clearTimeout(this._delayTimeout);
 
     this.volume = this._volume;
+    this.playbackRate = this._playbackRate;
 
     if(offset) {
         this._el.currentTime = offset;
@@ -135,6 +137,17 @@ Object.defineProperties(MediaSource.prototype, {
     'paused': {
         get: function() {
             return this._paused;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            if(this._el) {
+                this._el.playbackRate = this._playbackRate;
+            }
         }
     },
     'playing': {

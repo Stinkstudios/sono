@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>Sono - Examples - Oscillator</title>
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <h1>PlaybackRate</h1>
+
+    <div class="Player js-player">
+        <div class="Player-waveform">
+            <canvas class="Player-waveform-inner" data-js="waveform-back" width="400", height="80"></canvas>
+        </div>
+        <div class="Player-controls">
+            <button class="Player-button" data-js="button">PLAY</button>
+            <div class="Player-info" data-js="info"></div>
+            <div class="Player-slider">Rate
+                <span>0.1</span><input class="Player-slider-input Player-slider-input--wide" data-js="slider" type="range" min="0.1" max="10" value="1" step="0.01" /><span>10</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test with no WebAudio
+        window.AudioContext = window.webkitAudioContext = undefined;
+    </script>
+    <script src="../dist/sono.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            Sono.log();
+
+            var sound = Sono.createSound({
+                    loop: true,
+                    url: ['audio/TEST.ogg', 'audio/TEST.mp3']
+                }),
+                analyser = sound.effect.analyser(2048),
+                waveform = document.querySelector('[data-js="waveform-back"]'),
+                info = document.querySelector('[data-js="info"]'),
+                button = document.querySelector('[data-js="button"]'),
+                slider = document.querySelector('[data-js="slider"]');
+
+            // play/pause button
+            button.addEventListener('click', function() {
+                if(sound.playing) {
+                    sound.pause();
+                    button.innerHTML = 'PLAY';
+                }
+                else {
+                    sound.play();
+                    button.innerHTML = 'PAUSE';
+                }
+            });
+
+            // freq slider
+            info.innerHTML = '1';
+            slider.addEventListener('change', function() {
+                info.innerHTML = this.value;
+                sound.playbackRate = this.value;
+            });
+
+            // waveform display
+            new AnalyserDisplay(analyser, waveform);
+
+            function AnalyserDisplay(analyserNode, canvas) {
+
+                var context = canvas.getContext('2d'),
+                    width = canvas.width,
+                    height = canvas.height,
+                    frequencyBinCount = analyserNode.frequencyBinCount,
+                    barWidth = Math.max(1, Math.round(width/frequencyBinCount)),
+                    waveformData;
+
+                function draw() {
+                    window.requestAnimationFrame(draw);
+
+                    context.fillStyle = '#333333';
+                    context.fillRect(0, 0, width, height);
+
+                    waveformData = analyserNode.getWaveform();
+
+                    for (var i = 0; i < waveformData.length; i++) {
+                        var magnitude = waveformData[i];
+                        var percent = magnitude / 256;
+                        var hue = i/frequencyBinCount * 360;
+                        context.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
+                        context.fillRect(barWidth * i, height - height * percent - 1, 1, 1);
+                    }
+                }
+                draw();
+            }
+
+        }());
+    </script>
+</body>
+</html>

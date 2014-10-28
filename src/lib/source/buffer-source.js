@@ -9,6 +9,7 @@ function BufferSource(buffer, context) {
     this._loop = false;
     this._paused = false;
     this._pausedAt = 0;
+    this._playbackRate = 1;
     this._playing = false;
     this._sourceNode = null; // BufferSourceNode
     this._startedAt = 0;
@@ -34,6 +35,7 @@ BufferSource.prototype.play = function(delay, offset) {
     this.sourceNode.loop = this._loop;
     this.sourceNode.onended = this._endedHandler.bind(this);
     this.sourceNode.start(delay, offset);
+    this.sourceNode.playbackRate.value = this._playbackRate;
 
     if(this._pausedAt) {
         this._startedAt = this._context.currentTime - this._pausedAt;
@@ -141,6 +143,17 @@ Object.defineProperties(BufferSource.prototype, {
     'paused': {
         get: function() {
             return this._paused;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            if(this._sourceNode) {
+                this._sourceNode.playbackRate.value = this._playbackRate;
+            }
         }
     },
     'playing': {

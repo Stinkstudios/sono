@@ -16,6 +16,7 @@ function Sound(context, destination) {
     this._isTouchLocked = false;
     this._loop = false;
     this._pausedAt = 0;
+    this._playbackRate = 1;
     this._playWhenReady = null;
     this._source = null;
     this._startedAt = 0;
@@ -223,6 +224,18 @@ Object.defineProperties(Sound.prototype, {
     'playing': {
         get: function() {
             return this._source ? this._source.playing : false;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            console.log('sound set playbackRate:', value);
+            if(this._source) {
+              this._source.playbackRate = this._playbackRate;
+            }
         }
     },
     'progress': {

@@ -1959,6 +1959,7 @@ function Sound(context, destination) {
     this._isTouchLocked = false;
     this._loop = false;
     this._pausedAt = 0;
+    this._playbackRate = 1;
     this._playWhenReady = null;
     this._source = null;
     this._startedAt = 0;
@@ -2168,6 +2169,18 @@ Object.defineProperties(Sound.prototype, {
             return this._source ? this._source.playing : false;
         }
     },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            void 0;
+            if(this._source) {
+              this._source.playbackRate = this._playbackRate;
+            }
+        }
+    },
     'progress': {
         get: function() {
             return this._source ? this._source.progress : 0;
@@ -2208,6 +2221,7 @@ function BufferSource(buffer, context) {
     this._loop = false;
     this._paused = false;
     this._pausedAt = 0;
+    this._playbackRate = 1;
     this._playing = false;
     this._sourceNode = null; // BufferSourceNode
     this._startedAt = 0;
@@ -2233,6 +2247,7 @@ BufferSource.prototype.play = function(delay, offset) {
     this.sourceNode.loop = this._loop;
     this.sourceNode.onended = this._endedHandler.bind(this);
     this.sourceNode.start(delay, offset);
+    this.sourceNode.playbackRate.value = this._playbackRate;
 
     if(this._pausedAt) {
         this._startedAt = this._context.currentTime - this._pausedAt;
@@ -2342,6 +2357,17 @@ Object.defineProperties(BufferSource.prototype, {
             return this._paused;
         }
     },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            if(this._sourceNode) {
+                this._sourceNode.playbackRate.value = this._playbackRate;
+            }
+        }
+    },
     'playing': {
         get: function() {
             return this._playing;
@@ -2377,6 +2403,7 @@ function MediaSource(el, context) {
     this._endedHandlerBound = this._endedHandler.bind(this);
     this._loop = false;
     this._paused = false;
+    this._playbackRate = 1;
     this._playing = false;
     this._sourceNode = null; // MediaElementSourceNode
 }
@@ -2389,6 +2416,7 @@ MediaSource.prototype.play = function(delay, offset) {
     clearTimeout(this._delayTimeout);
 
     this.volume = this._volume;
+    this.playbackRate = this._playbackRate;
 
     if(offset) {
         this._el.currentTime = offset;
@@ -2503,6 +2531,17 @@ Object.defineProperties(MediaSource.prototype, {
     'paused': {
         get: function() {
             return this._paused;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            if(this._el) {
+                this._el.playbackRate = this._playbackRate;
+            }
         }
     },
     'playing': {
