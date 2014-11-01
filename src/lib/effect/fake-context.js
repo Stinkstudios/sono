@@ -63,7 +63,10 @@ function FakeContext() {
         numberOfChannels: 0,
         getChannelData: function() { return []; },
         copyFromChannel: fn,
-        copyToChannel: fn
+        copyToChannel: fn,
+        // listener
+        dopplerFactor: 0,
+        speedOfSound: 0
     };
     var returnFakeNode = function(){ return fakeNode; };
 
@@ -105,7 +108,8 @@ function FakeContext() {
         },
         createPanner: returnFakeNode,
         createScriptProcessor: returnFakeNode,
-        createWaveShaper: returnFakeNode
+        createWaveShaper: returnFakeNode,
+        listener: fakeNode
     };
 }
 

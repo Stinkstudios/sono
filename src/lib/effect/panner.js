@@ -49,7 +49,6 @@ function Panner(context) {
         cross(up, fw);
         normalize(up);
         normalize(fw);
-
         // set the audio context's listener position to match the camera position
         node.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
 

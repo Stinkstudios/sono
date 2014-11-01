@@ -1285,7 +1285,10 @@ function FakeContext() {
         numberOfChannels: 0,
         getChannelData: function() { return []; },
         copyFromChannel: fn,
-        copyToChannel: fn
+        copyToChannel: fn,
+        // listener
+        dopplerFactor: 0,
+        speedOfSound: 0
     };
     var returnFakeNode = function(){ return fakeNode; };
 
@@ -1327,7 +1330,8 @@ function FakeContext() {
         },
         createPanner: returnFakeNode,
         createScriptProcessor: returnFakeNode,
-        createWaveShaper: returnFakeNode
+        createWaveShaper: returnFakeNode,
+        listener: fakeNode
     };
 }
 
@@ -1572,7 +1576,6 @@ function Panner(context) {
         cross(up, fw);
         normalize(up);
         normalize(fw);
-
         // set the audio context's listener position to match the camera position
         node.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
 
