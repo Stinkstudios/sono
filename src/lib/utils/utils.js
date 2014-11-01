@@ -1,6 +1,7 @@
 'use strict';
 
-var Microphone = require('./microphone.js'),
+var File = require('./file.js'),
+    Microphone = require('./microphone.js'),
     Waveform = require('./waveform.js');
 
 var Utils = {};
@@ -39,20 +40,20 @@ Utils.reverseBuffer = function(buffer) {
  */
 
 Utils.crossFade = function(fromSound, toSound, duration) {
-    var from = this.isAudioParam(fromSound) ? fromSound : fromSound.gain.gain;
-    var to = this.isAudioParam(toSound) ? toSound : toSound.gain.gain;
+    var from = File.isAudioParam(fromSound) ? fromSound : fromSound.gain.gain;
+    var to = File.isAudioParam(toSound) ? toSound : toSound.gain.gain;
 
     this.ramp(from, from.value, 0, duration);
     this.ramp(to, to.value, 1, duration);
 };
 
 Utils.fadeFrom = function(sound, value, duration) {
-    var param = this.isAudioParam(sound) ? sound : sound.gain.gain;
+    var param = File.isAudioParam(sound) ? sound : sound.gain.gain;
     this.ramp(param, value, param.value, duration);
 };
 
 Utils.fadeTo = function(sound, value, duration) {
-    var param = this.isAudioParam(sound) ? sound : sound.gain.gain;
+    var param = File.isAudioParam(sound) ? sound : sound.gain.gain;
     this.ramp(param, param.value, value, duration);
 };
 
