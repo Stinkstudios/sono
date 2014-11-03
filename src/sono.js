@@ -51,7 +51,7 @@ Sono.prototype.createSound = function(config) {
     sound.isTouchLocked = this._isTouchLocked;
     if(config) {
         sound.data = config.data || config;
-        sound.id = config.id || '';
+        sound.id = config.id !== undefined ? config.id : '';
         sound.loop = !!config.loop;
         sound.volume = config.volume;
     }
@@ -145,7 +145,7 @@ Sono.prototype.load = function(config) {
 Sono.prototype._queue = function(config, asMediaElement, group) {
     var url = File.getSupportedFile(config.url || config);
     var sound = this.createSound();
-    sound.id = config.id || '';
+    sound.id = config.id !== undefined ? config.id : '';
     sound.loop = !!config.loop;
     sound.volume = config.volume;
 
