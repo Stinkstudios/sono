@@ -1,14 +1,13 @@
 'use strict';
 
-var File = require('./file.js'),
-    Microphone = require('./microphone.js'),
+var Microphone = require('./microphone.js'),
     Waveform = require('./waveform.js');
 
 var Utils = {};
 
 /*
  * audio context
- */    
+ */
 
 Utils.setContext = function(context) {
     this._context = context;
@@ -36,26 +35,8 @@ Utils.reverseBuffer = function(buffer) {
 };
 
 /*
- * fade gain
+ * ramp audio param
  */
-
-Utils.crossFade = function(fromSound, toSound, duration) {
-    var from = File.isAudioParam(fromSound) ? fromSound : fromSound.gain.gain;
-    var to = File.isAudioParam(toSound) ? toSound : toSound.gain.gain;
-
-    this.ramp(from, from.value, 0, duration);
-    this.ramp(to, to.value, 1, duration);
-};
-
-Utils.fadeFrom = function(sound, value, duration) {
-    var param = File.isAudioParam(sound) ? sound : sound.gain.gain;
-    this.ramp(param, value, param.value, duration);
-};
-
-Utils.fadeTo = function(sound, value, duration) {
-    var param = File.isAudioParam(sound) ? sound : sound.gain.gain;
-    this.ramp(param, param.value, value, duration);
-};
 
 Utils.ramp = function(param, fromValue, toValue, duration) {
     if(!this._context) { return; }

@@ -19,6 +19,7 @@ describe('Sound', function() {
         expect(sound.stop).to.be.a('function');
         expect(sound.volume).to.be.a('number');
         expect(sound.playbackRate).to.be.a('number');
+        expect(Sono.fade).to.be.a('function');
     });
 
     it('should have expected members (ended callback)', function() {

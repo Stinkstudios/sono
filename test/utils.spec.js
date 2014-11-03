@@ -9,7 +9,7 @@ describe('Utils', function() {
 
     describe('buffer', function() {
         var buffer = Sono.context.createBuffer(1, 4096, Sono.context.sampleRate);
-        
+
         it('should clone buffer', function() {
             var cloned = Utils.cloneBuffer(buffer);
             expect(cloned).to.be.an.instanceof(window.AudioBuffer);

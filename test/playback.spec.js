@@ -88,4 +88,43 @@ describe('Sono playback', function() {
         });
     });
 
+    describe('fade master', function() {
+        beforeEach(function(done) {
+            setTimeout(function() {
+                done();
+            }, 500);
+        });
+
+        it('should fade Sono master volume', function() {
+            expect(Sono.volume).to.eql(1);
+            Sono.fade(0, 0.2);
+        });
+
+        it('should be at zero volume', function() {
+            expect(Sono.volume).to.eql(0);
+        });
+
+    });
+
+    describe('fade sound', function() {
+        var sound = Sono.createSound('sine');
+
+        beforeEach(function(done) {
+            setTimeout(function() {
+                done();
+            }, 500);
+        });
+
+        it('should fade Sound volume', function() {
+            expect(sound.volume).to.eql(1);
+            sound.fade(0, 0.2);
+        });
+
+        it('should be at zero volume', function() {
+            expect(sound.volume).to.eql(0);
+            Sono.destroySound(sound);
+        });
+
+    });
+
 });

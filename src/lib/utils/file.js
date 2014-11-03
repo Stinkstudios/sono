@@ -102,10 +102,6 @@ File.isScriptConfig = function(data) {
               data.bufferSize && data.channels && data.callback);
 };
 
-File.isAudioParam = function(data) {
-    return !!(data && window.AudioParam && data instanceof window.AudioParam);
-};
-
 File.isURL = function(data) {
     return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
 };

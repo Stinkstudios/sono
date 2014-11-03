@@ -9,7 +9,7 @@ var Browser = require('./lib/utils/browser.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
-    this.VERSION = '0.0.5';
+    this.VERSION = '0.0.6';
 
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this._context = window.AudioContext ? new window.AudioContext() : null;
@@ -52,7 +52,7 @@ Sono.prototype.createSound = function(config) {
     sound.isTouchLocked = this._isTouchLocked;
     if(config) {
         sound.data = config.data || config;
-        sound.id = config.id || '';
+        sound.id = config.id !== undefined ? config.id : '';
         sound.loop = !!config.loop;
         sound.volume = config.volume;
     }
@@ -146,7 +146,7 @@ Sono.prototype.load = function(config) {
 Sono.prototype._queue = function(config, asMediaElement, group) {
     var url = File.getSupportedFile(config.url || config);
     var sound = this.createSound();
-    sound.id = config.id || '';
+    sound.id = config.id !== undefined ? config.id : '';
     sound.loop = !!config.loop;
     sound.volume = config.volume;
 
@@ -189,14 +189,29 @@ Object.defineProperty(Sono.prototype, 'volume', {
             this._masterGain.gain.cancelScheduledValues(this._context.currentTime);
             this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
         }
-
-        if(!this.hasWebAudio) {
+        else {
             this._sounds.forEach(function(sound) {
                 sound.volume = value;
             });
         }
     }
 });
+
+Sono.prototype.fade = function(volume, duration) {
+    if(this._context) {
+        var  param = this._masterGain.gain;
+        param.cancelScheduledValues(this._context.currentTime);
+        param.setValueAtTime(param.value, this._context.currentTime);
+        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
+    }
+    else {
+        this._sounds.forEach(function(sound) {
+            sound.fade(volume, duration);
+        });
+    }
+
+    return this;
+};
 
 Sono.prototype.pauseAll = function() {
     this._sounds.forEach(function(sound) {
@@ -286,7 +301,7 @@ Sono.prototype.log = function() {
         info = 'Supported:' + this.isSupported +
                ' WebAudioAPI:' + this.hasWebAudio +
                ' TouchLocked:' + this._isTouchLocked +
-               ' Extensions:' + Utils.extensions;
+               ' Extensions:' + File.extensions;
 
     if(navigator.userAgent.indexOf('Chrome') > -1) {
         var args = [
@@ -1223,115 +1238,118 @@ module.exports = Echo;
 'use strict';
 
 function FakeContext() {
+
+    var startTime = Date.now();
+
     var fn = function(){};
-    var param = {
-        value: 1,
-        defaultValue: 1,
-        linearRampToValueAtTime: fn,
-        setValueAtTime: fn,
-        exponentialRampToValueAtTime: fn,
-        setTargetAtTime: fn,
-        setValueCurveAtTime: fn,
-        cancelScheduledValues: fn
+
+    var param = function() {
+        return {
+            value: 1,
+            defaultValue: 1,
+            linearRampToValueAtTime: fn,
+            setValueAtTime: fn,
+            exponentialRampToValueAtTime: fn,
+            setTargetAtTime: fn,
+            setValueCurveAtTime: fn,
+            cancelScheduledValues: fn
+        };
     };
-    var fakeNode = {
-        connect:fn,
-        disconnect:fn,
-        // analyser
-        frequencyBinCount: 0,
-        smoothingTimeConstant: 0,
-        fftSize: 0,
-        minDecibels: 0,
-        maxDecibels: 0,
-        getByteTimeDomainData: fn,
-        getByteFrequencyData: fn,
-        getFloatTimeDomainData: fn,
-        getFloatFrequencyData: fn,
-        // gain
-        gain:{value: 1},
-        // panner
-        panningModel: 0,
-        setPosition: fn,
-        setOrientation: fn,
-        setVelocity: fn,
-        distanceModel: 0,
-        refDistance: 0,
-        maxDistance: 0,
-        rolloffFactor: 0,
-        coneInnerAngle: 360,
-        coneOuterAngle: 360,
-        coneOuterGain: 0,
-        // filter:
-        type:0,
-        frequency: param,
-        // delay
-        delayTime: param,
-        // convolver
-        buffer: 0,
-        // compressor
-        threshold: param,
-        knee: param,
-        ratio: param,
-        attack: param,
-        release: param,
-        reduction: param,
-        // distortion
-        oversample: 0,
-        curve: 0,
-        // buffer
-        sampleRate: 1,
-        length: 0,
-        duration: 0,
-        numberOfChannels: 0,
-        getChannelData: function() { return []; },
-        copyFromChannel: fn,
-        copyToChannel: fn,
-        // listener
-        dopplerFactor: 0,
-        speedOfSound: 0
+
+    var fakeNode = function() {
+        return {
+            connect:fn,
+            disconnect:fn,
+            // analyser
+            frequencyBinCount: 0,
+            smoothingTimeConstant: 0,
+            fftSize: 0,
+            minDecibels: 0,
+            maxDecibels: 0,
+            getByteTimeDomainData: fn,
+            getByteFrequencyData: fn,
+            getFloatTimeDomainData: fn,
+            getFloatFrequencyData: fn,
+            // gain
+            gain: param(),
+            // panner
+            panningModel: 0,
+            setPosition: fn,
+            setOrientation: fn,
+            setVelocity: fn,
+            distanceModel: 0,
+            refDistance: 0,
+            maxDistance: 0,
+            rolloffFactor: 0,
+            coneInnerAngle: 360,
+            coneOuterAngle: 360,
+            coneOuterGain: 0,
+            // filter:
+            type:0,
+            frequency: param(),
+            // delay
+            delayTime: param(),
+            // convolver
+            buffer: 0,
+            // compressor
+            threshold: param(),
+            knee: param(),
+            ratio: param(),
+            attack: param(),
+            release: param(),
+            reduction: param(),
+            // distortion
+            oversample: 0,
+            curve: 0,
+            // buffer
+            sampleRate: 1,
+            length: 0,
+            duration: 0,
+            numberOfChannels: 0,
+            getChannelData: function() {
+                return [];
+            },
+            copyFromChannel: fn,
+            copyToChannel: fn,
+            // listener
+            dopplerFactor: 0,
+            speedOfSound: 0,
+            // osc
+            start: fn
+        };
     };
-    var returnFakeNode = function(){ return fakeNode; };
 
     // ie9
     if(!window.Uint8Array) {
-        window.Int8Array = 
-        window.Uint8Array = 
-        window.Uint8ClampedArray = 
-        window.Int16Array = 
-        window.Uint16Array = 
-        window.Int32Array = 
-        window.Uint32Array = 
-        window.Float32Array = 
+        window.Int8Array =
+        window.Uint8Array =
+        window.Uint8ClampedArray =
+        window.Int16Array =
+        window.Uint16Array =
+        window.Int32Array =
+        window.Uint32Array =
+        window.Float32Array =
         window.Float64Array = Array;
     }
 
     return {
-        createAnalyser: returnFakeNode,
-        createBuffer: returnFakeNode,
-        createBiquadFilter: returnFakeNode,
-        createDynamicsCompressor: returnFakeNode,
-        createConvolver: returnFakeNode,
-        createDelay: returnFakeNode,
-        createGain: function() {
-            return {
-                gain: {
-                    value: 1,
-                    defaultValue: 1,
-                    linearRampToValueAtTime: fn,
-                    setValueAtTime: fn,
-                    exponentialRampToValueAtTime: fn,
-                    setTargetAtTime: fn,
-                    setValueCurveAtTime: fn,
-                    cancelScheduledValues: fn
-                },
-                connect:fn,
-                disconnect:fn
-            };
-        },
-        createPanner: returnFakeNode,
-        createScriptProcessor: returnFakeNode,
-        createWaveShaper: returnFakeNode,
-        listener: fakeNode
+        createAnalyser: fakeNode,
+        createBuffer: fakeNode,
+        createBiquadFilter: fakeNode,
+        createChannelMerger: fakeNode,
+        createChannelSplitter: fakeNode,
+        createDynamicsCompressor: fakeNode,
+        createConvolver: fakeNode,
+        createDelay: fakeNode,
+        createGain: fakeNode,
+        createOscillator: fakeNode,
+        createPanner: fakeNode,
+        createScriptProcessor: fakeNode,
+        createWaveShaper: fakeNode,
+        listener: fakeNode(),
+        get currentTime() {
+            return (Date.now() - startTime) / 1000;
+        }
     };
 }
 
@@ -2004,7 +2022,7 @@ Sound.prototype.play = function(delay, offset) {
 Sound.prototype.pause = function() {
     if(!this._source) { return this; }
     this._source.pause();
-    return this;  
+    return this;
 };
 
 Sound.prototype.stop = function() {
@@ -2017,6 +2035,21 @@ Sound.prototype.seek = function(percent) {
     if(!this._source) { return this; }
     this.stop();
     this.play(0, this._source.duration * percent);
+    return this;
+};
+
+Sound.prototype.fade = function(volume, duration) {
+    if(!this._source) { return this; }
+
+    if(this._context) {
+        var  param = this._gain.gain;
+        param.setValueAtTime(param.value, this._context.currentTime);
+        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
+    }
+    else if(typeof this._source.fade === 'function') {
+        this._source.fade(volume, duration);
+    }
+
     return this;
 };
 
@@ -2194,7 +2227,13 @@ Object.defineProperties(Sound.prototype, {
     },
     'volume': {
         get: function() {
-            return this._gain.gain.value;
+            if(this._context) {
+                return this._gain.gain.value;
+            }
+            else if(this._data && this._data.volume !== undefined) {
+                return this._data.volume;
+            }
+            return 1;
         },
         set: function(value) {
             if(isNaN(value)) { return; }
@@ -2205,8 +2244,10 @@ Object.defineProperties(Sound.prototype, {
                 this._gain.gain.cancelScheduledValues(this._context.currentTime);
                 this._gain.gain.setValueAtTime(value, this._context.currentTime);
             }
-
-            if(this._data && this._data.volume !== undefined) {
+            else if(this._data && this._data.volume !== undefined) {
+                if(this._source) {
+                    window.clearTimeout(this._source.fadeTimeout);
+                }
                 this._data.volume = value;
             }
         }
@@ -2421,7 +2462,6 @@ function MediaSource(el, context) {
 MediaSource.prototype.play = function(delay, offset) {
     clearTimeout(this._delayTimeout);
 
-    this.volume = this._volume;
     this.playbackRate = this._playbackRate;
 
     if(offset) {
@@ -2463,11 +2503,36 @@ MediaSource.prototype.stop = function() {
     try {
         this._el.currentTime = 0;
         // fixes bug where server doesn't support seek:
-        if(this._el.currentTime > 0) { this._el.load(); }    
+        if(this._el.currentTime > 0) { this._el.load(); }
     } catch(e) {}
 
     this._playing = false;
     this._paused = false;
+};
+
+/*
+ * Fade for no webaudio
+ */
+
+MediaSource.prototype.fade = function(volume, duration) {
+    if(!this._el) { return this; }
+    if(this._context) { return this; }
+
+    var ramp = function(value, step, self) {
+        var el = self._el;
+        self.fadeTimeout = setTimeout(function() {
+            el.volume = el.volume + ( value - el.volume ) * 0.2;
+            if(Math.abs(el.volume - value) > 0.05) {
+                return ramp(value, step, self);
+            }
+            el.volume = value;
+        }, step * 1000);
+    };
+
+    window.clearTimeout(this.fadeTimeout);
+    ramp(volume, duration / 10, this);
+
+    return this;
 };
 
 /*
@@ -3155,10 +3220,6 @@ File.isScriptConfig = function(data) {
               data.bufferSize && data.channels && data.callback);
 };
 
-File.isAudioParam = function(data) {
-    return !!(data && window.AudioParam && data instanceof window.AudioParam);
-};
-
 File.isURL = function(data) {
     return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
 };
@@ -3428,15 +3489,14 @@ module.exports = Microphone;
 },{}],24:[function(require,module,exports){
 'use strict';
 
-var File = require('./file.js'),
-    Microphone = require('./microphone.js'),
+var Microphone = require('./microphone.js'),
     Waveform = require('./waveform.js');
 
 var Utils = {};
 
 /*
  * audio context
- */    
+ */
 
 Utils.setContext = function(context) {
     this._context = context;
@@ -3464,26 +3524,8 @@ Utils.reverseBuffer = function(buffer) {
 };
 
 /*
- * fade gain
+ * ramp audio param
  */
-
-Utils.crossFade = function(fromSound, toSound, duration) {
-    var from = File.isAudioParam(fromSound) ? fromSound : fromSound.gain.gain;
-    var to = File.isAudioParam(toSound) ? toSound : toSound.gain.gain;
-
-    this.ramp(from, from.value, 0, duration);
-    this.ramp(to, to.value, 1, duration);
-};
-
-Utils.fadeFrom = function(sound, value, duration) {
-    var param = File.isAudioParam(sound) ? sound : sound.gain.gain;
-    this.ramp(param, value, param.value, duration);
-};
-
-Utils.fadeTo = function(sound, value, duration) {
-    var param = File.isAudioParam(sound) ? sound : sound.gain.gain;
-    this.ramp(param, param.value, value, duration);
-};
 
 Utils.ramp = function(param, fromValue, toValue, duration) {
     if(!this._context) { return; }
@@ -3543,7 +3585,7 @@ Utils.waveform = function(buffer, length) {
 
 module.exports = Utils;
 
-},{"./file.js":21,"./microphone.js":23,"./waveform.js":25}],25:[function(require,module,exports){
+},{"./microphone.js":23,"./waveform.js":25}],25:[function(require,module,exports){
 'use strict';
 
 function Waveform() {

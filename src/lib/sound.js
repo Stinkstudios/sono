@@ -55,7 +55,7 @@ Sound.prototype.play = function(delay, offset) {
 Sound.prototype.pause = function() {
     if(!this._source) { return this; }
     this._source.pause();
-    return this;  
+    return this;
 };
 
 Sound.prototype.stop = function() {
@@ -68,6 +68,21 @@ Sound.prototype.seek = function(percent) {
     if(!this._source) { return this; }
     this.stop();
     this.play(0, this._source.duration * percent);
+    return this;
+};
+
+Sound.prototype.fade = function(volume, duration) {
+    if(!this._source) { return this; }
+
+    if(this._context) {
+        var  param = this._gain.gain;
+        param.setValueAtTime(param.value, this._context.currentTime);
+        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
+    }
+    else if(typeof this._source.fade === 'function') {
+        this._source.fade(volume, duration);
+    }
+
     return this;
 };
 
@@ -245,7 +260,13 @@ Object.defineProperties(Sound.prototype, {
     },
     'volume': {
         get: function() {
-            return this._gain.gain.value;
+            if(this._context) {
+                return this._gain.gain.value;
+            }
+            else if(this._data && this._data.volume !== undefined) {
+                return this._data.volume;
+            }
+            return 1;
         },
         set: function(value) {
             if(isNaN(value)) { return; }
@@ -256,8 +277,10 @@ Object.defineProperties(Sound.prototype, {
                 this._gain.gain.cancelScheduledValues(this._context.currentTime);
                 this._gain.gain.setValueAtTime(value, this._context.currentTime);
             }
-
-            if(this._data && this._data.volume !== undefined) {
+            else if(this._data && this._data.volume !== undefined) {
+                if(this._source) {
+                    window.clearTimeout(this._source.fadeTimeout);
+                }
                 this._data.volume = value;
             }
         }

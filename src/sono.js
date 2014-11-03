@@ -8,7 +8,7 @@ var Browser = require('./lib/utils/browser.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
-    this.VERSION = '0.0.5';
+    this.VERSION = '0.0.6';
 
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this._context = window.AudioContext ? new window.AudioContext() : null;
@@ -188,14 +188,29 @@ Object.defineProperty(Sono.prototype, 'volume', {
             this._masterGain.gain.cancelScheduledValues(this._context.currentTime);
             this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
         }
-
-        if(!this.hasWebAudio) {
+        else {
             this._sounds.forEach(function(sound) {
                 sound.volume = value;
             });
         }
     }
 });
+
+Sono.prototype.fade = function(volume, duration) {
+    if(this._context) {
+        var  param = this._masterGain.gain;
+        param.cancelScheduledValues(this._context.currentTime);
+        param.setValueAtTime(param.value, this._context.currentTime);
+        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
+    }
+    else {
+        this._sounds.forEach(function(sound) {
+            sound.fade(volume, duration);
+        });
+    }
+
+    return this;
+};
 
 Sono.prototype.pauseAll = function() {
     this._sounds.forEach(function(sound) {

@@ -87,6 +87,7 @@ describe('Sono API', function() {
             expect(Sono.pause).to.be.a('function');
             expect(Sono.stop).to.be.a('function');
             expect(Sono.volume).to.be.a('number');
+            expect(Sono.fade).to.be.a('function');
         });
         it('should have get/set volume', function() {
             var desc = Object.getOwnPropertyDescriptor(Sono.constructor.prototype, 'volume');

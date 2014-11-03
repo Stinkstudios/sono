@@ -21,7 +21,6 @@ function MediaSource(el, context) {
 MediaSource.prototype.play = function(delay, offset) {
     clearTimeout(this._delayTimeout);
 
-    this.volume = this._volume;
     this.playbackRate = this._playbackRate;
 
     if(offset) {
@@ -63,11 +62,36 @@ MediaSource.prototype.stop = function() {
     try {
         this._el.currentTime = 0;
         // fixes bug where server doesn't support seek:
-        if(this._el.currentTime > 0) { this._el.load(); }    
+        if(this._el.currentTime > 0) { this._el.load(); }
     } catch(e) {}
 
     this._playing = false;
     this._paused = false;
+};
+
+/*
+ * Fade for no webaudio
+ */
+
+MediaSource.prototype.fade = function(volume, duration) {
+    if(!this._el) { return this; }
+    if(this._context) { return this; }
+
+    var ramp = function(value, step, self) {
+        var el = self._el;
+        self.fadeTimeout = setTimeout(function() {
+            el.volume = el.volume + ( value - el.volume ) * 0.2;
+            if(Math.abs(el.volume - value) > 0.05) {
+                return ramp(value, step, self);
+            }
+            el.volume = value;
+        }, step * 1000);
+    };
+
+    window.clearTimeout(this.fadeTimeout);
+    ramp(volume, duration / 10, this);
+
+    return this;
 };
 
 /*

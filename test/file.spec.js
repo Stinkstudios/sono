@@ -40,4 +40,5 @@ describe('File', function() {
         expect(File.canPlay.wav).to.be.a('boolean');
         expect(File.canPlay.m4a).to.be.a('boolean');
     });
+
 });
