@@ -285,7 +285,7 @@ Sono.prototype.log = function() {
         info = 'Supported:' + this.isSupported +
                ' WebAudioAPI:' + this.hasWebAudio +
                ' TouchLocked:' + this._isTouchLocked +
-               ' Extensions:' + Utils.extensions;
+               ' Extensions:' + File.extensions;
 
     if(navigator.userAgent.indexOf('Chrome') > -1) {
         var args = [
