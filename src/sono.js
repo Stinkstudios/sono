@@ -3,6 +3,7 @@
 var Browser = require('./lib/utils/browser.js'),
     Effect = require('./lib/effect.js'),
     File = require('./lib/utils/file.js'),
+    Group = require('./lib/utils/group.js'),
     Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
     Utils = require('./lib/utils/utils.js');
@@ -15,10 +16,10 @@ function Sono() {
     Utils.setContext(this._context);
 
     this._effect = new Effect(this._context);
-    this._masterGain = this._effect.gain();
+    this._gain = this._effect.gain();
 
     if(this._context) {
-        this._effect.setSource(this._masterGain);
+        this._effect.setSource(this._gain);
         this._effect.setDestination(this._context.destination);
     }
 
@@ -47,7 +48,7 @@ Sono.prototype.createSound = function(config) {
         return this.load(config);
     }
     // otherwise just return a new sound object
-    var sound = new Sound(this._context, this._masterGain);
+    var sound = new Sound(this._context, this._gain);
     sound.isTouchLocked = this._isTouchLocked;
     if(config) {
         sound.data = config.data || config;
@@ -93,6 +94,18 @@ Sono.prototype.getSound = function(id) {
         }
     });
     return sound;
+};
+
+/*
+ * Create group
+ */
+
+Sono.prototype.createGroup = function(sounds) {
+    var group = new Group(this._context, this._gain);
+    sounds.forEach(function(sound) {
+        group.add(sound);
+    });
+    return group;
 };
 
 /*
@@ -177,16 +190,16 @@ Sono.prototype.unMute = function() {
 
 Object.defineProperty(Sono.prototype, 'volume', {
     get: function() {
-        return this._masterGain.gain.value;
+        return this._gain.gain.value;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
 
-        this._masterGain.gain.value = value;
+        this._gain.gain.value = value;
 
         if(this._context) {
-            this._masterGain.gain.cancelScheduledValues(this._context.currentTime);
-            this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
+            this._gain.gain.cancelScheduledValues(this._context.currentTime);
+            this._gain.gain.setValueAtTime(value, this._context.currentTime);
         }
         else {
             this._sounds.forEach(function(sound) {
@@ -198,7 +211,7 @@ Object.defineProperty(Sono.prototype, 'volume', {
 
 Sono.prototype.fade = function(volume, duration) {
     if(this._context) {
-        var  param = this._masterGain.gain;
+        var  param = this._gain.gain;
         param.cancelScheduledValues(this._context.currentTime);
         param.setValueAtTime(param.value, this._context.currentTime);
         param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
@@ -353,7 +366,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'masterGain': {
         get: function() {
-            return this._masterGain;
+            return this._gain;
         }
     },
     'sounds': {

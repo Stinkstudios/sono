@@ -4,6 +4,7 @@
 var Browser = require('./lib/utils/browser.js'),
     Effect = require('./lib/effect.js'),
     File = require('./lib/utils/file.js'),
+    Group = require('./lib/utils/group.js'),
     Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
     Utils = require('./lib/utils/utils.js');
@@ -16,10 +17,10 @@ function Sono() {
     Utils.setContext(this._context);
 
     this._effect = new Effect(this._context);
-    this._masterGain = this._effect.gain();
+    this._gain = this._effect.gain();
 
     if(this._context) {
-        this._effect.setSource(this._masterGain);
+        this._effect.setSource(this._gain);
         this._effect.setDestination(this._context.destination);
     }
 
@@ -48,7 +49,7 @@ Sono.prototype.createSound = function(config) {
         return this.load(config);
     }
     // otherwise just return a new sound object
-    var sound = new Sound(this._context, this._masterGain);
+    var sound = new Sound(this._context, this._gain);
     sound.isTouchLocked = this._isTouchLocked;
     if(config) {
         sound.data = config.data || config;
@@ -94,6 +95,18 @@ Sono.prototype.getSound = function(id) {
         }
     });
     return sound;
+};
+
+/*
+ * Create group
+ */
+
+Sono.prototype.createGroup = function(sounds) {
+    var group = new Group(this._context, this._gain);
+    sounds.forEach(function(sound) {
+        group.add(sound);
+    });
+    return group;
 };
 
 /*
@@ -178,16 +191,16 @@ Sono.prototype.unMute = function() {
 
 Object.defineProperty(Sono.prototype, 'volume', {
     get: function() {
-        return this._masterGain.gain.value;
+        return this._gain.gain.value;
     },
     set: function(value) {
         if(isNaN(value)) { return; }
 
-        this._masterGain.gain.value = value;
+        this._gain.gain.value = value;
 
         if(this._context) {
-            this._masterGain.gain.cancelScheduledValues(this._context.currentTime);
-            this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
+            this._gain.gain.cancelScheduledValues(this._context.currentTime);
+            this._gain.gain.setValueAtTime(value, this._context.currentTime);
         }
         else {
             this._sounds.forEach(function(sound) {
@@ -199,7 +212,7 @@ Object.defineProperty(Sono.prototype, 'volume', {
 
 Sono.prototype.fade = function(volume, duration) {
     if(this._context) {
-        var  param = this._masterGain.gain;
+        var  param = this._gain.gain;
         param.cancelScheduledValues(this._context.currentTime);
         param.setValueAtTime(param.value, this._context.currentTime);
         param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
@@ -354,7 +367,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'masterGain': {
         get: function() {
-            return this._masterGain;
+            return this._gain;
         }
     },
     'sounds': {
@@ -375,7 +388,7 @@ Object.defineProperties(Sono.prototype, {
 
 module.exports = new Sono();
 
-},{"./lib/effect.js":3,"./lib/sound.js":14,"./lib/utils/browser.js":20,"./lib/utils/file.js":21,"./lib/utils/loader.js":22,"./lib/utils/utils.js":24}],2:[function(require,module,exports){
+},{"./lib/effect.js":3,"./lib/sound.js":14,"./lib/utils/browser.js":20,"./lib/utils/file.js":21,"./lib/utils/group.js":22,"./lib/utils/loader.js":23,"./lib/utils/utils.js":25}],2:[function(require,module,exports){
 /*jslint onevar:true, undef:true, newcap:true, regexp:true, bitwise:true, maxerr:50, indent:4, white:false, nomen:false, plusplus:false */
 /*global define:false, require:false, exports:false, module:false, signals:false */
 
@@ -3236,6 +3249,245 @@ module.exports = File;
 },{}],22:[function(require,module,exports){
 'use strict';
 
+var Effect = require('../effect.js');
+
+function Group(context, destination) {
+    this._sounds = [];
+    this._source = null;
+
+    this._effect = new Effect(this._context);
+    this._gain = this._effect.gain();
+    if(this._context) {
+        this._effect.setDestination(this._gain);
+        this._gain.connect(destination || this._context.destination);
+    }
+}
+
+/*
+ * Add / remove
+ */
+
+Group.prototype.add = function(sound) {
+    sound.gain.disconnect();
+    sound.gain.connect(this._gain);
+
+    this._sounds.push(sound);
+    this._getSource();
+};
+
+Group.prototype.remove = function(soundOrId) {
+    this._sounds.some(function(sound, index, sounds) {
+        if(sound === soundOrId || sound.id === soundOrId) {
+            sounds.splice(index, 1);
+            return true;
+        }
+    });
+    this._getSource();
+};
+
+Group.prototype._getSource = function() {
+    if(!this._sounds.length) { return; }
+
+    this._sounds.sort(function(a, b) {
+        return b.duration - a.duration;
+    });
+
+    this._source = this._sounds[0];
+};
+
+/*
+ * Controls
+ */
+
+Group.prototype.play = function(delay, offset) {
+    this._sounds.forEach(function(sound) {
+        sound.play(delay, offset);
+    });
+};
+
+Group.prototype.pause = function() {
+    this._sounds.forEach(function(sound) {
+        if(sound.playing) {
+            sound.pause();
+        }
+    });
+};
+
+Group.prototype.stop = function() {
+    this._sounds.forEach(function(sound) {
+        sound.stop();
+    });
+};
+
+Group.prototype.seek = function(percent) {
+    this._sounds.forEach(function(sound) {
+        sound.seek(percent);
+    });
+};
+
+Group.prototype.mute = function() {
+    this._preMuteVolume = this.volume;
+    this.volume = 0;
+};
+
+Group.prototype.unMute = function() {
+    this.volume = this._preMuteVolume || 1;
+};
+
+Object.defineProperty(Group.prototype, 'volume', {
+    get: function() {
+        return this._gain.gain.value;
+    },
+    set: function(value) {
+        if(isNaN(value)) { return; }
+
+        this._gain.gain.value = value;
+
+        if(this._context) {
+            this._gain.gain.cancelScheduledValues(this._context.currentTime);
+            this._gain.gain.setValueAtTime(value, this._context.currentTime);
+        }
+        else {
+            this._sounds.forEach(function(sound) {
+                sound.volume = value;
+            });
+        }
+    }
+});
+
+Group.prototype.fade = function(volume, duration) {
+    if(this._context) {
+        var  param = this._gain.gain;
+        param.cancelScheduledValues(this._context.currentTime);
+        param.setValueAtTime(param.value, this._context.currentTime);
+        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
+    }
+    else {
+        this._sounds.forEach(function(sound) {
+            sound.fade(volume, duration);
+        });
+    }
+
+    return this;
+};
+
+/*
+ * Ended handler
+ */
+
+Group.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+    return this;
+};
+
+Group.prototype._endedHandler = function() {
+    if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
+    }
+};
+
+/*
+ * Destroy
+ */
+
+Group.prototype.destroy = function() {
+    while(this._sounds.length) {
+        this._sounds.pop().destroy();
+    }
+};
+
+
+/*
+ * Getters & Setters
+ */
+
+Object.defineProperties(Group.prototype, {
+    'context': {
+        get: function() {
+            return this._context;
+        }
+    },
+    'currentTime': {
+        get: function() {
+            return this._source ? this._source.currentTime : 0;
+        },
+        set: function(value) {
+            this.stop();
+            this.play(0, value);
+        }
+    },
+    'duration': {
+        get: function() {
+            return this._source ? this._source.duration : 0;
+        }
+    },
+    'effect': {
+        get: function() {
+            return this._effect;
+        }
+    },
+    'ended': {
+        get: function() {
+            return this._source ? this._source.ended : false;
+        }
+    },
+    'gain': {
+        get: function() {
+            return this._gain;
+        }
+    },
+    'isTouchLocked': {
+        set: function(value) {
+            this._isTouchLocked = value;
+            if(!value && this._playWhenReady) {
+                this._playWhenReady();
+            }
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+            this._sounds.forEach(function(sound) {
+                sound.loop = this._loop;
+            });
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._source ? this._source.paused : false;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._source ? this._source.playing : false;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            this._sounds.forEach(function(sound) {
+                sound.playbackRate = this._playbackRate;
+            });
+        }
+    },
+    'progress': {
+        get: function() {
+            return this._source ? this._source.progress : 0;
+        }
+    }
+});
+
+module.exports = Group;
+
+},{"../effect.js":3}],23:[function(require,module,exports){
+'use strict';
+
 var signals = require('signals');
 
 function Loader(url) {
@@ -3432,7 +3684,7 @@ Loader.Group = function() {
 
 module.exports = Loader;
 
-},{"signals":2}],23:[function(require,module,exports){
+},{"signals":2}],24:[function(require,module,exports){
 'use strict';
 
 function Microphone(connected, denied, error, thisArg) {
@@ -3486,7 +3738,7 @@ Object.defineProperties(Microphone.prototype, {
 
 module.exports = Microphone;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var Microphone = require('./microphone.js'),
@@ -3585,7 +3837,7 @@ Utils.waveform = function(buffer, length) {
 
 module.exports = Utils;
 
-},{"./microphone.js":23,"./waveform.js":25}],25:[function(require,module,exports){
+},{"./microphone.js":24,"./waveform.js":26}],26:[function(require,module,exports){
 'use strict';
 
 function Waveform() {
