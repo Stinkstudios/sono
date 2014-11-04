@@ -232,12 +232,12 @@ var sound = Sono.load({
 });
 ```
 
-
 ## controls
 
 >`Sono.mute()`  
 `Sono.unMute()`  
 `Sono.volume`  
+`Sono.fade(volume, duration)`  
 `Sono.pauseAll()`  
 `Sono.resumeAll()`  
 `Sono.stopAll()`  
@@ -258,6 +258,8 @@ Sono.unMute();
 Sono.volume = 0.5;
 // get master volume
 console.log(Sono.volume); // 0.5
+// fade out master volume to 0 over 2 seconds
+Sono.fade(0, 2);
 // pause all currently playing
 Sono.pauseAll();
 // resume all currently paused
@@ -271,6 +273,7 @@ Sono.pause('foo');
 // stop sound by id
 Sono.stop('foo');
 ```
+
 
 ## log
 
@@ -329,6 +332,42 @@ Sono.sounds.forEach(function(sound) {
 });
 ```
 
+
+## Sound
+
+>`Sound.play(delay, offset)`  
+`Sound.pause()`  
+`Sound.stop()`  
+`Sound.seek(percent)`  
+`Sound.volume`  
+`Sound.fade(volume, duration)`  
+`Sound.playbackRate(value)`  
+`Sound.onEnded(callback, context)`
+
+[View source code](../src/sound.js)
+
+#### Examples
+
+```javascript
+// set volume to 50%
+sound.volume = 0.5;
+// get volume
+console.log(sound.volume); // 0.5
+// fade out volume to 0 over 2 seconds
+sound.fade(0, 2);
+// seek to half way through sound
+sound.seek(0.5);
+// play sound at double speed
+sound.playbackRate = 2;
+// play sound at half speed
+sound.playbackRate = 0.5;
+// get callback when sound ends
+sound.onEnded(function() {
+	console.log('ended');
+});
+```
+
+
 ## Effects
 
 [View source code](../src/lib/effect.js)
@@ -337,8 +376,8 @@ Sono.sounds.forEach(function(sound) {
 
 Add and remove effects
 
->`Sono.add(node)` returns AudioNode  
-`Sono.effect.remove(node)` returns AudioNode  
+>`Sono.add(node)` returns AudioNode
+`Sono.effect.remove(node)` returns AudioNode
 `Sono.effect.removeAll()`  
 
 >`Sound.add(node)` returns AudioNode  
@@ -717,19 +756,6 @@ var script = Sono.effect.script({
 [View source code](../src/utils.js)
 
 #### Examples
-
-Fade a sound in or out
-
-```javascript
-Sono.utils.fadeTo(sound, value, duration);
-Sono.utils.fadeFrom(sound, value, duration);
-```
-
-Crossfade two sounds
-
-```javascript
-Sono.utils.crossFade(soundA, soundB, 1);
-```
 
 Get user microphone
 
