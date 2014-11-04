@@ -103,9 +103,11 @@ Sono.prototype.getSound = function(id) {
 
 Sono.prototype.createGroup = function(sounds) {
     var group = new Group(this._context, this._gain);
-    sounds.forEach(function(sound) {
-        group.add(sound);
-    });
+    if(sounds) {
+        sounds.forEach(function(sound) {
+            group.add(sound);
+        });
+    }
     return group;
 };
 
@@ -3255,11 +3257,12 @@ function Group(context, destination) {
     this._sounds = [];
     this._source = null;
 
+    this._context = context;
     this._effect = new Effect(this._context);
     this._gain = this._effect.gain();
     if(this._context) {
-        this._effect.setDestination(this._gain);
-        this._gain.connect(destination || this._context.destination);
+        this._effect.setSource(this._gain);
+        this._effect.setDestination(destination || this._context.destination);
     }
 }
 
@@ -3479,6 +3482,11 @@ Object.defineProperties(Group.prototype, {
     'progress': {
         get: function() {
             return this._source ? this._source.progress : 0;
+        }
+    },
+    'sounds': {
+        get: function() {
+            return this._sounds;
         }
     }
 });

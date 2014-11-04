@@ -102,9 +102,11 @@ Sono.prototype.getSound = function(id) {
 
 Sono.prototype.createGroup = function(sounds) {
     var group = new Group(this._context, this._gain);
-    sounds.forEach(function(sound) {
-        group.add(sound);
-    });
+    if(sounds) {
+        sounds.forEach(function(sound) {
+            group.add(sound);
+        });
+    }
     return group;
 };
 
