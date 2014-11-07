@@ -1,7 +1,7 @@
 'use strict';
 
 var Browser = require('./lib/utils/browser.js'),
-    Effect = require('./lib/effect.js'),
+    // Effect = require('./lib/effect.js'),
     File = require('./lib/utils/file.js'),
     Group = require('./lib/utils/group.js'),
     Loader = require('./lib/utils/loader.js'),
@@ -15,6 +15,10 @@ function Sono() {
     this._context = window.AudioContext ? new window.AudioContext() : null;
     Utils.setContext(this._context);
 
+    this._group = new Group(this._context, this._context.destination);
+    this._gain = this._group.gain;
+    this._sounds = this._group.sounds;
+    /*
     this._effect = new Effect(this._context);
     this._gain = this._effect.gain();
 
@@ -24,6 +28,7 @@ function Sono() {
     }
 
     this._sounds = [];
+    */
 
     this._handleTouchlock();
     this._handlePageVisibility();
@@ -56,7 +61,8 @@ Sono.prototype.createSound = function(config) {
         sound.loop = !!config.loop;
         sound.volume = config.volume;
     }
-    this._sounds.push(sound);
+    this._group.add(sound);
+    // this._sounds.push(sound);
 
     return sound;
 };
@@ -182,6 +188,41 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
  */
 
 Sono.prototype.mute = function() {
+    this._group.mute();
+};
+
+Sono.prototype.unMute = function() {
+    this._group.unMute();
+};
+
+Object.defineProperty(Sono.prototype, 'volume', {
+    get: function() {
+        return this._group.volume;
+    },
+    set: function(value) {
+        this._group.volume = value;
+    }
+});
+
+Sono.prototype.fade = function(volume, duration) {
+    this._group.fade(volume, duration);
+    return this;
+};
+
+Sono.prototype.pauseAll = function() {
+    this._group.pause();
+};
+
+Sono.prototype.resumeAll = function() {
+    this._group.resume();
+};
+
+Sono.prototype.stopAll = function() {
+    this._group.stop();
+};
+
+/*
+Sono.prototype.mute = function() {
     this._preMuteVolume = this.volume;
     this.volume = 0;
 };
@@ -248,7 +289,7 @@ Sono.prototype.stopAll = function() {
         sound.stop();
     });
 };
-
+*/
 Sono.prototype.play = function(id, delay, offset) {
     this.getSound(id).play(delay, offset);
 };
@@ -348,7 +389,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'effect': {
         get: function() {
-            return this._effect;
+            return this._group.effect;
         }
     },
     'extensions': {
@@ -373,7 +414,7 @@ Object.defineProperties(Sono.prototype, {
     },
     'sounds': {
         get: function() {
-            return this._sounds.slice(0);
+            return this._group.sounds.slice(0);
         }
     },
     'utils': {

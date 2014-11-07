@@ -65,6 +65,14 @@ Group.prototype.pause = function() {
     });
 };
 
+Group.prototype.resume = function() {
+    this._sounds.forEach(function(sound) {
+        if(sound.paused) {
+            sound.play();
+        }
+    });
+};
+
 Group.prototype.stop = function() {
     this._sounds.forEach(function(sound) {
         sound.stop();
@@ -186,14 +194,6 @@ Object.defineProperties(Group.prototype, {
     'gain': {
         get: function() {
             return this._gain;
-        }
-    },
-    'isTouchLocked': {
-        set: function(value) {
-            this._isTouchLocked = value;
-            if(!value && this._playWhenReady) {
-                this._playWhenReady();
-            }
         }
     },
     'loop': {
