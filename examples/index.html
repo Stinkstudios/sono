@@ -14,12 +14,16 @@
     <ul>
         <li><a href="player.html">Player</a></li>
         <li><a href="effects.html">Effects</a></li>
+        <li><a href="fade.html">Fade</a></li>
+        <li><a href="destroy.html">Destroy</a></li>
         <li><a href="oscillator.html">Oscillator</a></li>
         <li><a href="microphone.html">Microphone</a></li>
-        <li><a href="video.html">Video</a></li>
+        <li><a href="playback-rate.html">Playback rate</a></li>
+        <li><a href="video.html">Video Element</a></li>
+        <li><a href="html-audio.html">Audio Element</a></li>
         <li><a href="threed.html">3d panning</a></li>
         <li><a href="reverse.html">Reverse</a></li>
-		<li><a href="recorder.html">Recorder</a></li>
+        <li><a href="recorder.html">Recorder</a></li>
     </ul>
 
     <h2>Browser support</h2>
@@ -27,7 +31,14 @@
 
     <script>
         // Test with no WebAudio
-        //window.AudioContext = window.webkitAudioContext = undefined;
+        if(window.location.search.substring(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+
+            var links = document.querySelectorAll('a');
+            [].forEach.call(links, function(link) {
+                link.setAttribute('href', link.getAttribute('href') + '?nowebaudio');
+            });
+        }
     </script>
 	<script src="../dist/sono.js"></script>
     <script src="js/player.js"></script>
@@ -43,93 +54,6 @@
                        '<li>Touch Locked: ' + Sono._isTouchLocked + '</li>' +
                        '<li>Extensions: ' + Sono.extensions.join(', ') + '</li>';
             support.innerHTML = info;
-
-
-            var baseURL = 'http://ianmcgregor.me/prototypes/assets/audio/';
-            var config = {
-                url: [
-                    {
-                        id: 'bullet',
-                        url: [
-                            baseURL + 'bullet.ogg',
-                            baseURL + 'bullet.mp3'
-                        ]
-                    },
-                    {
-                        id: 'collect',
-                        url: [
-                            baseURL + 'collect.ogg',
-                            baseURL + 'collect.mp3'
-                        ]
-                    },
-                    {
-                        id: 'hit',
-                        url: [
-                            baseURL + 'hit.ogg',
-                            baseURL + 'hit.mp3'
-                        ]
-                    },
-                    {
-                        id: 'select',
-                        url: [
-                            baseURL + 'select.ogg',
-                            baseURL + 'select.mp3'
-                        ]
-                    },
-                    {
-                        id: 'music',
-                        url: [
-                            baseURL + 'music.ogg',
-                            baseURL + 'music.mp3'
-                        ]
-                    },
-                    {
-                        id: 'piano',
-                        url: [
-                            'audio/PIANO_MIC_1.ogg',
-                            'audio/PIANO_MIC_1.mp3'
-                        ]
-                    },
-                    {
-                        id: 'drums',
-                        url: [
-                            'audio/DRUMS.ogg',
-                            'audio/DRUMS.mp3'
-                        ]
-                    },
-                    {
-                        id: 'vox',
-                        url: [
-                            'audio/VOX.ogg',
-                            'audio/VOX.mp3'
-                        ]
-                    }
-                ],
-                onComplete: function() {
-                    console.log('sounds loaded',  Sono.sounds.length);
-                },
-                asMediaElement: false
-            };
-
-
-            //var soundA = Sono.createSound(['audio/TEST.ogg', 'audio/TEST.mp3']);
-            Sono.load(config);
-            var destroy = function() {
-                document.body.removeEventListener('click', destroy);
-                console.log('Sono.sounds.length:', Sono.sounds.length);
-                Sono.sounds.forEach(function(sound) {
-                    Sono.destroySound(sound);
-                });
-                /*config.url.forEach(function(sound) {
-                    Sono.destroySound(sound.id);
-                });*/
-                console.log('destroyed!');
-                console.log('Sono.sounds.length:', Sono.sounds.length);
-                Sono.sounds.forEach(function(sound) {
-                    console.log('could not destroy:', sound.id);
-                });
-            };
-            document.body.addEventListener('click', destroy);
 
         }());
     </script>

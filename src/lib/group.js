@@ -1,11 +1,9 @@
 'use strict';
 
-var Effect = require('../effect.js');
+var Effect = require('./effect.js');
 
 function Group(context, destination) {
     this._sounds = [];
-    this._source = null;
-
     this._context = context;
     this._effect = new Effect(this._context);
     this._gain = this._effect.gain();
@@ -24,7 +22,6 @@ Group.prototype.add = function(sound) {
     sound.gain.connect(this._gain);
 
     this._sounds.push(sound);
-    this._getSource();
 };
 
 Group.prototype.remove = function(soundOrId) {
@@ -34,17 +31,6 @@ Group.prototype.remove = function(soundOrId) {
             return true;
         }
     });
-    this._getSource();
-};
-
-Group.prototype._getSource = function() {
-    if(!this._sounds.length) { return; }
-
-    this._sounds.sort(function(a, b) {
-        return b.duration - a.duration;
-    });
-
-    this._source = this._sounds[0];
 };
 
 /*
@@ -132,21 +118,6 @@ Group.prototype.fade = function(volume, duration) {
 };
 
 /*
- * Ended handler
- */
-
-Group.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-    return this;
-};
-
-Group.prototype._endedHandler = function() {
-    if(typeof this._endedCallback === 'function') {
-        this._endedCallback(this);
-    }
-};
-
-/*
  * Destroy
  */
 
@@ -162,75 +133,14 @@ Group.prototype.destroy = function() {
  */
 
 Object.defineProperties(Group.prototype, {
-    'context': {
-        get: function() {
-            return this._context;
-        }
-    },
-    'currentTime': {
-        get: function() {
-            return this._source ? this._source.currentTime : 0;
-        },
-        set: function(value) {
-            this.stop();
-            this.play(0, value);
-        }
-    },
-    'duration': {
-        get: function() {
-            return this._source ? this._source.duration : 0;
-        }
-    },
     'effect': {
         get: function() {
             return this._effect;
         }
     },
-    'ended': {
-        get: function() {
-            return this._source ? this._source.ended : false;
-        }
-    },
     'gain': {
         get: function() {
             return this._gain;
-        }
-    },
-    'loop': {
-        get: function() {
-            return this._loop;
-        },
-        set: function(value) {
-            this._loop = !!value;
-            this._sounds.forEach(function(sound) {
-                sound.loop = this._loop;
-            });
-        }
-    },
-    'paused': {
-        get: function() {
-            return this._source ? this._source.paused : false;
-        }
-    },
-    'playing': {
-        get: function() {
-            return this._source ? this._source.playing : false;
-        }
-    },
-    'playbackRate': {
-        get: function() {
-            return this._playbackRate;
-        },
-        set: function(value) {
-            this._playbackRate = value;
-            this._sounds.forEach(function(sound) {
-                sound.playbackRate = this._playbackRate;
-            });
-        }
-    },
-    'progress': {
-        get: function() {
-            return this._source ? this._source.progress : 0;
         }
     },
     'sounds': {

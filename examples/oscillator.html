@@ -28,7 +28,9 @@
 
     <script>
         // Test with no WebAudio
-        //window.AudioContext = window.webkitAudioContext = undefined;
+        if(window.location.search.substring(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
     </script>
     <script src="../dist/sono.js"></script>
     <script>

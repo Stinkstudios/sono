@@ -1,35 +1,26 @@
 'use strict';
 
 var Browser = require('./lib/utils/browser.js'),
-    // Effect = require('./lib/effect.js'),
     File = require('./lib/utils/file.js'),
-    Group = require('./lib/utils/group.js'),
+    Group = require('./lib/group.js'),
     Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
+    SoundGroup = require('./lib/utils/sound-group.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.6';
 
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    this._context = window.AudioContext ? new window.AudioContext() : null;
-    Utils.setContext(this._context);
+    var context = window.AudioContext ? new window.AudioContext() : null;
+    var destination = context ? context.destination : null;
 
-    this._group = new Group(this._context, this._context.destination);
+    this._group = new Group(context, destination);
     this._gain = this._group.gain;
     this._sounds = this._group.sounds;
-    /*
-    this._effect = new Effect(this._context);
-    this._gain = this._effect.gain();
+    this._context = context;
 
-    if(this._context) {
-        this._effect.setSource(this._gain);
-        this._effect.setDestination(this._context.destination);
-    }
-
-    this._sounds = [];
-    */
-
+    Utils.setContext(context);
     this._handleTouchlock();
     this._handlePageVisibility();
 }
@@ -62,7 +53,6 @@ Sono.prototype.createSound = function(config) {
         sound.volume = config.volume;
     }
     this._group.add(sound);
-    // this._sounds.push(sound);
 
     return sound;
 };
@@ -85,6 +75,12 @@ Sono.prototype.destroySound = function(soundOrId) {
             return true;
         }
     });
+    return this;
+};
+
+Sono.prototype.destroyAll = function() {
+    this._group.destroy();
+    return this;
 };
 
 /*
@@ -107,7 +103,7 @@ Sono.prototype.getSound = function(id) {
  */
 
 Sono.prototype.createGroup = function(sounds) {
-    var group = new Group(this._context, this._gain);
+    var group = new SoundGroup(this._context, this._gain);
     if(sounds) {
         sounds.forEach(function(sound) {
             group.add(sound);
@@ -189,10 +185,12 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
 
 Sono.prototype.mute = function() {
     this._group.mute();
+    return this;
 };
 
 Sono.prototype.unMute = function() {
     this._group.unMute();
+    return this;
 };
 
 Object.defineProperty(Sono.prototype, 'volume', {
@@ -211,95 +209,32 @@ Sono.prototype.fade = function(volume, duration) {
 
 Sono.prototype.pauseAll = function() {
     this._group.pause();
+    return this;
 };
 
 Sono.prototype.resumeAll = function() {
     this._group.resume();
+    return this;
 };
 
 Sono.prototype.stopAll = function() {
     this._group.stop();
-};
-
-/*
-Sono.prototype.mute = function() {
-    this._preMuteVolume = this.volume;
-    this.volume = 0;
-};
-
-Sono.prototype.unMute = function() {
-    this.volume = this._preMuteVolume || 1;
-};
-
-Object.defineProperty(Sono.prototype, 'volume', {
-    get: function() {
-        return this._gain.gain.value;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-
-        this._gain.gain.value = value;
-
-        if(this._context) {
-            this._gain.gain.cancelScheduledValues(this._context.currentTime);
-            this._gain.gain.setValueAtTime(value, this._context.currentTime);
-        }
-        else {
-            this._sounds.forEach(function(sound) {
-                sound.volume = value;
-            });
-        }
-    }
-});
-
-Sono.prototype.fade = function(volume, duration) {
-    if(this._context) {
-        var  param = this._gain.gain;
-        param.cancelScheduledValues(this._context.currentTime);
-        param.setValueAtTime(param.value, this._context.currentTime);
-        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
-    }
-    else {
-        this._sounds.forEach(function(sound) {
-            sound.fade(volume, duration);
-        });
-    }
-
     return this;
 };
 
-Sono.prototype.pauseAll = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.playing) {
-            sound.pause();
-        }
-    });
-};
-
-Sono.prototype.resumeAll = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.paused) {
-            sound.play();
-        }
-    });
-};
-
-Sono.prototype.stopAll = function() {
-    this._sounds.forEach(function(sound) {
-        sound.stop();
-    });
-};
-*/
 Sono.prototype.play = function(id, delay, offset) {
     this.getSound(id).play(delay, offset);
+    return this;
 };
 
 Sono.prototype.pause = function(id) {
     this.getSound(id).pause();
+    return this;
 };
 
 Sono.prototype.stop = function(id) {
     this.getSound(id).stop();
+    return this;
 };
 
 /*

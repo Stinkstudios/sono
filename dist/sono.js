@@ -2,35 +2,26 @@
 'use strict';
 
 var Browser = require('./lib/utils/browser.js'),
-    // Effect = require('./lib/effect.js'),
     File = require('./lib/utils/file.js'),
-    Group = require('./lib/utils/group.js'),
+    Group = require('./lib/group.js'),
     Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
+    SoundGroup = require('./lib/utils/sound-group.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
     this.VERSION = '0.0.6';
 
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    this._context = window.AudioContext ? new window.AudioContext() : null;
-    Utils.setContext(this._context);
+    var context = window.AudioContext ? new window.AudioContext() : null;
+    var destination = context ? context.destination : null;
 
-    this._group = new Group(this._context, this._context.destination);
+    this._group = new Group(context, destination);
     this._gain = this._group.gain;
     this._sounds = this._group.sounds;
-    /*
-    this._effect = new Effect(this._context);
-    this._gain = this._effect.gain();
+    this._context = context;
 
-    if(this._context) {
-        this._effect.setSource(this._gain);
-        this._effect.setDestination(this._context.destination);
-    }
-
-    this._sounds = [];
-    */
-
+    Utils.setContext(context);
     this._handleTouchlock();
     this._handlePageVisibility();
 }
@@ -63,7 +54,6 @@ Sono.prototype.createSound = function(config) {
         sound.volume = config.volume;
     }
     this._group.add(sound);
-    // this._sounds.push(sound);
 
     return sound;
 };
@@ -86,6 +76,12 @@ Sono.prototype.destroySound = function(soundOrId) {
             return true;
         }
     });
+    return this;
+};
+
+Sono.prototype.destroyAll = function() {
+    this._group.destroy();
+    return this;
 };
 
 /*
@@ -108,7 +104,7 @@ Sono.prototype.getSound = function(id) {
  */
 
 Sono.prototype.createGroup = function(sounds) {
-    var group = new Group(this._context, this._gain);
+    var group = new SoundGroup(this._context, this._gain);
     if(sounds) {
         sounds.forEach(function(sound) {
             group.add(sound);
@@ -190,10 +186,12 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
 
 Sono.prototype.mute = function() {
     this._group.mute();
+    return this;
 };
 
 Sono.prototype.unMute = function() {
     this._group.unMute();
+    return this;
 };
 
 Object.defineProperty(Sono.prototype, 'volume', {
@@ -212,95 +210,32 @@ Sono.prototype.fade = function(volume, duration) {
 
 Sono.prototype.pauseAll = function() {
     this._group.pause();
+    return this;
 };
 
 Sono.prototype.resumeAll = function() {
     this._group.resume();
+    return this;
 };
 
 Sono.prototype.stopAll = function() {
     this._group.stop();
-};
-
-/*
-Sono.prototype.mute = function() {
-    this._preMuteVolume = this.volume;
-    this.volume = 0;
-};
-
-Sono.prototype.unMute = function() {
-    this.volume = this._preMuteVolume || 1;
-};
-
-Object.defineProperty(Sono.prototype, 'volume', {
-    get: function() {
-        return this._gain.gain.value;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-
-        this._gain.gain.value = value;
-
-        if(this._context) {
-            this._gain.gain.cancelScheduledValues(this._context.currentTime);
-            this._gain.gain.setValueAtTime(value, this._context.currentTime);
-        }
-        else {
-            this._sounds.forEach(function(sound) {
-                sound.volume = value;
-            });
-        }
-    }
-});
-
-Sono.prototype.fade = function(volume, duration) {
-    if(this._context) {
-        var  param = this._gain.gain;
-        param.cancelScheduledValues(this._context.currentTime);
-        param.setValueAtTime(param.value, this._context.currentTime);
-        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
-    }
-    else {
-        this._sounds.forEach(function(sound) {
-            sound.fade(volume, duration);
-        });
-    }
-
     return this;
 };
 
-Sono.prototype.pauseAll = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.playing) {
-            sound.pause();
-        }
-    });
-};
-
-Sono.prototype.resumeAll = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.paused) {
-            sound.play();
-        }
-    });
-};
-
-Sono.prototype.stopAll = function() {
-    this._sounds.forEach(function(sound) {
-        sound.stop();
-    });
-};
-*/
 Sono.prototype.play = function(id, delay, offset) {
     this.getSound(id).play(delay, offset);
+    return this;
 };
 
 Sono.prototype.pause = function(id) {
     this.getSound(id).pause();
+    return this;
 };
 
 Sono.prototype.stop = function(id) {
     this.getSound(id).stop();
+    return this;
 };
 
 /*
@@ -431,7 +366,7 @@ Object.defineProperties(Sono.prototype, {
 
 module.exports = new Sono();
 
-},{"./lib/sound.js":14,"./lib/utils/browser.js":21,"./lib/utils/file.js":22,"./lib/utils/group.js":23,"./lib/utils/loader.js":24,"./lib/utils/utils.js":26}],2:[function(require,module,exports){
+},{"./lib/group.js":14,"./lib/sound.js":15,"./lib/utils/browser.js":21,"./lib/utils/file.js":22,"./lib/utils/loader.js":23,"./lib/utils/sound-group.js":25,"./lib/utils/utils.js":26}],2:[function(require,module,exports){
 /*jslint onevar:true, undef:true, newcap:true, regexp:true, bitwise:true, maxerr:50, indent:4, white:false, nomen:false, plusplus:false */
 /*global define:false, require:false, exports:false, module:false, signals:false */
 
@@ -2023,13 +1958,168 @@ module.exports = Reverb;
 },{}],14:[function(require,module,exports){
 'use strict';
 
-var BufferSource = require('./source/buffer-source-b.js'),
+var Effect = require('./effect.js');
+
+function Group(context, destination) {
+    this._sounds = [];
+    this._context = context;
+    this._effect = new Effect(this._context);
+    this._gain = this._effect.gain();
+    if(this._context) {
+        this._effect.setSource(this._gain);
+        this._effect.setDestination(destination || this._context.destination);
+    }
+}
+
+/*
+ * Add / remove
+ */
+
+Group.prototype.add = function(sound) {
+    sound.gain.disconnect();
+    sound.gain.connect(this._gain);
+
+    this._sounds.push(sound);
+};
+
+Group.prototype.remove = function(soundOrId) {
+    this._sounds.some(function(sound, index, sounds) {
+        if(sound === soundOrId || sound.id === soundOrId) {
+            sounds.splice(index, 1);
+            return true;
+        }
+    });
+};
+
+/*
+ * Controls
+ */
+
+Group.prototype.play = function(delay, offset) {
+    this._sounds.forEach(function(sound) {
+        sound.play(delay, offset);
+    });
+};
+
+Group.prototype.pause = function() {
+    this._sounds.forEach(function(sound) {
+        if(sound.playing) {
+            sound.pause();
+        }
+    });
+};
+
+Group.prototype.resume = function() {
+    this._sounds.forEach(function(sound) {
+        if(sound.paused) {
+            sound.play();
+        }
+    });
+};
+
+Group.prototype.stop = function() {
+    this._sounds.forEach(function(sound) {
+        sound.stop();
+    });
+};
+
+Group.prototype.seek = function(percent) {
+    this._sounds.forEach(function(sound) {
+        sound.seek(percent);
+    });
+};
+
+Group.prototype.mute = function() {
+    this._preMuteVolume = this.volume;
+    this.volume = 0;
+};
+
+Group.prototype.unMute = function() {
+    this.volume = this._preMuteVolume || 1;
+};
+
+Object.defineProperty(Group.prototype, 'volume', {
+    get: function() {
+        return this._gain.gain.value;
+    },
+    set: function(value) {
+        if(isNaN(value)) { return; }
+
+        this._gain.gain.value = value;
+
+        if(this._context) {
+            this._gain.gain.cancelScheduledValues(this._context.currentTime);
+            this._gain.gain.setValueAtTime(value, this._context.currentTime);
+        }
+        else {
+            this._sounds.forEach(function(sound) {
+                sound.volume = value;
+            });
+        }
+    }
+});
+
+Group.prototype.fade = function(volume, duration) {
+    if(this._context) {
+        var  param = this._gain.gain;
+        param.cancelScheduledValues(this._context.currentTime);
+        param.setValueAtTime(param.value, this._context.currentTime);
+        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
+    }
+    else {
+        this._sounds.forEach(function(sound) {
+            sound.fade(volume, duration);
+        });
+    }
+
+    return this;
+};
+
+/*
+ * Destroy
+ */
+
+Group.prototype.destroy = function() {
+    while(this._sounds.length) {
+        this._sounds.pop().destroy();
+    }
+};
+
+
+/*
+ * Getters & Setters
+ */
+
+Object.defineProperties(Group.prototype, {
+    'effect': {
+        get: function() {
+            return this._effect;
+        }
+    },
+    'gain': {
+        get: function() {
+            return this._gain;
+        }
+    },
+    'sounds': {
+        get: function() {
+            return this._sounds;
+        }
+    }
+});
+
+module.exports = Group;
+
+},{"./effect.js":3}],15:[function(require,module,exports){
+'use strict';
+
+var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
     File = require('./utils/file.js'),
-    MediaSource = require('./source/media-source-b.js'),
-    MicrophoneSource = require('./source/microphone-source-b.js'),
-    OscillatorSource = require('./source/oscillator-source-b.js'),
-    ScriptSource = require('./source/script-source-b.js');
+    MediaSource = require('./source/media-source.js'),
+    MicrophoneSource = require('./source/microphone-source.js'),
+    OscillatorSource = require('./source/oscillator-source.js'),
+    ScriptSource = require('./source/script-source.js');
 
 function Sound(context, destination) {
     this.id = '';
@@ -2312,64 +2402,180 @@ Object.defineProperties(Sound.prototype, {
 
 module.exports = Sound;
 
-},{"./effect.js":3,"./source/buffer-source-b.js":15,"./source/media-source-b.js":16,"./source/microphone-source-b.js":17,"./source/oscillator-source-b.js":18,"./source/script-source-b.js":19,"./utils/file.js":22}],15:[function(require,module,exports){
+},{"./effect.js":3,"./source/buffer-source.js":16,"./source/media-source.js":17,"./source/microphone-source.js":18,"./source/oscillator-source.js":19,"./source/script-source.js":20,"./utils/file.js":22}],16:[function(require,module,exports){
 'use strict';
 
-var Source = require('./source.js');
-
 function BufferSource(buffer, context) {
-    Source.call(this, buffer, context);
+    this.id = '';
+    this._buffer = buffer; // ArrayBuffer
+    this._context = context;
+    this._ended = false;
+    this._endedCallback = null;
+    this._loop = false;
+    this._paused = false;
+    this._pausedAt = 0;
+    this._playbackRate = 1;
+    this._playing = false;
+    this._sourceNode = null; // BufferSourceNode
+    this._startedAt = 0;
 }
-
-BufferSource.prototype = Object.create(Source.prototype);
-BufferSource.prototype.constructor = BufferSource;
 
 /*
  * Controls
  */
 
-// BufferSource.prototype.play = function(delay, offset) {
-//     Source.prototype.play.call(this, delay, offset);
-// };
+BufferSource.prototype.play = function(delay, offset) {
+    if(this._playing) { return; }
+    if(delay === undefined) { delay = 0; }
+    if(delay > 0) { delay = this._context.currentTime + delay; }
 
-// BufferSource.prototype.pause = function() {
-//     Source.prototype.pause.call(this);
-// };
+    if(offset === undefined) { offset = 0; }
+    if(offset > 0) { this._pausedAt = 0; }
+    if(this._pausedAt > 0) { offset = this._pausedAt; }
+    
+    //console.log.apply(console, ['1 offset:', offset]);
+    while(offset > this.duration) { offset = offset % this.duration; }
+    //console.log.apply(console, ['2 offset:', offset]);
 
-// BufferSource.prototype.stop = function() {
-//     Source.prototype.stop.call(this);
-// };
+    this.sourceNode.loop = this._loop;
+    this.sourceNode.onended = this._endedHandler.bind(this);
+    this.sourceNode.start(delay, offset);
+    this.sourceNode.playbackRate.value = this._playbackRate;
+
+    if(this._pausedAt) {
+        this._startedAt = this._context.currentTime - this._pausedAt;
+    }
+    else {
+        this._startedAt = this._context.currentTime - offset;
+    }
+
+    this._ended = false;
+    this._paused = false;
+    this._pausedAt = 0;
+    this._playing = true;
+};
+
+BufferSource.prototype.pause = function() {
+    var elapsed = this._context.currentTime - this._startedAt;
+    this.stop();
+    this._pausedAt = elapsed;
+    this._playing = false;
+    this._paused = true;
+};
+
+BufferSource.prototype.stop = function() {
+    if(this._sourceNode) {
+        this._sourceNode.onended = null;
+        try {
+            this._sourceNode.disconnect();
+            this._sourceNode.stop(0);
+        } catch(e) {}
+        this._sourceNode = null;
+    }
+
+    this._paused = false;
+    this._pausedAt = 0;
+    this._playing = false;
+    this._startedAt = 0;
+};
 
 /*
  * Ended handler
  */
 
-// BufferSource.prototype.onEnded = function(fn, context) {
-//     Source.prototype.onEnded.call(this, fn, context);
-// };
+BufferSource.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+};
 
-// BufferSource.prototype._endedHandler = function() {
-//     Source.prototype._endedHandler.call(this);
-// };
+BufferSource.prototype._endedHandler = function() {
+    this.stop();
+    this._ended = true;
+    if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
+    }
+};
 
 /*
  * Destroy
  */
 
-// BufferSource.prototype.destroy = function() {
-//     Source.prototype.foo.call(this);
-// };
+BufferSource.prototype.destroy = function() {
+    this.stop();
+    this._buffer = null;
+    this._context = null;
+    this._endedCallback = null;
+    this._sourceNode = null;
+};
 
 /*
  * Getters & Setters
  */
 
 Object.defineProperties(BufferSource.prototype, {
+    'currentTime': {
+        get: function() {
+            if(this._pausedAt) {
+                return this._pausedAt;
+            }
+            if(this._startedAt) {
+                var time = this._context.currentTime - this._startedAt;
+                if(time > this.duration) {
+                    time = time % this.duration;
+                }
+                return time;
+            }
+            return 0;
+        }
+    },
+    'duration': {
+        get: function() {
+            return this._buffer ? this._buffer.duration : 0;
+        }
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            if(this._sourceNode) {
+                this._sourceNode.playbackRate.value = this._playbackRate;
+            }
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this.duration ? this.currentTime / this.duration : 0;
+        }
+    },
     'sourceNode': {
         get: function() {
             if(!this._sourceNode) {
                 this._sourceNode = this._context.createBufferSource();
-                this._sourceNode.buffer = this._data;
+                this._sourceNode.buffer = this._buffer;
             }
             return this._sourceNode;
         }
@@ -2378,18 +2584,22 @@ Object.defineProperties(BufferSource.prototype, {
 
 module.exports = BufferSource;
 
-},{"./source.js":20}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
-var Source = require('./source.js');
-
 function MediaSource(el, context) {
-    Source.call(this, el, context);
-    this._el = el;
+    this.id = '';
+    this._context = context;
+    this._el = el; // HTMLMediaElement
+    this._ended = false;
+    this._endedCallback = null;
+    this._endedHandlerBound = this._endedHandler.bind(this);
+    this._loop = false;
+    this._paused = false;
+    this._playbackRate = 1;
+    this._playing = false;
+    this._sourceNode = null; // MediaElementSourceNode
 }
-
-MediaSource.prototype = Object.create(Source.prototype);
-MediaSource.prototype.constructor = MediaSource;
 
 /*
  * Controls
@@ -2417,12 +2627,9 @@ MediaSource.prototype.play = function(delay, offset) {
 
     this._el.removeEventListener('ended', this._endedHandlerBound);
     this._el.addEventListener('ended', this._endedHandlerBound, false);
-
-    // Source.prototype.play.call(this, delay, offset);
 };
 
 MediaSource.prototype.pause = function() {
-    // Source.prototype.pause.call(this);
     clearTimeout(this._delayTimeout);
 
     if(!this._el) { return; }
@@ -2432,35 +2639,138 @@ MediaSource.prototype.pause = function() {
     this._paused = true;
 };
 
-// MediaSource.prototype.stop = function() {
-//     Source.prototype.stop.call(this);
-// };
+MediaSource.prototype.stop = function() {
+    clearTimeout(this._delayTimeout);
+
+    if(!this._el) { return; }
+
+    this._el.pause();
+
+    try {
+        this._el.currentTime = 0;
+        // fixes bug where server doesn't support seek:
+        if(this._el.currentTime > 0) { this._el.load(); }
+    } catch(e) {}
+
+    this._playing = false;
+    this._paused = false;
+};
+
+/*
+ * Fade for no webaudio
+ */
+
+MediaSource.prototype.fade = function(volume, duration) {
+    if(!this._el) { return this; }
+    if(this._context) { return this; }
+
+    var ramp = function(value, step, self) {
+        var el = self._el;
+        self.fadeTimeout = setTimeout(function() {
+            el.volume = el.volume + ( value - el.volume ) * 0.2;
+            if(Math.abs(el.volume - value) > 0.05) {
+                return ramp(value, step, self);
+            }
+            el.volume = value;
+        }, step * 1000);
+    };
+
+    window.clearTimeout(this.fadeTimeout);
+    ramp(volume, duration / 10, this);
+
+    return this;
+};
 
 /*
  * Ended handler
  */
 
-// MediaSource.prototype.onEnded = function(fn, context) {
-//     Source.prototype.onEnded.call(this, fn, context);
-// };
+MediaSource.prototype.onEnded = function(fn, context) {
+    this._endedCallback = fn ? fn.bind(context || this) : null;
+};
 
-// MediaSource.prototype._endedHandler = function() {
-//     Source.prototype._endedHandler.call(this);
-// };
+MediaSource.prototype._endedHandler = function() {
+    this._ended = true;
+    this._paused = false;
+    this._playing = false;
+
+    if(this._loop) {
+        this._el.currentTime = 0;
+        // fixes bug where server doesn't support seek:
+        if(this._el.currentTime > 0) { this._el.load(); }
+        this.play();
+    } else if(typeof this._endedCallback === 'function') {
+        this._endedCallback(this);
+    }
+};
 
 /*
  * Destroy
  */
 
-// MediaSource.prototype.destroy = function() {
-//     Source.prototype.foo.call(this);
-// };
+MediaSource.prototype.destroy = function() {
+    this.stop();
+    this._el = null;
+    this._context = null;
+    this._endedCallback = null;
+    this._endedHandlerBound = null;
+    this._sourceNode = null;
+};
 
 /*
  * Getters & Setters
  */
 
 Object.defineProperties(MediaSource.prototype, {
+    'currentTime': {
+        get: function() {
+            return this._el ? this._el.currentTime : 0;
+        }
+    },
+    'duration': {
+        get: function() {
+            return this._el ? this._el.duration : 0;
+        }
+    },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            if(this._el) {
+                this._el.playbackRate = this._playbackRate;
+            }
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this.duration ? this.currentTime / this.duration : 0;
+        }
+    },
     'sourceNode': {
         get: function() {
             if(!this._sourceNode && this._context) {
@@ -2473,18 +2783,20 @@ Object.defineProperties(MediaSource.prototype, {
 
 module.exports = MediaSource;
 
-},{"./source.js":20}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
-var Source = require('./source.js');
-
 function MicrophoneSource(stream, context) {
-    Source.call(this, stream, context);
+    this.id = '';
+    this._context = context;
+    this._ended = false;
+    this._paused = false;
+    this._pausedAt = 0;
+    this._playing = false;
+    this._sourceNode = null; // MicrophoneSourceNode
+    this._startedAt = 0;
     this._stream = stream;
 }
-
-MicrophoneSource.prototype = Object.create(Source.prototype);
-MicrophoneSource.prototype.constructor = MicrophoneSource;
 
 /*
  * Controls
@@ -2509,13 +2821,27 @@ MicrophoneSource.prototype.play = function(delay) {
     this._pausedAt = 0;
 };
 
-// MicrophoneSource.prototype.pause = function() {
-//     Source.prototype.pause.call(this);
-// };
+MicrophoneSource.prototype.pause = function() {
+    var elapsed = this._context.currentTime - this._startedAt;
+    this.stop();
+    this._pausedAt = elapsed;
+    this._playing = false;
+    this._paused = true;
+};
 
-// MicrophoneSource.prototype.stop = function() {
-//     Source.prototype.stop.call(this);
-// };
+MicrophoneSource.prototype.stop = function() {
+    if(this._sourceNode) {
+        try {
+            this._sourceNode.stop(0);
+        } catch(e) {}
+        this._sourceNode = null;
+    }
+    this._ended = true;
+    this._paused = false;
+    this._pausedAt = 0;
+    this._playing = false;
+    this._startedAt = 0;
+};
 
 /*
  * Destroy
@@ -2550,6 +2876,11 @@ Object.defineProperties(MicrophoneSource.prototype, {
             return 0;
         }
     },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
     'frequency': {
         get: function() {
             return this._frequency;
@@ -2559,6 +2890,16 @@ Object.defineProperties(MicrophoneSource.prototype, {
             if(this._sourceNode) {
                 this._sourceNode.frequency.value = value;
             }
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
         }
     },
     'progress': {
@@ -2583,19 +2924,21 @@ Object.defineProperties(MicrophoneSource.prototype, {
 
 module.exports = MicrophoneSource;
 
-},{"./source.js":20}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
-var Source = require('./source.js');
-
 function OscillatorSource(type, context) {
-    Source.call(this, type, context);
+    this.id = '';
+    this._context = context;
+    this._ended = false;
+    this._paused = false;
+    this._pausedAt = 0;
+    this._playing = false;
+    this._sourceNode = null; // OscillatorSourceNode
+    this._startedAt = 0;
     this._type = type;
     this._frequency = 200;
 }
-
-OscillatorSource.prototype = Object.create(Source.prototype);
-OscillatorSource.prototype.constructor = OscillatorSource;
 
 /*
  * Controls
@@ -2621,7 +2964,11 @@ OscillatorSource.prototype.play = function(delay) {
 };
 
 OscillatorSource.prototype.pause = function() {
-    Source.prototype.pause.call(this);
+    var elapsed = this._context.currentTime - this._startedAt;
+    this.stop();
+    this._pausedAt = elapsed;
+    this._playing = false;
+    this._paused = true;
 };
 
 OscillatorSource.prototype.stop = function() {
@@ -2669,6 +3016,11 @@ Object.defineProperties(OscillatorSource.prototype, {
             return 0;
         }
     },
+    'ended': {
+        get: function() {
+            return this._ended;
+        }
+    },
     'frequency': {
         get: function() {
             return this._frequency;
@@ -2678,6 +3030,16 @@ Object.defineProperties(OscillatorSource.prototype, {
             if(this._sourceNode) {
                 this._sourceNode.frequency.value = value;
             }
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
         }
     },
     'progress': {
@@ -2699,21 +3061,22 @@ Object.defineProperties(OscillatorSource.prototype, {
 
 module.exports = OscillatorSource;
 
-},{"./source.js":20}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
-var Source = require('./source.js');
-
 function ScriptSource(data, context) {
-    Source.call(this, data, context);
-
+    this.id = '';
     this._bufferSize = data.bufferSize || 1024;
     this._channels = data.channels || 1;
+    this._context = context;
+    this._ended = false;
     this._onProcess = data.callback.bind(data.thisArg || this);
+    this._paused = false;
+    this._pausedAt = 0;
+    this._playing = false;
+    this._sourceNode = null; // ScriptSourceNode
+    this._startedAt = 0;
 }
-
-ScriptSource.prototype = Object.create(Source.prototype);
-ScriptSource.prototype.constructor = ScriptSource;
 
 /*
  * Controls
@@ -2738,9 +3101,13 @@ ScriptSource.prototype.play = function(delay) {
     this._playing = true;
 };
 
-// ScriptSource.prototype.pause = function() {
-//     Source.prototype.pause.call(this);
-// };
+ScriptSource.prototype.pause = function() {
+    var elapsed = this._context.currentTime - this._startedAt;
+    this.stop();
+    this._pausedAt = elapsed;
+    this._playing = false;
+    this._paused = true;
+};
 
 ScriptSource.prototype.stop = function() {
     if(this._sourceNode) {
@@ -2795,12 +3162,19 @@ Object.defineProperties(ScriptSource.prototype, {
             return 0;
         }
     },
-    'playbackRate': {
+    'ended': {
         get: function() {
-            return 1;
-        },
-        set: function(value) {
-            this._playbackRate = value;
+            return this._ended;
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._paused;
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._playing;
         }
     },
     'progress': {
@@ -2819,179 +3193,6 @@ Object.defineProperties(ScriptSource.prototype, {
 });
 
 module.exports = ScriptSource;
-
-},{"./source.js":20}],20:[function(require,module,exports){
-'use strict';
-
-function Source(data, context) {
-    this.id = '';
-    this._data = data;
-    this._context = context;
-    this._ended = false;
-    this._endedCallback = null;
-    this._loop = false;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playbackRate = 1;
-    this._playing = false;
-    this._sourceNode = null; // SourceNode
-    this._startedAt = 0;
-}
-
-/*
- * Controls
- */
-
-Source.prototype.play = function(delay, offset) {
-    if(this._playing) { return; }
-    if(delay === undefined) { delay = 0; }
-    if(delay > 0) { delay = this._context.currentTime + delay; }
-
-    if(offset === undefined) { offset = 0; }
-    if(offset > 0) { this._pausedAt = 0; }
-    if(this._pausedAt > 0) { offset = this._pausedAt; }
-
-    //console.log.apply(console, ['1 offset:', offset]);
-    while(offset > this.duration) { offset = offset % this.duration; }
-    //console.log.apply(console, ['2 offset:', offset]);
-
-    this.sourceNode.loop = this._loop;
-    this.sourceNode.onended = this._endedHandler.bind(this);
-    this.sourceNode.start(delay, offset);
-    this.sourceNode.playbackRate.value = this._playbackRate;
-
-    if(this._pausedAt) {
-        this._startedAt = this._context.currentTime - this._pausedAt;
-    }
-    else {
-        this._startedAt = this._context.currentTime - offset;
-    }
-
-    this._ended = false;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = true;
-};
-
-Source.prototype.pause = function() {
-    var elapsed = this._context.currentTime - this._startedAt;
-    this.stop();
-    this._pausedAt = elapsed;
-    this._playing = false;
-    this._paused = true;
-};
-
-Source.prototype.stop = function() {
-    if(this._sourceNode) {
-        this._sourceNode.onended = null;
-        try {
-            this._sourceNode.disconnect();
-            this._sourceNode.stop(0);
-        } catch(e) {}
-        this._sourceNode = null;
-    }
-
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = false;
-    this._startedAt = 0;
-};
-
-/*
- * Ended handler
- */
-
-Source.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-};
-
-Source.prototype._endedHandler = function() {
-    this.stop();
-    this._ended = true;
-    if(typeof this._endedCallback === 'function') {
-        this._endedCallback(this);
-    }
-};
-
-/*
- * Destroy
- */
-
-Source.prototype.destroy = function() {
-    this.stop();
-    this._data = null;
-    this._context = null;
-    this._endedCallback = null;
-    this._sourceNode = null;
-};
-
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(Source.prototype, {
-    'currentTime': {
-        get: function() {
-            if(this._pausedAt) {
-                return this._pausedAt;
-            }
-            if(this._startedAt) {
-                var time = this._context.currentTime - this._startedAt;
-                if(time > this.duration) {
-                    time = time % this.duration;
-                }
-                return time;
-            }
-            return 0;
-        }
-    },
-    'duration': {
-        get: function() {
-            return this._data ? this._data.duration : 0;
-        }
-    },
-    'ended': {
-        get: function() {
-            return this._ended;
-        }
-    },
-    'loop': {
-        get: function() {
-            return this._loop;
-        },
-        set: function(value) {
-            this._loop = !!value;
-        }
-    },
-    'paused': {
-        get: function() {
-            return this._paused;
-        }
-    },
-    'playbackRate': {
-        get: function() {
-            return this._playbackRate;
-        },
-        set: function(value) {
-            this._playbackRate = value;
-            if(this._sourceNode) {
-                this._sourceNode.playbackRate.value = this._playbackRate;
-            }
-        }
-    },
-    'playing': {
-        get: function() {
-            return this._playing;
-        }
-    },
-    'progress': {
-        get: function() {
-            return this.duration ? this.currentTime / this.duration : 0;
-        }
-    }
-});
-
-module.exports = Source;
 
 },{}],21:[function(require,module,exports){
 'use strict';
@@ -3179,251 +3380,6 @@ File.containsURL = function(config) {
 module.exports = File;
 
 },{}],23:[function(require,module,exports){
-'use strict';
-
-var Effect = require('../effect.js');
-
-function Group(context, destination) {
-    this._sounds = [];
-    this._source = null;
-
-    this._context = context;
-    this._effect = new Effect(this._context);
-    this._gain = this._effect.gain();
-    if(this._context) {
-        this._effect.setSource(this._gain);
-        this._effect.setDestination(destination || this._context.destination);
-    }
-}
-
-/*
- * Add / remove
- */
-
-Group.prototype.add = function(sound) {
-    sound.gain.disconnect();
-    sound.gain.connect(this._gain);
-
-    this._sounds.push(sound);
-    this._getSource();
-};
-
-Group.prototype.remove = function(soundOrId) {
-    this._sounds.some(function(sound, index, sounds) {
-        if(sound === soundOrId || sound.id === soundOrId) {
-            sounds.splice(index, 1);
-            return true;
-        }
-    });
-    this._getSource();
-};
-
-Group.prototype._getSource = function() {
-    if(!this._sounds.length) { return; }
-
-    this._sounds.sort(function(a, b) {
-        return b.duration - a.duration;
-    });
-
-    this._source = this._sounds[0];
-};
-
-/*
- * Controls
- */
-
-Group.prototype.play = function(delay, offset) {
-    this._sounds.forEach(function(sound) {
-        sound.play(delay, offset);
-    });
-};
-
-Group.prototype.pause = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.playing) {
-            sound.pause();
-        }
-    });
-};
-
-Group.prototype.resume = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.paused) {
-            sound.play();
-        }
-    });
-};
-
-Group.prototype.stop = function() {
-    this._sounds.forEach(function(sound) {
-        sound.stop();
-    });
-};
-
-Group.prototype.seek = function(percent) {
-    this._sounds.forEach(function(sound) {
-        sound.seek(percent);
-    });
-};
-
-Group.prototype.mute = function() {
-    this._preMuteVolume = this.volume;
-    this.volume = 0;
-};
-
-Group.prototype.unMute = function() {
-    this.volume = this._preMuteVolume || 1;
-};
-
-Object.defineProperty(Group.prototype, 'volume', {
-    get: function() {
-        return this._gain.gain.value;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-
-        this._gain.gain.value = value;
-
-        if(this._context) {
-            this._gain.gain.cancelScheduledValues(this._context.currentTime);
-            this._gain.gain.setValueAtTime(value, this._context.currentTime);
-        }
-        else {
-            this._sounds.forEach(function(sound) {
-                sound.volume = value;
-            });
-        }
-    }
-});
-
-Group.prototype.fade = function(volume, duration) {
-    if(this._context) {
-        var  param = this._gain.gain;
-        param.cancelScheduledValues(this._context.currentTime);
-        param.setValueAtTime(param.value, this._context.currentTime);
-        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
-    }
-    else {
-        this._sounds.forEach(function(sound) {
-            sound.fade(volume, duration);
-        });
-    }
-
-    return this;
-};
-
-/*
- * Ended handler
- */
-
-Group.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-    return this;
-};
-
-Group.prototype._endedHandler = function() {
-    if(typeof this._endedCallback === 'function') {
-        this._endedCallback(this);
-    }
-};
-
-/*
- * Destroy
- */
-
-Group.prototype.destroy = function() {
-    while(this._sounds.length) {
-        this._sounds.pop().destroy();
-    }
-};
-
-
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(Group.prototype, {
-    'context': {
-        get: function() {
-            return this._context;
-        }
-    },
-    'currentTime': {
-        get: function() {
-            return this._source ? this._source.currentTime : 0;
-        },
-        set: function(value) {
-            this.stop();
-            this.play(0, value);
-        }
-    },
-    'duration': {
-        get: function() {
-            return this._source ? this._source.duration : 0;
-        }
-    },
-    'effect': {
-        get: function() {
-            return this._effect;
-        }
-    },
-    'ended': {
-        get: function() {
-            return this._source ? this._source.ended : false;
-        }
-    },
-    'gain': {
-        get: function() {
-            return this._gain;
-        }
-    },
-    'loop': {
-        get: function() {
-            return this._loop;
-        },
-        set: function(value) {
-            this._loop = !!value;
-            this._sounds.forEach(function(sound) {
-                sound.loop = this._loop;
-            });
-        }
-    },
-    'paused': {
-        get: function() {
-            return this._source ? this._source.paused : false;
-        }
-    },
-    'playing': {
-        get: function() {
-            return this._source ? this._source.playing : false;
-        }
-    },
-    'playbackRate': {
-        get: function() {
-            return this._playbackRate;
-        },
-        set: function(value) {
-            this._playbackRate = value;
-            this._sounds.forEach(function(sound) {
-                sound.playbackRate = this._playbackRate;
-            });
-        }
-    },
-    'progress': {
-        get: function() {
-            return this._source ? this._source.progress : 0;
-        }
-    },
-    'sounds': {
-        get: function() {
-            return this._sounds;
-        }
-    }
-});
-
-module.exports = Group;
-
-},{"../effect.js":3}],24:[function(require,module,exports){
 'use strict';
 
 var signals = require('signals');
@@ -3622,7 +3578,7 @@ Loader.Group = function() {
 
 module.exports = Loader;
 
-},{"signals":2}],25:[function(require,module,exports){
+},{"signals":2}],24:[function(require,module,exports){
 'use strict';
 
 function Microphone(connected, denied, error, thisArg) {
@@ -3676,7 +3632,124 @@ Object.defineProperties(Microphone.prototype, {
 
 module.exports = Microphone;
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
+'use strict';
+
+var Group = require('../group.js');
+
+function SoundGroup(context, destination) {
+    Group.call(this, context, destination);
+    this._src = null;
+}
+
+SoundGroup.prototype = Object.create(Group.prototype);
+SoundGroup.prototype.constructor = SoundGroup;
+
+/*
+ * Add / remove
+ */
+
+SoundGroup.prototype.add = function(sound) {
+    Group.prototype.add.call(this, sound);
+    this._getSource();
+};
+
+SoundGroup.prototype.remove = function(soundOrId) {
+    Group.prototype.remove.call(this, soundOrId);
+    this._getSource();
+};
+
+SoundGroup.prototype._getSource = function() {
+    if(!this._sounds.length) { return; }
+
+    this._sounds.sort(function(a, b) {
+        return b.duration - a.duration;
+    });
+
+    this._src = this._sounds[0];
+};
+
+/*
+ * TODO: Ended handler
+ */
+
+// SoundGroup.prototype.onEnded = function(fn, context) {
+//     this._endedCallback = fn ? fn.bind(context || this) : null;
+//     return this;
+// };
+
+// SoundGroup.prototype._endedHandler = function() {
+//     if(typeof this._endedCallback === 'function') {
+//         this._endedCallback(this);
+//     }
+// };
+
+/*
+ * Getters & Setters
+ */
+
+Object.defineProperties(SoundGroup.prototype, {
+    'currentTime': {
+        get: function() {
+            return this._src ? this._src.currentTime : 0;
+        },
+        set: function(value) {
+            this.stop();
+            this.play(0, value);
+        }
+    },
+    'duration': {
+        get: function() {
+            return this._src ? this._src.duration : 0;
+        }
+    },
+    // 'ended': {
+    //     get: function() {
+    //         return this._src ? this._src.ended : false;
+    //     }
+    // },
+    'loop': {
+        get: function() {
+            return this._loop;
+        },
+        set: function(value) {
+            this._loop = !!value;
+            this._sounds.forEach(function(sound) {
+                sound.loop = this._loop;
+            });
+        }
+    },
+    'paused': {
+        get: function() {
+            return this._src ? this._src.paused : false;
+        }
+    },
+    'progress': {
+        get: function() {
+            return this._src ? this._src.progress : 0;
+        }
+    },
+    'playbackRate': {
+        get: function() {
+            return this._playbackRate;
+        },
+        set: function(value) {
+            this._playbackRate = value;
+            this._sounds.forEach(function(sound) {
+                sound.playbackRate = this._playbackRate;
+            });
+        }
+    },
+    'playing': {
+        get: function() {
+            return this._src ? this._src.playing : false;
+        }
+    }
+});
+
+module.exports = SoundGroup;
+
+},{"../group.js":14}],26:[function(require,module,exports){
 'use strict';
 
 var Microphone = require('./microphone.js'),
@@ -3697,6 +3770,8 @@ Utils.setContext = function(context) {
  */
 
 Utils.cloneBuffer = function(buffer) {
+    if(!this._context) { return buffer; }
+
     var numChannels = buffer.numberOfChannels,
         cloned = this._context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
@@ -3729,6 +3804,7 @@ Utils.ramp = function(param, fromValue, toValue, duration) {
  */
 
 Utils.getFrequency = function(value) {
+    if(!this._context) { return 0; }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
@@ -3775,7 +3851,7 @@ Utils.waveform = function(buffer, length) {
 
 module.exports = Utils;
 
-},{"./microphone.js":25,"./waveform.js":27}],27:[function(require,module,exports){
+},{"./microphone.js":24,"./waveform.js":27}],27:[function(require,module,exports){
 'use strict';
 
 function Waveform() {

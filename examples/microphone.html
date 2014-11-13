@@ -14,7 +14,9 @@
 
     <script>
         // Test with no WebAudio
-        //window.AudioContext = window.webkitAudioContext = undefined;
+        if(window.location.search.substring(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
     </script>
     <script src="../dist/sono.js"></script>
     <script>
@@ -35,7 +37,7 @@
             var mic = Sono.utils.microphone(onConnect);
 
             if(mic.isSupported) {
-                mic.connect();    
+                mic.connect();
             }
             else {
                 var p = document.createElement('p');

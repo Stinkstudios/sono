@@ -18,6 +18,8 @@ Utils.setContext = function(context) {
  */
 
 Utils.cloneBuffer = function(buffer) {
+    if(!this._context) { return buffer; }
+
     var numChannels = buffer.numberOfChannels,
         cloned = this._context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
@@ -50,6 +52,7 @@ Utils.ramp = function(param, fromValue, toValue, duration) {
  */
 
 Utils.getFrequency = function(value) {
+    if(!this._context) { return 0; }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.

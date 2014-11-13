@@ -10,7 +10,9 @@
 <body>
     <script>
         // Test with no WebAudio
-        // window.AudioContext = window.webkitAudioContext = undefined;
+        if(window.location.search.substring(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
     </script>
     <script src="../dist/sono.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r68/three.min.js"></script>
@@ -20,12 +22,12 @@
             'use strict';
 
             document.addEventListener('DOMContentLoaded', function() {
-                
+
                 var scene = new ThreeScene();
 
                 var sound = Sono.createSound(['audio/DRUMS.ogg', 'audio/DRUMS.mp3']);
                 sound.loop = true;
-                
+
                 // add a panner node
                 var pan = sound.effect.panner();
 
@@ -37,19 +39,19 @@
                 /*pan.coneOuterGain = 0.5;
                 pan.coneOuterAngle = 180;
                 pan.coneInnerAngle = 0;*/
-                
+
                 // set source position to the position vector of the speaker
                 pan.setSourcePosition(scene.speaker.position);
-                
+
                 // set source orientation to the normalised position vector of the speaker
                 pan.setSourceOrientation(scene.speaker.position);
-                
+
                 // play
                 sound.play();
 
                 function update() {
                     window.requestAnimationFrame(update);
-                    
+
                     // render Three.js scene
                     scene.render();
 
@@ -62,7 +64,7 @@
                 update();
 
             });
-            
+
 
         }());
     </script>

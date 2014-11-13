@@ -20,7 +20,9 @@
 
     <script>
         // Test with no WebAudio
-        //window.AudioContext = window.webkitAudioContext = undefined;
+        if(window.location.search.substring(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
     </script>
     <script src="../dist/sono.js"></script>
     <script src="js/player.js"></script>
@@ -99,7 +101,7 @@
                     });
                     [].forEach.call(btns, function(btn) {
                         var btnId = btn.getAttribute('data-effect');
-                        btn.classList.toggle('is-selected', btnId === effect); 
+                        btn.classList.toggle('is-selected', btnId === effect);
                     });
                     addEffect(effect);
                 });
@@ -226,13 +228,15 @@
                 ]
             });
 
+            var sampleRate = Sono.context ? Sono.context.sampleRate : 22050;
+
             createControls({
                 effect: 'Highpass',
                 params: [
                     {
                         label: 'Frequency',
                         min: 40,
-                        max: Sono.context.sampleRate / 2,
+                        max: sampleRate / 2,
                         step: 1,
                         prop: 'frequency'
                     },
@@ -259,7 +263,7 @@
                     {
                         label: 'Frequency',
                         min: 40,
-                        max: Sono.context.sampleRate / 2,
+                        max: sampleRate / 2,
                         step: 1,
                         prop: 'frequency'
                     },

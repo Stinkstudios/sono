@@ -17,7 +17,9 @@
 
     <script>
         // Test with no WebAudio
-        // window.AudioContext = window.webkitAudioContext = undefined;
+        if(window.location.search.substring(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
     </script>
     <script src="../dist/sono.js"></script>
     <script>
@@ -38,7 +40,11 @@
                 volume: 0
             }).play();
 
-            document.querySelector('[data-js="button-crossfade"]').addEventListener('click', function() {
+            var btnCross = document.querySelector('[data-js="button-crossfade"]'),
+                btnFadeIn = document.querySelector('[data-js="button-fadein"]'),
+                btnFadeOut = document.querySelector('[data-js="button-fadeout"]');
+
+            btnCross.addEventListener('click', function() {
                 console.log('cross fade:');
                 if(soundA.volume > soundB.volume) {
                     soundA.fade(0, 2);
@@ -50,12 +56,11 @@
                 }
             });
 
-            document.querySelector('[data-js="button-fadein"]').addEventListener('click', function() {
-                //soundA.fade(1, 2);
+            btnFadeIn.addEventListener('click', function() {
                 Sono.fade(1, 2);
             });
 
-            document.querySelector('[data-js="button-fadeout"]').addEventListener('click', function() {
+            btnFadeOut.addEventListener('click', function() {
                 Sono.fade(0, 2);
             });
 

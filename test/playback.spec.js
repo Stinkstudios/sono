@@ -115,14 +115,14 @@ describe('Sono playback', function() {
             }, 500);
         });
 
-        it('should fade Sound volume', function() {
+        it('should fade sound volume', function() {
             expect(sound.volume).to.eql(1);
+            sound.play();
             sound.fade(0, 0.2);
         });
 
         it('should be at zero volume', function() {
             expect(sound.volume).to.eql(0);
-            Sono.destroySound(sound);
         });
 
     });

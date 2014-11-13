@@ -1,11 +1,11 @@
 'use strict';
 
 var Sono = require('../src/sono.js');
-var BufferSource = require('../src/lib/source/buffer-source-b.js');
-var MediaSource = require('../src/lib/source/media-source-b.js');
-var MicrophoneSource = require('../src/lib/source/microphone-source-b.js');
-var OscillatorSource = require('../src/lib/source/oscillator-source-b.js');
-var ScriptSource = require('../src/lib/source/script-source-b.js');
+var BufferSource = require('../src/lib/source/buffer-source.js');
+var MediaSource = require('../src/lib/source/media-source.js');
+var MicrophoneSource = require('../src/lib/source/microphone-source.js');
+var OscillatorSource = require('../src/lib/source/oscillator-source.js');
+var ScriptSource = require('../src/lib/source/script-source.js');
 
 describe('Source', function() {
 
