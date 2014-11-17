@@ -347,7 +347,7 @@ Sono.effect returns Effect
 Sono.extensions returns Array
 Sono.hasWebAudio returns boolean
 Sono.isSupported returns boolean
-Sono.masterGain returns GainNode
+Sono.gain returns GainNode
 Sono.sounds returns Array
 Sono.utils returns Utils
 ```
@@ -376,7 +376,7 @@ if(Sono.hasWebAudio) {
 var hasAudioSupport = Sono.isSupported;
 
 // access to the master Gain node
-Sono.masterGain
+Sono.gain
 
 // access array of sounds in Sono
 Sono.sounds.forEach(function(sound) {

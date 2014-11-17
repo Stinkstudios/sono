@@ -342,7 +342,7 @@ Object.defineProperties(Sono.prototype, {
             return File.extensions.length > 0;
         }
     },
-    'masterGain': {
+    'gain': {
         get: function() {
             return this._gain;
         }
