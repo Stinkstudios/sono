@@ -102,7 +102,6 @@ Object.defineProperty(Group.prototype, 'volume', {
 });
 
 Group.prototype.fade = function(volume, duration) {
-    console.log.call(console, 'fade', volume, ',', duration);
     if(this._context) {
         var param = this._gain.gain;
         var time = this._context.currentTime;
