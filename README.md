@@ -17,7 +17,7 @@ A JavaScript library for working with audio
 ## Installation
 
 * npm: ```npm install sono --save-dev```
-* bower: ```bower install sono --save```
+* bower: ```bower install sono --save-dev```
 
 ## Usage
 

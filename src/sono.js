@@ -33,9 +33,9 @@ function Sono() {
  * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
  * ArrayBuffer
  * HTMLMediaElement
- * String (filename e.g. 'foo.ogg')
- * String (Oscillator type i.e. 'sine', 'square', 'sawtooth', 'triangle')
- * Object (ScriptProcessor config: { bufferSize: 1024, channels: 1, callback: fn, thisArg: self })
+ * Filename string (e.g. 'foo.ogg')
+ * Oscillator type string (i.e. 'sine', 'square', 'sawtooth', 'triangle')
+ * ScriptProcessor config object (e.g. { bufferSize: 1024, channels: 1, callback: fn, thisArg: self })
  */
 
 Sono.prototype.createSound = function(config) {
