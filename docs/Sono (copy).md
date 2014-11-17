@@ -130,7 +130,7 @@ Sono.destroySound('bar');
 Remove all sounds from Sono
 
 ```javascript
-Sono.destroySound(soundOrId)
+Sono.destroyAll()
 ```
 
 [View source code](../src/sono.js#L81-84)

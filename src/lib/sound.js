@@ -76,8 +76,10 @@ Sound.prototype.fade = function(volume, duration) {
 
     if(this._context) {
         var  param = this._gain.gain;
-        param.setValueAtTime(param.value, this._context.currentTime);
-        param.linearRampToValueAtTime(volume, this._context.currentTime + duration);
+        var time = this._context.currentTime;
+        param.cancelScheduledValues(time);
+        param.setValueAtTime(param.value, time);
+        param.linearRampToValueAtTime(volume, time + duration);
     }
     else if(typeof this._source.fade === 'function') {
         this._source.fade(volume, duration);
@@ -271,13 +273,16 @@ Object.defineProperties(Sound.prototype, {
         set: function(value) {
             if(isNaN(value)) { return; }
 
-            this._gain.gain.value = value;
+            var param = this._gain.gain;
 
             if(this._context) {
-                this._gain.gain.cancelScheduledValues(this._context.currentTime);
-                this._gain.gain.setValueAtTime(value, this._context.currentTime);
+                var time = this._context.currentTime;
+                param.cancelScheduledValues(time);
+                param.value = value;
+                param.setValueAtTime(value, time);
             }
             else if(this._data && this._data.volume !== undefined) {
+                param.value = value;
                 if(this._source) {
                     window.clearTimeout(this._source.fadeTimeout);
                 }

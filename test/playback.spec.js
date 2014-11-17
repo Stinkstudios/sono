@@ -94,13 +94,12 @@ describe('Sono playback', function() {
                 done();
             }, 500);
         });
+        Sono.volume = 1;
+        Sono.fade(0, 0.2);
+        // console.log('1:', Sono.context.currentTime.toFixed(3), Sono.volume.toFixed(3));
 
-        it('should fade Sono master volume', function() {
-            expect(Sono.volume).to.eql(1);
-            Sono.fade(0, 0.2);
-        });
-
-        it('should be at zero volume', function() {
+        it('should have faded to zero volume', function() {
+            // console.log('2:', Sono.context.currentTime.toFixed(3), Sono.volume.toFixed(3));
             expect(Sono.volume).to.eql(0);
         });
 
@@ -108,6 +107,8 @@ describe('Sono playback', function() {
 
     describe('fade sound', function() {
         var sound = Sono.createSound('sine');
+        sound.play();
+        sound.fade(0, 0.2);
 
         beforeEach(function(done) {
             setTimeout(function() {
@@ -115,13 +116,7 @@ describe('Sono playback', function() {
             }, 500);
         });
 
-        it('should fade sound volume', function() {
-            expect(sound.volume).to.eql(1);
-            sound.play();
-            sound.fade(0, 0.2);
-        });
-
-        it('should be at zero volume', function() {
+        it('should have faded to zero volume', function() {
             expect(sound.volume).to.eql(0);
         });
 
