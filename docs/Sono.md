@@ -6,7 +6,9 @@
 
 Create a Sound object
 
->`Sono.createSound(config)` returns Sound
+```javascript
+Sono.createSound(config); returns Sound
+```
 
 [View source code](../src/sono.js#L41-58)
 
@@ -106,7 +108,9 @@ Sono.play('foo');
 
 Remove a sound from Sono
 
->`Sono.destroySound(soundOrId)`
+```javascript
+Sono.destroySound(soundOrId)
+```
 
 [View source code](../src/sono.js#L64-79)
 
@@ -125,7 +129,9 @@ Sono.destroySound('bar');
 
 Remove all sounds from Sono
 
->`Sono.destroySound(soundOrId)`
+```javascript
+Sono.destroyAll()
+```
 
 [View source code](../src/sono.js#L81-84)
 
@@ -138,7 +144,9 @@ Sono.destroyAll();
 
 ## getSound
 
->`Sono.getSound(id)`
+```javascript
+Sono.getSound(id)
+```
 
 [View source code](../src/sono.js#L90-L99)
 
@@ -157,7 +165,9 @@ var sound = Sono.getSound('bar');
 
 Create a group to control multiple sounds together
 
->`Sono.createGroup(sounds)`
+```javascript
+Sono.createGroup(sounds)
+```
 
 [View source code](../src/sono.js#L105-L113)
 
@@ -176,7 +186,9 @@ group.play();
 
 Load a sound and add to Sono
 
->`Sono.load(config)` returns Sound
+```javascript
+Sono.load(config) returns Sound
+```
 
 [View source code](../src/sono.js#L119-160)
 
@@ -267,16 +279,18 @@ var sound = Sono.load({
 
 ## controls
 
->`Sono.mute()`
-`Sono.unMute()`
-`Sono.volume`
-`Sono.fade(volume, duration)`
-`Sono.pauseAll()`
-`Sono.resumeAll()`
-`Sono.stopAll()`
-`Sono.play(id, delay, offset)`
-`Sono.pause(id)`
-`Sono.stop(id)`
+```
+Sono.mute() returns Sono
+Sono.unMute() returns Sono
+Sono.volume (get/set)
+Sono.fade(volume, duration) returns Sono
+Sono.pauseAll() returns Sono
+Sono.resumeAll() returns Sono
+Sono.stopAll() returns Sono
+Sono.play(id, delay, offset) returns Sono
+Sono.pause(id) returns Sono
+Sono.stop(id) returns Sono
+```
 
 [View source code](../src/sono.js#L186-238)
 
@@ -310,7 +324,9 @@ Sono.stop('foo');
 
 ## log
 
->`Sono.log()`
+```javascript
+Sono.log()
+```
 
 [View source code](../src/sono.js#L289-308)
 
@@ -324,15 +340,17 @@ Sono.log(); // Sono 0.0.5 Supported:true WebAudioAPI:true TouchLocked:false Exte
 
 ## getters
 
->`Sono.canPlay` returns Object
-`Sono.context` returns WebAudioContext
-`Sono.effect` returns Effect
-`Sono.extensions` returns Array
-`Sono.hasWebAudio` returns boolean
-`Sono.isSupported` returns boolean
-`Sono.gain` returns GainNode
-`Sono.sounds` returns Array
-`Sono.utils` returns Utils
+```
+Sono.canPlay returns Object
+Sono.context returns WebAudioContext
+Sono.effect returns Effect
+Sono.extensions returns Array
+Sono.hasWebAudio returns boolean
+Sono.isSupported returns boolean
+Sono.gain returns GainNode
+Sono.sounds returns Array
+Sono.utils returns Utils
+```
 
 [View source code](../src/sono.js#L314-360)
 
@@ -367,35 +385,43 @@ Sono.sounds.forEach(function(sound) {
 ```
 
 
-## Sound
+# Sound
 
->`Sound.play(delay, offset)` returns Sound
-`Sound.pause()` returns Sound
-`Sound.stop()` returns Sound
-`Sound.seek(percent)` returns Sound
-`Sound.fade(volume, duration)` returns Sound
-`Sound.onEnded(callback, context)` returns Sound
-`Sound.destroy()`
-`Sound.currentTime` returns Number
-`Sound.data` returns Object
-`Sound.duration` returns Number
-`Sound.effect` returns Effect
-`Sound.ended` returns Boolean
+```javascript
+Sound.play(delay, offset) returns Sound
+Sound.pause() returns Sound
+Sound.stop() returns Sound
+Sound.seek(percent) returns Sound
+Sound.fade(volume, duration) returns Sound
+Sound.onEnded(callback, context) returns Sound
+Sound.destroy()
+Sound.currentTime returns Number
+Sound.data returns Object
+Sound.duration returns Number
+Sound.effect returns Effect
+Sound.ended returns Boolean
 
->`Sound.frequency` returns Number
-`Sound.gain` returns GainNode
-`Sound.loop` returns Boolean
-`Sound.paused` returns Boolean
-`Sound.playing` returns Boolean
-`Sound.playbackRate` returns Number
-`Sound.progress` returns Number
-`Sound.volume` returns Number
+Sound.frequency returns Number
+Sound.gain returns GainNode
+Sound.loop returns Boolean
+Sound.paused returns Boolean
+Sound.playing returns Boolean
+Sound.playbackRate returns Number
+Sound.progress returns Number
+Sound.volume returns Number
+```
 
 [View source code](../src/sound.js)
 
 #### Examples
 
 ```javascript
+var sound = Sono.createSound({
+	id: 'foo',
+	url: ['audio/foo.ogg', 'audio/foo.mp3'],
+	loop: true,
+	volume: 0.5
+});
 // set volume to 50%
 sound.volume = 0.5;
 // get volume
@@ -415,7 +441,7 @@ sound.onEnded(function() {
 ```
 
 
-## Effects
+# Effects
 
 [View source code](../src/lib/effect.js)
 
@@ -423,13 +449,15 @@ sound.onEnded(function() {
 
 Add and remove effects
 
->`Sono.effect.add(node)` returns AudioNode
-`Sono.effect.remove(node)` returns AudioNode
-`Sono.effect.removeAll()`
+```javascript
+Sono.effect.add(node) returns AudioNode
+Sono.effect.remove(node) returns AudioNode
+Sono.effect.removeAll()
 
->`Sound.effect.add(node)` returns AudioNode
-`Sound.effect.remove(node)` returns AudioNode
-`Sound.effect.removeAll()`
+Sound.effect.add(node) returns AudioNode
+Sound.effect.remove(node) returns AudioNode
+Sound.effect.removeAll()
+```
 
 [View source code](../src/lib/effect.js#L21-48)
 
@@ -447,8 +475,10 @@ sound.effect.removeAll();
 
 Create an AnalyserNode and add to chain
 
->`Sono.effect.analyser(fftSize)`
-`Sound.effect.analyser(fftSize)`
+```javascript
+Sono.effect.analyser(fftSize)
+Sound.effect.analyser(fftSize)
+```
 
 [View source code](../src/lib/effect/analyser.js)
 
@@ -487,8 +517,10 @@ draw();
 
 Apply compression processing (lowers the volume of the loudest parts of the signal and raises the volume of the softest parts)
 
->`Sono.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor
->`Sound.effect.compressor(threshold, knee, ratio, reduction, attack, release)` returns Compressor
+```javascript
+Sono.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
+Sound.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
+```
 
 [View source code](../src/lib/effect.js#L116-140)
 
@@ -514,8 +546,10 @@ compressor.release.value = 0.25;
 
 Create a reverb effect by passing an audio buffer of a pre-recorded reverb impulse
 
->`Sono.effect.convolver(impulseResponse)` returns Convolver
->`Sound.effect.convolver(impulseResponse)` returns Convolver
+```javascript
+Sono.effect.convolver(impulseResponse) returns Convolver
+Sound.effect.convolver(impulseResponse) returns Convolver
+```
 
 [View source code](../src/lib/effect.js#L142-147)
 
@@ -533,8 +567,10 @@ Sono.load(['impulse.ogg', 'impulse.mp3'], applyImpulse);
 
 Delay the sound playback
 
->`Sono.effect.delay(time)` returns Delay
->`Sound.effect.delay(time)` returns Delay
+```javascript
+Sono.effect.delay(time) returns Delay
+Sound.effect.delay(time) returns Delay
+```
 
 [View source code](../src/lib/effect.js#L149-153)
 
@@ -548,8 +584,10 @@ var delay = sound.effect.delay(1);
 
 Create a distortion effect
 
->`Sono.effect.distortion(amount)` returns Distortion
->`Sono.effect.distortion(amount)` returns Distortion
+```javascript
+Sono.effect.distortion(amount) returns Distortion
+Sono.effect.distortion(amount) returns Distortion
+```
 
 [View source code](../src/lib/effect/distortion.js)
 
@@ -565,8 +603,10 @@ distortion.amount = 0.8; // [0,1]
 
 Create a repeating echo or delay effect
 
->`Sono.effect.echo(delayTime, gainValue)` returns Echo
-`sound.effect.echo(delayTime, gainValue)` returns Echo
+```javascript
+Sono.effect.echo(delayTime, gainValue) returns Echo
+Sound.effect.echo(delayTime, gainValue) returns Echo
+```
 
 [View source code](../src/lib/effect/echo.js)
 
@@ -581,30 +621,34 @@ echo.update(3, 0.5); // [seconds, gain]
 
 Create a filter effect
 
->`Sono.effect.filter(type, frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.lowpass(frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.highpass(frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.bandpass(frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.lowshelf(frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.highshelf(frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.peaking(frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.notch(frequency, quality, gain)` returns BiquadFilter
-`Sono.effect.allpass(frequency, quality, gain)` returns BiquadFilter
+```javascript
+Sono.effect.filter(type, frequency, quality, gain) returns BiquadFilter
+Sono.effect.lowpass(frequency, quality, gain) returns BiquadFilter
+Sono.effect.highpass(frequency, quality, gain) returns BiquadFilter
+Sono.effect.bandpass(frequency, quality, gain) returns BiquadFilter
+Sono.effect.lowshelf(frequency, quality, gain) returns BiquadFilter
+Sono.effect.highshelf(frequency, quality, gain) returns BiquadFilter
+Sono.effect.peaking(frequency, quality, gain) returns BiquadFilter
+Sono.effect.notch(frequency, quality, gain) returns BiquadFilter
+Sono.effect.allpass(frequency, quality, gain) returns BiquadFilter
 
->`Sound.effect.filter(type, frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.lowpass(frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.highpass(frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.bandpass(frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.lowshelf(frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.highshelf(frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.peaking(frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.notch(frequency, quality, gain)` returns BiquadFilter
-`Sound.effect.allpass(frequency, quality, gain)` returns BiquadFilter
+Sound.effect.filter(type, frequency, quality, gain) returns BiquadFilter
+Sound.effect.lowpass(frequency, quality, gain) returns BiquadFilter
+Sound.effect.highpass(frequency, quality, gain) returns BiquadFilter
+Sound.effect.bandpass(frequency, quality, gain) returns BiquadFilter
+Sound.effect.lowshelf(frequency, quality, gain) returns BiquadFilter
+Sound.effect.highshelf(frequency, quality, gain) returns BiquadFilter
+Sound.effect.peaking(frequency, quality, gain) returns BiquadFilter
+Sound.effect.notch(frequency, quality, gain) returns BiquadFilter
+Sound.effect.allpass(frequency, quality, gain) returns BiquadFilter
+```
 
 Update the filter node
 
->`BiquadFilter.setByPercent(percent, quality, gain)`
-`BiquadFilter.update(frequency, gain)`
+```javascript
+BiquadFilter.setByPercent(percent, quality, gain)
+BiquadFilter.update(frequency, gain)
+```
 
 [View source code](../src/lib/effect/filter.js)
 
@@ -620,7 +664,9 @@ lowpass.update(600, 1);
 
 ## flanger
 
->`Sono.effect.flanger()` returns Flanger
+```javascript
+Sono.effect.flanger() returns Flanger
+```
 
 [View source code](../src/lib/effect/flanger.js)
 
@@ -637,7 +683,9 @@ var flanger = Sono.effect.flanger({
 
 ## gain
 
->`Sono.effect.gain(value)` returns Gain
+```javascript
+Sono.effect.gain(value) returns Gain
+```
 
 [View source code](../src/lib/effect.js#L211-217)
 
@@ -653,26 +701,32 @@ gain.gain.value = 0.5;
 
 Create a panner node
 
->`Sono.effect.panner()` returns Panner
-`sound.effect.panner()` returns Panner
+```javascript
+Sono.effect.panner() returns Panner
+sound.effect.panner() returns Panner
+```
 
 Update the panner node
 
->`panner.setX(value)`
-`panner.setSourcePosition(x, y, z)`
-`panner.setSourceOrientation(x, y, z)`
-`panner.setSourceVelocity(x, y, z)`
-`panner.setListenerPosition(x, y, z)`
-`panner.setListenerOrientation(x, y, z)`
-`panner.setListenerVelocity(x, y, z)`
-`panner.calculateVelocity(currentPosition, lastPosition, deltaTime)` returns Vec3
+```javascript
+panner.setX(value)
+panner.setSourcePosition(x, y, z)
+panner.setSourceOrientation(x, y, z)
+panner.setSourceVelocity(x, y, z)
+panner.setListenerPosition(x, y, z)
+panner.setListenerOrientation(x, y, z)
+panner.setListenerVelocity(x, y, z)
+panner.calculateVelocity(currentPosition, lastPosition, deltaTime) returns Vec3
+```
 
 Modify global values for panning
 
->`Sono.effect.panning.setDefaults(object)`
-`Sono.effect.panning.setListenerPosition(x, y, z)`
-`Sono.effect.panning.setListenerOrientation(x, y, z)`
-`Sono.effect.panning.setListenerVelocity(x, y, z)`
+```javascript
+Sono.effect.panning.setDefaults(object)
+Sono.effect.panning.setListenerPosition(x, y, z)
+Sono.effect.panning.setListenerOrientation(x, y, z)
+Sono.effect.panning.setListenerVelocity(x, y, z)
+```
 
 [View source code](../src/lib/effect/panner.js)
 
@@ -705,7 +759,9 @@ Sono.effect.panning.setListenerPosition(camera.position);
 
 ## phaser
 
->`Sono.effect.phaser()` returns Phaser
+```javascript
+Sono.effect.phaser() returns Phaser
+```
 
 [View source code](../src/lib/effect/phaser.js)
 
@@ -724,14 +780,18 @@ var phaser = Sono.effect.phaser({
 
 Record audio from the mix or microphone to a new audio buffer
 
->`Sono.effect.recorder(passThrough)` returns Recorder
-`Sound.effect.recorder(passThrough)` returns Recorder
+```javascript
+Sono.effect.recorder(passThrough) returns Recorder
+Sound.effect.recorder(passThrough) returns Recorder
+```
 
 Controls
 
->`recorder.start()`
-`recorder.stop()` returns AudioBuffer
-`recorder.getDuration()` returns number
+```javascript
+recorder.start()
+recorder.stop() returns AudioBuffer
+recorder.getDuration() returns number
+```
 
 [View source code](../src/lib/effect/recorder.js)
 
@@ -762,7 +822,9 @@ mic.connect();
 
 ## reverb
 
->`Sono.effect.reverb(seconds, decay, reverse)` returns Reverb
+```javascript
+Sono.effect.reverb(seconds, decay, reverse) returns Reverb
+```
 
 [View source code](../src/lib/effect/reverb.js)
 
@@ -776,7 +838,9 @@ reverb.update(2, 0.5);
 
 ## script
 
->`Sono.effect.script(config)` returns ScriptProcessor
+```javascript
+Sono.effect.script(config) returns ScriptProcessor
+```
 
 [View source code](../src/lib/effect.js#L239-268)
 
@@ -798,7 +862,7 @@ var script = Sono.effect.script({
 ```
 
 
-## utils
+# Utils
 
 [View source code](../src/utils.js)
 
