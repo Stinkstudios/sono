@@ -49,7 +49,7 @@ function Player(sound, el) {
     });
 
     // reset button when sound ended
-    sound.onEnded(function() {
+    sound.on('ended', function() {
         button.innerHTML = 'PLAY';
     });
 

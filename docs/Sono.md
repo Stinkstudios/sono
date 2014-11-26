@@ -393,7 +393,7 @@ Sound.pause() returns Sound
 Sound.stop() returns Sound
 Sound.seek(percent) returns Sound
 Sound.fade(volume, duration) returns Sound
-Sound.onEnded(callback, context) returns Sound
+Sound.on('ended', fn) returns Sound
 Sound.destroy()
 Sound.currentTime returns Number
 Sound.data returns Object
@@ -435,7 +435,7 @@ sound.playbackRate = 2;
 // play sound at half speed
 sound.playbackRate = 0.5;
 // get callback when sound ends
-sound.onEnded(function() {
+sound.on('ended', function() {
 	console.log('ended');
 });
 ```
