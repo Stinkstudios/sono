@@ -2,6 +2,8 @@
 
 var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
+    // var inherits = require('inherits');
+    EventEmitter = require('events').EventEmitter,
     File = require('./utils/file.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
@@ -12,7 +14,7 @@ function Sound(context, destination) {
     this.id = '';
     this._context = context;
     this._data = null;
-    this._endedCallback = null;
+    // this._endedCallback = null;
     this._isTouchLocked = false;
     this._loop = false;
     this._pausedAt = 0;
@@ -28,6 +30,18 @@ function Sound(context, destination) {
         this._gain.connect(destination || this._context.destination);
     }
 }
+
+Sound.prototype = Object.create(EventEmitter.prototype);
+Sound.prototype.constructor = Sound;
+Sound.prototype.off = EventEmitter.prototype.removeListener;
+// Sound.prototype = Object.create(EventEmitter.prototype, {
+//   constructor: {
+//     value: Sound,
+//     enumerable: false,
+//     writable: true,
+//     configurable: true
+//   }
+// });
 
 /*
  * Controls
@@ -92,16 +106,18 @@ Sound.prototype.fade = function(volume, duration) {
  * Ended handler
  */
 
-Sound.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-    return this;
-};
+// Sound.prototype.onEnded = function(fn, context) {
+//     this._endedCallback = fn ? fn.bind(context || this) : null;
+//     return this;
+// };
 
-Sound.prototype._endedHandler = function() {
-    if(typeof this._endedCallback === 'function') {
-        this._endedCallback(this);
-    }
-};
+// Sound.prototype._endedHandler = function() {
+//     this.emit('ended');
+
+//     // if(typeof this._endedCallback === 'function') {
+//     //     this._endedCallback(this);
+//     // }
+// };
 
 /*
  * Destroy
@@ -114,7 +130,8 @@ Sound.prototype.destroy = function() {
     this._gain = null;
     this._context = null;
     this._data = null;
-    this._endedCallback = null;
+    // this._endedCallback = null;
+    this.removeAllListeners('ended');
     this._playWhenReady = null;
     this._source = null;
     this._effect = null;
@@ -146,8 +163,13 @@ Sound.prototype._createSource = function(data) {
 
     this._effect.setSource(this._source.sourceNode);
 
-    if(typeof this._source.onEnded === 'function') {
-        this._source.onEnded(this._endedHandler, this);
+    // if(typeof this._source.onEnded === 'function') {
+    //     this._source.onEnded(this._endedHandler, this);
+    // }
+    if(this._source.hasOwnProperty('_endedCallback')) {
+        this._source._endedCallback = function() {
+            this.emit('ended');
+        }.bind(this);
     }
 
     if(this._playWhenReady) {

@@ -86,7 +86,7 @@ function Player(sound, el) {
             color: '#333333',
             bgColor: '#dddddd'
         });
-        
+
         wave.draw({
             canvas: waveformFront,
             sound: sound,
@@ -110,7 +110,8 @@ function Player(sound, el) {
         displayWaveform();
     }
     else if(sound.loader) {
-        sound.loader.onComplete.add(displayWaveform);
+        // sound.loader.onComplete.add(displayWaveform);
+        sound.loader.on('complete', displayWaveform);
     }
 
 }

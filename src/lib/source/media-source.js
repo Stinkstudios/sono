@@ -6,7 +6,7 @@ function MediaSource(el, context) {
     this._el = el; // HTMLMediaElement
     this._ended = false;
     this._endedCallback = null;
-    this._endedHandlerBound = this._endedHandler.bind(this);
+    // this._endedHandlerBound = this._endedHandler.bind(this);
     this._loop = false;
     this._paused = false;
     this._playbackRate = 1;
@@ -98,9 +98,9 @@ MediaSource.prototype.fade = function(volume, duration) {
  * Ended handler
  */
 
-MediaSource.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-};
+// MediaSource.prototype.onEnded = function(fn, context) {
+//     this._endedCallback = fn ? fn.bind(context || this) : null;
+// };
 
 MediaSource.prototype._endedHandler = function() {
     this._ended = true;
@@ -126,7 +126,7 @@ MediaSource.prototype.destroy = function() {
     this._el = null;
     this._context = null;
     this._endedCallback = null;
-    this._endedHandlerBound = null;
+    // this._endedHandlerBound = null;
     this._sourceNode = null;
 };
 

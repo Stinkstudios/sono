@@ -18,7 +18,10 @@ describe('Sono playback', function() {
 
         beforeEach(function(done) {
             sound = Sono.createSound(config);
-            sound.onEnded(function() {
+            // sound.onEnded(function() {
+            //     done();
+            // });
+            sound.on('ended', function() {
                 done();
             });
             sound.play();
@@ -40,7 +43,11 @@ describe('Sono playback', function() {
         beforeEach(function(done) {
             var onComplete = function(loadedSound) {
                 sound = loadedSound;
-                sound.onEnded(function() {
+                // sound.onEnded(function() {
+                //     ended = true;
+                //     done();
+                // });
+                sound.on('ended', function() {
                     ended = true;
                     done();
                 });
@@ -70,9 +77,15 @@ describe('Sono playback', function() {
             ended = false;
 
         beforeEach(function(done) {
+            // sound = Sono.createSound({
+            //     url: [baseURL + 'select.ogg', baseURL + 'select.mp3']
+            // }).onEnded(function() {
+            //     ended = true;
+            //     done();
+            // }).play(0.1, 0.1);
             sound = Sono.createSound({
                 url: [baseURL + 'select.ogg', baseURL + 'select.mp3']
-            }).onEnded(function() {
+            }).on('ended', function() {
                 ended = true;
                 done();
             }).play(0.1, 0.1);

@@ -26,6 +26,7 @@
     "browserify": "^6.2.0",
     "chai": "^1.9.2",
     "chalk": "^0.5.1",
+    "events": "^1.0.2",
     "gulp": "^3.8.9",
     "gulp-if": "^1.2.5",
     "gulp-jshint": "^1.8.6",

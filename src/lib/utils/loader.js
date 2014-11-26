@@ -1,12 +1,14 @@
 'use strict';
 
-var signals = require('signals');
+// var signals = require('signals');
+var EventEmitter = require('events').EventEmitter;
 
 function Loader(url) {
-    var onProgress = new signals.Signal(),
-        onBeforeComplete = new signals.Signal(),
-        onComplete = new signals.Signal(),
-        onError = new signals.Signal(),
+    var emitter = new EventEmitter(),
+        // onProgress = new signals.Signal(),
+        // onBeforeComplete = new signals.Signal(),
+        // onComplete = new signals.Signal(),
+        // onError = new signals.Signal(),
         progress = 0,
         audioContext,
         isTouchLocked,
@@ -21,6 +23,12 @@ function Loader(url) {
         }
     };
 
+    var dispatch = function(buffer) {
+        emitter.emit('progress', 1);
+        emitter.emit('loaded', buffer);
+        emitter.emit('complete', buffer);
+    };
+
     var loadArrayBuffer = function() {
         request = new XMLHttpRequest();
         request.open('GET', url, true);
@@ -28,7 +36,8 @@ function Loader(url) {
         request.onprogress = function(event) {
             if (event.lengthComputable) {
                 progress = event.loaded / event.total;
-                onProgress.dispatch(progress);
+                // onProgress.dispatch(progress);
+                emitter.emit('progress', progress);
             }
         };
         request.onload = function() {
@@ -37,17 +46,20 @@ function Loader(url) {
                 function(buffer) {
                     data = buffer;
                     progress = 1;
-                    onProgress.dispatch(1);
-                    onBeforeComplete.dispatch(buffer);
-                    onComplete.dispatch(buffer);
+                    dispatch(buffer);
+                    // onProgress.dispatch(1);
+                    // onBeforeComplete.dispatch(buffer);
+                    // onComplete.dispatch(buffer);
                 },
                 function(e) {
-                    onError.dispatch(e);
+                    //onError.dispatch(e);
+                    emitter.emit('error', e);
                 }
             );
         };
         request.onerror = function(e) {
-            onError.dispatch(e);
+            // onError.dispatch(e);
+            emitter.emit('error', e);
         };
         request.send();
     };
@@ -59,9 +71,10 @@ function Loader(url) {
         data.src = url;
 
         if (!!isTouchLocked) {
-            onProgress.dispatch(1);
-            onBeforeComplete.dispatch(data);
-            onComplete.dispatch(data);
+            // onProgress.dispatch(1);
+            // onBeforeComplete.dispatch(data);
+            // onComplete.dispatch(data);
+            dispatch(data);
         }
         else {
             var timeout;
@@ -69,16 +82,18 @@ function Loader(url) {
                 data.removeEventListener('canplaythrough', readyHandler);
                 window.clearTimeout(timeout);
                 progress = 1;
-                onProgress.dispatch(1);
-                onBeforeComplete.dispatch(data);
-                onComplete.dispatch(data);
+                // onProgress.dispatch(1);
+                // onBeforeComplete.dispatch(data);
+                // onComplete.dispatch(data);
+                dispatch(data);
             };
             // timeout because sometimes canplaythrough doesn't fire
             timeout = window.setTimeout(readyHandler, 4000);
             data.addEventListener('canplaythrough', readyHandler, false);
             data.onerror = function(e) {
                 window.clearTimeout(timeout);
-                onError.dispatch(e);
+                // onError.dispatch(e);
+                emitter.emit('error', e);
             };
             data.load();
         }
@@ -92,23 +107,31 @@ function Loader(url) {
 
     var destroy = function() {
         cancel();
-        onProgress.removeAll();
-        onComplete.removeAll();
-        onBeforeComplete.removeAll();
-        onError.removeAll();
+        // onProgress.removeAll();
+        // onComplete.removeAll();
+        // onBeforeComplete.removeAll();
+        // onError.removeAll();
+        emitter.removeAllListeners('progress');
+        emitter.removeAllListeners('complete');
+        emitter.removeAllListeners('loaded');
+        emitter.removeAllListeners('error');
         request = null;
         data = null;
         audioContext = null;
     };
 
     var api = {
+        on: emitter.on.bind(emitter),
+        once: emitter.once.bind(emitter),
+        off: emitter.removeListener.bind(emitter),
         start: start,
         cancel: cancel,
-        destroy: destroy,
-        onProgress: onProgress,
-        onComplete: onComplete,
-        onBeforeComplete: onBeforeComplete,
-        onError: onError
+        destroy: destroy
+        // ,
+        // onProgress: onProgress,
+        // onComplete: onComplete,
+        // onBeforeComplete: onBeforeComplete,
+        // onError: onError
     };
 
     Object.defineProperties(api, {
@@ -138,12 +161,13 @@ function Loader(url) {
 }
 
 Loader.Group = function() {
-    var queue = [],
+    var emitter = new EventEmitter(),
+        queue = [],
         numLoaded = 0,
-        numTotal = 0,
-        onComplete = new signals.Signal(),
-        onProgress = new signals.Signal(),
-        onError = new signals.Signal();
+        numTotal = 0;//,
+        // onComplete = new signals.Signal(),
+        // onProgress = new signals.Signal(),
+        // onError = new signals.Signal();
 
     var add = function(loader) {
         queue.push(loader);
@@ -158,39 +182,49 @@ Loader.Group = function() {
 
     var next = function() {
         if(queue.length === 0) {
-            onComplete.dispatch();
+            // onComplete.dispatch();
+            emitter.emit('complete');
             return;
         }
 
         var loader = queue.pop();
-        loader.onProgress.add(progressHandler);
-        loader.onBeforeComplete.addOnce(completeHandler);
-        loader.onError.addOnce(errorHandler);
+        // loader.onProgress.add(progressHandler);
+        // loader.onBeforeComplete.addOnce(completeHandler);
+        // loader.onError.addOnce(errorHandler);
+        loader.on('progress', progressHandler);
+        loader.on('loaded', completeHandler);
+        loader.on('error', errorHandler);
         loader.start();
     };
 
     var progressHandler = function(progress) {
         var loaded = numLoaded + progress;
-        onProgress.dispatch(loaded / numTotal);
+        // onProgress.dispatch(loaded / numTotal);
+        emitter.emit('progress', loaded / numTotal);
     };
 
     var completeHandler = function() {
         numLoaded++;
-        onProgress.dispatch(numLoaded / numTotal);
+        // onProgress.dispatch(numLoaded / numTotal);
+        emitter.emit('progress', numLoaded / numTotal);
         next();
     };
 
     var errorHandler = function(e) {
-        onError.dispatch(e);
+        // onError.dispatch(e);
+        emitter.emit('error', e);
         next();
     };
 
     return Object.freeze({
+        on: emitter.on.bind(emitter),
+        once: emitter.once.bind(emitter),
+        off: emitter.removeListener.bind(emitter),
         add: add,
-        start: start,
-        onProgress: onProgress,
-        onComplete: onComplete,
-        onError: onError
+        start: start//,
+        // onProgress: onProgress,
+        // onComplete: onComplete,
+        // onError: onError
     });
 };
 

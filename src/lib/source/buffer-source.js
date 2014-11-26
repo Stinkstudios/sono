@@ -27,7 +27,7 @@ BufferSource.prototype.play = function(delay, offset) {
     if(offset === undefined) { offset = 0; }
     if(offset > 0) { this._pausedAt = 0; }
     if(this._pausedAt > 0) { offset = this._pausedAt; }
-    
+
     //console.log.apply(console, ['1 offset:', offset]);
     while(offset > this.duration) { offset = offset % this.duration; }
     //console.log.apply(console, ['2 offset:', offset]);
@@ -78,9 +78,9 @@ BufferSource.prototype.stop = function() {
  * Ended handler
  */
 
-BufferSource.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-};
+// BufferSource.prototype.onEnded = function(fn, context) {
+//     this._endedCallback = fn ? fn.bind(context || this) : null;
+// };
 
 BufferSource.prototype._endedHandler = function() {
     this.stop();

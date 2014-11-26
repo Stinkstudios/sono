@@ -23,7 +23,9 @@ describe('Sound', function() {
     });
 
     it('should have expected members (ended callback)', function() {
-        expect(sound.onEnded).to.be.a('function');
+        // expect(sound.onEnded).to.be.a('function');
+        expect(sound.on).to.be.a('function');
+        expect(sound.off).to.be.a('function');
     });
 
     it('should have expected members (state)', function() {
@@ -47,7 +49,7 @@ describe('Sound', function() {
         expect(sound.play()).to.be.an.instanceof(Sound);
         expect(sound.pause()).to.be.an.instanceof(Sound);
         expect(sound.stop()).to.be.an.instanceof(Sound);
-        expect(sound.onEnded()).to.be.an.instanceof(Sound);
+        // expect(sound.onEnded()).to.be.an.instanceof(Sound);
     });
 
 });

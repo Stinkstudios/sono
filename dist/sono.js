@@ -148,10 +148,14 @@ Sono.prototype.load = function(config) {
     }
 
     if(onProgress) {
-        loader.onProgress.add(onProgress, thisArg);
+        // loader.onProgress.add(onProgress, thisArg);
+        loader.on('progress', onProgress.bind(thisArg));
     }
     if(onComplete) {
-        loader.onComplete.addOnce(function() {
+        // loader.onComplete.addOnce(function() {
+        //     onComplete.call(thisArg, sound);
+        // });
+        loader.once('complete', function() {
             onComplete.call(thisArg, sound);
         });
     }
@@ -170,7 +174,10 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
     var loader = new Loader(url);
     loader.audioContext = asMediaElement ? null : this._context;
     loader.isTouchLocked = this._isTouchLocked;
-    loader.onBeforeComplete.addOnce(function(data) {
+    // loader.onBeforeComplete.addOnce(function(data) {
+    //     sound.data = data;
+    // });
+    loader.once('loaded', function(data) {
         sound.data = data;
     });
     // keep a ref so can call sound.loader.cancel()
@@ -367,451 +374,304 @@ Object.defineProperties(Sono.prototype, {
 module.exports = new Sono();
 
 },{"./lib/group.js":14,"./lib/sound.js":15,"./lib/utils/browser.js":21,"./lib/utils/file.js":22,"./lib/utils/loader.js":23,"./lib/utils/sound-group.js":25,"./lib/utils/utils.js":26}],2:[function(require,module,exports){
-/*jslint onevar:true, undef:true, newcap:true, regexp:true, bitwise:true, maxerr:50, indent:4, white:false, nomen:false, plusplus:false */
-/*global define:false, require:false, exports:false, module:false, signals:false */
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-/** @license
- * JS Signals <http://millermedeiros.github.com/js-signals/>
- * Released under the MIT license
- * Author: Miller Medeiros
- * Version: 1.0.0 - Build: 268 (2012/11/29 05:48 PM)
- */
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
 
-(function(global){
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
 
-    // SignalBinding -------------------------------------------------
-    //================================================================
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
 
-    /**
-     * Object that represents a binding between a Signal and a listener function.
-     * <br />- <strong>This is an internal constructor and shouldn't be called by regular users.</strong>
-     * <br />- inspired by Joa Ebert AS3 SignalBinding and Robert Penner's Slot classes.
-     * @author Miller Medeiros
-     * @constructor
-     * @internal
-     * @name SignalBinding
-     * @param {Signal} signal Reference to Signal object that listener is currently bound to.
-     * @param {Function} listener Handler function bound to the signal.
-     * @param {boolean} isOnce If binding should be executed just once.
-     * @param {Object} [listenerContext] Context on which listener will be executed (object that should represent the `this` variable inside listener function).
-     * @param {Number} [priority] The priority level of the event listener. (default = 0).
-     */
-    function SignalBinding(signal, listener, isOnce, listenerContext, priority) {
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
 
-        /**
-         * Handler function bound to the signal.
-         * @type Function
-         * @private
-         */
-        this._listener = listener;
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
 
-        /**
-         * If binding should be executed just once.
-         * @type boolean
-         * @private
-         */
-        this._isOnce = isOnce;
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
 
-        /**
-         * Context on which listener will be executed (object that should represent the `this` variable inside listener function).
-         * @memberOf SignalBinding.prototype
-         * @name context
-         * @type Object|undefined|null
-         */
-        this.context = listenerContext;
+  if (!this._events)
+    this._events = {};
 
-        /**
-         * Reference to Signal object that listener is currently bound to.
-         * @type Signal
-         * @private
-         */
-        this._signal = signal;
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      }
+      throw TypeError('Uncaught, unspecified "error" event.');
+    }
+  }
 
-        /**
-         * Listener priority
-         * @type Number
-         * @private
-         */
-        this._priority = priority || 0;
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        len = arguments.length;
+        args = new Array(len - 1);
+        for (i = 1; i < len; i++)
+          args[i - 1] = arguments[i];
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    len = arguments.length;
+    args = new Array(len - 1);
+    for (i = 1; i < len; i++)
+      args[i - 1] = arguments[i];
+
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    var m;
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
     }
 
-    SignalBinding.prototype = {
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      void 0;
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        void 0;
+      }
+    }
+  }
 
-        /**
-         * If binding is active and should be executed.
-         * @type boolean
-         */
-        active : true,
+  return this;
+};
 
-        /**
-         * Default parameters passed to listener during `Signal.dispatch` and `SignalBinding.execute`. (curried parameters)
-         * @type Array|null
-         */
-        params : null,
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
-        /**
-         * Call listener passing arbitrary parameters.
-         * <p>If binding was added using `Signal.addOnce()` it will be automatically removed from signal dispatch queue, this method is used internally for the signal dispatch.</p>
-         * @param {Array} [paramsArr] Array of parameters that should be passed to the listener
-         * @return {*} Value returned by the listener.
-         */
-        execute : function (paramsArr) {
-            var handlerReturn, params;
-            if (this.active && !!this._listener) {
-                params = this.params? this.params.concat(paramsArr) : paramsArr;
-                handlerReturn = this._listener.apply(this.context, params);
-                if (this._isOnce) {
-                    this.detach();
-                }
-            }
-            return handlerReturn;
-        },
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
 
-        /**
-         * Detach binding from signal.
-         * - alias to: mySignal.remove(myBinding.getListener());
-         * @return {Function|null} Handler function bound to the signal or `null` if binding was previously detached.
-         */
-        detach : function () {
-            return this.isBound()? this._signal.remove(this._listener, this.context) : null;
-        },
+  var fired = false;
 
-        /**
-         * @return {Boolean} `true` if binding is still bound to the signal and have a listener.
-         */
-        isBound : function () {
-            return (!!this._signal && !!this._listener);
-        },
+  function g() {
+    this.removeListener(type, g);
 
-        /**
-         * @return {boolean} If SignalBinding will only be executed once.
-         */
-        isOnce : function () {
-            return this._isOnce;
-        },
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
 
-        /**
-         * @return {Function} Handler function bound to the signal.
-         */
-        getListener : function () {
-            return this._listener;
-        },
+  g.listener = listener;
+  this.on(type, g);
 
-        /**
-         * @return {Signal} Signal that listener is currently bound to.
-         */
-        getSignal : function () {
-            return this._signal;
-        },
+  return this;
+};
 
-        /**
-         * Delete instance properties
-         * @private
-         */
-        _destroy : function () {
-            delete this._signal;
-            delete this._listener;
-            delete this.context;
-        },
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
 
-        /**
-         * @return {string} String representation of the object.
-         */
-        toString : function () {
-            return '[SignalBinding isOnce:' + this._isOnce +', isBound:'+ this.isBound() +', active:' + this.active + ']';
-        }
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
 
-    };
+  if (!this._events || !this._events[type])
+    return this;
 
+  list = this._events[type];
+  length = list.length;
+  position = -1;
 
-/*global SignalBinding:false*/
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
 
-    // Signal --------------------------------------------------------
-    //================================================================
-
-    function validateListener(listener, fnName) {
-        if (typeof listener !== 'function') {
-            throw new Error( 'listener is a required param of {fn}() and should be a Function.'.replace('{fn}', fnName) );
-        }
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
     }
 
-    /**
-     * Custom event broadcaster
-     * <br />- inspired by Robert Penner's AS3 Signals.
-     * @name Signal
-     * @author Miller Medeiros
-     * @constructor
-     */
-    function Signal() {
-        /**
-         * @type Array.<SignalBinding>
-         * @private
-         */
-        this._bindings = [];
-        this._prevParams = null;
+    if (position < 0)
+      return this;
 
-        // enforce dispatch to aways work on same context (#47)
-        var self = this;
-        this.dispatch = function(){
-            Signal.prototype.dispatch.apply(self, arguments);
-        };
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
     }
 
-    Signal.prototype = {
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
 
-        /**
-         * Signals Version Number
-         * @type String
-         * @const
-         */
-        VERSION : '1.0.0',
+  return this;
+};
 
-        /**
-         * If Signal should keep record of previously dispatched parameters and
-         * automatically execute listener during `add()`/`addOnce()` if Signal was
-         * already dispatched before.
-         * @type boolean
-         */
-        memorize : false,
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
 
-        /**
-         * @type boolean
-         * @private
-         */
-        _shouldPropagate : true,
+  if (!this._events)
+    return this;
 
-        /**
-         * If Signal is active and should broadcast events.
-         * <p><strong>IMPORTANT:</strong> Setting this property during a dispatch will only affect the next dispatch, if you want to stop the propagation of a signal use `halt()` instead.</p>
-         * @type boolean
-         */
-        active : true,
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
 
-        /**
-         * @param {Function} listener
-         * @param {boolean} isOnce
-         * @param {Object} [listenerContext]
-         * @param {Number} [priority]
-         * @return {SignalBinding}
-         * @private
-         */
-        _registerListener : function (listener, isOnce, listenerContext, priority) {
-
-            var prevIndex = this._indexOfListener(listener, listenerContext),
-                binding;
-
-            if (prevIndex !== -1) {
-                binding = this._bindings[prevIndex];
-                if (binding.isOnce() !== isOnce) {
-                    throw new Error('You cannot add'+ (isOnce? '' : 'Once') +'() then add'+ (!isOnce? '' : 'Once') +'() the same listener without removing the relationship first.');
-                }
-            } else {
-                binding = new SignalBinding(this, listener, isOnce, listenerContext, priority);
-                this._addBinding(binding);
-            }
-
-            if(this.memorize && this._prevParams){
-                binding.execute(this._prevParams);
-            }
-
-            return binding;
-        },
-
-        /**
-         * @param {SignalBinding} binding
-         * @private
-         */
-        _addBinding : function (binding) {
-            //simplified insertion sort
-            var n = this._bindings.length;
-            do { --n; } while (this._bindings[n] && binding._priority <= this._bindings[n]._priority);
-            this._bindings.splice(n + 1, 0, binding);
-        },
-
-        /**
-         * @param {Function} listener
-         * @return {number}
-         * @private
-         */
-        _indexOfListener : function (listener, context) {
-            var n = this._bindings.length,
-                cur;
-            while (n--) {
-                cur = this._bindings[n];
-                if (cur._listener === listener && cur.context === context) {
-                    return n;
-                }
-            }
-            return -1;
-        },
-
-        /**
-         * Check if listener was attached to Signal.
-         * @param {Function} listener
-         * @param {Object} [context]
-         * @return {boolean} if Signal has the specified listener.
-         */
-        has : function (listener, context) {
-            return this._indexOfListener(listener, context) !== -1;
-        },
-
-        /**
-         * Add a listener to the signal.
-         * @param {Function} listener Signal handler function.
-         * @param {Object} [listenerContext] Context on which listener will be executed (object that should represent the `this` variable inside listener function).
-         * @param {Number} [priority] The priority level of the event listener. Listeners with higher priority will be executed before listeners with lower priority. Listeners with same priority level will be executed at the same order as they were added. (default = 0)
-         * @return {SignalBinding} An Object representing the binding between the Signal and listener.
-         */
-        add : function (listener, listenerContext, priority) {
-            validateListener(listener, 'add');
-            return this._registerListener(listener, false, listenerContext, priority);
-        },
-
-        /**
-         * Add listener to the signal that should be removed after first execution (will be executed only once).
-         * @param {Function} listener Signal handler function.
-         * @param {Object} [listenerContext] Context on which listener will be executed (object that should represent the `this` variable inside listener function).
-         * @param {Number} [priority] The priority level of the event listener. Listeners with higher priority will be executed before listeners with lower priority. Listeners with same priority level will be executed at the same order as they were added. (default = 0)
-         * @return {SignalBinding} An Object representing the binding between the Signal and listener.
-         */
-        addOnce : function (listener, listenerContext, priority) {
-            validateListener(listener, 'addOnce');
-            return this._registerListener(listener, true, listenerContext, priority);
-        },
-
-        /**
-         * Remove a single listener from the dispatch queue.
-         * @param {Function} listener Handler function that should be removed.
-         * @param {Object} [context] Execution context (since you can add the same handler multiple times if executing in a different context).
-         * @return {Function} Listener handler function.
-         */
-        remove : function (listener, context) {
-            validateListener(listener, 'remove');
-
-            var i = this._indexOfListener(listener, context);
-            if (i !== -1) {
-                this._bindings[i]._destroy(); //no reason to a SignalBinding exist if it isn't attached to a signal
-                this._bindings.splice(i, 1);
-            }
-            return listener;
-        },
-
-        /**
-         * Remove all listeners from the Signal.
-         */
-        removeAll : function () {
-            var n = this._bindings.length;
-            while (n--) {
-                this._bindings[n]._destroy();
-            }
-            this._bindings.length = 0;
-        },
-
-        /**
-         * @return {number} Number of listeners attached to the Signal.
-         */
-        getNumListeners : function () {
-            return this._bindings.length;
-        },
-
-        /**
-         * Stop propagation of the event, blocking the dispatch to next listeners on the queue.
-         * <p><strong>IMPORTANT:</strong> should be called only during signal dispatch, calling it before/after dispatch won't affect signal broadcast.</p>
-         * @see Signal.prototype.disable
-         */
-        halt : function () {
-            this._shouldPropagate = false;
-        },
-
-        /**
-         * Dispatch/Broadcast Signal to all listeners added to the queue.
-         * @param {...*} [params] Parameters that should be passed to each handler.
-         */
-        dispatch : function (params) {
-            if (! this.active) {
-                return;
-            }
-
-            var paramsArr = Array.prototype.slice.call(arguments),
-                n = this._bindings.length,
-                bindings;
-
-            if (this.memorize) {
-                this._prevParams = paramsArr;
-            }
-
-            if (! n) {
-                //should come after memorize
-                return;
-            }
-
-            bindings = this._bindings.slice(); //clone array in case add/remove items during dispatch
-            this._shouldPropagate = true; //in case `halt` was called before dispatch or during the previous dispatch.
-
-            //execute all callbacks until end of the list or until a callback returns `false` or stops propagation
-            //reverse loop since listeners with higher priority will be added at the end of the list
-            do { n--; } while (bindings[n] && this._shouldPropagate && bindings[n].execute(paramsArr) !== false);
-        },
-
-        /**
-         * Forget memorized arguments.
-         * @see Signal.memorize
-         */
-        forget : function(){
-            this._prevParams = null;
-        },
-
-        /**
-         * Remove all bindings from signal and destroy any reference to external objects (destroy Signal object).
-         * <p><strong>IMPORTANT:</strong> calling any method on the signal instance after calling dispose will throw errors.</p>
-         */
-        dispose : function () {
-            this.removeAll();
-            delete this._bindings;
-            delete this._prevParams;
-        },
-
-        /**
-         * @return {string} String representation of the object.
-         */
-        toString : function () {
-            return '[Signal active:'+ this.active +' numListeners:'+ this.getNumListeners() +']';
-        }
-
-    };
-
-
-    // Namespace -----------------------------------------------------
-    //================================================================
-
-    /**
-     * Signals namespace
-     * @namespace
-     * @name signals
-     */
-    var signals = Signal;
-
-    /**
-     * Custom event broadcaster
-     * @see Signal
-     */
-    // alias for backwards compatibility (see #gh-44)
-    signals.Signal = Signal;
-
-
-
-    //exports to multiple environments
-    if(typeof define === 'function' && define.amd){ //AMD
-        define(function () { return signals; });
-    } else if (typeof module !== 'undefined' && module.exports){ //node
-        module.exports = signals;
-    } else { //browser
-        //use string because of Google closure compiler ADVANCED_MODE
-        /*jslint sub:true */
-        global['signals'] = signals;
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
     }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
 
-}(this));
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (isFunction(emitter._events[type]))
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
 
 },{}],3:[function(require,module,exports){
 'use strict';
@@ -2120,6 +1980,8 @@ module.exports = Group;
 
 var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
+    // var inherits = require('inherits');
+    EventEmitter = require('events').EventEmitter,
     File = require('./utils/file.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
@@ -2130,7 +1992,7 @@ function Sound(context, destination) {
     this.id = '';
     this._context = context;
     this._data = null;
-    this._endedCallback = null;
+    // this._endedCallback = null;
     this._isTouchLocked = false;
     this._loop = false;
     this._pausedAt = 0;
@@ -2146,6 +2008,18 @@ function Sound(context, destination) {
         this._gain.connect(destination || this._context.destination);
     }
 }
+
+Sound.prototype = Object.create(EventEmitter.prototype);
+Sound.prototype.constructor = Sound;
+Sound.prototype.off = EventEmitter.prototype.removeListener;
+// Sound.prototype = Object.create(EventEmitter.prototype, {
+//   constructor: {
+//     value: Sound,
+//     enumerable: false,
+//     writable: true,
+//     configurable: true
+//   }
+// });
 
 /*
  * Controls
@@ -2210,16 +2084,18 @@ Sound.prototype.fade = function(volume, duration) {
  * Ended handler
  */
 
-Sound.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-    return this;
-};
+// Sound.prototype.onEnded = function(fn, context) {
+//     this._endedCallback = fn ? fn.bind(context || this) : null;
+//     return this;
+// };
 
-Sound.prototype._endedHandler = function() {
-    if(typeof this._endedCallback === 'function') {
-        this._endedCallback(this);
-    }
-};
+// Sound.prototype._endedHandler = function() {
+//     this.emit('ended');
+
+//     // if(typeof this._endedCallback === 'function') {
+//     //     this._endedCallback(this);
+//     // }
+// };
 
 /*
  * Destroy
@@ -2232,7 +2108,8 @@ Sound.prototype.destroy = function() {
     this._gain = null;
     this._context = null;
     this._data = null;
-    this._endedCallback = null;
+    // this._endedCallback = null;
+    this.removeAllListeners('ended');
     this._playWhenReady = null;
     this._source = null;
     this._effect = null;
@@ -2264,8 +2141,13 @@ Sound.prototype._createSource = function(data) {
 
     this._effect.setSource(this._source.sourceNode);
 
-    if(typeof this._source.onEnded === 'function') {
-        this._source.onEnded(this._endedHandler, this);
+    // if(typeof this._source.onEnded === 'function') {
+    //     this._source.onEnded(this._endedHandler, this);
+    // }
+    if(this._source.hasOwnProperty('_endedCallback')) {
+        this._source._endedCallback = function() {
+            this.emit('ended');
+        }.bind(this);
     }
 
     if(this._playWhenReady) {
@@ -2412,7 +2294,7 @@ Object.defineProperties(Sound.prototype, {
 
 module.exports = Sound;
 
-},{"./effect.js":3,"./source/buffer-source.js":16,"./source/media-source.js":17,"./source/microphone-source.js":18,"./source/oscillator-source.js":19,"./source/script-source.js":20,"./utils/file.js":22}],16:[function(require,module,exports){
+},{"./effect.js":3,"./source/buffer-source.js":16,"./source/media-source.js":17,"./source/microphone-source.js":18,"./source/oscillator-source.js":19,"./source/script-source.js":20,"./utils/file.js":22,"events":2}],16:[function(require,module,exports){
 'use strict';
 
 function BufferSource(buffer, context) {
@@ -2442,7 +2324,7 @@ BufferSource.prototype.play = function(delay, offset) {
     if(offset === undefined) { offset = 0; }
     if(offset > 0) { this._pausedAt = 0; }
     if(this._pausedAt > 0) { offset = this._pausedAt; }
-    
+
     //console.log.apply(console, ['1 offset:', offset]);
     while(offset > this.duration) { offset = offset % this.duration; }
     //console.log.apply(console, ['2 offset:', offset]);
@@ -2493,9 +2375,9 @@ BufferSource.prototype.stop = function() {
  * Ended handler
  */
 
-BufferSource.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-};
+// BufferSource.prototype.onEnded = function(fn, context) {
+//     this._endedCallback = fn ? fn.bind(context || this) : null;
+// };
 
 BufferSource.prototype._endedHandler = function() {
     this.stop();
@@ -2603,7 +2485,7 @@ function MediaSource(el, context) {
     this._el = el; // HTMLMediaElement
     this._ended = false;
     this._endedCallback = null;
-    this._endedHandlerBound = this._endedHandler.bind(this);
+    // this._endedHandlerBound = this._endedHandler.bind(this);
     this._loop = false;
     this._paused = false;
     this._playbackRate = 1;
@@ -2695,9 +2577,9 @@ MediaSource.prototype.fade = function(volume, duration) {
  * Ended handler
  */
 
-MediaSource.prototype.onEnded = function(fn, context) {
-    this._endedCallback = fn ? fn.bind(context || this) : null;
-};
+// MediaSource.prototype.onEnded = function(fn, context) {
+//     this._endedCallback = fn ? fn.bind(context || this) : null;
+// };
 
 MediaSource.prototype._endedHandler = function() {
     this._ended = true;
@@ -2723,7 +2605,7 @@ MediaSource.prototype.destroy = function() {
     this._el = null;
     this._context = null;
     this._endedCallback = null;
-    this._endedHandlerBound = null;
+    // this._endedHandlerBound = null;
     this._sourceNode = null;
 };
 
@@ -3392,13 +3274,15 @@ module.exports = File;
 },{}],23:[function(require,module,exports){
 'use strict';
 
-var signals = require('signals');
+// var signals = require('signals');
+var EventEmitter = require('events').EventEmitter;
 
 function Loader(url) {
-    var onProgress = new signals.Signal(),
-        onBeforeComplete = new signals.Signal(),
-        onComplete = new signals.Signal(),
-        onError = new signals.Signal(),
+    var emitter = new EventEmitter(),
+        // onProgress = new signals.Signal(),
+        // onBeforeComplete = new signals.Signal(),
+        // onComplete = new signals.Signal(),
+        // onError = new signals.Signal(),
         progress = 0,
         audioContext,
         isTouchLocked,
@@ -3413,6 +3297,12 @@ function Loader(url) {
         }
     };
 
+    var dispatch = function(buffer) {
+        emitter.emit('progress', 1);
+        emitter.emit('loaded', buffer);
+        emitter.emit('complete', buffer);
+    };
+
     var loadArrayBuffer = function() {
         request = new XMLHttpRequest();
         request.open('GET', url, true);
@@ -3420,7 +3310,8 @@ function Loader(url) {
         request.onprogress = function(event) {
             if (event.lengthComputable) {
                 progress = event.loaded / event.total;
-                onProgress.dispatch(progress);
+                // onProgress.dispatch(progress);
+                emitter.emit('progress', progress);
             }
         };
         request.onload = function() {
@@ -3429,17 +3320,20 @@ function Loader(url) {
                 function(buffer) {
                     data = buffer;
                     progress = 1;
-                    onProgress.dispatch(1);
-                    onBeforeComplete.dispatch(buffer);
-                    onComplete.dispatch(buffer);
+                    dispatch(buffer);
+                    // onProgress.dispatch(1);
+                    // onBeforeComplete.dispatch(buffer);
+                    // onComplete.dispatch(buffer);
                 },
                 function(e) {
-                    onError.dispatch(e);
+                    //onError.dispatch(e);
+                    emitter.emit('error', e);
                 }
             );
         };
         request.onerror = function(e) {
-            onError.dispatch(e);
+            // onError.dispatch(e);
+            emitter.emit('error', e);
         };
         request.send();
     };
@@ -3451,9 +3345,10 @@ function Loader(url) {
         data.src = url;
 
         if (!!isTouchLocked) {
-            onProgress.dispatch(1);
-            onBeforeComplete.dispatch(data);
-            onComplete.dispatch(data);
+            // onProgress.dispatch(1);
+            // onBeforeComplete.dispatch(data);
+            // onComplete.dispatch(data);
+            dispatch(data);
         }
         else {
             var timeout;
@@ -3461,16 +3356,18 @@ function Loader(url) {
                 data.removeEventListener('canplaythrough', readyHandler);
                 window.clearTimeout(timeout);
                 progress = 1;
-                onProgress.dispatch(1);
-                onBeforeComplete.dispatch(data);
-                onComplete.dispatch(data);
+                // onProgress.dispatch(1);
+                // onBeforeComplete.dispatch(data);
+                // onComplete.dispatch(data);
+                dispatch(data);
             };
             // timeout because sometimes canplaythrough doesn't fire
             timeout = window.setTimeout(readyHandler, 4000);
             data.addEventListener('canplaythrough', readyHandler, false);
             data.onerror = function(e) {
                 window.clearTimeout(timeout);
-                onError.dispatch(e);
+                // onError.dispatch(e);
+                emitter.emit('error', e);
             };
             data.load();
         }
@@ -3484,23 +3381,31 @@ function Loader(url) {
 
     var destroy = function() {
         cancel();
-        onProgress.removeAll();
-        onComplete.removeAll();
-        onBeforeComplete.removeAll();
-        onError.removeAll();
+        // onProgress.removeAll();
+        // onComplete.removeAll();
+        // onBeforeComplete.removeAll();
+        // onError.removeAll();
+        emitter.removeAllListeners('progress');
+        emitter.removeAllListeners('complete');
+        emitter.removeAllListeners('loaded');
+        emitter.removeAllListeners('error');
         request = null;
         data = null;
         audioContext = null;
     };
 
     var api = {
+        on: emitter.on.bind(emitter),
+        once: emitter.once.bind(emitter),
+        off: emitter.removeListener.bind(emitter),
         start: start,
         cancel: cancel,
-        destroy: destroy,
-        onProgress: onProgress,
-        onComplete: onComplete,
-        onBeforeComplete: onBeforeComplete,
-        onError: onError
+        destroy: destroy
+        // ,
+        // onProgress: onProgress,
+        // onComplete: onComplete,
+        // onBeforeComplete: onBeforeComplete,
+        // onError: onError
     };
 
     Object.defineProperties(api, {
@@ -3530,12 +3435,13 @@ function Loader(url) {
 }
 
 Loader.Group = function() {
-    var queue = [],
+    var emitter = new EventEmitter(),
+        queue = [],
         numLoaded = 0,
-        numTotal = 0,
-        onComplete = new signals.Signal(),
-        onProgress = new signals.Signal(),
-        onError = new signals.Signal();
+        numTotal = 0;//,
+        // onComplete = new signals.Signal(),
+        // onProgress = new signals.Signal(),
+        // onError = new signals.Signal();
 
     var add = function(loader) {
         queue.push(loader);
@@ -3550,45 +3456,55 @@ Loader.Group = function() {
 
     var next = function() {
         if(queue.length === 0) {
-            onComplete.dispatch();
+            // onComplete.dispatch();
+            emitter.emit('complete');
             return;
         }
 
         var loader = queue.pop();
-        loader.onProgress.add(progressHandler);
-        loader.onBeforeComplete.addOnce(completeHandler);
-        loader.onError.addOnce(errorHandler);
+        // loader.onProgress.add(progressHandler);
+        // loader.onBeforeComplete.addOnce(completeHandler);
+        // loader.onError.addOnce(errorHandler);
+        loader.on('progress', progressHandler);
+        loader.on('loaded', completeHandler);
+        loader.on('error', errorHandler);
         loader.start();
     };
 
     var progressHandler = function(progress) {
         var loaded = numLoaded + progress;
-        onProgress.dispatch(loaded / numTotal);
+        // onProgress.dispatch(loaded / numTotal);
+        emitter.emit('progress', loaded / numTotal);
     };
 
     var completeHandler = function() {
         numLoaded++;
-        onProgress.dispatch(numLoaded / numTotal);
+        // onProgress.dispatch(numLoaded / numTotal);
+        emitter.emit('progress', numLoaded / numTotal);
         next();
     };
 
     var errorHandler = function(e) {
-        onError.dispatch(e);
+        // onError.dispatch(e);
+        emitter.emit('error', e);
         next();
     };
 
     return Object.freeze({
+        on: emitter.on.bind(emitter),
+        once: emitter.once.bind(emitter),
+        off: emitter.removeListener.bind(emitter),
         add: add,
-        start: start,
-        onProgress: onProgress,
-        onComplete: onComplete,
-        onError: onError
+        start: start//,
+        // onProgress: onProgress,
+        // onComplete: onComplete,
+        // onError: onError
     });
 };
 
 module.exports = Loader;
 
-},{"signals":2}],24:[function(require,module,exports){
+},{"events":2}],24:[function(require,module,exports){
 'use strict';
 
 function Microphone(connected, denied, error, thisArg) {

@@ -147,10 +147,14 @@ Sono.prototype.load = function(config) {
     }
 
     if(onProgress) {
-        loader.onProgress.add(onProgress, thisArg);
+        // loader.onProgress.add(onProgress, thisArg);
+        loader.on('progress', onProgress.bind(thisArg));
     }
     if(onComplete) {
-        loader.onComplete.addOnce(function() {
+        // loader.onComplete.addOnce(function() {
+        //     onComplete.call(thisArg, sound);
+        // });
+        loader.once('complete', function() {
             onComplete.call(thisArg, sound);
         });
     }
@@ -169,7 +173,10 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
     var loader = new Loader(url);
     loader.audioContext = asMediaElement ? null : this._context;
     loader.isTouchLocked = this._isTouchLocked;
-    loader.onBeforeComplete.addOnce(function(data) {
+    // loader.onBeforeComplete.addOnce(function(data) {
+    //     sound.data = data;
+    // });
+    loader.once('loaded', function(data) {
         sound.data = data;
     });
     // keep a ref so can call sound.loader.cancel()
