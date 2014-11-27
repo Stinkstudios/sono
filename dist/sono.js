@@ -3403,6 +3403,7 @@ function Loader(url) {
         audioContext,
         isTouchLocked,
         request,
+        timeout,
         data;
 
     var start = function() {
@@ -3446,7 +3447,6 @@ function Loader(url) {
 
     var loadAudioElement = function() {
         data = new Audio();
-        data.name = url;
         data.preload = 'auto';
         data.src = url;
 
@@ -3456,16 +3456,8 @@ function Loader(url) {
             onComplete.dispatch(data);
         }
         else {
-            var timeout;
-            var readyHandler = function() {
-                data.removeEventListener('canplaythrough', readyHandler);
-                window.clearTimeout(timeout);
-                progress = 1;
-                onProgress.dispatch(1);
-                onBeforeComplete.dispatch(data);
-                onComplete.dispatch(data);
-            };
             // timeout because sometimes canplaythrough doesn't fire
+            window.clearTimeout(timeout);
             timeout = window.setTimeout(readyHandler, 4000);
             data.addEventListener('canplaythrough', readyHandler, false);
             data.onerror = function(e) {
@@ -3476,10 +3468,24 @@ function Loader(url) {
         }
     };
 
+    var readyHandler = function() {
+        window.clearTimeout(timeout);
+        if(!data) { return; }
+        data.removeEventListener('canplaythrough', readyHandler);
+        progress = 1;
+        onProgress.dispatch(1);
+        onBeforeComplete.dispatch(data);
+        onComplete.dispatch(data);
+    };
+
     var cancel = function() {
         if(request && request.readyState !== 4) {
           request.abort();
         }
+        if(data && typeof data.removeEventListener === 'function') {
+            data.removeEventListener('canplaythrough', readyHandler);
+        }
+        window.clearTimeout(timeout);
     };
 
     var destroy = function() {
