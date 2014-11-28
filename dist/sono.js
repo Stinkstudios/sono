@@ -3429,6 +3429,7 @@ function Loader(url) {
                 request.response,
                 function(buffer) {
                     data = buffer;
+                    request = null;
                     progress = 1;
                     onProgress.dispatch(1);
                     onBeforeComplete.dispatch(buffer);
