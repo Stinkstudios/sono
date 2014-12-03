@@ -14,7 +14,10 @@ function Panner(context) {
     node.coneInnerAngle = Panner.defaults.coneInnerAngle;
     node.coneOuterAngle = Panner.defaults.coneOuterAngle;
     node.coneOuterGain = Panner.defaults.coneOuterGain;
-    
+    // set to defaults (needed in Firefox)
+    node.setPosition(0, 0, 0);
+    node.setOrientation(0, 0, 0);
+
     // simple vec3 object pool
     var VecPool = {
         pool: [],
@@ -29,7 +32,7 @@ function Panner(context) {
             else {
                 v.x = x || 0;
                 v.y = y || 0;
-                v.z = z || 0;    
+                v.z = z || 0;
             }
             return v;
         },
