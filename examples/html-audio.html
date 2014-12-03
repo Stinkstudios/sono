@@ -10,12 +10,16 @@
 <body>
     <h1>HTML Audio Element</h1>
 
+    <h3>As WebAudio Node</h3>
+
     <audio controls preload="auto">
         <source src="audio/DRUMS.ogg" type="audio/ogg">
         <source src="audio/DRUMS.mp3" type="audio/mp3">
     </audio>
 
     <canvas data-js="waveform" width="960", height="120"></canvas>
+
+    <h3>As Simple HTML Media Element</h3>
 
     <script>
         // Test with no WebAudio
@@ -31,15 +35,26 @@
             var audio = document.querySelector('audio');
             audio.addEventListener('canplaythrough', initSound, false);
             audio.play();
+            audio.pause();
 
             function initSound() {
-                var sound = Sono.createSound(audio),
-                    reverb = sound.effect.reverb(5, 2),
-                    analyser = sound.effect.analyser(2048),
+                var soundA = Sono.createSound(audio),
+                    reverb = soundA.effect.reverb(5, 2),
+                    analyser = soundA.effect.analyser(2048),
                     waveform = document.querySelector('[data-js="waveform"]');
 
                 new AnalyserDisplay(analyser, waveform);
             }
+
+            var soundB = Sono.createSound({
+                url: ['audio/Original.ogg', 'audio/Original.mp3'],
+                noWebAudio: true,
+                onComplete: function(sound) {
+                    console.log('loaded:', sound);
+                    soundB.data.setAttribute('controls', 'controls');
+                    document.body.appendChild(soundB.data);
+                }
+            });
 
             function AnalyserDisplay(analyserNode, canvas) {
 
