@@ -44,8 +44,10 @@ Sono.prototype.createSound = function(config) {
     if(File.containsURL(config)) {
         return this.load(config);
     }
+    // option to use simple audio el
+    var context = (config && config.noWebAudio) ? null : this._context;
     // otherwise just return a new sound object
-    var sound = new Sound(this._context, this._gain);
+    var sound = new Sound(context, this._gain);
     sound.isTouchLocked = this._isTouchLocked;
     if(config) {
         sound.data = config.data || config;
@@ -122,11 +124,14 @@ Sono.prototype.load = function(config) {
         throw new Error('ArgumentException: Sono.load: param config is undefined');
     }
 
-    var asMediaElement = !!config.asMediaElement,
+    var asMediaElement = !!config.noWebAudio || !!config.asMediaElement,
         onProgress = config.onProgress,
         onComplete = config.onComplete,
         thisArg = config.thisArg || config.context || this,
         url = config.url || config;
+
+        console.log.call(console, config.url[0], 'noWebAudio:', !!config.noWebAudio);
+        console.log.call(console, config.url[0], 'asMediaElement:', asMediaElement);
 
     var sound,
         loader;
@@ -162,7 +167,12 @@ Sono.prototype.load = function(config) {
 
 Sono.prototype._queue = function(config, asMediaElement, group) {
     var url = File.getSupportedFile(config.url || config);
-    var sound = this.createSound();
+    // var sound = this.createSound(config);
+    var context = (config && config.noWebAudio) ? null : this._context;
+    var sound = new Sound(context, this._gain);
+    sound.isTouchLocked = this._isTouchLocked;
+    this._group.add(sound);
+
     sound.id = config.id !== undefined ? config.id : '';
     sound.loop = !!config.loop;
     sound.volume = config.volume;
@@ -1550,7 +1560,10 @@ function Panner(context) {
     node.coneInnerAngle = Panner.defaults.coneInnerAngle;
     node.coneOuterAngle = Panner.defaults.coneOuterAngle;
     node.coneOuterGain = Panner.defaults.coneOuterGain;
-    
+    // set to defaults (needed in Firefox)
+    node.setPosition(0, 0, 0);
+    node.setOrientation(0, 0, 0);
+
     // simple vec3 object pool
     var VecPool = {
         pool: [],
@@ -1565,7 +1578,7 @@ function Panner(context) {
             else {
                 v.x = x || 0;
                 v.y = y || 0;
-                v.z = z || 0;    
+                v.z = z || 0;
             }
             return v;
         },
