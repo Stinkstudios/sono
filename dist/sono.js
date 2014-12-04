@@ -128,12 +128,8 @@ Sono.prototype.load = function(config) {
         onProgress = config.onProgress,
         onComplete = config.onComplete,
         thisArg = config.thisArg || config.context || this,
-        url = config.url || config;
-
-        console.log.call(console, config.url[0], 'noWebAudio:', !!config.noWebAudio);
-        console.log.call(console, config.url[0], 'asMediaElement:', asMediaElement);
-
-    var sound,
+        url = config.url || config,
+        sound,
         loader;
 
     if(File.containsURL(url)) {
@@ -2065,10 +2061,12 @@ Object.defineProperty(Group.prototype, 'volume', {
         }
         else {
             this._gain.gain.value = value;
-            this._sounds.forEach(function(sound) {
-                sound.volume = value;
-            });
         }
+        this._sounds.forEach(function(sound) {
+            if (!sound.context) {
+                sound.volume = value;
+            }
+        });
     }
 });
 
