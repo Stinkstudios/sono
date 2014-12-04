@@ -2174,7 +2174,7 @@ Sound.prototype.play = function(delay, offset) {
     this._source.loop = this._loop;
 
     // update volume needed for no webaudio
-    if(!this._context) { this.volume = this.volume; }
+    if(!this._context) { this.volume = this._gain.gain.value; }
 
     this._source.play(delay, offset);
 
@@ -2410,12 +2410,14 @@ Object.defineProperties(Sound.prototype, {
                 param.value = value;
                 param.setValueAtTime(value, time);
             }
-            else if(this._data && this._data.volume !== undefined) {
+            else {
                 param.value = value;
                 if(this._source) {
                     window.clearTimeout(this._source.fadeTimeout);
                 }
-                this._data.volume = value;
+                if(this._data && this._data.volume !== undefined) {
+                    this._data.volume = value;
+                }
             }
         }
     }
