@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>Sono - Examples - Append</title>
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <h1></h1>
+
+    <h3 data-js="title">Player A</h3>
+    <div data-js="playerA"></div>
+
+    <script>
+        // Test with no WebAudio
+        if(window.location.search.substring(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
+    </script>
+    <script src="../dist/sono.js"></script>
+    <script src="js/player.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            Sono.log();
+
+            var title = document.querySelector('[data-js="title"]');
+
+            function appendBuffer(a, b) {
+                var numChannels = Math.min(a.numberOfChannels, b.numberOfChannels);
+                var buffer = Sono.context.createBuffer(numChannels, a.length + b.length, a.sampleRate);
+                for (var i = 0; i < numChannels; i++) {
+                  var channel = buffer.getChannelData(i);
+                  channel.set( a.getChannelData(i), 0);
+                  channel.set( b.getChannelData(i), a.length);
+                }
+                return buffer;
+            }
+
+            function appendBuffers(arr) {
+                var numChannels = arr.reduce(function(a, b) {
+                    return a.numberOfChannels < b.numberOfChannels ? a.numberOfChannels : b.numberOfChannels;
+                });
+                var totalLength = arr.reduce(function(a, b) {
+                    return a + b.length;
+                }, 0);
+                var sampleRate = arr[0].sampleRate;
+
+                // console.log('numChannels:', numChannels);
+                // console.log('totalLength:', totalLength);
+                // console.log('sampleRate:', sampleRate);
+
+                var buffer = Sono.context.createBuffer(numChannels, totalLength, sampleRate);
+                for (var i = 0; i < numChannels; i++) {
+                  var channel = buffer.getChannelData(i);
+                  var offset = 0;
+
+                  arr.forEach(function(el) {
+                    channel.set( el.getChannelData(i), offset);
+                    offset += el.length;
+                  });
+
+                }
+                return buffer;
+            }
+
+            var ext = Sono.canPlay.ogg ? 'ogg' : 'mp3';
+
+            var files = [];
+
+            for(var i = 1; i < 21; i++) {
+                var num = i < 10 ? '0' + i : '' + i;
+                var name = 'audio/split/' + num + 'Label.' + ext;
+                var file = {
+                    url: name,
+                    id: num
+                };
+                files.push(file);
+            }
+
+            var sounds = Sono.load({
+                url: files,
+                onProgress: function(p) {
+                    title.innerHTML = (p * 100).toFixed() + '%';
+                },
+                onComplete: function() {
+                    console.log('Sono.sounds.length:', Sono.sounds.length);
+                    var buffers = sounds.map(function(sound) {
+                        return sound.data;
+                    });
+                    var buffer = appendBuffers(buffers);
+                    var soundA = Sono.createSound(buffer);
+                    sounds.forEach(function(sound) {
+                        Sono.destroySound(sound);
+                    });
+                    console.log('Sono.sounds.length:', Sono.sounds.length);
+                    new Player(soundA, document.querySelector('[data-js="playerA"]'));
+                }
+            });
+
+
+
+        }());
+    </script>
+</body>
+</html>

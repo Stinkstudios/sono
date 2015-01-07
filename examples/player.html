@@ -33,10 +33,10 @@
 
             Sono.log();
 
-            var soundA = Sono.createSound(['audio/TEST.ogg', 'audio/TEST.mp3']);
+            var soundA = Sono.createSound(['audio/music.ogg', 'audio/music.mp3']);
             new Player(soundA, document.querySelector('[data-js="playerA"]'));
 
-            var soundB = Sono.createSound(['audio/DRUMS.ogg', 'audio/DRUMS.mp3']);
+            var soundB = Sono.createSound(['audio/hit.ogg', 'audio/hit.mp3']);
             new Player(soundB, document.querySelector('[data-js="playerB"]'));
 
             var masterVolume = document.querySelector('[data-js="master-volume"]');
