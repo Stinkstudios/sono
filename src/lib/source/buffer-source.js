@@ -27,7 +27,7 @@ BufferSource.prototype.play = function(delay, offset) {
     if(offset === undefined) { offset = 0; }
     if(offset > 0) { this._pausedAt = 0; }
     if(this._pausedAt > 0) { offset = this._pausedAt; }
-    
+
     //console.log.apply(console, ['1 offset:', offset]);
     while(offset > this.duration) { offset = offset % this.duration; }
     //console.log.apply(console, ['2 offset:', offset]);
@@ -120,6 +120,11 @@ Object.defineProperties(BufferSource.prototype, {
                 return time;
             }
             return 0;
+        }
+    },
+    'data': {
+        set: function(value) {
+            this._buffer = value;
         }
     },
     'duration': {

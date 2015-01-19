@@ -70,10 +70,6 @@ Sono.prototype.destroySound = function(soundOrId) {
     this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
             sounds.splice(index, 1);
-            if(sound.loader) {
-                sound.loader.destroy();
-                sound.loader = null;
-            }
             sound.destroy();
             return true;
         }
@@ -124,8 +120,7 @@ Sono.prototype.load = function(config) {
         throw new Error('ArgumentException: Sono.load: param config is undefined');
     }
 
-    var asMediaElement = !!config.noWebAudio || !!config.asMediaElement,
-        onProgress = config.onProgress,
+    var onProgress = config.onProgress,
         onComplete = config.onComplete,
         thisArg = config.thisArg || config.context || this,
         url = config.url || config,
@@ -133,7 +128,7 @@ Sono.prototype.load = function(config) {
         loader;
 
     if(File.containsURL(url)) {
-        sound = this._queue(config, asMediaElement);
+        sound = this._queue(config);
         loader = sound.loader;
     }
     else if(Array.isArray(url) && File.containsURL(url[0].url) ) {
@@ -141,7 +136,7 @@ Sono.prototype.load = function(config) {
         loader = new Loader.Group();
 
         url.forEach(function(file) {
-            sound.push(this._queue(file, asMediaElement, loader));
+            sound.push(this._queue(file, loader));
         }, this);
     }
     else {
@@ -161,9 +156,7 @@ Sono.prototype.load = function(config) {
     return sound;
 };
 
-Sono.prototype._queue = function(config, asMediaElement, group) {
-    var url = File.getSupportedFile(config.url || config);
-    // var sound = this.createSound(config);
+Sono.prototype._queue = function(config, group) {
     var context = (config && config.noWebAudio) ? null : this._context;
     var sound = new Sound(context, this._gain);
     sound.isTouchLocked = this._isTouchLocked;
@@ -172,16 +165,9 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
     sound.id = config.id !== undefined ? config.id : '';
     sound.loop = !!config.loop;
     sound.volume = config.volume;
+    sound.load(config);
 
-    var loader = new Loader(url);
-    loader.audioContext = asMediaElement ? null : this._context;
-    loader.isTouchLocked = this._isTouchLocked;
-    loader.onBeforeComplete.addOnce(function(data) {
-        sound.data = data;
-    });
-    // keep a ref so can call sound.loader.cancel()
-    sound.loader = loader;
-    if(group) { group.add(loader); }
+    if(group) { group.add(sound.loader); }
 
     return sound;
 };
@@ -2132,6 +2118,7 @@ module.exports = Group;
 var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
     File = require('./utils/file.js'),
+    Loader = require('./utils/loader.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
@@ -2143,6 +2130,7 @@ function Sound(context, destination) {
     this._data = null;
     this._endedCallback = null;
     this._isTouchLocked = false;
+    this._loader = null;
     this._loop = false;
     this._pausedAt = 0;
     this._playbackRate = 1;
@@ -2157,6 +2145,27 @@ function Sound(context, destination) {
         this._gain.connect(destination || this._context.destination);
     }
 }
+
+/*
+ * Load
+ */
+
+Sound.prototype.load = function(config) {
+    var url = File.getSupportedFile(config.url || config);
+
+    if(this._source && this._source._el) {
+        this._source.load(url);
+    }
+    else {
+        this._loader = this._loader || new Loader(url);
+        this._loader.audioContext = !!config.asMediaElement ? null : this._context;
+        this._loader.isTouchLocked = this._isTouchLocked;
+        this._loader.onBeforeComplete.addOnce(function(data) {
+            this.data = data;
+        }, this);
+    }
+    return this;
+};
 
 /*
  * Controls
@@ -2247,6 +2256,10 @@ Sound.prototype.destroy = function() {
     this._playWhenReady = null;
     this._source = null;
     this._effect = null;
+    if(this._loader) {
+        this._loader.destroy();
+        this._loader = null;
+    }
 };
 
 /*
@@ -2254,6 +2267,9 @@ Sound.prototype.destroy = function() {
  */
 
 Sound.prototype._createSource = function(data) {
+    // if (this._source && File.type(data) === this._source.type) {
+    //     this._source.data = data;
+    // } else
     if(File.isAudioBuffer(data)) {
         this._source = new BufferSource(data, this._context);
     }
@@ -2351,6 +2367,11 @@ Object.defineProperties(Sound.prototype, {
             }
         }
     },
+    'loader': {
+        get: function() {
+            return this._loader;
+        }
+    },
     'loop': {
         get: function() {
             return this._loop;
@@ -2378,7 +2399,6 @@ Object.defineProperties(Sound.prototype, {
         },
         set: function(value) {
             this._playbackRate = value;
-            void 0;
             if(this._source) {
               this._source.playbackRate = this._playbackRate;
             }
@@ -2425,7 +2445,7 @@ Object.defineProperties(Sound.prototype, {
 
 module.exports = Sound;
 
-},{"./effect.js":3,"./source/buffer-source.js":16,"./source/media-source.js":17,"./source/microphone-source.js":18,"./source/oscillator-source.js":19,"./source/script-source.js":20,"./utils/file.js":22}],16:[function(require,module,exports){
+},{"./effect.js":3,"./source/buffer-source.js":16,"./source/media-source.js":17,"./source/microphone-source.js":18,"./source/oscillator-source.js":19,"./source/script-source.js":20,"./utils/file.js":22,"./utils/loader.js":23}],16:[function(require,module,exports){
 'use strict';
 
 function BufferSource(buffer, context) {
@@ -2455,7 +2475,7 @@ BufferSource.prototype.play = function(delay, offset) {
     if(offset === undefined) { offset = 0; }
     if(offset > 0) { this._pausedAt = 0; }
     if(this._pausedAt > 0) { offset = this._pausedAt; }
-    
+
     //console.log.apply(console, ['1 offset:', offset]);
     while(offset > this.duration) { offset = offset % this.duration; }
     //console.log.apply(console, ['2 offset:', offset]);
@@ -2550,6 +2570,11 @@ Object.defineProperties(BufferSource.prototype, {
             return 0;
         }
     },
+    'data': {
+        set: function(value) {
+            this._buffer = value;
+        }
+    },
     'duration': {
         get: function() {
             return this._buffer ? this._buffer.duration : 0;
@@ -2617,12 +2642,25 @@ function MediaSource(el, context) {
     this._ended = false;
     this._endedCallback = null;
     this._endedHandlerBound = this._endedHandler.bind(this);
+    this._readyHandlerBound = this._readyHandler.bind(this);
     this._loop = false;
     this._paused = false;
     this._playbackRate = 1;
     this._playing = false;
     this._sourceNode = null; // MediaElementSourceNode
 }
+
+/*
+ * Load
+ */
+
+MediaSource.prototype.load = function(url) {
+    this._el.src = url;
+    this._el.load();
+    this._ended = false;
+    this._paused = false;
+    this._playing = false;
+};
 
 /*
  * Controls
@@ -2641,6 +2679,7 @@ MediaSource.prototype.play = function(delay, offset) {
         this._delayTimeout = setTimeout(this.play.bind(this), delay);
     }
     else {
+        // this._el.load();
         this._el.play();
     }
 
@@ -2650,6 +2689,14 @@ MediaSource.prototype.play = function(delay, offset) {
 
     this._el.removeEventListener('ended', this._endedHandlerBound);
     this._el.addEventListener('ended', this._endedHandlerBound, false);
+
+    // console.log.call(console, 'MediaSource.play. ReadyState:', this._el.readyState, this._el.currentSrc);
+    if(this._el.readyState < 4) {
+        this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
+        this._el.addEventListener('canplaythrough', this._readyHandlerBound, false);
+        this._el.load();
+        this._el.play();
+    }
 };
 
 MediaSource.prototype.pause = function() {
@@ -2727,11 +2774,20 @@ MediaSource.prototype._endedHandler = function() {
     }
 };
 
+MediaSource.prototype._readyHandler = function() {
+    this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
+    if(this._playing) {
+        this._el.play();
+    }
+};
+
 /*
  * Destroy
  */
 
 MediaSource.prototype.destroy = function() {
+    this._el.removeEventListener('ended', this._endedHandlerBound);
+    this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
     this.stop();
     this._el = null;
     this._context = null;
@@ -2748,6 +2804,11 @@ Object.defineProperties(MediaSource.prototype, {
     'currentTime': {
         get: function() {
             return this._el ? this._el.currentTime : 0;
+        }
+    },
+    'data': {
+        set: function(value) {
+            this._el = value;
         }
     },
     'duration': {
@@ -3259,7 +3320,8 @@ Browser.handlePageVisibility = function(onHidden, onShown, thisArg) {
 
 Browser.handleTouchLock = function(onUnlock, thisArg) {
     var ua = navigator.userAgent,
-        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i);
+        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|SymbianOS/i);
+
 
     var unlock = function() {
         document.body.removeEventListener('touchstart', unlock);
@@ -3321,6 +3383,14 @@ if(el) {
  */
 
 File.getFileExtension = function(url) {
+    // from DataURL
+    if(url.substr(0, 5) === 'data:') {
+        var match = url.match(/data:audio\/(ogg|mp3|opus|wav|m4a)/i);
+        if(match && match.length > 1) {
+            return match[1].toLowerCase();
+        }
+    }
+    // from Standard URL
     url = url.split('?')[0];
     url = url.substr(url.lastIndexOf('/') + 1);
 
@@ -3390,7 +3460,8 @@ File.isScriptConfig = function(data) {
 };
 
 File.isURL = function(data) {
-    return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
+    return !!(data && typeof data === 'string' &&
+             (data.indexOf('.') > -1 || data.substr(0, 5) === 'data:'));
 };
 
 File.containsURL = function(config) {
@@ -3460,26 +3531,32 @@ function Loader(url) {
     };
 
     var loadAudioElement = function() {
-        data = new Audio();
+        if(!data || !data.tagName) {
+            data = new Audio();
+        }
+
+        if(!isTouchLocked) {
+            // timeout because sometimes canplaythrough doesn't fire
+            window.clearTimeout(timeout);
+            timeout = window.setTimeout(readyHandler, 2000);
+            data.addEventListener('canplaythrough', readyHandler, false);
+        }
+
+        data.addEventListener('error', errorHandler, false);
         data.preload = 'auto';
         data.src = url;
+        data.load();
 
-        if (!!isTouchLocked) {
+        if (isTouchLocked) {
             onProgress.dispatch(1);
             onBeforeComplete.dispatch(data);
             onComplete.dispatch(data);
         }
-        else {
-            // timeout because sometimes canplaythrough doesn't fire
-            window.clearTimeout(timeout);
-            timeout = window.setTimeout(readyHandler, 4000);
-            data.addEventListener('canplaythrough', readyHandler, false);
-            data.onerror = function(e) {
-                window.clearTimeout(timeout);
-                onError.dispatch(e);
-            };
-            data.load();
-        }
+    };
+
+    var errorHandler = function(e) {
+        window.clearTimeout(timeout);
+        onError.dispatch(e);
     };
 
     var readyHandler = function() {
@@ -3500,20 +3577,27 @@ function Loader(url) {
             data.removeEventListener('canplaythrough', readyHandler);
         }
         window.clearTimeout(timeout);
-    };
 
-    var destroy = function() {
-        cancel();
         onProgress.removeAll();
         onComplete.removeAll();
         onBeforeComplete.removeAll();
         onError.removeAll();
+    };
+
+    var destroy = function() {
+        cancel();
         request = null;
         data = null;
         audioContext = null;
     };
 
+    var load = function(newUrl) {
+        url = newUrl;
+        start();
+    };
+
     var api = {
+        load: load,
         start: start,
         cancel: cancel,
         destroy: destroy,

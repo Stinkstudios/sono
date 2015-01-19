@@ -7,12 +7,25 @@ function MediaSource(el, context) {
     this._ended = false;
     this._endedCallback = null;
     this._endedHandlerBound = this._endedHandler.bind(this);
+    this._readyHandlerBound = this._readyHandler.bind(this);
     this._loop = false;
     this._paused = false;
     this._playbackRate = 1;
     this._playing = false;
     this._sourceNode = null; // MediaElementSourceNode
 }
+
+/*
+ * Load
+ */
+
+MediaSource.prototype.load = function(url) {
+    this._el.src = url;
+    this._el.load();
+    this._ended = false;
+    this._paused = false;
+    this._playing = false;
+};
 
 /*
  * Controls
@@ -31,6 +44,7 @@ MediaSource.prototype.play = function(delay, offset) {
         this._delayTimeout = setTimeout(this.play.bind(this), delay);
     }
     else {
+        // this._el.load();
         this._el.play();
     }
 
@@ -40,6 +54,14 @@ MediaSource.prototype.play = function(delay, offset) {
 
     this._el.removeEventListener('ended', this._endedHandlerBound);
     this._el.addEventListener('ended', this._endedHandlerBound, false);
+
+    // console.log.call(console, 'MediaSource.play. ReadyState:', this._el.readyState, this._el.currentSrc);
+    if(this._el.readyState < 4) {
+        this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
+        this._el.addEventListener('canplaythrough', this._readyHandlerBound, false);
+        this._el.load();
+        this._el.play();
+    }
 };
 
 MediaSource.prototype.pause = function() {
@@ -117,11 +139,20 @@ MediaSource.prototype._endedHandler = function() {
     }
 };
 
+MediaSource.prototype._readyHandler = function() {
+    this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
+    if(this._playing) {
+        this._el.play();
+    }
+};
+
 /*
  * Destroy
  */
 
 MediaSource.prototype.destroy = function() {
+    this._el.removeEventListener('ended', this._endedHandlerBound);
+    this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
     this.stop();
     this._el = null;
     this._context = null;
@@ -138,6 +169,11 @@ Object.defineProperties(MediaSource.prototype, {
     'currentTime': {
         get: function() {
             return this._el ? this._el.currentTime : 0;
+        }
+    },
+    'data': {
+        set: function(value) {
+            this._el = value;
         }
     },
     'duration': {

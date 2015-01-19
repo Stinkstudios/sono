@@ -69,10 +69,6 @@ Sono.prototype.destroySound = function(soundOrId) {
     this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
             sounds.splice(index, 1);
-            if(sound.loader) {
-                sound.loader.destroy();
-                sound.loader = null;
-            }
             sound.destroy();
             return true;
         }
@@ -123,8 +119,7 @@ Sono.prototype.load = function(config) {
         throw new Error('ArgumentException: Sono.load: param config is undefined');
     }
 
-    var asMediaElement = !!config.noWebAudio || !!config.asMediaElement,
-        onProgress = config.onProgress,
+    var onProgress = config.onProgress,
         onComplete = config.onComplete,
         thisArg = config.thisArg || config.context || this,
         url = config.url || config,
@@ -132,7 +127,7 @@ Sono.prototype.load = function(config) {
         loader;
 
     if(File.containsURL(url)) {
-        sound = this._queue(config, asMediaElement);
+        sound = this._queue(config);
         loader = sound.loader;
     }
     else if(Array.isArray(url) && File.containsURL(url[0].url) ) {
@@ -140,7 +135,7 @@ Sono.prototype.load = function(config) {
         loader = new Loader.Group();
 
         url.forEach(function(file) {
-            sound.push(this._queue(file, asMediaElement, loader));
+            sound.push(this._queue(file, loader));
         }, this);
     }
     else {
@@ -160,9 +155,7 @@ Sono.prototype.load = function(config) {
     return sound;
 };
 
-Sono.prototype._queue = function(config, asMediaElement, group) {
-    var url = File.getSupportedFile(config.url || config);
-    // var sound = this.createSound(config);
+Sono.prototype._queue = function(config, group) {
     var context = (config && config.noWebAudio) ? null : this._context;
     var sound = new Sound(context, this._gain);
     sound.isTouchLocked = this._isTouchLocked;
@@ -171,16 +164,9 @@ Sono.prototype._queue = function(config, asMediaElement, group) {
     sound.id = config.id !== undefined ? config.id : '';
     sound.loop = !!config.loop;
     sound.volume = config.volume;
+    sound.load(config);
 
-    var loader = new Loader(url);
-    loader.audioContext = asMediaElement ? null : this._context;
-    loader.isTouchLocked = this._isTouchLocked;
-    loader.onBeforeComplete.addOnce(function(data) {
-        sound.data = data;
-    });
-    // keep a ref so can call sound.loader.cancel()
-    sound.loader = loader;
-    if(group) { group.add(loader); }
+    if(group) { group.add(sound.loader); }
 
     return sound;
 };

@@ -3,6 +3,7 @@
 var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
     File = require('./utils/file.js'),
+    Loader = require('./utils/loader.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
@@ -14,6 +15,7 @@ function Sound(context, destination) {
     this._data = null;
     this._endedCallback = null;
     this._isTouchLocked = false;
+    this._loader = null;
     this._loop = false;
     this._pausedAt = 0;
     this._playbackRate = 1;
@@ -28,6 +30,27 @@ function Sound(context, destination) {
         this._gain.connect(destination || this._context.destination);
     }
 }
+
+/*
+ * Load
+ */
+
+Sound.prototype.load = function(config) {
+    var url = File.getSupportedFile(config.url || config);
+
+    if(this._source && this._source._el) {
+        this._source.load(url);
+    }
+    else {
+        this._loader = this._loader || new Loader(url);
+        this._loader.audioContext = !!config.asMediaElement ? null : this._context;
+        this._loader.isTouchLocked = this._isTouchLocked;
+        this._loader.onBeforeComplete.addOnce(function(data) {
+            this.data = data;
+        }, this);
+    }
+    return this;
+};
 
 /*
  * Controls
@@ -118,6 +141,10 @@ Sound.prototype.destroy = function() {
     this._playWhenReady = null;
     this._source = null;
     this._effect = null;
+    if(this._loader) {
+        this._loader.destroy();
+        this._loader = null;
+    }
 };
 
 /*
@@ -125,6 +152,9 @@ Sound.prototype.destroy = function() {
  */
 
 Sound.prototype._createSource = function(data) {
+    // if (this._source && File.type(data) === this._source.type) {
+    //     this._source.data = data;
+    // } else
     if(File.isAudioBuffer(data)) {
         this._source = new BufferSource(data, this._context);
     }
@@ -222,6 +252,11 @@ Object.defineProperties(Sound.prototype, {
             }
         }
     },
+    'loader': {
+        get: function() {
+            return this._loader;
+        }
+    },
     'loop': {
         get: function() {
             return this._loop;
@@ -249,7 +284,6 @@ Object.defineProperties(Sound.prototype, {
         },
         set: function(value) {
             this._playbackRate = value;
-            console.log('sound set playbackRate:', value);
             if(this._source) {
               this._source.playbackRate = this._playbackRate;
             }

@@ -55,26 +55,32 @@ function Loader(url) {
     };
 
     var loadAudioElement = function() {
-        data = new Audio();
+        if(!data || !data.tagName) {
+            data = new Audio();
+        }
+
+        if(!isTouchLocked) {
+            // timeout because sometimes canplaythrough doesn't fire
+            window.clearTimeout(timeout);
+            timeout = window.setTimeout(readyHandler, 2000);
+            data.addEventListener('canplaythrough', readyHandler, false);
+        }
+
+        data.addEventListener('error', errorHandler, false);
         data.preload = 'auto';
         data.src = url;
+        data.load();
 
-        if (!!isTouchLocked) {
+        if (isTouchLocked) {
             onProgress.dispatch(1);
             onBeforeComplete.dispatch(data);
             onComplete.dispatch(data);
         }
-        else {
-            // timeout because sometimes canplaythrough doesn't fire
-            window.clearTimeout(timeout);
-            timeout = window.setTimeout(readyHandler, 4000);
-            data.addEventListener('canplaythrough', readyHandler, false);
-            data.onerror = function(e) {
-                window.clearTimeout(timeout);
-                onError.dispatch(e);
-            };
-            data.load();
-        }
+    };
+
+    var errorHandler = function(e) {
+        window.clearTimeout(timeout);
+        onError.dispatch(e);
     };
 
     var readyHandler = function() {
@@ -95,20 +101,27 @@ function Loader(url) {
             data.removeEventListener('canplaythrough', readyHandler);
         }
         window.clearTimeout(timeout);
-    };
 
-    var destroy = function() {
-        cancel();
         onProgress.removeAll();
         onComplete.removeAll();
         onBeforeComplete.removeAll();
         onError.removeAll();
+    };
+
+    var destroy = function() {
+        cancel();
         request = null;
         data = null;
         audioContext = null;
     };
 
+    var load = function(newUrl) {
+        url = newUrl;
+        start();
+    };
+
     var api = {
+        load: load,
         start: start,
         cancel: cancel,
         destroy: destroy,
