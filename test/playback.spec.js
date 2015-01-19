@@ -88,6 +88,10 @@ describe('Sono playback', function() {
         });
     });
 
+    // Firefox 35 and less has a bug where audio param ramping does not change the readable value in the param itself
+    // Fading still audibly affects the sound, but the value is untouched
+    if(navigator.userAgent.toLowerCase().indexOf('firefox') > -1) { return; }
+
     describe('fade master', function() {
         beforeEach(function(done) {
             setTimeout(function() {
