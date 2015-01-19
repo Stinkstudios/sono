@@ -94,10 +94,12 @@ Object.defineProperty(Group.prototype, 'volume', {
         }
         else {
             this._gain.gain.value = value;
-            this._sounds.forEach(function(sound) {
-                sound.volume = value;
-            });
         }
+        this._sounds.forEach(function(sound) {
+            if (!sound.context) {
+                sound.volume = value;
+            }
+        });
     }
 });
 

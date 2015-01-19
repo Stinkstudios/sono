@@ -122,6 +122,11 @@ Object.defineProperties(BufferSource.prototype, {
             return 0;
         }
     },
+    'data': {
+        set: function(value) {
+            this._buffer = value;
+        }
+    },
     'duration': {
         get: function() {
             return this._buffer ? this._buffer.duration : 0;

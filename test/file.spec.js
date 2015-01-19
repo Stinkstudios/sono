@@ -21,6 +21,8 @@ describe('File', function() {
         expect(File.getFileExtension('../../audio/foo.ogg')).to.eql('ogg');
         expect(File.getFileExtension('http://www.example.com/audio/foo.ogg')).to.eql('ogg');
         expect(File.getFileExtension('http://www.example.com/audio/foo.ogg?foo=bar')).to.eql('ogg');
+        expect(File.getFileExtension('data:audio/ogg;base64,T2dnUwAC')).to.eql('ogg');
+        expect(File.getFileExtension('data:audio/mp3;base64,T2dnUwAC')).to.eql('mp3');
     });
 
     it('should get file', function() {
@@ -30,6 +32,7 @@ describe('File', function() {
         expect(File.getSupportedFile(['audio/foo.ogg', 'audio/foo.mp3'])).to.be.a('string');
         expect(File.getSupportedFile({foo:'audio/foo.ogg', bar:'audio/foo.mp3'})).to.be.a('string');
         expect(File.getSupportedFile('audio/foo.ogg')).to.be.a('string');
+        expect(File.getSupportedFile('data:audio/ogg;base64,T2dnUwAC')).to.be.a('string');
     });
 
     it('should have canPlay hash', function() {

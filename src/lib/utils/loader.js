@@ -1,18 +1,14 @@
 'use strict';
 
-// var signals = require('signals');
 var EventEmitter = require('events').EventEmitter;
 
 function Loader(url) {
     var emitter = new EventEmitter(),
-        // onProgress = new signals.Signal(),
-        // onBeforeComplete = new signals.Signal(),
-        // onComplete = new signals.Signal(),
-        // onError = new signals.Signal(),
         progress = 0,
         audioContext,
         isTouchLocked,
         request,
+        timeout,
         data;
 
     var start = function() {
@@ -45,14 +41,11 @@ function Loader(url) {
                 request.response,
                 function(buffer) {
                     data = buffer;
+                    request = null;
                     progress = 1;
                     dispatch(buffer);
-                    // onProgress.dispatch(1);
-                    // onBeforeComplete.dispatch(buffer);
-                    // onComplete.dispatch(buffer);
                 },
                 function(e) {
-                    //onError.dispatch(e);
                     emitter.emit('error', e);
                 }
             );
@@ -65,73 +58,75 @@ function Loader(url) {
     };
 
     var loadAudioElement = function() {
-        data = new Audio();
-        data.name = url;
+        if(!data || !data.tagName) {
+            data = new Audio();
+        }
+
+        if(!isTouchLocked) {
+            // timeout because sometimes canplaythrough doesn't fire
+            window.clearTimeout(timeout);
+            timeout = window.setTimeout(readyHandler, 2000);
+            data.addEventListener('canplaythrough', readyHandler, false);
+        }
+
+        data.addEventListener('error', errorHandler, false);
         data.preload = 'auto';
         data.src = url;
+        data.load();
 
-        if (!!isTouchLocked) {
-            // onProgress.dispatch(1);
-            // onBeforeComplete.dispatch(data);
-            // onComplete.dispatch(data);
+        if (isTouchLocked) {
             dispatch(data);
         }
-        else {
-            var timeout;
-            var readyHandler = function() {
-                data.removeEventListener('canplaythrough', readyHandler);
-                window.clearTimeout(timeout);
-                progress = 1;
-                // onProgress.dispatch(1);
-                // onBeforeComplete.dispatch(data);
-                // onComplete.dispatch(data);
-                dispatch(data);
-            };
-            // timeout because sometimes canplaythrough doesn't fire
-            timeout = window.setTimeout(readyHandler, 4000);
-            data.addEventListener('canplaythrough', readyHandler, false);
-            data.onerror = function(e) {
-                window.clearTimeout(timeout);
-                // onError.dispatch(e);
-                emitter.emit('error', e);
-            };
-            data.load();
-        }
+    };
+
+    var errorHandler = function(e) {
+        window.clearTimeout(timeout);
+        emitter.emit('error', e);
+    };
+
+    var readyHandler = function() {
+        window.clearTimeout(timeout);
+        if(!data) { return; }
+        data.removeEventListener('canplaythrough', readyHandler);
+        progress = 1;
+        dispatch(data);
     };
 
     var cancel = function() {
         if(request && request.readyState !== 4) {
           request.abort();
         }
-    };
+        if(data && typeof data.removeEventListener === 'function') {
+            data.removeEventListener('canplaythrough', readyHandler);
+        }
+        window.clearTimeout(timeout);
 
-    var destroy = function() {
-        cancel();
-        // onProgress.removeAll();
-        // onComplete.removeAll();
-        // onBeforeComplete.removeAll();
-        // onError.removeAll();
         emitter.removeAllListeners('progress');
         emitter.removeAllListeners('complete');
         emitter.removeAllListeners('loaded');
         emitter.removeAllListeners('error');
+    };
+
+    var destroy = function() {
+        cancel();
         request = null;
         data = null;
         audioContext = null;
+    };
+
+    var load = function(newUrl) {
+        url = newUrl;
+        start();
     };
 
     var api = {
         on: emitter.on.bind(emitter),
         once: emitter.once.bind(emitter),
         off: emitter.removeListener.bind(emitter),
+        load: load,
         start: start,
         cancel: cancel,
         destroy: destroy
-        // ,
-        // onProgress: onProgress,
-        // onComplete: onComplete,
-        // onBeforeComplete: onBeforeComplete,
-        // onError: onError
     };
 
     Object.defineProperties(api, {
@@ -164,10 +159,7 @@ Loader.Group = function() {
     var emitter = new EventEmitter(),
         queue = [],
         numLoaded = 0,
-        numTotal = 0;//,
-        // onComplete = new signals.Signal(),
-        // onProgress = new signals.Signal(),
-        // onError = new signals.Signal();
+        numTotal = 0;
 
     var add = function(loader) {
         queue.push(loader);
@@ -182,15 +174,11 @@ Loader.Group = function() {
 
     var next = function() {
         if(queue.length === 0) {
-            // onComplete.dispatch();
             emitter.emit('complete');
             return;
         }
 
         var loader = queue.pop();
-        // loader.onProgress.add(progressHandler);
-        // loader.onBeforeComplete.addOnce(completeHandler);
-        // loader.onError.addOnce(errorHandler);
         loader.on('progress', progressHandler);
         loader.on('loaded', completeHandler);
         loader.on('error', errorHandler);
@@ -199,19 +187,16 @@ Loader.Group = function() {
 
     var progressHandler = function(progress) {
         var loaded = numLoaded + progress;
-        // onProgress.dispatch(loaded / numTotal);
         emitter.emit('progress', loaded / numTotal);
     };
 
     var completeHandler = function() {
         numLoaded++;
-        // onProgress.dispatch(numLoaded / numTotal);
         emitter.emit('progress', numLoaded / numTotal);
         next();
     };
 
     var errorHandler = function(e) {
-        // onError.dispatch(e);
         emitter.emit('error', e);
         next();
     };
@@ -221,10 +206,7 @@ Loader.Group = function() {
         once: emitter.once.bind(emitter),
         off: emitter.removeListener.bind(emitter),
         add: add,
-        start: start//,
-        // onProgress: onProgress,
-        // onComplete: onComplete,
-        // onError: onError
+        start: start
     });
 };
 

@@ -39,10 +39,10 @@
                 Compressor: sound.effect.compressor(),
                 Distortion: sound.effect.distortion(),
                 Echo: sound.effect.echo(0.5, 0.15),
-                Flanger: sound.effect.flanger(),
+                Flanger: sound.effect.flanger({ stereo: true }),
                 Highpass: sound.effect.highpass(2000),
                 Lowpass: sound.effect.lowpass(1000),
-                Phaser: sound.effect.phaser({ stereo: true }),
+                Phaser: sound.effect.phaser(),
                 //Convolver: sound.effect.convolver(),
                 Reverb: sound.effect.reverb()
             };

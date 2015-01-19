@@ -43,8 +43,10 @@ Sono.prototype.createSound = function(config) {
     if(File.containsURL(config)) {
         return this.load(config);
     }
+    // option to use simple audio el
+    var context = (config && config.noWebAudio) ? null : this._context;
     // otherwise just return a new sound object
-    var sound = new Sound(this._context, this._gain);
+    var sound = new Sound(context, this._gain);
     sound.isTouchLocked = this._isTouchLocked;
     if(config) {
         sound.data = config.data || config;
@@ -67,10 +69,6 @@ Sono.prototype.destroySound = function(soundOrId) {
     this._sounds.some(function(sound, index, sounds) {
         if(sound === soundOrId || sound.id === soundOrId) {
             sounds.splice(index, 1);
-            if(sound.loader) {
-                sound.loader.destroy();
-                sound.loader = null;
-            }
             sound.destroy();
             return true;
         }
@@ -121,17 +119,15 @@ Sono.prototype.load = function(config) {
         throw new Error('ArgumentException: Sono.load: param config is undefined');
     }
 
-    var asMediaElement = !!config.asMediaElement,
-        onProgress = config.onProgress,
+    var onProgress = config.onProgress,
         onComplete = config.onComplete,
         thisArg = config.thisArg || config.context || this,
-        url = config.url || config;
-
-    var sound,
+        url = config.url || config,
+        sound,
         loader;
 
     if(File.containsURL(url)) {
-        sound = this._queue(config, asMediaElement);
+        sound = this._queue(config);
         loader = sound.loader;
     }
     else if(Array.isArray(url) && File.containsURL(url[0].url) ) {
@@ -139,7 +135,7 @@ Sono.prototype.load = function(config) {
         loader = new Loader.Group();
 
         url.forEach(function(file) {
-            sound.push(this._queue(file, asMediaElement, loader));
+            sound.push(this._queue(file, loader));
         }, this);
     }
     else {
@@ -155,6 +151,7 @@ Sono.prototype.load = function(config) {
         //     onComplete.call(thisArg, sound);
         // });
         loader.once('complete', function() {
+            console.log.call(console, '--> SOUND COMPLETE')
             onComplete.call(thisArg, sound);
         });
     }
@@ -163,25 +160,18 @@ Sono.prototype.load = function(config) {
     return sound;
 };
 
-Sono.prototype._queue = function(config, asMediaElement, group) {
-    var url = File.getSupportedFile(config.url || config);
-    var sound = this.createSound();
+Sono.prototype._queue = function(config, group) {
+    var context = (config && config.noWebAudio) ? null : this._context;
+    var sound = new Sound(context, this._gain);
+    sound.isTouchLocked = this._isTouchLocked;
+    this._group.add(sound);
+
     sound.id = config.id !== undefined ? config.id : '';
     sound.loop = !!config.loop;
     sound.volume = config.volume;
+    sound.load(config);
 
-    var loader = new Loader(url);
-    loader.audioContext = asMediaElement ? null : this._context;
-    loader.isTouchLocked = this._isTouchLocked;
-    // loader.onBeforeComplete.addOnce(function(data) {
-    //     sound.data = data;
-    // });
-    loader.once('loaded', function(data) {
-        sound.data = data;
-    });
-    // keep a ref so can call sound.loader.cancel()
-    sound.loader = loader;
-    if(group) { group.add(loader); }
+    if(group) { group.add(sound.loader); }
 
     return sound;
 };

@@ -5,6 +5,7 @@ var BufferSource = require('./source/buffer-source.js'),
     // var inherits = require('inherits');
     EventEmitter = require('events').EventEmitter,
     File = require('./utils/file.js'),
+    Loader = require('./utils/loader.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
@@ -16,6 +17,7 @@ function Sound(context, destination) {
     this._data = null;
     // this._endedCallback = null;
     this._isTouchLocked = false;
+    this._loader = null;
     this._loop = false;
     this._pausedAt = 0;
     this._playbackRate = 1;
@@ -44,6 +46,28 @@ Sound.prototype.off = EventEmitter.prototype.removeListener;
 // });
 
 /*
+ * Load
+ */
+
+Sound.prototype.load = function(config) {
+    var url = File.getSupportedFile(config.url || config);
+
+    if(this._source && this._source._el) {
+        this._source.load(url);
+    }
+    else {
+        this._loader = this._loader || new Loader(url);
+        this._loader.audioContext = !!config.asMediaElement ? null : this._context;
+        this._loader.isTouchLocked = this._isTouchLocked;
+        this._loader.once('loaded', function(data) {
+            console.log.call(console, 'SOUND LOADED');
+            this.data = data;
+        }, this);
+    }
+    return this;
+};
+
+/*
  * Controls
  */
 
@@ -59,7 +83,7 @@ Sound.prototype.play = function(delay, offset) {
     this._source.loop = this._loop;
 
     // update volume needed for no webaudio
-    if(!this._context) { this.volume = this.volume; }
+    if(!this._context) { this.volume = this._gain.gain.value; }
 
     this._source.play(delay, offset);
 
@@ -135,6 +159,10 @@ Sound.prototype.destroy = function() {
     this._playWhenReady = null;
     this._source = null;
     this._effect = null;
+    if(this._loader) {
+        this._loader.destroy();
+        this._loader = null;
+    }
 };
 
 /*
@@ -142,6 +170,9 @@ Sound.prototype.destroy = function() {
  */
 
 Sound.prototype._createSource = function(data) {
+    // if (this._source && File.type(data) === this._source.type) {
+    //     this._source.data = data;
+    // } else
     if(File.isAudioBuffer(data)) {
         this._source = new BufferSource(data, this._context);
     }
@@ -168,6 +199,7 @@ Sound.prototype._createSource = function(data) {
     // }
     if(this._source.hasOwnProperty('_endedCallback')) {
         this._source._endedCallback = function() {
+            console.log.call(console, 'ENDED CB');
             this.emit('ended');
         }.bind(this);
     }
@@ -244,6 +276,11 @@ Object.defineProperties(Sound.prototype, {
             }
         }
     },
+    'loader': {
+        get: function() {
+            return this._loader;
+        }
+    },
     'loop': {
         get: function() {
             return this._loop;
@@ -271,7 +308,6 @@ Object.defineProperties(Sound.prototype, {
         },
         set: function(value) {
             this._playbackRate = value;
-            console.log('sound set playbackRate:', value);
             if(this._source) {
               this._source.playbackRate = this._playbackRate;
             }
@@ -303,12 +339,14 @@ Object.defineProperties(Sound.prototype, {
                 param.value = value;
                 param.setValueAtTime(value, time);
             }
-            else if(this._data && this._data.volume !== undefined) {
+            else {
                 param.value = value;
                 if(this._source) {
                     window.clearTimeout(this._source.fadeTimeout);
                 }
-                this._data.volume = value;
+                if(this._data && this._data.volume !== undefined) {
+                    this._data.volume = value;
+                }
             }
         }
     }

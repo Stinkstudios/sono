@@ -34,6 +34,14 @@ if(el) {
  */
 
 File.getFileExtension = function(url) {
+    // from DataURL
+    if(url.substr(0, 5) === 'data:') {
+        var match = url.match(/data:audio\/(ogg|mp3|opus|wav|m4a)/i);
+        if(match && match.length > 1) {
+            return match[1].toLowerCase();
+        }
+    }
+    // from Standard URL
     url = url.split('?')[0];
     url = url.substr(url.lastIndexOf('/') + 1);
 
@@ -103,7 +111,8 @@ File.isScriptConfig = function(data) {
 };
 
 File.isURL = function(data) {
-    return !!(data && typeof data === 'string' && data.indexOf('.') > -1);
+    return !!(data && typeof data === 'string' &&
+             (data.indexOf('.') > -1 || data.substr(0, 5) === 'data:'));
 };
 
 File.containsURL = function(config) {
