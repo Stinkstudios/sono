@@ -39,7 +39,8 @@ Browser.handlePageVisibility = function(onHidden, onShown, thisArg) {
 
 Browser.handleTouchLock = function(onUnlock, thisArg) {
     var ua = navigator.userAgent,
-        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i);
+        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|SymbianOS/i);
+
 
     var unlock = function() {
         document.body.removeEventListener('touchstart', unlock);
