@@ -22,10 +22,6 @@ describe('Source', function() {
             expect(source.stop).to.be.a('function');
         });
 
-        // it('should have ended callback', function() {
-        //     expect(source.onEnded).to.be.a('function');
-        // });
-
         it('should have destroy', function() {
             expect(source.destroy).to.be.a('function');
         });
@@ -65,10 +61,6 @@ describe('Source', function() {
             expect(source.pause).to.be.a('function');
             expect(source.stop).to.be.a('function');
         });
-
-        // it('should have ended callback', function() {
-        //     expect(source.onEnded).to.be.a('function');
-        // });
 
         it('should have destroy', function() {
             expect(source.destroy).to.be.a('function');
@@ -112,10 +104,6 @@ describe('Source', function() {
             expect(source.stop).to.be.a('function');
         });
 
-        /*it('should have ended callback', function() {
-            expect(source.onEnded).to.be.a('function');
-        });*/
-
         it('should have destroy', function() {
             expect(source.destroy).to.be.a('function');
         });
@@ -154,10 +142,6 @@ describe('Source', function() {
             expect(source.pause).to.be.a('function');
             expect(source.stop).to.be.a('function');
         });
-
-        /*it('should have ended callback', function() {
-            expect(source.onEnded).to.be.a('function');
-        });*/
 
         it('should have destroy', function() {
             expect(source.destroy).to.be.a('function');
@@ -203,10 +187,6 @@ describe('Source', function() {
             expect(source.pause).to.be.a('function');
             expect(source.stop).to.be.a('function');
         });
-
-        /*it('should have ended callback', function() {
-            expect(source.onEnded).to.be.a('function');
-        });*/
 
         it('should have destroy', function() {
             expect(source.destroy).to.be.a('function');

@@ -78,10 +78,6 @@ BufferSource.prototype.stop = function() {
  * Ended handler
  */
 
-// BufferSource.prototype.onEnded = function(fn, context) {
-//     this._endedCallback = fn ? fn.bind(context || this) : null;
-// };
-
 BufferSource.prototype._endedHandler = function() {
     this.stop();
     this._ended = true;

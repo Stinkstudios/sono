@@ -1,5 +1,9 @@
 'use strict';
 
+/*
+ * TODO: Ended handler
+ */
+
 var Group = require('../group.js');
 
 function SoundGroup(context, destination) {
@@ -33,21 +37,6 @@ SoundGroup.prototype._getSource = function() {
 
     this._src = this._sounds[0];
 };
-
-/*
- * TODO: Ended handler
- */
-
-// SoundGroup.prototype.onEnded = function(fn, context) {
-//     this._endedCallback = fn ? fn.bind(context || this) : null;
-//     return this;
-// };
-
-// SoundGroup.prototype._endedHandler = function() {
-//     if(typeof this._endedCallback === 'function') {
-//         this._endedCallback(this);
-//     }
-// };
 
 /*
  * Getters & Setters

@@ -70,12 +70,6 @@ describe('Sono playback', function() {
             ended = false;
 
         beforeEach(function(done) {
-            // sound = Sono.createSound({
-            //     url: [baseURL + 'select.ogg', baseURL + 'select.mp3']
-            // }).onEnded(function() {
-            //     ended = true;
-            //     done();
-            // }).play(0.1, 0.1);
             sound = Sono.createSound({
                 url: [baseURL + 'select.ogg', baseURL + 'select.mp3']
             }).on('ended', function() {

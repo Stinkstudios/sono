@@ -100,7 +100,7 @@ gulp.task('reload', function() {
 
 // watch
 gulp.task('watch', function() {
-  gulp.watch('src/**/*.js', ['jshint', 'bundle-debug']);
+  gulp.watch('src/**/*.js', ['jshint', 'bundle']);
   gulp.watch('test/**/*.js', ['jshint']);
   gulp.watch('examples/**/*.html', ['reload']);
   gulp.watch('examples/**/*.js', ['reload']);

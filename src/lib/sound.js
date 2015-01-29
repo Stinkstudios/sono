@@ -118,23 +118,6 @@ Sound.prototype.fade = function(volume, duration) {
 };
 
 /*
- * Ended handler
- */
-
-// Sound.prototype.onEnded = function(fn, context) {
-//     this._endedCallback = fn ? fn.bind(context || this) : null;
-//     return this;
-// };
-
-// Sound.prototype._endedHandler = function() {
-//     this.emit('ended');
-
-//     // if(typeof this._endedCallback === 'function') {
-//     //     this._endedCallback(this);
-//     // }
-// };
-
-/*
  * Destroy
  */
 
@@ -185,9 +168,6 @@ Sound.prototype._createSource = function(data) {
 
     this._effect.setSource(this._source.sourceNode);
 
-    // if(typeof this._source.onEnded === 'function') {
-    //     this._source.onEnded(this._endedHandler, this);
-    // }
     if(this._source.hasOwnProperty('_endedCallback')) {
         this._source._endedCallback = function() {
             this.emit('ended');
