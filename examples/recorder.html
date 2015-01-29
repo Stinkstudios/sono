@@ -10,11 +10,15 @@
 <body>
     <h1>Recorder</h1>
 
-    <div class="Player-effect-panel is-visible">
-    <button class="Player-button" data-js="button" disabled>RECORD</button>
-    <p class="Player-info">TIME: <output data-js="output">0</output></p>
-</div>
-    <canvas data-js="waveform" width="420", height="120"></canvas>
+    <section>
+
+        <div class="Player-effect-panel is-visible">
+            <button class="Player-button" data-js="button" disabled>RECORD</button>
+            <p class="Player-info">TIME: <output data-js="output">0</output></p>
+        </div>
+        <canvas data-js="waveform" width="420", height="120"></canvas>
+
+    </section>
 
     <script>
         // Test with no WebAudio

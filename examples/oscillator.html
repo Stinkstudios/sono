@@ -10,21 +10,25 @@
 <body>
     <h1>Oscillator</h1>
 
-    <div class="Player js-player">
-        <div class="Player-waveform">
-            <canvas class="Player-waveform-inner" data-js="waveform-back" width="400", height="80"></canvas>
-        </div>
-        <div class="Player-controls">
-            <button class="Player-button" data-js="button">PLAY</button>
-            <div class="Player-slider">Freq
-                <span>0</span><input class="Player-slider-input" data-js="freq" type="range" min="0" max="100" value="10" /><span>1</span>
+    <section>
+
+        <div class="Player js-player">
+            <div class="Player-waveform">
+                <canvas class="Player-waveform-inner" data-js="waveform-back" width="400", height="80"></canvas>
             </div>
-            <div class="Player-slider">Dist
-                <span>0</span><input class="Player-slider-input" data-js="distort" type="range" min="0" max="100" value="100" /><span>1</span>
+            <div class="Player-controls">
+                <button class="Player-button" data-js="button">PLAY</button>
+                <div class="Player-slider">Freq
+                    <span>0</span><input class="Player-slider-input" data-js="freq" type="range" min="0" max="100" value="10" /><span>1</span>
+                </div>
+                <div class="Player-slider">Dist
+                    <span>0</span><input class="Player-slider-input" data-js="distort" type="range" min="0" max="100" value="100" /><span>1</span>
+                </div>
+                <div class="Player-info" data-js="info"></div>
             </div>
-            <div class="Player-info" data-js="info"></div>
         </div>
-    </div>
+
+    </section>
 
     <script>
         // Test with no WebAudio
