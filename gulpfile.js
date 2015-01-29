@@ -1,13 +1,13 @@
 /* jshint strict: false */
 var browserify = require('browserify'),
     browserSync = require('browser-sync'),
+    buffer = require('vinyl-buffer'),
     chalk = require('chalk'),
     gulp = require('gulp'),
-    gulpIf = require('gulp-if'),
     jshint = require('gulp-jshint'),
     rename = require('gulp-rename'),
     source = require('vinyl-source-stream'),
-    streamify = require('gulp-streamify'),
+    sourcemaps = require('gulp-sourcemaps'),
     strip = require('gulp-strip-debug'),
     uglify = require('gulp-uglify'),
     watchify = require('watchify');
@@ -20,27 +20,29 @@ function logError(msg) {
 // bundler
 var bundler = watchify(browserify({
   entries: ['./src/sono.js'],
-  standalone: 'Sono'
+  standalone: 'Sono',
+  debug: true
 }, watchify.args));
 
-function bundle(debug) {
+function bundle() {
   return bundler
     .bundle()
     .on('error', logError)
     .pipe(source('sono.js'))
     .pipe(gulp.dest('./dist/'))
     .pipe(rename({ extname: '.min.js' }))
-    .pipe(streamify(strip()))
-    .pipe(streamify(uglify()))
+    .pipe(buffer())
+    .pipe(sourcemaps.init({loadMaps: true}))
+    .pipe(strip())
+    .pipe(uglify())
+    .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest('./dist/'))
     .pipe(browserSync.reload({ stream: true }));
 }
 
 bundler.on('update', bundle); // on any dep update, runs the bundler
 
-gulp.task('bundle', ['jshint'], function() {
-  bundle(true);
-});
+gulp.task('bundle', ['jshint'], bundle);
 
 // connect browsers
 gulp.task('connect', function() {
@@ -58,31 +60,6 @@ gulp.task('connect', function() {
 gulp.task('reload', function() {
   browserSync.reload();
 });
-
-// build bundled js using browserify
-// function buildJS(debug, minify) {
-//   var bundleName = minify ? 'sono.min.js' : 'sono.js';
-
-//   return browserify('./src/sono.js', {
-//       debug: debug,
-//       standalone: 'Sono'
-//     })
-//     .bundle()
-//     .on('error', logError)
-//     .pipe(source(bundleName))
-//     .pipe(gulpIf(!debug, streamify(strip())))
-//     .pipe(gulpIf(minify, streamify(uglify())))
-//     .pipe(gulp.dest('./dist/'))
-//     .pipe(browserSync.reload({ stream: true }));
-// }
-// gulp.task('bundle-debug', function() {
-//   buildJS(true, false);
-//   buildJS(true, true);
-// });
-// gulp.task('bundle', function() {
-//   buildJS(false, false);
-//   buildJS(false, true);
-// });
 
 // js hint
 gulp.task('jshint', function() {
@@ -127,7 +104,6 @@ gulp.task('jshint', function() {
 
 // watch
 gulp.task('watch', function() {
-  // gulp.watch('src/**/*.js', ['jshint', 'bundle']);
   gulp.watch('test/**/*.js', ['jshint']);
   gulp.watch('examples/**/*.css', ['reload']);
   gulp.watch('examples/**/*.html', ['reload']);
@@ -135,5 +111,4 @@ gulp.task('watch', function() {
 });
 
 // default
-// gulp.task('default', ['connect', 'watch']);
 gulp.task('default', ['connect', 'watch', 'bundle']);
