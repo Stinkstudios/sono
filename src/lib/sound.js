@@ -2,8 +2,7 @@
 
 var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
-    // var inherits = require('inherits');
-    EventEmitter = require('events').EventEmitter,
+    Emitter = require('./utils/emitter.js'),
     File = require('./utils/file.js'),
     Loader = require('./utils/loader.js'),
     MediaSource = require('./source/media-source.js'),
@@ -33,17 +32,8 @@ function Sound(context, destination) {
     }
 }
 
-Sound.prototype = Object.create(EventEmitter.prototype);
+Sound.prototype = Object.create(Emitter.prototype);
 Sound.prototype.constructor = Sound;
-Sound.prototype.off = EventEmitter.prototype.removeListener;
-// Sound.prototype = Object.create(EventEmitter.prototype, {
-//   constructor: {
-//     value: Sound,
-//     enumerable: false,
-//     writable: true,
-//     configurable: true
-//   }
-// });
 
 /*
  * Load
@@ -59,10 +49,11 @@ Sound.prototype.load = function(config) {
         this._loader = this._loader || new Loader(url);
         this._loader.audioContext = !!config.asMediaElement ? null : this._context;
         this._loader.isTouchLocked = this._isTouchLocked;
+        var self = this;
         this._loader.once('loaded', function(data) {
-            console.log.call(console, 'SOUND LOADED');
-            this.data = data;
-        }, this);
+            self.data = data;
+            self = null;
+        });
     }
     return this;
 };
@@ -199,7 +190,6 @@ Sound.prototype._createSource = function(data) {
     // }
     if(this._source.hasOwnProperty('_endedCallback')) {
         this._source._endedCallback = function() {
-            console.log.call(console, 'ENDED CB');
             this.emit('ended');
         }.bind(this);
     }

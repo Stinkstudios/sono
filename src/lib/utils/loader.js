@@ -1,9 +1,9 @@
 'use strict';
 
-var EventEmitter = require('events').EventEmitter;
+var Emitter = require('./emitter.js');
 
 function Loader(url) {
-    var emitter = new EventEmitter(),
+    var emitter = new Emitter(),
         progress = 0,
         audioContext,
         isTouchLocked,
@@ -122,7 +122,7 @@ function Loader(url) {
     var api = {
         on: emitter.on.bind(emitter),
         once: emitter.once.bind(emitter),
-        off: emitter.removeListener.bind(emitter),
+        off: emitter.off.bind(emitter),
         load: load,
         start: start,
         cancel: cancel,
@@ -156,7 +156,7 @@ function Loader(url) {
 }
 
 Loader.Group = function() {
-    var emitter = new EventEmitter(),
+    var emitter = new Emitter(),
         queue = [],
         numLoaded = 0,
         numTotal = 0;
@@ -204,7 +204,7 @@ Loader.Group = function() {
     return Object.freeze({
         on: emitter.on.bind(emitter),
         once: emitter.once.bind(emitter),
-        off: emitter.removeListener.bind(emitter),
+        off: emitter.off.bind(emitter),
         add: add,
         start: start
     });

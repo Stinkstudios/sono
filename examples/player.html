@@ -44,21 +44,12 @@
                 Sono.volume = this.value;
             });
             var end = function() {
-                console.log('1 ended');
                 soundA.off('ended', end);
                 soundA.on('ended', function() {
                     soundA.removeAllListeners();
                 });
             };
             soundA.on('ended', end);
-
-            soundA.on('ended', function() {
-                console.log('2 ended');
-            });
-
-            soundA.loader.on('complete', function(data) {
-                console.log('complete', soundA.data);
-            });
 
         }());
     </script>

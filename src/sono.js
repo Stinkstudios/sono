@@ -143,15 +143,13 @@ Sono.prototype.load = function(config) {
     }
 
     if(onProgress) {
-        // loader.onProgress.add(onProgress, thisArg);
-        loader.on('progress', onProgress.bind(thisArg));
+        loader.on('progress', function(progress) {
+            onProgress.call(thisArg, progress);
+        });
     }
     if(onComplete) {
-        // loader.onComplete.addOnce(function() {
-        //     onComplete.call(thisArg, sound);
-        // });
         loader.once('complete', function() {
-            console.log.call(console, '--> SOUND COMPLETE')
+            loader.off('progress');
             onComplete.call(thisArg, sound);
         });
     }

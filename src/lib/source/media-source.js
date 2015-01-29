@@ -53,7 +53,6 @@ MediaSource.prototype.play = function(delay, offset) {
     this._el.removeEventListener('ended', this._endedHandlerBound);
     this._el.addEventListener('ended', this._endedHandlerBound, false);
 
-    console.log.call(console, 'MediaSource.play. ReadyState:', this._el.readyState, this._el.currentSrc);
     if(this._el.readyState < 4) {
         this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
         this._el.addEventListener('canplaythrough', this._readyHandlerBound, false);
@@ -119,7 +118,6 @@ MediaSource.prototype.fade = function(volume, duration) {
  */
 
 MediaSource.prototype._endedHandler = function() {
-    console.log.call(console, 'ENDED _endedHandler');
     this._ended = true;
     this._paused = false;
     this._playing = false;
