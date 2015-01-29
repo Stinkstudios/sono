@@ -1,4 +1,4 @@
-!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self),o.Sono=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self),o.Sono=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./src/sono.js":[function(require,module,exports){
 'use strict';
 
 var Browser = require('./lib/utils/browser.js'),
@@ -10,7 +10,7 @@ var Browser = require('./lib/utils/browser.js'),
     Utils = require('./lib/utils/utils.js');
 
 function Sono() {
-    this.VERSION = '0.0.6';
+    this.VERSION = '0.0.7';
 
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     var context = window.AudioContext ? new window.AudioContext() : null;
@@ -361,7 +361,7 @@ Object.defineProperties(Sono.prototype, {
 
 module.exports = new Sono();
 
-},{"./lib/group.js":14,"./lib/sound.js":15,"./lib/utils/browser.js":21,"./lib/utils/file.js":23,"./lib/utils/loader.js":24,"./lib/utils/sound-group.js":26,"./lib/utils/utils.js":27}],2:[function(require,module,exports){
+},{"./lib/group.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/group.js","./lib/sound.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/sound.js","./lib/utils/browser.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/browser.js","./lib/utils/file.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/file.js","./lib/utils/loader.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/loader.js","./lib/utils/sound-group.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/sound-group.js","./lib/utils/utils.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/utils.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/node_modules/browserify/node_modules/events/events.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -503,10 +503,13 @@ EventEmitter.prototype.addListener = function(type, listener) {
 
     if (m && m > 0 && this._events[type].length > m) {
       this._events[type].warned = true;
-      void 0;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
       if (typeof console.trace === 'function') {
         // not supported in IE 10
-        void 0;
+        console.trace();
       }
     }
   }
@@ -661,7 +664,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],3:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect.js":[function(require,module,exports){
 'use strict';
 
 var Analyser = require('./effect/analyser.js'),
@@ -944,7 +947,7 @@ Effect.prototype.setDestination = function(node) {
 
 module.exports = Effect;
 
-},{"./effect/analyser.js":4,"./effect/distortion.js":5,"./effect/echo.js":6,"./effect/fake-context.js":7,"./effect/filter.js":8,"./effect/flanger.js":9,"./effect/panner.js":10,"./effect/phaser.js":11,"./effect/recorder.js":12,"./effect/reverb.js":13}],4:[function(require,module,exports){
+},{"./effect/analyser.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/analyser.js","./effect/distortion.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/distortion.js","./effect/echo.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/echo.js","./effect/fake-context.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/fake-context.js","./effect/filter.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/filter.js","./effect/flanger.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/flanger.js","./effect/panner.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/panner.js","./effect/phaser.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/phaser.js","./effect/recorder.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/recorder.js","./effect/reverb.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/reverb.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/analyser.js":[function(require,module,exports){
 'use strict';
 
 function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
@@ -993,7 +996,7 @@ function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
 
 module.exports = Analyser;
 
-},{}],5:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/distortion.js":[function(require,module,exports){
 'use strict';
 
 function Distortion(context, amount) {
@@ -1035,7 +1038,7 @@ function Distortion(context, amount) {
 
 module.exports = Distortion;
 
-},{}],6:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/echo.js":[function(require,module,exports){
 'use strict';
 
 function Echo(context, delayTime, gainValue) {
@@ -1073,7 +1076,7 @@ function Echo(context, delayTime, gainValue) {
 
 module.exports = Echo;
 
-},{}],7:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/fake-context.js":[function(require,module,exports){
 'use strict';
 
 function FakeContext() {
@@ -1194,7 +1197,7 @@ function FakeContext() {
 
 module.exports = FakeContext;
 
-},{}],8:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/filter.js":[function(require,module,exports){
 'use strict';
 
 function Filter(context, type, frequency, quality, gain) {
@@ -1240,7 +1243,7 @@ function Filter(context, type, frequency, quality, gain) {
 
 module.exports = Filter;
 
-},{}],9:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/flanger.js":[function(require,module,exports){
 'use strict';
 
 function MonoFlanger(context, config) {
@@ -1381,7 +1384,7 @@ function Flanger(context, config) {
 
 module.exports = Flanger;
 
-},{}],10:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/panner.js":[function(require,module,exports){
 'use strict';
 
 function Panner(context) {
@@ -1568,7 +1571,7 @@ Panner.defaults = {
 
 module.exports = Panner;
 
-},{}],11:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/phaser.js":[function(require,module,exports){
 'use strict';
 
 function Phaser(context, config) {
@@ -1640,7 +1643,7 @@ function Phaser(context, config) {
 
 module.exports = Phaser;
 
-},{}],12:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/recorder.js":[function(require,module,exports){
 'use strict';
 
 function Recorder(context, passThrough) {
@@ -1718,7 +1721,7 @@ function Recorder(context, passThrough) {
 
 module.exports = Recorder;
 
-},{}],13:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect/reverb.js":[function(require,module,exports){
 'use strict';
 
 function Reverb(context, config) {
@@ -1780,7 +1783,7 @@ function Reverb(context, config) {
         time: {
             get: function() { return time; },
             set: function(value) {
-                void 0;
+                console.log('set time:', value);
                 if(value === time) { return; }
                 this.update({time: time});
             }
@@ -1806,7 +1809,7 @@ function Reverb(context, config) {
 
 module.exports = Reverb;
 
-},{}],14:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/group.js":[function(require,module,exports){
 'use strict';
 
 var Effect = require('./effect.js');
@@ -1968,7 +1971,7 @@ Object.defineProperties(Group.prototype, {
 
 module.exports = Group;
 
-},{"./effect.js":3}],15:[function(require,module,exports){
+},{"./effect.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/sound.js":[function(require,module,exports){
 'use strict';
 
 var BufferSource = require('./source/buffer-source.js'),
@@ -2295,7 +2298,7 @@ Object.defineProperties(Sound.prototype, {
 
 module.exports = Sound;
 
-},{"./effect.js":3,"./source/buffer-source.js":16,"./source/media-source.js":17,"./source/microphone-source.js":18,"./source/oscillator-source.js":19,"./source/script-source.js":20,"./utils/emitter.js":22,"./utils/file.js":23,"./utils/loader.js":24}],16:[function(require,module,exports){
+},{"./effect.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/effect.js","./source/buffer-source.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/buffer-source.js","./source/media-source.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/media-source.js","./source/microphone-source.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/microphone-source.js","./source/oscillator-source.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/oscillator-source.js","./source/script-source.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/script-source.js","./utils/emitter.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/emitter.js","./utils/file.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/file.js","./utils/loader.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/loader.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/buffer-source.js":[function(require,module,exports){
 'use strict';
 
 function BufferSource(buffer, context) {
@@ -2478,7 +2481,7 @@ Object.defineProperties(BufferSource.prototype, {
 
 module.exports = BufferSource;
 
-},{}],17:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/media-source.js":[function(require,module,exports){
 'use strict';
 
 function MediaSource(el, context) {
@@ -2705,7 +2708,7 @@ Object.defineProperties(MediaSource.prototype, {
 
 module.exports = MediaSource;
 
-},{}],18:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/microphone-source.js":[function(require,module,exports){
 'use strict';
 
 function MicrophoneSource(stream, context) {
@@ -2846,7 +2849,7 @@ Object.defineProperties(MicrophoneSource.prototype, {
 
 module.exports = MicrophoneSource;
 
-},{}],19:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/oscillator-source.js":[function(require,module,exports){
 'use strict';
 
 function OscillatorSource(type, context) {
@@ -2983,7 +2986,7 @@ Object.defineProperties(OscillatorSource.prototype, {
 
 module.exports = OscillatorSource;
 
-},{}],20:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/source/script-source.js":[function(require,module,exports){
 'use strict';
 
 function ScriptSource(data, context) {
@@ -3116,7 +3119,7 @@ Object.defineProperties(ScriptSource.prototype, {
 
 module.exports = ScriptSource;
 
-},{}],21:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/browser.js":[function(require,module,exports){
 'use strict';
 
 var Browser = {};
@@ -3184,7 +3187,7 @@ Browser.handleTouchLock = function(onUnlock, thisArg) {
 
 module.exports = Browser;
 
-},{}],22:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/emitter.js":[function(require,module,exports){
 'use strict';
 
 var EventEmitter = require('events').EventEmitter;
@@ -3203,7 +3206,7 @@ Emitter.prototype.off = function(type, listener) {
 
 module.exports = Emitter;
 
-},{"events":2}],23:[function(require,module,exports){
+},{"events":"/Users/ianmcgregor/Dropbox/workspace/sono/node_modules/browserify/node_modules/events/events.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/file.js":[function(require,module,exports){
 'use strict';
 
 var File = {
@@ -3330,7 +3333,7 @@ File.containsURL = function(config) {
 
 module.exports = File;
 
-},{}],24:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/loader.js":[function(require,module,exports){
 'use strict';
 
 var Emitter = require('./emitter.js');
@@ -3545,7 +3548,7 @@ Loader.Group = function() {
 
 module.exports = Loader;
 
-},{"./emitter.js":22}],25:[function(require,module,exports){
+},{"./emitter.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/emitter.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/microphone.js":[function(require,module,exports){
 'use strict';
 
 function Microphone(connected, denied, error, thisArg) {
@@ -3566,7 +3569,7 @@ Microphone.prototype.connect = function() {
         self._onConnected(stream);
     }, function(e) {
         if(e.name === 'PermissionDeniedError' || e === 'PERMISSION_DENIED') {
-            void 0;
+            console.log('Permission denied. You can undo this by clicking the camera icon with the red cross in the address bar');
             self._onDenied();
         }
         else {
@@ -3599,7 +3602,7 @@ Object.defineProperties(Microphone.prototype, {
 
 module.exports = Microphone;
 
-},{}],26:[function(require,module,exports){
+},{}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/sound-group.js":[function(require,module,exports){
 'use strict';
 
 /*
@@ -3705,7 +3708,7 @@ Object.defineProperties(SoundGroup.prototype, {
 
 module.exports = SoundGroup;
 
-},{"../group.js":14}],27:[function(require,module,exports){
+},{"../group.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/group.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/utils.js":[function(require,module,exports){
 'use strict';
 
 var Microphone = require('./microphone.js'),
@@ -3807,7 +3810,7 @@ Utils.waveform = function(buffer, length) {
 
 module.exports = Utils;
 
-},{"./microphone.js":25,"./waveform.js":28}],28:[function(require,module,exports){
+},{"./microphone.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/microphone.js","./waveform.js":"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/waveform.js"}],"/Users/ianmcgregor/Dropbox/workspace/sono/src/lib/utils/waveform.js":[function(require,module,exports){
 'use strict';
 
 function Waveform() {
@@ -3904,5 +3907,5 @@ function Waveform() {
 
 module.exports = Waveform;
 
-},{}]},{},[1])(1)
+},{}]},{},["./src/sono.js"])("./src/sono.js")
 });

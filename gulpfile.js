@@ -5,40 +5,84 @@ var browserify = require('browserify'),
     gulp = require('gulp'),
     gulpIf = require('gulp-if'),
     jshint = require('gulp-jshint'),
+    rename = require('gulp-rename'),
     source = require('vinyl-source-stream'),
     streamify = require('gulp-streamify'),
     strip = require('gulp-strip-debug'),
-    uglify = require('gulp-uglify');
+    uglify = require('gulp-uglify'),
+    watchify = require('watchify');
 
 // log
 function logError(msg) {
   console.log(chalk.bold.red('[ERROR] ' + msg.toString()));
 }
 
-// build bundled js using browserify
-function buildJS(debug, minify) {
-  var bundleName = minify ? 'sono.min.js' : 'sono.js';
+// bundler
+var bundler = watchify(browserify({
+  entries: ['./src/sono.js'],
+  standalone: 'Sono'
+}, watchify.args));
 
-  return browserify('./src/sono.js', {
-      debug: debug,
-      standalone: 'Sono'
-    })
+function bundle(debug) {
+  return bundler
     .bundle()
     .on('error', logError)
-    .pipe(source(bundleName))
-    .pipe(gulpIf(!debug, streamify(strip())))
-    .pipe(gulpIf(minify, streamify(uglify())))
+    .pipe(source('sono.js'))
+    .pipe(gulp.dest('./dist/'))
+    .pipe(rename({ extname: '.min.js' }))
+    .pipe(streamify(strip()))
+    .pipe(streamify(uglify()))
     .pipe(gulp.dest('./dist/'))
     .pipe(browserSync.reload({ stream: true }));
 }
-gulp.task('bundle-debug', function() {
-  buildJS(true, false);
-  buildJS(true, true);
+
+bundler.on('update', bundle); // on any dep update, runs the bundler
+
+gulp.task('bundle', ['jshint'], function() {
+  bundle(true);
 });
-gulp.task('bundle', function() {
-  buildJS(false, false);
-  buildJS(false, true);
+
+// connect browsers
+gulp.task('connect', function() {
+  browserSync.init(null, {
+    browser: 'google chrome',
+    server: {
+      baseDir: './',
+      startPath: 'examples/index.html'
+    },
+    reloadDelay: 100
+  });
 });
+
+// reload browsers
+gulp.task('reload', function() {
+  browserSync.reload();
+});
+
+// build bundled js using browserify
+// function buildJS(debug, minify) {
+//   var bundleName = minify ? 'sono.min.js' : 'sono.js';
+
+//   return browserify('./src/sono.js', {
+//       debug: debug,
+//       standalone: 'Sono'
+//     })
+//     .bundle()
+//     .on('error', logError)
+//     .pipe(source(bundleName))
+//     .pipe(gulpIf(!debug, streamify(strip())))
+//     .pipe(gulpIf(minify, streamify(uglify())))
+//     .pipe(gulp.dest('./dist/'))
+//     .pipe(browserSync.reload({ stream: true }));
+// }
+// gulp.task('bundle-debug', function() {
+//   buildJS(true, false);
+//   buildJS(true, true);
+// });
+// gulp.task('bundle', function() {
+//   buildJS(false, false);
+//   buildJS(false, true);
+// });
 
 // js hint
 gulp.task('jshint', function() {
@@ -81,26 +125,9 @@ gulp.task('jshint', function() {
   .pipe(jshint.reporter('jshint-stylish'));
 });
 
-// connect browser
-gulp.task('connect', function() {
-  browserSync.init(null, {
-    browser: 'google chrome',
-    server: {
-      baseDir: './',
-      startPath: 'examples/index.html'
-    },
-    reloadDelay: 5000
-  });
-});
-
-// reload
-gulp.task('reload', function() {
-  browserSync.reload();
-});
-
 // watch
 gulp.task('watch', function() {
-  gulp.watch('src/**/*.js', ['jshint', 'bundle']);
+  // gulp.watch('src/**/*.js', ['jshint', 'bundle']);
   gulp.watch('test/**/*.js', ['jshint']);
   gulp.watch('examples/**/*.css', ['reload']);
   gulp.watch('examples/**/*.html', ['reload']);
@@ -108,4 +135,5 @@ gulp.task('watch', function() {
 });
 
 // default
-gulp.task('default', ['connect', 'watch']);
+// gulp.task('default', ['connect', 'watch']);
+gulp.task('default', ['connect', 'watch', 'bundle']);
