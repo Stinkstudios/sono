@@ -70,8 +70,8 @@ Utils.getFrequency = function(value) {
  * microphone util
  */
 
-Utils.microphone = function(connected, denied, error, thisArg) {
-    return new Microphone(connected, denied, error, thisArg);
+Utils.microphone = function(connected, denied, error) {
+    return new Microphone(connected, denied, error);
 };
 
 /*

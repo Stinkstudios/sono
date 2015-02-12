@@ -1,52 +1,58 @@
 'use strict';
 
-function Microphone(connected, denied, error, thisArg) {
-    navigator.getUserMedia_ = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
-    this._isSupported = !!navigator.getUserMedia_;
-    this._stream = null;
+function Microphone(connected, denied, error) {
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+    error = error || function() {};
 
-    this._onConnected = connected.bind(thisArg || this);
-    this._onDenied = denied ? denied.bind(thisArg || this) : function() {};
-    this._onError = error ? error.bind(thisArg || this) : function() {};
-}
+    var isSupported = !!navigator.getUserMedia,
+        stream = null,
+        api = {};
 
-Microphone.prototype.connect = function() {
-    if(!this._isSupported) { return; }
-    var self = this;
-    navigator.getUserMedia_({audio:true}, function(stream) {
-        self._stream = stream;
-        self._onConnected(stream);
-    }, function(e) {
-        if(e.name === 'PermissionDeniedError' || e === 'PERMISSION_DENIED') {
-            console.log('Permission denied. You can undo this by clicking the camera icon with the red cross in the address bar');
-            self._onDenied();
+    var connect = function() {
+        if(!isSupported) { return; }
+
+        navigator.getUserMedia({audio:true}, function(stream) {
+            stream = stream;
+            connected(stream);
+        }, function(e) {
+            if(denied && e.name === 'PermissionDeniedError' || e === 'PERMISSION_DENIED') {
+                // console.log('Permission denied. Reset by clicking the camera icon with the red cross in the address bar');
+                denied();
+            }
+            else {
+                error(e.message || e);
+            }
+        });
+        return api;
+    };
+
+    var disconnect = function() {
+        if(stream) {
+            stream.stop();
+            stream = null;
         }
-        else {
-            self._onError(e.message || e);
+        return api;
+    };
+
+    Object.defineProperties(api, {
+        connect: {
+            value: connect
+        },
+        disconnect: {
+            value: disconnect
+        },
+        isSupported: {
+            value: isSupported
+        },
+        stream: {
+            get: function() {
+                return stream;
+            }
         }
     });
-    return this;
-};
 
-Microphone.prototype.disconnect = function() {
-    if(this._stream) {
-        this._stream.stop();
-        this._stream = null;
-    }
-    return this;
-};
+    return Object.freeze(api);
+}
 
-Object.defineProperties(Microphone.prototype, {
-    'stream': {
-        get: function() {
-            return this._stream;
-        }
-    },
-    'isSupported': {
-        get: function() {
-            return this._isSupported;
-        }
-    }
-});
 
 module.exports = Microphone;

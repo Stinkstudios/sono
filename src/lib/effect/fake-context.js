@@ -84,16 +84,19 @@ function FakeContext() {
 
     // ie9
     if(!window.Uint8Array) {
-        window.Int8Array =
-        window.Uint8Array =
-        window.Uint8ClampedArray =
-        window.Int16Array =
-        window.Uint16Array =
-        window.Int32Array =
-        window.Uint32Array =
-        window.Float32Array =
-        window.Float64Array = Array;
+        window.Uint8Array = window.Float32Array = Array;
     }
+    // if(!window.Uint8Array) {
+    //     window.Int8Array =
+    //     window.Uint8Array =
+    //     window.Uint8ClampedArray =
+    //     window.Int16Array =
+    //     window.Uint16Array =
+    //     window.Int32Array =
+    //     window.Uint32Array =
+    //     window.Float32Array =
+    //     window.Float64Array = Array;
+    // }
 
     return {
         createAnalyser: fakeNode,

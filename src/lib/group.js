@@ -22,6 +22,8 @@ Group.prototype.add = function(sound) {
     sound.gain.connect(this._gain);
 
     this._sounds.push(sound);
+
+    sound.once('destroyed', this.remove.bind(this));
 };
 
 Group.prototype.remove = function(soundOrId) {
@@ -80,29 +82,6 @@ Group.prototype.unMute = function() {
     this.volume = this._preMuteVolume || 1;
 };
 
-Object.defineProperty(Group.prototype, 'volume', {
-    get: function() {
-        return this._gain.gain.value;
-    },
-    set: function(value) {
-        if(isNaN(value)) { return; }
-
-        if(this._context) {
-            this._gain.gain.cancelScheduledValues(this._context.currentTime);
-            this._gain.gain.value = value;
-            this._gain.gain.setValueAtTime(value, this._context.currentTime);
-        }
-        else {
-            this._gain.gain.value = value;
-        }
-        this._sounds.forEach(function(sound) {
-            if (!sound.context) {
-                sound.volume = value;
-            }
-        });
-    }
-});
-
 Group.prototype.fade = function(volume, duration) {
     if(this._context) {
         var param = this._gain.gain;
@@ -129,9 +108,12 @@ Group.prototype.fade = function(volume, duration) {
  */
 
 Group.prototype.destroy = function() {
-    while(this._sounds.length) {
-        this._sounds.pop().destroy();
-    }
+    // while(this._sounds.length) {
+    //     this._sounds.pop().destroy();
+    // }
+    this._sounds.forEach(function(sound) {
+        sound.destroy();
+    });
 };
 
 
@@ -140,19 +122,41 @@ Group.prototype.destroy = function() {
  */
 
 Object.defineProperties(Group.prototype, {
-    'effect': {
+    effect: {
         get: function() {
             return this._effect;
         }
     },
-    'gain': {
+    gain: {
         get: function() {
             return this._gain;
         }
     },
-    'sounds': {
+    sounds: {
         get: function() {
             return this._sounds;
+        }
+    },
+    volume: {
+        get: function() {
+            return this._gain.gain.value;
+        },
+        set: function(value) {
+            if(isNaN(value)) { return; }
+
+            if(this._context) {
+                this._gain.gain.cancelScheduledValues(this._context.currentTime);
+                this._gain.gain.value = value;
+                this._gain.gain.setValueAtTime(value, this._context.currentTime);
+            }
+            else {
+                this._gain.gain.value = value;
+            }
+            this._sounds.forEach(function(sound) {
+                if (!sound.context) {
+                    sound.volume = value;
+                }
+            });
         }
     }
 });

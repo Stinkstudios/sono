@@ -9,7 +9,8 @@ function Loader(url) {
         isTouchLocked,
         request,
         timeout,
-        data;
+        data,
+        ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
 
     var start = function() {
         if(audioContext) {
@@ -19,47 +20,53 @@ function Loader(url) {
         }
     };
 
-    var dispatch = function(buffer) {
+    var dispatchComplete = function(buffer) {
         emitter.emit('progress', 1);
         emitter.emit('loaded', buffer);
         emitter.emit('complete', buffer);
+
+        removeListeners();
     };
+
+    // audio buffer
 
     var loadArrayBuffer = function() {
         request = new XMLHttpRequest();
         request.open('GET', url, true);
         request.responseType = 'arraybuffer';
-        request.onprogress = function(event) {
-            if (event.lengthComputable) {
-                progress = event.loaded / event.total;
-                // onProgress.dispatch(progress);
-                emitter.emit('progress', progress);
-            }
-        };
-        request.onload = function() {
-            audioContext.decodeAudioData(
-                request.response,
-                function(buffer) {
-                    data = buffer;
-                    request = null;
-                    progress = 1;
-                    dispatch(buffer);
-                },
-                function(e) {
-                    emitter.emit('error', e);
-                }
-            );
-        };
-        request.onerror = function(e) {
-            // onError.dispatch(e);
-            emitter.emit('error', e);
-        };
+        request.addEventListener('progress', progressHandler);
+        request.addEventListener('load', loadHandler);
+        request.addEventListener('error', errorHandler);
         request.send();
     };
 
+    var progressHandler = function(event) {
+        if (event.lengthComputable) {
+            progress = event.loaded / event.total;
+            emitter.emit('progress', progress);
+        }
+    };
+
+    var loadHandler = function() {
+        audioContext.decodeAudioData(
+            request.response,
+            function(buffer) {
+                data = buffer;
+                request = null;
+                progress = 1;
+                dispatchComplete(buffer);
+            },
+            function(e) {
+                emitter.emit('error', e);
+            }
+        );
+    };
+
+    // audio element
+
     var loadAudioElement = function() {
         if(!data || !data.tagName) {
-            data = new Audio();
+            data = document.createElement('audio');
         }
 
         if(!isTouchLocked) {
@@ -75,36 +82,67 @@ function Loader(url) {
         data.load();
 
         if (isTouchLocked) {
-            dispatch(data);
+            dispatchComplete(data);
         }
-    };
-
-    var errorHandler = function(e) {
-        window.clearTimeout(timeout);
-        emitter.emit('error', e);
     };
 
     var readyHandler = function() {
         window.clearTimeout(timeout);
         if(!data) { return; }
-        data.removeEventListener('canplaythrough', readyHandler);
         progress = 1;
-        dispatch(data);
+        dispatchComplete(data);
+    };
+
+    // error
+
+    var errorHandler = function(event) {
+        window.clearTimeout(timeout);
+        // emitter.emit('error', (data && data.error));
+
+        var message = event;
+
+        if(data && data.error) {
+            message = 'Media Error: ' + ERROR_STATE[data.error.code] + ' ' + url;
+        }
+
+        if(request) {
+            message = 'XHR Error: code ' + (request.statusText || request.status) + ' ' + url;
+        }
+
+        emitter.emit('error', message);
+
+        removeListeners();
+    };
+
+    // clean up
+
+    var removeListeners = function() {
+        emitter.off('error');
+        emitter.off('progress');
+        emitter.off('complete');
+        emitter.off('loaded');
+
+        if(data && typeof data.removeEventListener === 'function') {
+            data.removeEventListener('canplaythrough', readyHandler);
+            data.removeEventListener('error', errorHandler);
+        }
+
+        if(request) {
+            request.removeEventListener('progress', progressHandler);
+            request.removeEventListener('load', loadHandler);
+            request.removeEventListener('error', errorHandler);
+        }
     };
 
     var cancel = function() {
+        removeListeners();
+
         if(request && request.readyState !== 4) {
           request.abort();
         }
-        if(data && typeof data.removeEventListener === 'function') {
-            data.removeEventListener('canplaythrough', readyHandler);
-        }
-        window.clearTimeout(timeout);
+        request = null;
 
-        emitter.removeAllListeners('progress');
-        emitter.removeAllListeners('complete');
-        emitter.removeAllListeners('loaded');
-        emitter.removeAllListeners('error');
+        window.clearTimeout(timeout);
     };
 
     var destroy = function() {
@@ -113,6 +151,8 @@ function Loader(url) {
         data = null;
         audioContext = null;
     };
+
+    // reload
 
     var load = function(newUrl) {
         url = newUrl;
@@ -130,22 +170,22 @@ function Loader(url) {
     };
 
     Object.defineProperties(api, {
-        'data': {
+        data: {
             get: function() {
                 return data;
             }
         },
-        'progress': {
+        progress: {
             get: function() {
                 return progress;
             }
         },
-        'audioContext': {
+        audioContext: {
             set: function(value) {
                 audioContext = value;
             }
         },
-        'isTouchLocked': {
+        isTouchLocked: {
             set: function(value) {
                 isTouchLocked = value;
             }
@@ -159,7 +199,8 @@ Loader.Group = function() {
     var emitter = new Emitter(),
         queue = [],
         numLoaded = 0,
-        numTotal = 0;
+        numTotal = 0,
+        loader;
 
     var add = function(loader) {
         queue.push(loader);
@@ -174,14 +215,15 @@ Loader.Group = function() {
 
     var next = function() {
         if(queue.length === 0) {
+            loader = null;
             emitter.emit('complete');
             return;
         }
 
-        var loader = queue.pop();
+        loader = queue.pop();
         loader.on('progress', progressHandler);
-        loader.on('loaded', completeHandler);
-        loader.on('error', errorHandler);
+        loader.once('loaded', completeHandler);
+        loader.once('error', errorHandler);
         loader.start();
     };
 
@@ -192,13 +234,22 @@ Loader.Group = function() {
 
     var completeHandler = function() {
         numLoaded++;
+        removeListeners();
         emitter.emit('progress', numLoaded / numTotal);
         next();
     };
 
     var errorHandler = function(e) {
+        console.error.call(console, e);
+        removeListeners();
         emitter.emit('error', e);
         next();
+    };
+
+    var removeListeners = function() {
+        loader.off('progress', progressHandler);
+        loader.off('loaded', completeHandler);
+        loader.off('error', errorHandler);
     };
 
     return Object.freeze({

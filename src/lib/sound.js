@@ -3,7 +3,7 @@
 var BufferSource = require('./source/buffer-source.js'),
     Effect = require('./effect.js'),
     Emitter = require('./utils/emitter.js'),
-    File = require('./utils/file.js'),
+    file = require('./utils/file.js'),
     Loader = require('./utils/loader.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
@@ -11,315 +11,337 @@ var BufferSource = require('./source/buffer-source.js'),
     ScriptSource = require('./source/script-source.js');
 
 function Sound(context, destination) {
-    this.id = '';
-    this._context = context;
-    this._data = null;
-    // this._endedCallback = null;
-    this._isTouchLocked = false;
-    this._loader = null;
-    this._loop = false;
-    this._pausedAt = 0;
-    this._playbackRate = 1;
-    this._playWhenReady = null;
-    this._source = null;
-    this._startedAt = 0;
+    var id,
+        data,
+        effect = new Effect(context),
+        gain = effect.gain(),
+        isTouchLocked = false,
+        loader,
+        loop = false,
+        playbackRate = 1,
+        playWhenReady,
+        source,
+        api;
 
-    this._effect = new Effect(this._context);
-    this._gain = this._effect.gain();
-    if(this._context) {
-        this._effect.setDestination(this._gain);
-        this._gain.connect(destination || this._context.destination);
+    if(context) {
+        effect.setDestination(gain);
+        gain.connect(destination || context.destination);
     }
+
+    /*
+     * Load
+     */
+
+    var load = function(config) {
+        var url = file.getSupportedFile(config.url || config);
+
+        if(source && data && data.tagName) {
+            source.load(url);
+        }
+        else {
+            loader = loader || new Loader(url);
+            loader.audioContext = !!config.asMediaElement ? null : context;
+            loader.isTouchLocked = isTouchLocked;
+            loader.once('loaded', function(file) {
+                createSource(file);
+                api.emit('loaded');
+            });
+        }
+        return api;
+    };
+
+    /*
+     * Controls
+     */
+
+    var play = function(delay, offset) {
+        if(!source || isTouchLocked) {
+            playWhenReady = function() {
+                if (source) {
+                    play(delay, offset);
+                }
+            };
+            return api;
+        }
+        playWhenReady = null;
+        effect.setSource(source.sourceNode);
+        if(source.hasOwnProperty('loop')) {
+            source.loop = loop;
+        }
+
+        // update volume needed for no webaudio
+        if(!context) { api.volume = gain.gain.value; }
+
+        source.play(delay, offset);
+
+        return api;
+    };
+
+    var pause = function() {
+        if(!source) { return api; }
+        source.pause();
+        return api;
+    };
+
+    var stop = function() {
+        if(!source) { return api; }
+        source.stop();
+        return api;
+    };
+
+    var seek = function(percent) {
+        if(!source) { return api; }
+        stop();
+        play(0, source.duration * percent);
+        return api;
+    };
+
+    var fade = function(volume, duration) {
+        if(!source) { return api; }
+
+        if(context) {
+            var  param = gain.gain;
+            var time = context.currentTime;
+            param.cancelScheduledValues(time);
+            param.setValueAtTime(param.value, time);
+            param.linearRampToValueAtTime(volume, time + duration);
+        }
+        else if(typeof source.fade === 'function') {
+            source.fade(volume, duration);
+        }
+
+        return api;
+    };
+
+    /*
+     * Destroy
+     */
+
+    var destroy = function() {
+        if(source) { source.destroy(); }
+        if(effect) { effect.destroy(); }
+        if(gain) { gain.disconnect(); }
+        if(loader) { loader.destroy(); }
+        api.off('ended');
+        gain = null;
+        context = null;
+        data = null;
+        playWhenReady = null;
+        source = null;
+        effect = null;
+        loader = null;
+        api.emit('destroyed', api);
+        api.off('destroyed');
+    };
+
+    /*
+     * Create source
+     */
+
+    var createSource = function(value) {
+        data = value;
+
+        if(file.isAudioBuffer(data)) {
+            source = new BufferSource(data, context, function() {
+                api.emit('ended');
+            });
+        }
+        else if(file.isMediaElement(data)) {
+            source = new MediaSource(data, context, function() {
+                api.emit('ended');
+            });
+        }
+        else if(file.isMediaStream(data)) {
+            source = new MicrophoneSource(data, context);
+        }
+        else if(file.isOscillatorType(data)) {
+            source = new OscillatorSource(data, context);
+        }
+        else if(file.isScriptConfig(data)) {
+            source = new ScriptSource(data, context);
+        }
+        else {
+            throw new Error('Cannot detect data type: ' + data);
+        }
+
+        effect.setSource(source.sourceNode);
+
+        if(playWhenReady) {
+            playWhenReady();
+        }
+    };
+
+    api = Object.create(Emitter.prototype, {
+        constructor: Sound,
+
+        _events: {
+            value: {}
+        },
+        play: {
+            value: play
+        },
+        pause: {
+            value: pause
+        },
+        load: {
+            value: load
+        },
+        seek: {
+            value: seek
+        },
+        stop: {
+            value: stop
+        },
+        fade: {
+            value: fade
+        },
+        destroy: {
+            value: destroy
+        },
+        context: {
+            value: context
+        },
+        currentTime: {
+            get: function() {
+                return source ? source.currentTime : 0;
+            },
+            set: function(value) {
+                stop();
+                play(0, value);
+            }
+        },
+        data: {
+            get: function() {
+                return data;
+            },
+            set : function(value) {
+                if(!value) { return; }
+                createSource(value);
+            }
+        },
+        duration: {
+            get: function() {
+                return source ? source.duration : 0;
+            }
+        },
+        effect: {
+            value: effect
+        },
+        ended: {
+            get: function() {
+                // return source ? source.ended : false;
+                return !!source && source.ended;
+            }
+        },
+        frequency: {
+            get: function() {
+                return source ? source.frequency : 0;
+            },
+            set: function(value) {
+                if(source) {
+                    source.frequency = value;
+                }
+            }
+        },
+        gain: {
+            value: gain
+        },
+        id: {
+            get: function() {
+                return id;
+            },
+            set: function(value) {
+                id = value;
+            }
+        },
+        isTouchLocked: {
+            set: function(value) {
+                isTouchLocked = value;
+                if(loader) {
+                    loader.isTouchLocked = value;
+                }
+                if(!value && playWhenReady) {
+                    playWhenReady();
+                }
+            }
+        },
+        loader: {
+            get: function() {
+                return loader;
+            }
+        },
+        loop: {
+            get: function() {
+                return loop;
+            },
+            set: function(value) {
+                loop = !!value;
+                if(source && source.hasOwnProperty('loop')) {
+                  source.loop = loop;
+                }
+            }
+        },
+        paused: {
+            get: function() {
+                // return source ? source.paused : false;
+                return !!source && source.paused;
+            }
+        },
+        playing: {
+            get: function() {
+                // return source ? source.playing : false;
+                return !!source && source.playing;
+            }
+        },
+        playbackRate: {
+            get: function() {
+                return playbackRate;
+            },
+            set: function(value) {
+                playbackRate = value;
+                if(source) {
+                  source.playbackRate = playbackRate;
+                }
+            }
+        },
+        progress: {
+            get: function() {
+                return source ? source.progress : 0;
+            }
+        },
+        volume: {
+            get: function() {
+                if(context) {
+                    return gain.gain.value;
+                }
+                if(source && source.hasOwnProperty('volume')) {
+                    return source.volume;
+                }
+                return 1;
+            },
+            set: function(value) {
+                if(isNaN(value)) { return; }
+
+                var param = gain.gain;
+
+                if(context) {
+                    var time = context.currentTime;
+                    param.cancelScheduledValues(time);
+                    param.value = value;
+                    param.setValueAtTime(value, time);
+                }
+                else {
+                    param.value = value;
+
+                    if(source && source.hasOwnProperty('volume')) {
+                        source.volume = value;
+                    }
+                }
+            }
+        }
+    });
+
+    return Object.freeze(api);
 }
-
-Sound.prototype = Object.create(Emitter.prototype);
-Sound.prototype.constructor = Sound;
-
-/*
- * Load
- */
-
-Sound.prototype.load = function(config) {
-    var url = File.getSupportedFile(config.url || config);
-
-    if(this._source && this._source._el) {
-        this._source.load(url);
-    }
-    else {
-        this._loader = this._loader || new Loader(url);
-        this._loader.audioContext = !!config.asMediaElement ? null : this._context;
-        this._loader.isTouchLocked = this._isTouchLocked;
-        var self = this;
-        this._loader.once('loaded', function(data) {
-            self.data = data;
-            self = null;
-        });
-    }
-    return this;
-};
-
-/*
- * Controls
- */
-
-Sound.prototype.play = function(delay, offset) {
-    if(!this._source || this._isTouchLocked) {
-        this._playWhenReady = function() {
-            this.play(delay, offset);
-        }.bind(this);
-        return this;
-    }
-    this._playWhenReady = null;
-    this._effect.setSource(this._source.sourceNode);
-    this._source.loop = this._loop;
-
-    // update volume needed for no webaudio
-    if(!this._context) { this.volume = this._gain.gain.value; }
-
-    this._source.play(delay, offset);
-
-    return this;
-};
-
-Sound.prototype.pause = function() {
-    if(!this._source) { return this; }
-    this._source.pause();
-    return this;
-};
-
-Sound.prototype.stop = function() {
-    if(!this._source) { return this; }
-    this._source.stop();
-    return this;
-};
-
-Sound.prototype.seek = function(percent) {
-    if(!this._source) { return this; }
-    this.stop();
-    this.play(0, this._source.duration * percent);
-    return this;
-};
-
-Sound.prototype.fade = function(volume, duration) {
-    if(!this._source) { return this; }
-
-    if(this._context) {
-        var  param = this._gain.gain;
-        var time = this._context.currentTime;
-        param.cancelScheduledValues(time);
-        param.setValueAtTime(param.value, time);
-        param.linearRampToValueAtTime(volume, time + duration);
-    }
-    else if(typeof this._source.fade === 'function') {
-        this._source.fade(volume, duration);
-    }
-
-    return this;
-};
-
-/*
- * Destroy
- */
-
-Sound.prototype.destroy = function() {
-    if(this._source) { this._source.destroy(); }
-    if(this._effect) { this._effect.destroy(); }
-    if(this._gain) { this._gain.disconnect(); }
-    this._gain = null;
-    this._context = null;
-    this._data = null;
-    // this._endedCallback = null;
-    this.removeAllListeners('ended');
-    this._playWhenReady = null;
-    this._source = null;
-    this._effect = null;
-    if(this._loader) {
-        this._loader.destroy();
-        this._loader = null;
-    }
-};
-
-/*
- * Create source
- */
-
-Sound.prototype._createSource = function(data) {
-    // if (this._source && File.type(data) === this._source.type) {
-    //     this._source.data = data;
-    // } else
-    if(File.isAudioBuffer(data)) {
-        this._source = new BufferSource(data, this._context);
-    }
-    else if(File.isMediaElement(data)) {
-        this._source = new MediaSource(data, this._context);
-    }
-    else if(File.isMediaStream(data)) {
-        this._source = new MicrophoneSource(data, this._context);
-    }
-    else if(File.isOscillatorType(data)) {
-        this._source = new OscillatorSource(data, this._context);
-    }
-    else if(File.isScriptConfig(data)) {
-        this._source = new ScriptSource(data, this._context);
-    }
-    else {
-        throw new Error('Cannot detect data type: ' + data);
-    }
-
-    this._effect.setSource(this._source.sourceNode);
-
-    if(this._source.hasOwnProperty('_endedCallback')) {
-        this._source._endedCallback = function() {
-            this.emit('ended');
-        }.bind(this);
-    }
-
-    if(this._playWhenReady) {
-        this._playWhenReady();
-    }
-};
-
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(Sound.prototype, {
-    'context': {
-        get: function() {
-            return this._context;
-        }
-    },
-    'currentTime': {
-        get: function() {
-            return this._source ? this._source.currentTime : 0;
-        },
-        set: function(value) {
-            this.stop();
-            this.play(0, value);
-        }
-    },
-    'data': {
-        get: function() {
-            return this._data;
-        },
-        set : function(value) {
-            if(!value) { return; }
-            this._data = value;
-            this._createSource(this._data);
-        }
-    },
-    'duration': {
-        get: function() {
-            return this._source ? this._source.duration : 0;
-        }
-    },
-    'effect': {
-        get: function() {
-            return this._effect;
-        }
-    },
-    'ended': {
-        get: function() {
-            return this._source ? this._source.ended : false;
-        }
-    },
-    'frequency': {
-        get: function() {
-            return this._source ? this._source.frequency : 0;
-        },
-        set: function(value) {
-            if(this._source) {
-                this._source.frequency = value;
-            }
-        }
-    },
-    'gain': {
-        get: function() {
-            return this._gain;
-        }
-    },
-    'isTouchLocked': {
-        set: function(value) {
-            this._isTouchLocked = value;
-            if(!value && this._playWhenReady) {
-                this._playWhenReady();
-            }
-        }
-    },
-    'loader': {
-        get: function() {
-            return this._loader;
-        }
-    },
-    'loop': {
-        get: function() {
-            return this._loop;
-        },
-        set: function(value) {
-            this._loop = !!value;
-            if(this._source) {
-              this._source.loop = this._loop;
-            }
-        }
-    },
-    'paused': {
-        get: function() {
-            return this._source ? this._source.paused : false;
-        }
-    },
-    'playing': {
-        get: function() {
-            return this._source ? this._source.playing : false;
-        }
-    },
-    'playbackRate': {
-        get: function() {
-            return this._playbackRate;
-        },
-        set: function(value) {
-            this._playbackRate = value;
-            if(this._source) {
-              this._source.playbackRate = this._playbackRate;
-            }
-        }
-    },
-    'progress': {
-        get: function() {
-            return this._source ? this._source.progress : 0;
-        }
-    },
-    'volume': {
-        get: function() {
-            if(this._context) {
-                return this._gain.gain.value;
-            }
-            else if(this._data && this._data.volume !== undefined) {
-                return this._data.volume;
-            }
-            return 1;
-        },
-        set: function(value) {
-            if(isNaN(value)) { return; }
-
-            var param = this._gain.gain;
-
-            if(this._context) {
-                var time = this._context.currentTime;
-                param.cancelScheduledValues(time);
-                param.value = value;
-                param.setValueAtTime(value, time);
-            }
-            else {
-                param.value = value;
-                if(this._source) {
-                    window.clearTimeout(this._source.fadeTimeout);
-                }
-                if(this._data && this._data.volume !== undefined) {
-                    this._data.volume = value;
-                }
-            }
-        }
-    }
-});
 
 module.exports = Sound;

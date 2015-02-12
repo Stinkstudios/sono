@@ -304,7 +304,7 @@ h1 {
   box-shadow: 0 0 8px rgba(0,0,0,0.5);
   color: #333333;
   margin: 0;
-  padding: 1em;
+  padding: 0.5em 1em;
 }
 
 h3 {

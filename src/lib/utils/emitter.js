@@ -2,7 +2,9 @@
 
 var EventEmitter = require('events').EventEmitter;
 
-function Emitter() {}
+function Emitter() {
+    EventEmitter.call(this);
+}
 
 Emitter.prototype = Object.create(EventEmitter.prototype);
 Emitter.prototype.constructor = Emitter;

@@ -75,7 +75,8 @@ Object.defineProperties(SoundGroup.prototype, {
     },
     'paused': {
         get: function() {
-            return this._src ? this._src.paused : false;
+            // return this._src ? this._src.paused : false;
+            return !!this._src && this._src.paused;
         }
     },
     'progress': {
@@ -96,7 +97,8 @@ Object.defineProperties(SoundGroup.prototype, {
     },
     'playing': {
         get: function() {
-            return this._src ? this._src.playing : false;
+            // return this._src ? this._src.playing : false;
+            return !!this._src && this._src.playing;
         }
     }
 });

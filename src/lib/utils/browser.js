@@ -2,7 +2,7 @@
 
 var Browser = {};
 
-Browser.handlePageVisibility = function(onHidden, onShown, thisArg) {
+Browser.handlePageVisibility = function(onHidden, onShown) {
     var hidden,
         visibilityChange;
 
@@ -25,10 +25,10 @@ Browser.handlePageVisibility = function(onHidden, onShown, thisArg) {
 
     function onChange() {
         if (document[hidden]) {
-            onHidden.call(thisArg);
+            onHidden();
         }
         else {
-            onShown.call(thisArg);
+            onShown();
         }
     }
 
@@ -37,25 +37,24 @@ Browser.handlePageVisibility = function(onHidden, onShown, thisArg) {
     }
 };
 
-Browser.handleTouchLock = function(onUnlock, thisArg) {
+Browser.handleTouchLock = function(context, onUnlock) {
     var ua = navigator.userAgent,
         locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|SymbianOS/i);
-
 
     var unlock = function() {
         document.body.removeEventListener('touchstart', unlock);
 
-        if(this._context) {
-            var buffer = this._context.createBuffer(1, 1, 22050);
-            var unlockSource = this._context.createBufferSource();
-            unlockSource.buffer = buffer;
-            unlockSource.connect(this._context.destination);
-            unlockSource.start(0);
+        if(context) {
+            var buffer = context.createBuffer(1, 1, 22050);
+            var source = context.createBufferSource();
+            source.buffer = buffer;
+            source.connect(context.destination);
+            source.start(0);
+            source.disconnect();
         }
 
-        onUnlock.call(thisArg);
-
-    }.bind(this);
+        onUnlock();
+    };
 
     if(locked) {
         document.body.addEventListener('touchstart', unlock, false);

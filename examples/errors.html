@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>Sono - Examples - Destroy</title>
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <h1>Destroy</h1>
+
+    <section>
+
+
+    </section>
+
+    <script>
+        // Test with no WebAudio
+        if(window.location.search.slice(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
+    </script>
+    <script src="../dist/sono.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            Sono.log();
+
+            var baseURL = 'http://ianmcgregor.me/prototypes/assets/audio/';
+
+            Sono.load({
+                id: 'bullet',
+                url: [
+                    baseURL + 'bulletx.ogg',
+                    baseURL + 'bulletx.mp3'
+                ]
+            });
+
+            Sono.load({
+                id: 'nonono',
+                url: [
+                    baseURL + 'nonono.ogg',
+                    baseURL + 'nonono.mp3'
+                ],
+                webAudio: false
+            });
+
+        }());
+    </script>
+</body>
+</html>

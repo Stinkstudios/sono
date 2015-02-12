@@ -9,7 +9,7 @@ module.exports = function(config) {
     plugins: [
       'karma-mocha',
       'karma-chai',
-      'karma-bro',
+      'karma-browserify',
       'karma-chrome-launcher',
       'karma-firefox-launcher'
     ],
@@ -24,7 +24,7 @@ module.exports = function(config) {
 
     // list of files to exclude
     exclude: [
-      
+
     ],
 
     // Browserify config (all optional)

@@ -4,6 +4,8 @@ var Sono = require('../src/sono.js');
 
 describe('Sono playback', function() {
 
+    this.timeout(5000);
+
     var baseURL = 'http://ianmcgregor.me/prototypes/assets/audio/';
 
     describe('create', function() {

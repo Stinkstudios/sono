@@ -7,8 +7,11 @@ describe('Sound', function() {
     var sound = new Sound(Sono.context);
 
     it('should have expected members (id, setdata)', function() {
-        expect(sound).to.have.property('id');
-        var data = Object.getOwnPropertyDescriptor(sound.constructor.prototype, 'data');
+        // expect(sound).to.have.property('id');
+        var id = Object.getOwnPropertyDescriptor(sound, 'id');
+        expect(id.get).to.be.a('function');
+        expect(id.set).to.be.a('function');
+        var data = Object.getOwnPropertyDescriptor(sound, 'data');
         expect(data.get).to.be.a('function');
         expect(data.set).to.be.a('function');
     });
@@ -40,9 +43,9 @@ describe('Sound', function() {
     });
 
     it('should have chainable methods', function() {
-        expect(sound.play()).to.be.an.instanceof(Sound);
-        expect(sound.pause()).to.be.an.instanceof(Sound);
-        expect(sound.stop()).to.be.an.instanceof(Sound);
+        var a = sound.play().pause().load({}).stop().fade().play();
+        expect(a).to.be.an('object');
+        expect(a.currentTime).to.be.a('number');
     });
 
     it('should have event emitter', function() {

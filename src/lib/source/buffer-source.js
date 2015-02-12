@@ -1,181 +1,183 @@
 'use strict';
 
-function BufferSource(buffer, context) {
-    this.id = '';
-    this._buffer = buffer; // ArrayBuffer
-    this._context = context;
-    this._ended = false;
-    this._endedCallback = null;
-    this._loop = false;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playbackRate = 1;
-    this._playing = false;
-    this._sourceNode = null; // BufferSourceNode
-    this._startedAt = 0;
-}
+function BufferSource(buffer, context, onEnded) {
+    var ended = false,
+        endedCallback = onEnded,
+        loop = false,
+        paused = false,
+        pausedAt = 0,
+        playbackRate = 1,
+        playing = false,
+        sourceNode = null,
+        startedAt = 0,
+        api = {};
 
-/*
- * Controls
- */
+    var createSourceNode = function() {
+        if(!sourceNode && context) {
+            sourceNode = context.createBufferSource();
+            sourceNode.buffer = buffer;
+        }
+        return sourceNode;
+    };
 
-BufferSource.prototype.play = function(delay, offset) {
-    if(this._playing) { return; }
-    if(delay === undefined) { delay = 0; }
-    if(delay > 0) { delay = this._context.currentTime + delay; }
+    /*
+     * Controls
+     */
 
-    if(offset === undefined) { offset = 0; }
-    if(offset > 0) { this._pausedAt = 0; }
-    if(this._pausedAt > 0) { offset = this._pausedAt; }
+    var play = function(delay, offset) {
+        if(playing) { return; }
 
-    //console.log.apply(console, ['1 offset:', offset]);
-    while(offset > this.duration) { offset = offset % this.duration; }
-    //console.log.apply(console, ['2 offset:', offset]);
+        delay = delay ? context.currentTime + delay : 0;
+        offset = offset || 0;
+        if(offset) { pausedAt = 0; }
+        if(pausedAt) { offset = pausedAt; }
+        while(offset > api.duration) { offset = offset % api.duration; }
 
-    this.sourceNode.loop = this._loop;
-    this.sourceNode.onended = this._endedHandler.bind(this);
-    this.sourceNode.start(delay, offset);
-    this.sourceNode.playbackRate.value = this._playbackRate;
+        createSourceNode();
+        sourceNode.loop = loop;
+        sourceNode.onended = endedHandler;
+        sourceNode.start(delay, offset);
+        sourceNode.playbackRate.value = playbackRate;
 
-    if(this._pausedAt) {
-        this._startedAt = this._context.currentTime - this._pausedAt;
-    }
-    else {
-        this._startedAt = this._context.currentTime - offset;
-    }
+        startedAt = context.currentTime - offset;
+        ended = false;
+        paused = false;
+        pausedAt = 0;
+        playing = true;
+    };
 
-    this._ended = false;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = true;
-};
+    var pause = function() {
+        var elapsed = context.currentTime - startedAt;
+        stop();
+        pausedAt = elapsed;
+        playing = false;
+        paused = true;
+    };
 
-BufferSource.prototype.pause = function() {
-    var elapsed = this._context.currentTime - this._startedAt;
-    this.stop();
-    this._pausedAt = elapsed;
-    this._playing = false;
-    this._paused = true;
-};
+    var stop = function() {
+        if(sourceNode) {
+            sourceNode.onended = null;
+            try {
+                sourceNode.disconnect();
+                sourceNode.stop(0);
+            } catch(e) {}
+            sourceNode = null;
+        }
 
-BufferSource.prototype.stop = function() {
-    if(this._sourceNode) {
-        this._sourceNode.onended = null;
-        try {
-            this._sourceNode.disconnect();
-            this._sourceNode.stop(0);
-        } catch(e) {}
-        this._sourceNode = null;
-    }
+        paused = false;
+        pausedAt = 0;
+        playing = false;
+        startedAt = 0;
+    };
 
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = false;
-    this._startedAt = 0;
-};
+    /*
+     * Ended handler
+     */
 
-/*
- * Ended handler
- */
+    var endedHandler = function() {
+        stop();
+        ended = true;
+        if(typeof endedCallback === 'function') {
+            endedCallback(api);
+        }
+    };
 
-BufferSource.prototype._endedHandler = function() {
-    this.stop();
-    this._ended = true;
-    if(typeof this._endedCallback === 'function') {
-        this._endedCallback(this);
-    }
-};
+    /*
+     * Destroy
+     */
 
-/*
- * Destroy
- */
+    var destroy = function() {
+        stop();
+        buffer = null;
+        context = null;
+        endedCallback = null;
+        sourceNode = null;
+    };
 
-BufferSource.prototype.destroy = function() {
-    this.stop();
-    this._buffer = null;
-    this._context = null;
-    this._endedCallback = null;
-    this._sourceNode = null;
-};
+    /*
+     * Getters & Setters
+     */
 
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(BufferSource.prototype, {
-    'currentTime': {
-        get: function() {
-            if(this._pausedAt) {
-                return this._pausedAt;
-            }
-            if(this._startedAt) {
-                var time = this._context.currentTime - this._startedAt;
-                if(time > this.duration) {
-                    time = time % this.duration;
+    Object.defineProperties(api, {
+        play: {
+            value: play
+        },
+        pause: {
+            value: pause
+        },
+        stop: {
+            value: stop
+        },
+        destroy: {
+            value: destroy
+        },
+        currentTime: {
+            get: function() {
+                if(pausedAt) {
+                    return pausedAt;
                 }
-                return time;
+                if(startedAt) {
+                    var time = context.currentTime - startedAt;
+                    if(time > api.duration) {
+                        time = time % api.duration;
+                    }
+                    return time;
+                }
+                return 0;
             }
-            return 0;
-        }
-    },
-    'data': {
-        set: function(value) {
-            this._buffer = value;
-        }
-    },
-    'duration': {
-        get: function() {
-            return this._buffer ? this._buffer.duration : 0;
-        }
-    },
-    'ended': {
-        get: function() {
-            return this._ended;
-        }
-    },
-    'loop': {
-        get: function() {
-            return this._loop;
         },
-        set: function(value) {
-            this._loop = !!value;
-        }
-    },
-    'paused': {
-        get: function() {
-            return this._paused;
-        }
-    },
-    'playbackRate': {
-        get: function() {
-            return this._playbackRate;
+        duration: {
+            get: function() {
+                return buffer ? buffer.duration : 0;
+            }
         },
-        set: function(value) {
-            this._playbackRate = value;
-            if(this._sourceNode) {
-                this._sourceNode.playbackRate.value = this._playbackRate;
+        ended: {
+            get: function() {
+                return ended;
+            }
+        },
+        loop: {
+            get: function() {
+                return loop;
+            },
+            set: function(value) {
+                loop = !!value;
+            }
+        },
+        paused: {
+            get: function() {
+                return paused;
+            }
+        },
+        playbackRate: {
+            get: function() {
+                return playbackRate;
+            },
+            set: function(value) {
+                playbackRate = value;
+                if(sourceNode) {
+                    sourceNode.playbackRate.value = playbackRate;
+                }
+            }
+        },
+        playing: {
+            get: function() {
+                return playing;
+            }
+        },
+        progress: {
+            get: function() {
+                return api.duration ? api.currentTime / api.duration : 0;
+            }
+        },
+        sourceNode: {
+            get: function() {
+                return createSourceNode();
             }
         }
-    },
-    'playing': {
-        get: function() {
-            return this._playing;
-        }
-    },
-    'progress': {
-        get: function() {
-            return this.duration ? this.currentTime / this.duration : 0;
-        }
-    },
-    'sourceNode': {
-        get: function() {
-            if(!this._sourceNode) {
-                this._sourceNode = this._context.createBufferSource();
-                this._sourceNode.buffer = this._buffer;
-            }
-            return this._sourceNode;
-        }
-    }
-});
+    });
+
+    return Object.freeze(api);
+}
 
 module.exports = BufferSource;

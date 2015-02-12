@@ -10,7 +10,7 @@ function effectTest(isWebAudio) {
     describe('Effect (' + name + ')', function() {
 
         var effect = isWebAudio ? new Effect(Sono.context) : new Effect();
-        var audioContext = effect._context;
+        var audioContext = effect.context;
         var audioNode = isWebAudio ? window.AudioNode : Object;
 
         describe('initialization', function() {
@@ -28,7 +28,7 @@ function effectTest(isWebAudio) {
             it('should add a node', function() {
                 var panner = effect.add(effect.gain());
                 expect(panner).to.be.an.instanceof(audioNode);
-                expect(effect._nodeList.length).to.eql(1);
+                expect(effect.nodeList.length).to.eql(1);
                 effect.remove(panner);
             });
         });
@@ -40,9 +40,9 @@ function effectTest(isWebAudio) {
             });
             it('should remove a node', function() {
                 var panner = effect.add(audioContext.createPanner());
-                expect(effect._nodeList.length).to.eql(1);
+                expect(effect.nodeList.length).to.eql(1);
                 effect.remove(panner);
-                expect(effect._nodeList.length).to.eql(0);
+                expect(effect.nodeList.length).to.eql(0);
             });
         });
 
@@ -54,9 +54,9 @@ function effectTest(isWebAudio) {
             it('should remove all nodes', function() {
                 effect.add(audioContext.createPanner());
                 effect.add(audioContext.createGain());
-                expect(effect._nodeList.length).to.eql(2);
+                expect(effect.nodeList.length).to.eql(2);
                 effect.removeAll();
-                expect(effect._nodeList.length).to.eql(0);
+                expect(effect.nodeList.length).to.eql(0);
             });
         });
 
@@ -127,9 +127,9 @@ function effectTest(isWebAudio) {
                 effect.removeAll();
                 var echo = effect.echo();
                 expect(echo).to.be.an.instanceof(audioNode);
-                expect(effect._nodeList).to.include(echo);
+                expect(effect.nodeList).to.include(echo);
                 effect.remove(echo);
-                expect(effect._nodeList).to.not.include(echo);
+                expect(effect.nodeList).to.not.include(echo);
             });
         });
 
@@ -189,7 +189,7 @@ function effectTest(isWebAudio) {
             it('should have expected api', function() {
                 expect(effect.recorder).to.be.a('function');
                 expect(effect.recorder()).to.be.an.instanceof(audioNode);
-            }); 
+            });
         });
 
         describe('reverb', function() {
@@ -203,9 +203,9 @@ function effectTest(isWebAudio) {
             it('should have expected api', function() {
                 expect(effect.script).to.be.a('function');
                 expect(effect.script()).to.be.an.instanceof(audioNode);
-            }); 
+            });
         });
-       
+
     });
 }
 

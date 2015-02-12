@@ -23,7 +23,7 @@
 
     <script>
         // Test with no WebAudio
-        if(window.location.search.substring(1) === 'nowebaudio') {
+        if(window.location.search.slice(1) === 'nowebaudio') {
             window.AudioContext = window.webkitAudioContext = undefined;
         }
     </script>

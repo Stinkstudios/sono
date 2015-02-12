@@ -25,11 +25,11 @@
 
     <script>
         // Test with no WebAudio
-        if(window.location.search.substring(1) === 'nowebaudio') {
+        if(window.location.search.slice(1) === 'nowebaudio') {
             window.AudioContext = window.webkitAudioContext = undefined;
         }
     </script>
-    <script src="../dist/sono.js"></script>
+    <script src="../dist/sono.min.js"></script>
     <script src="js/player.js"></script>
     <script>
         (function() {
@@ -50,7 +50,7 @@
             var end = function() {
                 soundA.off('ended', end);
                 soundA.on('ended', function() {
-                    soundA.removeAllListeners();
+                    soundA.off('ended');
                 });
             };
             soundA.on('ended', end);

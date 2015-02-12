@@ -1,139 +1,129 @@
 'use strict';
 
 function MicrophoneSource(stream, context) {
-    this.id = '';
-    this._context = context;
-    this._ended = false;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = false;
-    this._sourceNode = null; // MicrophoneSourceNode
-    this._startedAt = 0;
-    this._stream = stream;
-}
+    var ended = false,
+        paused = false,
+        pausedAt = 0,
+        playing = false,
+        sourceNode = null, // MicrophoneSourceNode
+        startedAt = 0;
 
-/*
- * Controls
- */
-
-MicrophoneSource.prototype.play = function(delay) {
-    if(delay === undefined) { delay = 0; }
-    if(delay > 0) { delay = this._context.currentTime + delay; }
-
-    this.sourceNode.start(delay);
-
-    if(this._pausedAt) {
-        this._startedAt = this._context.currentTime - this._pausedAt;
-    }
-    else {
-        this._startedAt = this._context.currentTime;
-    }
-
-    this._ended = false;
-    this._playing = true;
-    this._paused = false;
-    this._pausedAt = 0;
-};
-
-MicrophoneSource.prototype.pause = function() {
-    var elapsed = this._context.currentTime - this._startedAt;
-    this.stop();
-    this._pausedAt = elapsed;
-    this._playing = false;
-    this._paused = true;
-};
-
-MicrophoneSource.prototype.stop = function() {
-    if(this._sourceNode) {
-        try {
-            this._sourceNode.stop(0);
-        } catch(e) {}
-        this._sourceNode = null;
-    }
-    this._ended = true;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = false;
-    this._startedAt = 0;
-};
-
-/*
- * Destroy
- */
-
-MicrophoneSource.prototype.destroy = function() {
-    this.stop();
-    this._context = null;
-    this._sourceNode = null;
-    this._stream = null;
-    window.mozHack = null;
-};
-
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(MicrophoneSource.prototype, {
-    'currentTime': {
-        get: function() {
-            if(this._pausedAt) {
-                return this._pausedAt;
-            }
-            if(this._startedAt) {
-                return this._context.currentTime - this._startedAt;
-            }
-            return 0;
-        }
-    },
-    'duration': {
-        get: function() {
-            return 0;
-        }
-    },
-    'ended': {
-        get: function() {
-            return this._ended;
-        }
-    },
-    'frequency': {
-        get: function() {
-            return this._frequency;
-        },
-        set: function(value) {
-            this._frequency = value;
-            if(this._sourceNode) {
-                this._sourceNode.frequency.value = value;
+    var createSourceNode = function() {
+        if(!sourceNode && context) {
+            sourceNode = context.createMediaStreamSource(stream);
+            // HACK: stops moz garbage collection killing the stream
+            // see https://support.mozilla.org/en-US/questions/984179
+            if(navigator.mozGetUserMedia) {
+                window.mozHack = sourceNode;
             }
         }
-    },
-    'paused': {
-        get: function() {
-            return this._paused;
+        return sourceNode;
+    };
+
+    /*
+     * Controls
+     */
+
+    var play = function(delay) {
+        delay = delay ? context.currentTime + delay : 0;
+
+        createSourceNode();
+        sourceNode.start(delay);
+
+        startedAt = context.currentTime - pausedAt;
+        ended = false;
+        playing = true;
+        paused = false;
+        pausedAt = 0;
+    };
+
+    var pause = function() {
+        var elapsed = context.currentTime - startedAt;
+        stop();
+        pausedAt = elapsed;
+        playing = false;
+        paused = true;
+    };
+
+    var stop = function() {
+        if(sourceNode) {
+            try {
+                sourceNode.stop(0);
+            } catch(e) {}
+            sourceNode = null;
         }
-    },
-    'playing': {
-        get: function() {
-            return this._playing;
-        }
-    },
-    'progress': {
-        get: function() {
-            return 0;
-        }
-    },
-    'sourceNode': {
-        get: function() {
-            if(!this._sourceNode) {
-                this._sourceNode = this._context.createMediaStreamSource(this._stream);
-                // HACK: stops moz garbage collection killing the stream
-                // see https://support.mozilla.org/en-US/questions/984179
-                if(navigator.mozGetUserMedia) {
-                    window.mozHack = this._sourceNode;
+        ended = true;
+        paused = false;
+        pausedAt = 0;
+        playing = false;
+        startedAt = 0;
+    };
+
+    /*
+     * Destroy
+     */
+
+    var destroy = function() {
+        stop();
+        context = null;
+        sourceNode = null;
+        stream = null;
+        window.mozHack = null;
+    };
+
+    /*
+     * Api
+     */
+
+    var api = {
+        play: play,
+        pause: pause,
+        stop: stop,
+        destroy: destroy,
+
+        duration: 0,
+        progress: 0
+    };
+
+    /*
+     * Getters & Setters
+     */
+
+    Object.defineProperties(api, {
+        currentTime: {
+            get: function() {
+                if(pausedAt) {
+                    return pausedAt;
                 }
+                if(startedAt) {
+                    return context.currentTime - startedAt;
+                }
+                return 0;
             }
-            return this._sourceNode;
+        },
+        ended: {
+            get: function() {
+                return ended;
+            }
+        },
+        paused: {
+            get: function() {
+                return paused;
+            }
+        },
+        playing: {
+            get: function() {
+                return playing;
+            }
+        },
+        sourceNode: {
+            get: function() {
+                return createSourceNode();
+            }
         }
-    }
-});
+    });
+
+    return Object.freeze(api);
+}
 
 module.exports = MicrophoneSource;

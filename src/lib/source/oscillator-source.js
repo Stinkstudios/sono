@@ -1,135 +1,147 @@
 'use strict';
 
 function OscillatorSource(type, context) {
-    this.id = '';
-    this._context = context;
-    this._ended = false;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = false;
-    this._sourceNode = null; // OscillatorSourceNode
-    this._startedAt = 0;
-    this._type = type;
-    this._frequency = 200;
-}
+    var ended = false,
+        paused = false,
+        pausedAt = 0,
+        playing = false,
+        sourceNode = null, // OscillatorSourceNode
+        startedAt = 0,
+        frequency = 200,
+        api;
 
-/*
- * Controls
- */
+    var createSourceNode = function() {
+        if(!sourceNode && context) {
+            sourceNode = context.createOscillator();
+            sourceNode.type = type;
+            sourceNode.frequency.value = frequency;
+        }
+        return sourceNode;
+    };
 
-OscillatorSource.prototype.play = function(delay) {
-    if(delay === undefined) { delay = 0; }
-    if(delay > 0) { delay = this._context.currentTime + delay; }
+    /*
+     * Controls
+     */
 
-    this.sourceNode.start(delay);
+    var play = function(delay) {
+        delay = delay || 0;
+        if(delay) { delay = context.currentTime + delay; }
 
-    if(this._pausedAt) {
-        this._startedAt = this._context.currentTime - this._pausedAt;
-    }
-    else {
-        this._startedAt = this._context.currentTime;
-    }
+        createSourceNode();
+        sourceNode.start(delay);
 
-    this._ended = false;
-    this._playing = true;
-    this._paused = false;
-    this._pausedAt = 0;
-};
+        if(pausedAt) {
+            startedAt = context.currentTime - pausedAt;
+        }
+        else {
+            startedAt = context.currentTime;
+        }
 
-OscillatorSource.prototype.pause = function() {
-    var elapsed = this._context.currentTime - this._startedAt;
-    this.stop();
-    this._pausedAt = elapsed;
-    this._playing = false;
-    this._paused = true;
-};
+        ended = false;
+        playing = true;
+        paused = false;
+        pausedAt = 0;
+    };
 
-OscillatorSource.prototype.stop = function() {
-    if(this._sourceNode) {
-        try {
-            this._sourceNode.stop(0);
-        } catch(e) {}
-        this._sourceNode = null;
-    }
-    this._ended = true;
-    this._paused = false;
-    this._pausedAt = 0;
-    this._playing = false;
-    this._startedAt = 0;
-};
+    var pause = function() {
+        var elapsed = context.currentTime - startedAt;
+        this.stop();
+        pausedAt = elapsed;
+        playing = false;
+        paused = true;
+    };
 
-/*
- * Destroy
- */
+    var stop = function() {
+        if(sourceNode) {
+            try {
+                sourceNode.stop(0);
+            } catch(e) {}
+            sourceNode = null;
+        }
+        ended = true;
+        paused = false;
+        pausedAt = 0;
+        playing = false;
+        startedAt = 0;
+    };
 
-OscillatorSource.prototype.destroy = function() {
-    this.stop();
-    this._context = null;
-    this._sourceNode = null;
-};
+    /*
+     * Destroy
+     */
 
-/*
- * Getters & Setters
- */
+    var destroy = function() {
+        this.stop();
+        context = null;
+        sourceNode = null;
+    };
 
-Object.defineProperties(OscillatorSource.prototype, {
-    'currentTime': {
-        get: function() {
-            if(this._pausedAt) {
-                return this._pausedAt;
+    /*
+     * Api
+     */
+
+    api = {
+        play: play,
+        pause: pause,
+        stop: stop,
+        destroy: destroy
+    };
+
+    /*
+     * Getters & Setters
+     */
+
+    Object.defineProperties(api, {
+        currentTime: {
+            get: function() {
+                if(pausedAt) {
+                    return pausedAt;
+                }
+                if(startedAt) {
+                    return context.currentTime - startedAt;
+                }
+                return 0;
             }
-            if(this._startedAt) {
-                return this._context.currentTime - this._startedAt;
-            }
-            return 0;
-        }
-    },
-    'duration': {
-        get: function() {
-            return 0;
-        }
-    },
-    'ended': {
-        get: function() {
-            return this._ended;
-        }
-    },
-    'frequency': {
-        get: function() {
-            return this._frequency;
         },
-        set: function(value) {
-            this._frequency = value;
-            if(this._sourceNode) {
-                this._sourceNode.frequency.value = value;
+        duration: {
+            value: 0
+        },
+        ended: {
+            get: function() {
+                return ended;
+            }
+        },
+        frequency: {
+            get: function() {
+                return frequency;
+            },
+            set: function(value) {
+                frequency = value;
+                if(sourceNode) {
+                    sourceNode.frequency.value = value;
+                }
+            }
+        },
+        paused: {
+            get: function() {
+                return paused;
+            }
+        },
+        playing: {
+            get: function() {
+                return playing;
+            }
+        },
+        progress: {
+            value: 0
+        },
+        sourceNode: {
+            get: function() {
+                return createSourceNode();
             }
         }
-    },
-    'paused': {
-        get: function() {
-            return this._paused;
-        }
-    },
-    'playing': {
-        get: function() {
-            return this._playing;
-        }
-    },
-    'progress': {
-        get: function() {
-            return 0;
-        }
-    },
-    'sourceNode': {
-        get: function() {
-            if(!this._sourceNode && this._context) {
-                this._sourceNode = this._context.createOscillator();
-                this._sourceNode.type = this._type;
-                this._sourceNode.frequency.value = this._frequency;
-            }
-            return this._sourceNode;
-        }
-    }
-});
+    });
+
+    return Object.freeze(api);
+}
 
 module.exports = OscillatorSource;

@@ -35,7 +35,7 @@
 
     <script>
         // Test with no WebAudio
-        if(window.location.search.substring(1) === 'nowebaudio') {
+        if(window.location.search.slice(1) === 'nowebaudio') {
             window.AudioContext = window.webkitAudioContext = undefined;
 
             var links = document.querySelectorAll('a');
@@ -53,10 +53,10 @@
             Sono.log();
 
             var support = document.querySelector('[data-js="support"]');
-            var info = '<li>Audio Support: ' + Sono.isSupported + '</li>' +
-                       '<li>Web Audio API: ' + Sono.hasWebAudio + '</li>' +
-                       '<li>Touch Locked: ' + Sono._isTouchLocked + '</li>' +
-                       '<li>Extensions: ' + Sono.extensions.join(', ') + '</li>';
+            var info = '<li>Basic audio support: ' + Sono.isSupported + '</li>' +
+                       '<li>Web Audio support: ' + Sono.hasWebAudio + '</li>' +
+                       '<li>Touch locked (mobile): ' + Sono.isTouchLocked + '</li>' +
+                       '<li>Supported extensions: ' + Sono.extensions.join(', ') + '</li>';
             support.innerHTML = info;
 
         }());

@@ -1,225 +1,254 @@
 'use strict';
 
-function MediaSource(el, context) {
-    this.id = '';
-    this._context = context;
-    this._el = el; // HTMLMediaElement
-    this._ended = false;
-    this._endedCallback = null;
-    this._loop = false;
-    this._paused = false;
-    this._playbackRate = 1;
-    this._playing = false;
-    this._sourceNode = null; // MediaElementSourceNode
-}
+function MediaSource(el, context, onEnded) {
+    var ended = false,
+        endedCallback = onEnded,
+        delayTimeout,
+        fadeTimeout,
+        loop = false,
+        paused = false,
+        playbackRate = 1,
+        playing = false,
+        sourceNode = null,
+        api = {};
 
-/*
- * Load
- */
-
-MediaSource.prototype.load = function(url) {
-    this._el.src = url;
-    this._el.load();
-    this._ended = false;
-    this._paused = false;
-    this._playing = false;
-};
-
-/*
- * Controls
- */
-
-MediaSource.prototype.play = function(delay, offset) {
-    clearTimeout(this._delayTimeout);
-
-    this.playbackRate = this._playbackRate;
-
-    if(offset) {
-        this._el.currentTime = offset;
-    }
-
-    if(delay) {
-        this._delayTimeout = setTimeout(this.play.bind(this), delay);
-    }
-    else {
-        // this._el.load();
-        this._el.play();
-    }
-
-    this._ended = false;
-    this._paused = false;
-    this._playing = true;
-
-    this._el.removeEventListener('ended', this._endedHandlerBound);
-    this._el.addEventListener('ended', this._endedHandlerBound, false);
-
-    if(this._el.readyState < 4) {
-        this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
-        this._el.addEventListener('canplaythrough', this._readyHandlerBound, false);
-        this._el.load();
-        this._el.play();
-    }
-};
-
-MediaSource.prototype.pause = function() {
-    clearTimeout(this._delayTimeout);
-
-    if(!this._el) { return; }
-
-    this._el.pause();
-    this._playing = false;
-    this._paused = true;
-};
-
-MediaSource.prototype.stop = function() {
-    clearTimeout(this._delayTimeout);
-
-    if(!this._el) { return; }
-
-    this._el.pause();
-
-    try {
-        this._el.currentTime = 0;
-        // fixes bug where server doesn't support seek:
-        if(this._el.currentTime > 0) { this._el.load(); }
-    } catch(e) {}
-
-    this._playing = false;
-    this._paused = false;
-};
-
-/*
- * Fade for no webaudio
- */
-
-MediaSource.prototype.fade = function(volume, duration) {
-    if(!this._el) { return this; }
-    if(this._context) { return this; }
-
-    var ramp = function(value, step, self) {
-        var el = self._el;
-        self.fadeTimeout = setTimeout(function() {
-            el.volume = el.volume + ( value - el.volume ) * 0.2;
-            if(Math.abs(el.volume - value) > 0.05) {
-                return ramp(value, step, self);
-            }
-            el.volume = value;
-        }, step * 1000);
+    var createSourceNode = function() {
+        if(!sourceNode && context) {
+            sourceNode = context.createMediaElementSource(el);
+        }
+        return sourceNode;
     };
 
-    window.clearTimeout(this.fadeTimeout);
-    ramp(volume, duration / 10, this);
+    /*
+     * Load
+     */
 
-    return this;
-};
+    var load = function(url) {
+        el.src = url;
+        el.load();
+        ended = false;
+        paused = false;
+        playing = false;
+    };
 
-/*
- * Ended handler
- */
+    /*
+     * Controls
+     */
 
-MediaSource.prototype._endedHandler = function() {
-    this._ended = true;
-    this._paused = false;
-    this._playing = false;
+    var play = function(delay, offset) {
+        clearTimeout(delayTimeout);
 
-    if(this._loop) {
-        this._el.currentTime = 0;
-        // fixes bug where server doesn't support seek:
-        if(this._el.currentTime > 0) { this._el.load(); }
-        this.play();
-    } else if(typeof this._endedCallback === 'function') {
-        this._endedCallback(this);
-    }
-};
+        el.playbackRate = playbackRate;
 
-MediaSource.prototype._readyHandler = function() {
-    this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
-    if(this._playing) {
-        this._el.play();
-    }
-};
-
-/*
- * Destroy
- */
-
-MediaSource.prototype.destroy = function() {
-    this._el.removeEventListener('ended', this._endedHandlerBound);
-    this._el.removeEventListener('canplaythrough', this._readyHandlerBound);
-    this.stop();
-    this._el = null;
-    this._context = null;
-    this._endedCallback = null;
-    this._sourceNode = null;
-};
-
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(MediaSource.prototype, {
-    'currentTime': {
-        get: function() {
-            return this._el ? this._el.currentTime : 0;
+        if(offset) {
+            el.currentTime = offset;
         }
-    },
-    'data': {
-        set: function(value) {
-            this._el = value;
+
+        if(delay) {
+            delayTimeout = setTimeout(play, delay);
         }
-    },
-    'duration': {
-        get: function() {
-            return this._el ? this._el.duration : 0;
+        else {
+            // el.load();
+            el.play();
         }
-    },
-    'ended': {
-        get: function() {
-            return this._ended;
+
+        ended = false;
+        paused = false;
+        playing = true;
+
+        el.removeEventListener('ended', endedHandler);
+        el.addEventListener('ended', endedHandler, false);
+
+        if(el.readyState < 4) {
+            el.removeEventListener('canplaythrough', readyHandler);
+            el.addEventListener('canplaythrough', readyHandler, false);
+            el.load();
+            el.play();
         }
-    },
-    'loop': {
-        get: function() {
-            return this._loop;
+    };
+
+    var readyHandler = function() {
+        el.removeEventListener('canplaythrough', readyHandler);
+        if(playing) {
+            el.play();
+        }
+    };
+
+    var pause = function() {
+        clearTimeout(delayTimeout);
+
+        if(!el) { return; }
+
+        el.pause();
+        playing = false;
+        paused = true;
+    };
+
+    var stop = function() {
+        clearTimeout(delayTimeout);
+
+        if(!el) { return; }
+
+        el.pause();
+
+        try {
+            el.currentTime = 0;
+            // fixes bug where server doesn't support seek:
+            if(el.currentTime > 0) { el.load(); }
+        } catch(e) {}
+
+        playing = false;
+        paused = false;
+    };
+
+    /*
+     * Fade for no webaudio
+     */
+
+    var fade = function(volume, duration) {
+        if(!el) { return api; }
+        if(context) { return api; }
+
+        function ramp(value, step) {
+            fadeTimeout = setTimeout(function() {
+                el.volume = el.volume + ( value - el.volume ) * 0.2;
+                if(Math.abs(el.volume - value) > 0.05) {
+                    return ramp(value, step);
+                }
+                el.volume = value;
+            }, step * 1000);
+        }
+
+        window.clearTimeout(fadeTimeout);
+        ramp(volume, duration / 10);
+
+        return api;
+    };
+
+    /*
+     * Ended handler
+     */
+
+    var endedHandler = function() {
+        ended = true;
+        paused = false;
+        playing = false;
+
+        if(loop) {
+            el.currentTime = 0;
+            // fixes bug where server doesn't support seek:
+            if(el.currentTime > 0) { el.load(); }
+            play();
+        } else if(typeof endedCallback === 'function') {
+            endedCallback(api);
+        }
+    };
+
+    /*
+     * Destroy
+     */
+
+    var destroy = function() {
+        el.removeEventListener('ended', endedHandler);
+        el.removeEventListener('canplaythrough', readyHandler);
+        stop();
+        el = null;
+        context = null;
+        endedCallback = null;
+        sourceNode = null;
+    };
+
+    /*
+     * Getters & Setters
+     */
+
+    Object.defineProperties(api, {
+        play: {
+            value: play
         },
-        set: function(value) {
-            this._loop = !!value;
-        }
-    },
-    'paused': {
-        get: function() {
-            return this._paused;
-        }
-    },
-    'playbackRate': {
-        get: function() {
-            return this._playbackRate;
+        pause: {
+            value: pause
         },
-        set: function(value) {
-            this._playbackRate = value;
-            if(this._el) {
-                this._el.playbackRate = this._playbackRate;
+        stop: {
+            value: stop
+        },
+        load: {
+            value: load
+        },
+        fade: {
+            value: fade
+        },
+        destroy: {
+            value: destroy
+        },
+        currentTime: {
+            get: function() {
+                return el ? el.currentTime : 0;
+            }
+        },
+        duration: {
+            get: function() {
+                return el ? el.duration : 0;
+            }
+        },
+        ended: {
+            get: function() {
+                return ended;
+            }
+        },
+        loop: {
+            get: function() {
+                return loop;
+            },
+            set: function(value) {
+                loop = !!value;
+            }
+        },
+        paused: {
+            get: function() {
+                return paused;
+            }
+        },
+        playbackRate: {
+            get: function() {
+                return playbackRate;
+            },
+            set: function(value) {
+                playbackRate = value;
+                if(el) {
+                    el.playbackRate = playbackRate;
+                }
+            }
+        },
+        playing: {
+            get: function() {
+                return playing;
+            }
+        },
+        progress: {
+            get: function() {
+                return el && el.duration ? el.currentTime / el.duration : 0;
+            }
+        },
+        sourceNode: {
+            get: function() {
+                return createSourceNode();
+            }
+        },
+        volume: {
+            get: function() {
+                return el ? el.volume : 1;
+            },
+            set: function(value) {
+                window.clearTimeout(fadeTimeout);
+                if(el) {
+                    el.volume = value;
+                }
             }
         }
-    },
-    'playing': {
-        get: function() {
-            return this._playing;
-        }
-    },
-    'progress': {
-        get: function() {
-            return this.duration ? this.currentTime / this.duration : 0;
-        }
-    },
-    'sourceNode': {
-        get: function() {
-            if(!this._sourceNode && this._context) {
-                this._sourceNode = this._context.createMediaElementSource(this._el);
-            }
-            return this._sourceNode;
-        }
-    }
-});
+    });
+
+    return Object.freeze(api);
+}
 
 module.exports = MediaSource;

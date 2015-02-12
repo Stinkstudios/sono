@@ -27,7 +27,7 @@
 
     <script>
         // Test with no WebAudio
-        if(window.location.search.substring(1) === 'nowebaudio') {
+        if(window.location.search.slice(1) === 'nowebaudio') {
             window.AudioContext = window.webkitAudioContext = undefined;
         }
     </script>
@@ -52,7 +52,7 @@
 
             var soundB = Sono.createSound({
                 url: ['audio/Original.ogg', 'audio/Original.mp3'],
-                noWebAudio: true,
+                webAudio: false,
                 onComplete: function(sound) {
                     console.log('loaded:', sound);
                     soundB.data.setAttribute('controls', 'controls');

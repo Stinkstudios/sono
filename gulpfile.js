@@ -3,11 +3,13 @@ var browserify = require('browserify'),
     browserSync = require('browser-sync'),
     buffer = require('vinyl-buffer'),
     chalk = require('chalk'),
+    collapse = require('bundle-collapser/plugin'),
+    derequire = require('gulp-derequire'),
+    exorcist = require('exorcist'),
     gulp = require('gulp'),
     jshint = require('gulp-jshint'),
     rename = require('gulp-rename'),
     source = require('vinyl-source-stream'),
-    sourcemaps = require('gulp-sourcemaps'),
     strip = require('gulp-strip-debug'),
     uglify = require('gulp-uglify'),
     watchify = require('watchify');
@@ -27,26 +29,46 @@ var bundler = watchify(browserify({
 function bundle() {
   return bundler
     .bundle()
+    .pipe(exorcist('./dist/sono.js.map'))
     .on('error', logError)
     .pipe(source('sono.js'))
+    .pipe(buffer())
+    .pipe(derequire())
     .pipe(gulp.dest('./dist/'))
     .pipe(rename({ extname: '.min.js' }))
-    .pipe(buffer())
-    .pipe(sourcemaps.init({loadMaps: true}))
     .pipe(strip())
     .pipe(uglify())
-    .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest('./dist/'))
-    .pipe(browserSync.reload({ stream: true }));
+    .pipe(browserSync.reload({stream: true}));
 }
 
 bundler.on('update', bundle); // on any dep update, runs the bundler
-
 gulp.task('bundle', ['jshint'], bundle);
+
+// release bundle with extra compression (can't get collapse to work with watchify)
+gulp.task('release', function() {
+  return browserify({
+      entries: ['./src/sono.js'],
+      standalone: 'Sono',
+      debug: true
+    })
+    .plugin(collapse)
+    .bundle()
+    .on('error', logError)
+    .pipe(exorcist('./dist/sono.js.map'))
+    .pipe(source('sono.js'))
+    .pipe(buffer())
+    .pipe(derequire())
+    .pipe(strip())
+    .pipe(gulp.dest('./dist/'))
+    .pipe(rename({ extname: '.min.js' }))
+    .pipe(uglify())
+    .pipe(gulp.dest('./dist/'));
+});
 
 // connect browsers
 gulp.task('connect', function() {
-  browserSync.init(null, {
+  browserSync.init({
     browser: 'google chrome',
     server: {
       baseDir: './',
