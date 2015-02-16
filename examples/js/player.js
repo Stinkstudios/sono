@@ -94,6 +94,9 @@ function Player(sound, el) {
             bgColor: '#333333'
         });
 
+        // var arr = wave.compute(sound.data, 360);
+        // console.log(Array.prototype.join.call(arr));
+
         // click waveform to seek
         waveform.addEventListener('click', function(event) {
             var rect = waveform.getBoundingClientRect();
@@ -109,9 +112,9 @@ function Player(sound, el) {
     if(sound.data) {
         displayWaveform();
     }
-    else if(sound.loader) {
+    else {
         // sound.loader.onComplete.add(displayWaveform);
-        sound.loader.on('complete', displayWaveform);
+        sound.on('loaded', displayWaveform);
     }
 
 }

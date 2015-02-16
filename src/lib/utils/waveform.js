@@ -11,7 +11,7 @@ function Waveform() {
         var sameBuffer = buffer === audioBuffer;
         var sameLength = waveformData && waveformData.length === length;
         if(sameBuffer && sameLength) { return waveformData; }
-        
+
         //console.log('-------------------');
         //console.time('waveformData');
         var waveform = new Float32Array(length),
@@ -68,7 +68,7 @@ function Waveform() {
         var color = config.color || '#333333';
         var bgColor = config.bgColor || '#dddddd';
         var buffer = config.sound ? config.sound.data : config.buffer || audioBuffer;
-        var data = this.compute(buffer, width);
+        var data = compute(buffer, width);
 
         var context = canvas.getContext('2d');
         context.strokeStyle = color;
@@ -85,7 +85,7 @@ function Waveform() {
 
         return canvas;
     };
-    
+
     return Object.freeze({
         compute: compute,
         draw: draw
