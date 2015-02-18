@@ -2,10 +2,10 @@
 
 var Browser = require('./lib/utils/browser.js'),
     file = require('./lib/utils/file.js'),
-    Group = require('./lib/group-b.js'),
+    Group = require('./lib/group.js'),
     Loader = require('./lib/utils/loader.js'),
     Sound = require('./lib/sound.js'),
-    SoundGroup = require('./lib/utils/sound-group-b.js'),
+    SoundGroup = require('./lib/utils/sound-group.js'),
     utils = require('./lib/utils/utils.js');
 
 function Sono() {

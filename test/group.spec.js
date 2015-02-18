@@ -2,7 +2,7 @@
 
 var Sono = require('../src/sono.js');
 
-var baseURL = 'http://ianmcgregor.me/prototypes/assets/audio/';
+var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
 
 describe('Group', function() {
 

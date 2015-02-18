@@ -34,7 +34,7 @@ function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
 
     // map native properties of AnalyserNode
     Object.defineProperties(node, {
-        'smoothing': {
+        smoothing: {
             // 0 to 1
             get: function() { return node.smoothingTimeConstant; },
             set: function(value) { node.smoothingTimeConstant = value; }

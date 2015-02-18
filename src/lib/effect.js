@@ -54,7 +54,9 @@ function Effect(context) {
         context = null;
         destination = null;
         nodeList = [];
-        sourceNode.disconnect();
+        if(sourceNode) {
+            sourceNode.disconnect();
+        }
         sourceNode = null;
     };
 

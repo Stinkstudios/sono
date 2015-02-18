@@ -3,7 +3,7 @@
 function Distortion(context, amount) {
 
     amount = amount || 1;
-    
+
     var node = context.createWaveShaper();
 
     // create waveShaper distortion curve from 0 to 1
@@ -24,7 +24,7 @@ function Distortion(context, amount) {
     };
 
     Object.defineProperties(node, {
-        'amount': {
+        amount: {
             get: function() { return amount; },
             set: function(value) { this.update(value); }
         }

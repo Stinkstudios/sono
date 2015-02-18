@@ -154,8 +154,8 @@ function Sound(context, destination) {
         else if(file.isMediaStream(data)) {
             source = new MicrophoneSource(data, context);
         }
-        else if(file.isOscillatorType(data)) {
-            source = new OscillatorSource(data, context);
+        else if(file.isOscillatorType((data && data.type) || data)) {
+            source = new OscillatorSource(data.type || data, context);
         }
         else if(file.isScriptConfig(data)) {
             source = new ScriptSource(data, context);

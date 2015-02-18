@@ -1,106 +1,101 @@
 'use strict';
 
-/*
- * TODO: Ended handler
- */
-
 var Group = require('../group.js');
 
 function SoundGroup(context, destination) {
-    Group.call(this, context, destination);
-    this._src = null;
-}
+    var api = new Group(context, destination),
+        sounds = api.sounds,
+        playbackRate = 1,
+        loop = false,
+        src;
 
-SoundGroup.prototype = Object.create(Group.prototype);
-SoundGroup.prototype.constructor = SoundGroup;
+    var getSource = function() {
+        if(!sounds.length) { return; }
 
-/*
- * Add / remove
- */
+        sounds.sort(function(a, b) {
+            return b.duration - a.duration;
+        });
 
-SoundGroup.prototype.add = function(sound) {
-    Group.prototype.add.call(this, sound);
-    this._getSource();
-};
+        src = sounds[0];
+    };
 
-SoundGroup.prototype.remove = function(soundOrId) {
-    Group.prototype.remove.call(this, soundOrId);
-    this._getSource();
-};
+    var add = api.add;
+    api.add = function(sound) {
+        add(sound);
+        getSource();
+        return api;
+    };
 
-SoundGroup.prototype._getSource = function() {
-    if(!this._sounds.length) { return; }
+    var remove = api.rmeove;
+    api.remove = function(soundOrId) {
+        remove(soundOrId);
+        getSource();
+        return api;
+    };
 
-    this._sounds.sort(function(a, b) {
-        return b.duration - a.duration;
+    Object.defineProperties(api, {
+        currentTime: {
+            get: function() {
+                return src ? src.currentTime : 0;
+            },
+            set: function(value) {
+                this.stop();
+                this.play(0, value);
+            }
+        },
+        duration: {
+            get: function() {
+                return src ? src.duration : 0;
+            }
+        },
+        // ended: {
+        //     get: function() {
+        //         return src ? src.ended : false;
+        //     }
+        // },
+        loop: {
+            get: function() {
+                return loop;
+            },
+            set: function(value) {
+                loop = !!value;
+                sounds.forEach(function(sound) {
+                    sound.loop = loop;
+                });
+            }
+        },
+        paused: {
+            get: function() {
+                // return src ? src.paused : false;
+                return !!src && src.paused;
+            }
+        },
+        progress: {
+            get: function() {
+                return src ? src.progress : 0;
+            }
+        },
+        playbackRate: {
+            get: function() {
+                return playbackRate;
+            },
+            set: function(value) {
+                playbackRate = value;
+                sounds.forEach(function(sound) {
+                    sound.playbackRate = playbackRate;
+                });
+            }
+        },
+        playing: {
+            get: function() {
+                // return src ? src.playing : false;
+                return !!src && src.playing;
+            }
+        }
     });
 
-    this._src = this._sounds[0];
-};
+    return api;
 
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(SoundGroup.prototype, {
-    'currentTime': {
-        get: function() {
-            return this._src ? this._src.currentTime : 0;
-        },
-        set: function(value) {
-            this.stop();
-            this.play(0, value);
-        }
-    },
-    'duration': {
-        get: function() {
-            return this._src ? this._src.duration : 0;
-        }
-    },
-    // 'ended': {
-    //     get: function() {
-    //         return this._src ? this._src.ended : false;
-    //     }
-    // },
-    'loop': {
-        get: function() {
-            return this._loop;
-        },
-        set: function(value) {
-            this._loop = !!value;
-            this._sounds.forEach(function(sound) {
-                sound.loop = this._loop;
-            });
-        }
-    },
-    'paused': {
-        get: function() {
-            // return this._src ? this._src.paused : false;
-            return !!this._src && this._src.paused;
-        }
-    },
-    'progress': {
-        get: function() {
-            return this._src ? this._src.progress : 0;
-        }
-    },
-    'playbackRate': {
-        get: function() {
-            return this._playbackRate;
-        },
-        set: function(value) {
-            this._playbackRate = value;
-            this._sounds.forEach(function(sound) {
-                sound.playbackRate = this._playbackRate;
-            });
-        }
-    },
-    'playing': {
-        get: function() {
-            // return this._src ? this._src.playing : false;
-            return !!this._src && this._src.playing;
-        }
-    }
-});
+}
 
 module.exports = SoundGroup;

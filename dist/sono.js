@@ -707,7 +707,9 @@ function Effect(context) {
         context = null;
         destination = null;
         nodeList = [];
-        sourceNode.disconnect();
+        if(sourceNode) {
+            sourceNode.disconnect();
+        }
         sourceNode = null;
     };
 
@@ -1006,7 +1008,7 @@ function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
 
     // map native properties of AnalyserNode
     Object.defineProperties(node, {
-        'smoothing': {
+        smoothing: {
             // 0 to 1
             get: function() { return node.smoothingTimeConstant; },
             set: function(value) { node.smoothingTimeConstant = value; }
@@ -1024,7 +1026,7 @@ module.exports = Analyser;
 function Distortion(context, amount) {
 
     amount = amount || 1;
-    
+
     var node = context.createWaveShaper();
 
     // create waveShaper distortion curve from 0 to 1
@@ -1045,7 +1047,7 @@ function Distortion(context, amount) {
     };
 
     Object.defineProperties(node, {
-        'amount': {
+        amount: {
             get: function() { return amount; },
             set: function(value) { this.update(value); }
         }
@@ -1187,17 +1189,6 @@ function FakeContext() {
     if(!window.Uint8Array) {
         window.Uint8Array = window.Float32Array = Array;
     }
-    // if(!window.Uint8Array) {
-    //     window.Int8Array =
-    //     window.Uint8Array =
-    //     window.Uint8ClampedArray =
-    //     window.Int16Array =
-    //     window.Uint16Array =
-    //     window.Int32Array =
-    //     window.Uint32Array =
-    //     window.Float32Array =
-    //     window.Float64Array = Array;
-    // }
 
     return {
         createAnalyser: fakeNode,
@@ -1946,12 +1937,9 @@ function Group(context, destination) {
      */
 
     var destroy = function() {
-        // while(sounds.length) {
-        //     sounds.pop().destroy();
-        // }
-        sounds.forEach(function(sound) {
-            sound.destroy();
-        });
+        while(sounds.length) {
+            sounds.pop().destroy();
+        }
     };
 
     /*
@@ -2173,8 +2161,8 @@ function Sound(context, destination) {
         else if(file.isMediaStream(data)) {
             source = new MicrophoneSource(data, context);
         }
-        else if(file.isOscillatorType(data)) {
-            source = new OscillatorSource(data, context);
+        else if(file.isOscillatorType((data && data.type) || data)) {
+            source = new OscillatorSource(data.type || data, context);
         }
         else if(file.isScriptConfig(data)) {
             source = new ScriptSource(data, context);
@@ -3801,7 +3789,7 @@ function SoundGroup(context, destination) {
     };
 
     Object.defineProperties(api, {
-        'currentTime': {
+        currentTime: {
             get: function() {
                 return src ? src.currentTime : 0;
             },
@@ -3810,17 +3798,17 @@ function SoundGroup(context, destination) {
                 this.play(0, value);
             }
         },
-        'duration': {
+        duration: {
             get: function() {
                 return src ? src.duration : 0;
             }
         },
-        // 'ended': {
+        // ended: {
         //     get: function() {
         //         return src ? src.ended : false;
         //     }
         // },
-        'loop': {
+        loop: {
             get: function() {
                 return loop;
             },
@@ -3831,18 +3819,18 @@ function SoundGroup(context, destination) {
                 });
             }
         },
-        'paused': {
+        paused: {
             get: function() {
                 // return src ? src.paused : false;
                 return !!src && src.paused;
             }
         },
-        'progress': {
+        progress: {
             get: function() {
                 return src ? src.progress : 0;
             }
         },
-        'playbackRate': {
+        playbackRate: {
             get: function() {
                 return playbackRate;
             },
@@ -3853,7 +3841,7 @@ function SoundGroup(context, destination) {
                 });
             }
         },
-        'playing': {
+        playing: {
             get: function() {
                 // return src ? src.playing : false;
                 return !!src && src.playing;
@@ -3983,7 +3971,7 @@ function Waveform() {
         var sameBuffer = buffer === audioBuffer;
         var sameLength = waveformData && waveformData.length === length;
         if(sameBuffer && sameLength) { return waveformData; }
-        
+
         //console.log('-------------------');
         //console.time('waveformData');
         var waveform = new Float32Array(length),
@@ -4040,7 +4028,7 @@ function Waveform() {
         var color = config.color || '#333333';
         var bgColor = config.bgColor || '#dddddd';
         var buffer = config.sound ? config.sound.data : config.buffer || audioBuffer;
-        var data = this.compute(buffer, width);
+        var data = compute(buffer, width);
 
         var context = canvas.getContext('2d');
         context.strokeStyle = color;
@@ -4057,7 +4045,7 @@ function Waveform() {
 
         return canvas;
     };
-    
+
     return Object.freeze({
         compute: compute,
         draw: draw

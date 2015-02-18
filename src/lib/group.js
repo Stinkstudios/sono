@@ -3,162 +3,175 @@
 var Effect = require('./effect.js');
 
 function Group(context, destination) {
-    this._sounds = [];
-    this._context = context;
-    this._effect = new Effect(this._context);
-    this._gain = this._effect.gain();
-    if(this._context) {
-        this._effect.setSource(this._gain);
-        this._effect.setDestination(destination || this._context.destination);
+    var sounds = [],
+        effect = new Effect(context),
+        gain = effect.gain(),
+        preMuteVolume = 1,
+        api;
+
+    if(context) {
+        effect.setSource(gain);
+        effect.setDestination(destination || context.destination);
     }
-}
 
-/*
- * Add / remove
- */
+    /*
+     * Add / remove
+     */
 
-Group.prototype.add = function(sound) {
-    sound.gain.disconnect();
-    sound.gain.connect(this._gain);
+    var add = function(sound) {
+        sound.gain.disconnect();
+        sound.gain.connect(gain);
 
-    this._sounds.push(sound);
+        sounds.push(sound);
 
-    sound.once('destroyed', this.remove.bind(this));
-};
+        sound.once('destroyed', remove);
+    };
 
-Group.prototype.remove = function(soundOrId) {
-    this._sounds.some(function(sound, index, sounds) {
-        if(sound === soundOrId || sound.id === soundOrId) {
-            sounds.splice(index, 1);
-            return true;
-        }
-    });
-};
-
-/*
- * Controls
- */
-
-Group.prototype.play = function(delay, offset) {
-    this._sounds.forEach(function(sound) {
-        sound.play(delay, offset);
-    });
-};
-
-Group.prototype.pause = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.playing) {
-            sound.pause();
-        }
-    });
-};
-
-Group.prototype.resume = function() {
-    this._sounds.forEach(function(sound) {
-        if(sound.paused) {
-            sound.play();
-        }
-    });
-};
-
-Group.prototype.stop = function() {
-    this._sounds.forEach(function(sound) {
-        sound.stop();
-    });
-};
-
-Group.prototype.seek = function(percent) {
-    this._sounds.forEach(function(sound) {
-        sound.seek(percent);
-    });
-};
-
-Group.prototype.mute = function() {
-    this._preMuteVolume = this.volume;
-    this.volume = 0;
-};
-
-Group.prototype.unMute = function() {
-    this.volume = this._preMuteVolume || 1;
-};
-
-Group.prototype.fade = function(volume, duration) {
-    if(this._context) {
-        var param = this._gain.gain;
-        var time = this._context.currentTime;
-
-        param.cancelScheduledValues(time);
-        param.setValueAtTime(param.value, time);
-        // param.setValueAtTime(volume, time + duration);
-        param.linearRampToValueAtTime(volume, time + duration);
-        // param.setTargetAtTime(volume, time, duration);
-        // param.exponentialRampToValueAtTime(Math.max(volume, 0.0001), time + duration);
-    }
-    else {
-        this._sounds.forEach(function(sound) {
-            sound.fade(volume, duration);
+    var remove = function(soundOrId) {
+        sounds.some(function(sound, index, sounds) {
+            if(sound === soundOrId || sound.id === soundOrId) {
+                sounds.splice(index, 1);
+                return true;
+            }
         });
-    }
+    };
 
-    return this;
-};
+    /*
+     * Controls
+     */
 
-/*
- * Destroy
- */
+    var play = function(delay, offset) {
+        sounds.forEach(function(sound) {
+            sound.play(delay, offset);
+        });
+    };
 
-Group.prototype.destroy = function() {
-    // while(this._sounds.length) {
-    //     this._sounds.pop().destroy();
-    // }
-    this._sounds.forEach(function(sound) {
-        sound.destroy();
-    });
-};
-
-
-/*
- * Getters & Setters
- */
-
-Object.defineProperties(Group.prototype, {
-    effect: {
-        get: function() {
-            return this._effect;
-        }
-    },
-    gain: {
-        get: function() {
-            return this._gain;
-        }
-    },
-    sounds: {
-        get: function() {
-            return this._sounds;
-        }
-    },
-    volume: {
-        get: function() {
-            return this._gain.gain.value;
-        },
-        set: function(value) {
-            if(isNaN(value)) { return; }
-
-            if(this._context) {
-                this._gain.gain.cancelScheduledValues(this._context.currentTime);
-                this._gain.gain.value = value;
-                this._gain.gain.setValueAtTime(value, this._context.currentTime);
+    var pause = function() {
+        sounds.forEach(function(sound) {
+            if(sound.playing) {
+                sound.pause();
             }
-            else {
-                this._gain.gain.value = value;
+        });
+    };
+
+    var resume = function() {
+        sounds.forEach(function(sound) {
+            if(sound.paused) {
+                sound.play();
             }
-            this._sounds.forEach(function(sound) {
-                if (!sound.context) {
-                    sound.volume = value;
-                }
+        });
+    };
+
+    var stop = function() {
+        sounds.forEach(function(sound) {
+            sound.stop();
+        });
+    };
+
+    var seek = function(percent) {
+        sounds.forEach(function(sound) {
+            sound.seek(percent);
+        });
+    };
+
+    var mute = function() {
+        preMuteVolume = api.volume;
+        api.volume = 0;
+    };
+
+    var unMute = function() {
+        api.volume = preMuteVolume || 1;
+    };
+
+    var fade = function(volume, duration) {
+        if(context) {
+            var param = gain.gain;
+            var time = context.currentTime;
+
+            param.cancelScheduledValues(time);
+            param.setValueAtTime(param.value, time);
+            // param.setValueAtTime(volume, time + duration);
+            param.linearRampToValueAtTime(volume, time + duration);
+            // param.setTargetAtTime(volume, time, duration);
+            // param.exponentialRampToValueAtTime(Math.max(volume, 0.0001), time + duration);
+        }
+        else {
+            sounds.forEach(function(sound) {
+                sound.fade(volume, duration);
             });
         }
-    }
-});
+
+        return this;
+    };
+
+    /*
+     * Destroy
+     */
+
+    var destroy = function() {
+        while(sounds.length) {
+            sounds.pop().destroy();
+        }
+    };
+
+    /*
+     * Api
+     */
+
+    api = {
+        add: add,
+        remove: remove,
+        play: play,
+        pause: pause,
+        resume: resume,
+        stop: stop,
+        seek: seek,
+        mute: mute,
+        unMute: unMute,
+        fade: fade,
+        destroy: destroy
+    };
+
+    /*
+     * Getters & Setters
+     */
+
+    Object.defineProperties(api, {
+        effect: {
+            value: effect
+        },
+        gain: {
+            value: gain
+        },
+        sounds: {
+            value: sounds
+        },
+        volume: {
+            get: function() {
+                return gain.gain.value;
+            },
+            set: function(value) {
+                if(isNaN(value)) { return; }
+
+                if(context) {
+                    gain.gain.cancelScheduledValues(context.currentTime);
+                    gain.gain.value = value;
+                    gain.gain.setValueAtTime(value, context.currentTime);
+                }
+                else {
+                    gain.gain.value = value;
+                }
+                sounds.forEach(function(sound) {
+                    if (!sound.context) {
+                        sound.volume = value;
+                    }
+                });
+            }
+        }
+    });
+
+    return api;
+    // return Object.freeze(api);
+}
 
 module.exports = Group;

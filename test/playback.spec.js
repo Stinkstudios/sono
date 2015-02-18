@@ -6,7 +6,7 @@ describe('Sono playback', function() {
 
     this.timeout(5000);
 
-    var baseURL = 'http://ianmcgregor.me/prototypes/assets/audio/';
+    var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
 
     describe('create', function() {
         var config = {
@@ -112,7 +112,9 @@ describe('Sono playback', function() {
     });
 
     describe('fade sound', function() {
-        var sound = Sono.createSound('sine');
+        var sound = Sono.createSound({
+            type: 'sine'
+        });
         sound.play();
         sound.fade(0, 0.2);
 
