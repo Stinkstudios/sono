@@ -4,6 +4,7 @@ var browserify = require('browserify'),
     buffer = require('vinyl-buffer'),
     chalk = require('chalk'),
     collapse = require('bundle-collapser/plugin'),
+    cssnext = require('gulp-cssnext'),
     derequire = require('gulp-derequire'),
     exorcist = require('exorcist'),
     gulp = require('gulp'),
@@ -22,7 +23,7 @@ function logError(msg) {
 // bundler
 var bundler = watchify(browserify({
   entries: ['./src/sono.js'],
-  standalone: 'Sono',
+  standalone: 'sono',
   debug: true
 }, watchify.args));
 
@@ -127,10 +128,23 @@ gulp.task('jshint', function() {
 // watch
 gulp.task('watch', function() {
   gulp.watch('test/**/*.js', ['jshint']);
-  gulp.watch('examples/**/*.css', ['reload']);
+  gulp.watch('examples/**/*.css', ['stylesheets']);
   gulp.watch('examples/**/*.html', ['reload']);
   gulp.watch('examples/**/*.js', ['reload']);
 });
 
 // default
 gulp.task('default', ['connect', 'watch', 'bundle']);
+
+
+// examples
+
+gulp.task('stylesheets', function() {
+  gulp.src('examples/css/index.css')
+    .pipe(cssnext({
+        compress: false
+    }))
+    .pipe(rename('styles.css'))
+    .pipe(gulp.dest('./examples/css/'))
+    .pipe(browserSync.reload({stream: true}));
+});

@@ -101,7 +101,6 @@ svg:not(:root) {
 }
 
 hr {
-  -moz-box-sizing: content-box;
   box-sizing: content-box;
   height: 0;
 }
@@ -162,8 +161,7 @@ input {
 
 input[type=checkbox],
 input[type=radio] {
-  -moz-box-sizing: border-box;
-       box-sizing: border-box;
+  box-sizing: border-box;
   padding: 0;
 }
 
@@ -174,7 +172,6 @@ input[type=number]::-webkit-outer-spin-button {
 
 input[type=search] {
   -webkit-appearance: textfield;
-  -moz-box-sizing: content-box;
   box-sizing: content-box;
 }
 
@@ -272,7 +269,7 @@ ul {
   outline: 0!important;
 }
 
-/*! Elements */
+/*! Sections */
 
 html {
   height: 100%;
@@ -283,10 +280,31 @@ body {
   background-color: #FFF;
   color: #000;
   font-family: Helvetica, sans-serif;
+  font-size: 16px;
   font-size: 1.6rem;
   height: 100%;
   line-height: 1.5;
   margin: 0;
+}
+
+body {
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+      -ms-flex-pack: center;
+          justify-content: center;
 }
 
 h1,
@@ -296,15 +314,13 @@ h3 {
   margin: .5em 0;
 }
 
-/*! Sections */
-
 h1 {
-  background-color: #eeeeee;
+  /*background-color: #eeeeee;*/
   /*border-bottom: 2px solid #dddddd;*/
-  box-shadow: 0 0 8px rgba(0,0,0,0.5);
+  /*box-shadow: 0 0 8px rgba(0,0,0,0.5);
   color: #333333;
   margin: 0;
-  padding: 0.5em 1em;
+  padding: 0.5em 1em;*/
 }
 
 h3 {
@@ -312,11 +328,169 @@ h3 {
 }
 
 section {
-  padding: 2em;
+  /*padding: 2em;*/
 }
 
 /*! Components */
 
+/* Player */
+
+.Player {
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 8px #aaa;
+  height: 360px;
+  position: relative;
+  width: 360px;
+}
+
+@media (max-width: 640px) {
+  .Player {
+    -webkit-transform: scale(0.5);
+        -ms-transform: scale(0.5);
+            transform: scale(0.5);
+  }
+}
+
+@media (max-width: 140px) {
+  .Player {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+.Player-canvas {
+  left: 50%;
+  margin-left: -380px;
+  margin-top: -380px;
+  position: absolute;
+  top: 50%;
+  z-index: -1;
+}
+
+@media (max-width: 140px) {
+  .Player-canvas {
+    -webkit-transform: scale(0.6);
+        -ms-transform: scale(0.6);
+            transform: scale(0.6);
+  }
+}
+
+.Player-inner {
+  background: #fff;
+  border-radius: 50%;
+  height: calc(100% - 10px);
+  left: 5px;
+  position: absolute;
+  top: 5px;
+  width: calc(100% - 10px);
+  z-index: 1;
+}
+
+.Player-play {
+  width: 0;
+  height: 0;
+  border-top: 60px solid transparent;
+  border-bottom: 60px solid transparent;
+  border-left: 80px solid rgba(255, 0, 255, 0.6);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translate(-40%, -50%);
+      -ms-transform: translate(-40%, -50%);
+          transform: translate(-40%, -50%);
+}
+
+.Player-pause {
+  border-left: 35px solid rgba(255, 0, 255, 0.6);
+  border-right: 35px solid rgba(255, 0, 255, 0.6);
+  display: none;
+  height: 100px;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  -webkit-transform: translate(-50%, -50%);
+      -ms-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+  width: 20px;
+}
+
+.Player.is-playing .Player-play {
+  display: none;
+}
+
+.Player.is-playing .Player-pause {
+  display: block;
+}
+
+.Player-mask {
+  height: 360px;
+  position: absolute;
+  width: 180px;
+  overflow: hidden;
+}
+
+@media (max-width: 140px) {
+  .Player-mask {
+    height: 200px;
+    width: 100px;
+  }
+}
+
+.Player-maskA {
+  left: 180px;
+}
+
+@media (max-width: 140px) {
+  .Player-maskA {
+    left: 100px;
+  }
+}
+
+.Player-half {
+  background-color: rgba(255, 0, 255, 1);
+  height: 360px;
+  position: absolute;
+  width: 180px;
+}
+
+@media (max-width: 140px) {
+  .Player-half {
+    width: 100px;
+    height: 200px;
+  }
+}
+
+.Player-halfA {
+  /*border-radius: var(--radius) 0 0 var(--radius);*/
+  border-radius: 100% / 50%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  /*left: calc(0 - var(--radius));*/
+  left: -100%;
+  -webkit-transform-origin: right center;
+      -ms-transform-origin: right center;
+          transform-origin: right center;
+  -webkit-transform: rotate(0deg);
+      -ms-transform: rotate(0deg);
+          transform: rotate(0deg);
+}
+
+.Player-halfB {
+  /*border-radius: 0 var(--radius) var(--radius) 0;*/
+  border-radius: 100% / 50%;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  /*left: var(--radius);*/
+  left: 100%;
+  -webkit-transform-origin: left center;
+      -ms-transform-origin: left center;
+          transform-origin: left center;
+  -webkit-transform: rotate(0deg);
+      -ms-transform: rotate(0deg);
+          transform: rotate(0deg);
+}
+
+/*
 .Player {
   background: #eee;
   box-shadow: 1px 2px 2px rgba(0,0,0,.2);
@@ -422,3 +596,4 @@ section {
 .Player-effect-panel.is-visible {
   display: block;
 }
+*/

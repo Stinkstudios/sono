@@ -28,6 +28,7 @@ function Effect(context) {
     };
 
     var remove = function(node) {
+        if(!node) { return; }
         var l = nodeList.length;
         for (var i = 0; i < l; i++) {
             if(node === nodeList[i]) {
@@ -54,9 +55,7 @@ function Effect(context) {
         context = null;
         destination = null;
         nodeList = [];
-        if(sourceNode) {
-            sourceNode.disconnect();
-        }
+        sourceNode && sourceNode.disconnect();
         sourceNode = null;
     };
 
@@ -105,9 +104,8 @@ function Effect(context) {
      * Effects
      */
 
-    var analyser = function(fftSize, smoothing, minDecibels, maxDecibels) {
-        var node = new Analyser(context, fftSize, smoothing, minDecibels, maxDecibels);
-        return add(node);
+    var analyser = function(config) {
+        return add(new Analyser(context, config));
     };
 
     // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
@@ -150,22 +148,19 @@ function Effect(context) {
     };
 
     var echo = function(time, gain) {
-        var node = new Echo(context, time, gain);
-        return add(node);
+        return add(new Echo(context, time, gain));
     };
 
     var distortion = function(amount) {
-        var node = new Distortion(context, amount);
         // Float32Array defining curve (values are interpolated)
         //node.curve
         // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
         //node.oversample = '2x';
-        return add(node);
+        return add(new Distortion(context, amount));
     };
 
     var filter = function(type, frequency, quality, gain) {
-        var filter = new Filter(context, type, frequency, quality, gain);
-        return add(filter);
+        return add(new Filter(context, type, frequency, quality, gain));
     };
 
     var lowpass = function(frequency, quality, gain) {
@@ -201,8 +196,7 @@ function Effect(context) {
     };
 
     var flanger = function(config) {
-        var node = new Flanger(context, config);
-        return add(node);
+        return add(new Flanger(context, config));
     };
 
     var gain = function(value) {
@@ -214,23 +208,19 @@ function Effect(context) {
     };
 
     var panner = function() {
-        var node = new Panner(context);
-        return add(node);
+        return add(new Panner(context));
     };
 
     var phaser = function(config) {
-        var node = new Phaser(context, config);
-        return add(node);
+        return add(new Phaser(context, config));
     };
 
     var recorder = function(passThrough) {
-        var node = new Recorder(context, passThrough);
-        return add(node);
+        return add(new Recorder(context, passThrough));
     };
 
     var reverb = function(seconds, decay, reverse) {
-        var node = new Reverb(context, seconds, decay, reverse);
-        return add(node);
+        return add(new Reverb(context, seconds, decay, reverse));
     };
 
     var script = function(config) {

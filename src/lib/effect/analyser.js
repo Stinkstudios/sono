@@ -1,15 +1,21 @@
 'use strict';
 
-function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
-    fftSize = fftSize || 32;
-    var waveformData, frequencyData;
+function Analyser(context, config) {
+    config = config || {};
 
-    var node = context.createAnalyser();
+    var fftSize = config.fftSize || 512,
+        waveformData,
+        frequencyData,
+        node = context.createAnalyser();
+
     node.fftSize = fftSize; // frequencyBinCount will be half this value
 
-    if(smoothing !== undefined) { node.smoothingTimeConstant = smoothing; }
-    if(minDecibels !== undefined) { node.minDecibels = minDecibels; }
-    if(maxDecibels !== undefined) { node.maxDecibels = maxDecibels; }
+    node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
+    node.minDecibels = config.minDecibels || node.minDecibels;
+    node.maxDecibels = config.maxDecibels || node.maxDecibels;
+    // if(config.smoothing !== undefined) { node.smoothingTimeConstant = smoothing; }
+    // if(config.minDecibels !== undefined) { node.minDecibels = minDecibels; }
+    // if(config.maxDecibels !== undefined) { node.maxDecibels = maxDecibels; }
 
     var updateFFTSize = function() {
         if(fftSize !== node.fftSize || waveformData === undefined) {

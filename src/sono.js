@@ -270,7 +270,7 @@ function Sono() {
      */
 
     var log = function() {
-        var title = 'Sono ' + VERSION,
+        var title = 'sono ' + VERSION,
             info = 'Supported:' + api.isSupported +
                    ' WebAudioAPI:' + api.hasWebAudio +
                    ' TouchLocked:' + isTouchLocked +

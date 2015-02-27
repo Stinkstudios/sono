@@ -8,7 +8,8 @@ var BufferSource = require('./source/buffer-source.js'),
     MediaSource = require('./source/media-source.js'),
     MicrophoneSource = require('./source/microphone-source.js'),
     OscillatorSource = require('./source/oscillator-source.js'),
-    ScriptSource = require('./source/script-source.js');
+    ScriptSource = require('./source/script-source.js'),
+    waveform = require('./utils/waveform.js')();
 
 function Sound(context, destination) {
     var id,
@@ -78,21 +79,23 @@ function Sound(context, destination) {
     };
 
     var pause = function() {
-        if(!source) { return api; }
-        source.pause();
+        // if(!source) { return api; }
+        source && source.pause();
         return api;
     };
 
     var stop = function() {
-        if(!source) { return api; }
-        source.stop();
+        // if(!source) { return api; }
+        source && source.stop();
         return api;
     };
 
     var seek = function(percent) {
-        if(!source) { return api; }
-        stop();
-        play(0, source.duration * percent);
+        // if(!source) { return api; }
+        if(source) {
+            stop();
+            play(0, source.duration * percent);
+        }
         return api;
     };
 
@@ -118,10 +121,15 @@ function Sound(context, destination) {
      */
 
     var destroy = function() {
-        if(source) { source.destroy(); }
-        if(effect) { effect.destroy(); }
-        if(gain) { gain.disconnect(); }
-        if(loader) { loader.destroy(); }
+        // if(source) { source.destroy(); }
+        // if(effect) { effect.destroy(); }
+        // if(gain) { gain.disconnect(); }
+        // if(loader) { loader.destroy(); }
+        source && source.destroy();
+        effect && effect.destroy();
+        gain && gain.disconnect();
+        loader && loader.destroy();
+        api.off('loaded');
         api.off('ended');
         gain = null;
         context = null;
@@ -166,16 +174,21 @@ function Sound(context, destination) {
 
         effect.setSource(source.sourceNode);
 
+        // window.setTimeout(function() {
+        api.emit('ready');
+        // }, 0);
+
         if(playWhenReady) {
             playWhenReady();
         }
     };
 
     api = Object.create(Emitter.prototype, {
-        constructor: Sound,
-
         _events: {
             value: {}
+        },
+        constructor: {
+            value: Sound
         },
         play: {
             value: play
@@ -337,6 +350,16 @@ function Sound(context, destination) {
                         source.volume = value;
                     }
                 }
+            }
+        },
+        waveform: {
+            value: function(length) {
+                if(!data) {
+                    api.once('ready', function() {
+                        waveform(data, length);
+                    });
+                }
+                return waveform(data, length);
             }
         }
     });

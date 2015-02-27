@@ -80,7 +80,7 @@ function effectTest(isWebAudio) {
         describe('analyser', function() {
             it('should have expected api', function() {
                 expect(effect.analyser).to.be.a('function');
-                expect(effect.analyser.length).to.eql(4);
+                expect(effect.analyser.length).to.eql(1);
                 expect(effect.analyser()).to.be.an.instanceof(audioNode);
             });
         });

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Sono - Examples - Fade</title>
+    <title>sono - Examples - Fade</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -30,15 +30,15 @@
         (function() {
             'use strict';
 
-            Sono.log();
+            sono.log();
 
-            var soundA = Sono.createSound({
+            var soundA = sono.createSound({
                 url: ['audio/music.ogg', 'audio/music.mp3'],
                 loop: true,
                 volume: 1
             }).play();
 
-            var soundB = Sono.createSound({
+            var soundB = sono.createSound({
                 url: ['audio/hit.ogg', 'audio/hit.mp3'],
                 loop: true,
                 volume: 0
@@ -61,11 +61,11 @@
             });
 
             btnFadeIn.addEventListener('click', function() {
-                Sono.fade(1, 2);
+                sono.fade(1, 2);
             });
 
             btnFadeOut.addEventListener('click', function() {
-                Sono.fade(0, 2);
+                sono.fade(0, 2);
             });
 
             var info = document.querySelector('[data-js="info"]');
@@ -73,7 +73,7 @@
             function update() {
                 window.requestAnimationFrame(update);
 
-                info.innerHTML = '<p>Sono.volume: ' + Sono.volume.toFixed(2) +
+                info.innerHTML = '<p>sono.volume: ' + sono.volume.toFixed(2) +
                     '<br />soundA.volume: ' + soundA.volume.toFixed(2) +
                     '<br />soundB.volume: ' + soundB.volume.toFixed(2) + '</p>';
             }

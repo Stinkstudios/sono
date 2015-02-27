@@ -1,5 +1,5 @@
 /*jshint unused: false*/
-/*global Sono:false */
+/*global sono:false */
 
 'use strict';
 
@@ -70,8 +70,8 @@ function Player(sound, el) {
             window.requestAnimationFrame(update);
         }
 
-        info.innerHTML = Sono.utils.timeCode(sound.currentTime) + ' / ' +
-                         Sono.utils.timeCode(sound.duration);
+        info.innerHTML = sono.utils.timeCode(sound.currentTime) + ' / ' +
+                         sono.utils.timeCode(sound.duration);
 
         waveformProgress.style.width = (sound.progress * 100).toFixed(1) + '%';
     }
@@ -79,17 +79,18 @@ function Player(sound, el) {
 
     // display waveform
     function displayWaveform() {
-        var wave = Sono.utils.waveform();
-        wave.draw({
+        sono.utils.drawWaveform({
             canvas: waveformBack,
-            sound: sound,
+            // sound: sound,
+            waveform: sound.waveform(waveformBack.width),
             color: '#333333',
             bgColor: '#dddddd'
         });
 
-        wave.draw({
+        sono.utils.drawWaveform({
             canvas: waveformFront,
-            sound: sound,
+            // sound: sound,
+            waveform: sound.waveform(waveformFront.width),
             color: '#dddddd',
             bgColor: '#333333'
         });

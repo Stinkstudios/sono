@@ -271,7 +271,7 @@ function Sono() {
      */
 
     var log = function() {
-        var title = 'Sono ' + VERSION,
+        var title = 'sono ' + VERSION,
             info = 'Supported:' + api.isSupported +
                    ' WebAudioAPI:' + api.hasWebAudio +
                    ' TouchLocked:' + isTouchLocked +
@@ -681,6 +681,7 @@ function Effect(context) {
     };
 
     var remove = function(node) {
+        if(!node) { return; }
         var l = nodeList.length;
         for (var i = 0; i < l; i++) {
             if(node === nodeList[i]) {
@@ -707,9 +708,7 @@ function Effect(context) {
         context = null;
         destination = null;
         nodeList = [];
-        if(sourceNode) {
-            sourceNode.disconnect();
-        }
+        sourceNode && sourceNode.disconnect();
         sourceNode = null;
     };
 
@@ -758,9 +757,8 @@ function Effect(context) {
      * Effects
      */
 
-    var analyser = function(fftSize, smoothing, minDecibels, maxDecibels) {
-        var node = new Analyser(context, fftSize, smoothing, minDecibels, maxDecibels);
-        return add(node);
+    var analyser = function(config) {
+        return add(new Analyser(context, config));
     };
 
     // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
@@ -803,22 +801,19 @@ function Effect(context) {
     };
 
     var echo = function(time, gain) {
-        var node = new Echo(context, time, gain);
-        return add(node);
+        return add(new Echo(context, time, gain));
     };
 
     var distortion = function(amount) {
-        var node = new Distortion(context, amount);
         // Float32Array defining curve (values are interpolated)
         //node.curve
         // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
         //node.oversample = '2x';
-        return add(node);
+        return add(new Distortion(context, amount));
     };
 
     var filter = function(type, frequency, quality, gain) {
-        var filter = new Filter(context, type, frequency, quality, gain);
-        return add(filter);
+        return add(new Filter(context, type, frequency, quality, gain));
     };
 
     var lowpass = function(frequency, quality, gain) {
@@ -854,8 +849,7 @@ function Effect(context) {
     };
 
     var flanger = function(config) {
-        var node = new Flanger(context, config);
-        return add(node);
+        return add(new Flanger(context, config));
     };
 
     var gain = function(value) {
@@ -867,23 +861,19 @@ function Effect(context) {
     };
 
     var panner = function() {
-        var node = new Panner(context);
-        return add(node);
+        return add(new Panner(context));
     };
 
     var phaser = function(config) {
-        var node = new Phaser(context, config);
-        return add(node);
+        return add(new Phaser(context, config));
     };
 
     var recorder = function(passThrough) {
-        var node = new Recorder(context, passThrough);
-        return add(node);
+        return add(new Recorder(context, passThrough));
     };
 
     var reverb = function(seconds, decay, reverse) {
-        var node = new Reverb(context, seconds, decay, reverse);
-        return add(node);
+        return add(new Reverb(context, seconds, decay, reverse));
     };
 
     var script = function(config) {
@@ -974,16 +964,22 @@ module.exports = Effect;
 },{}],4:[function(_dereq_,module,exports){
 'use strict';
 
-function Analyser(context, fftSize, smoothing, minDecibels, maxDecibels) {
-    fftSize = fftSize || 32;
-    var waveformData, frequencyData;
+function Analyser(context, config) {
+    config = config || {};
 
-    var node = context.createAnalyser();
+    var fftSize = config.fftSize || 512,
+        waveformData,
+        frequencyData,
+        node = context.createAnalyser();
+
     node.fftSize = fftSize; // frequencyBinCount will be half this value
 
-    if(smoothing !== undefined) { node.smoothingTimeConstant = smoothing; }
-    if(minDecibels !== undefined) { node.minDecibels = minDecibels; }
-    if(maxDecibels !== undefined) { node.maxDecibels = maxDecibels; }
+    node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
+    node.minDecibels = config.minDecibels || node.minDecibels;
+    node.maxDecibels = config.maxDecibels || node.maxDecibels;
+    // if(config.smoothing !== undefined) { node.smoothingTimeConstant = smoothing; }
+    // if(config.minDecibels !== undefined) { node.minDecibels = minDecibels; }
+    // if(config.maxDecibels !== undefined) { node.maxDecibels = maxDecibels; }
 
     var updateFFTSize = function() {
         if(fftSize !== node.fftSize || waveformData === undefined) {
@@ -2015,7 +2011,8 @@ var BufferSource = _dereq_(16),
     MediaSource = _dereq_(17),
     MicrophoneSource = _dereq_(18),
     OscillatorSource = _dereq_(19),
-    ScriptSource = _dereq_(20);
+    ScriptSource = _dereq_(20),
+    waveform = _dereq_(28)();
 
 function Sound(context, destination) {
     var id,
@@ -2085,21 +2082,23 @@ function Sound(context, destination) {
     };
 
     var pause = function() {
-        if(!source) { return api; }
-        source.pause();
+        // if(!source) { return api; }
+        source && source.pause();
         return api;
     };
 
     var stop = function() {
-        if(!source) { return api; }
-        source.stop();
+        // if(!source) { return api; }
+        source && source.stop();
         return api;
     };
 
     var seek = function(percent) {
-        if(!source) { return api; }
-        stop();
-        play(0, source.duration * percent);
+        // if(!source) { return api; }
+        if(source) {
+            stop();
+            play(0, source.duration * percent);
+        }
         return api;
     };
 
@@ -2125,10 +2124,15 @@ function Sound(context, destination) {
      */
 
     var destroy = function() {
-        if(source) { source.destroy(); }
-        if(effect) { effect.destroy(); }
-        if(gain) { gain.disconnect(); }
-        if(loader) { loader.destroy(); }
+        // if(source) { source.destroy(); }
+        // if(effect) { effect.destroy(); }
+        // if(gain) { gain.disconnect(); }
+        // if(loader) { loader.destroy(); }
+        source && source.destroy();
+        effect && effect.destroy();
+        gain && gain.disconnect();
+        loader && loader.destroy();
+        api.off('loaded');
         api.off('ended');
         gain = null;
         context = null;
@@ -2173,16 +2177,21 @@ function Sound(context, destination) {
 
         effect.setSource(source.sourceNode);
 
+        // window.setTimeout(function() {
+        api.emit('ready');
+        // }, 0);
+
         if(playWhenReady) {
             playWhenReady();
         }
     };
 
     api = Object.create(Emitter.prototype, {
-        constructor: Sound,
-
         _events: {
             value: {}
+        },
+        constructor: {
+            value: Sound
         },
         play: {
             value: play
@@ -2344,6 +2353,16 @@ function Sound(context, destination) {
                         source.volume = value;
                     }
                 }
+            }
+        },
+        waveform: {
+            value: function(length) {
+                if(!data) {
+                    api.once('ready', function() {
+                        waveform(data, length);
+                    });
+                }
+                return waveform(data, length);
             }
         }
     });
@@ -3951,51 +3970,102 @@ Utils.timeCode = function(seconds, delim) {
  * waveform
  */
 
-Utils.waveform = function(buffer, length) {
-    return new Waveform(buffer, length);
+Utils.drawWaveform = function(config) {
+    var x, y;
+    var canvas = config.canvas || document.createElement('canvas');
+    var context = config.context || canvas.getContext('2d');
+    var width = config.width || canvas.width;
+    var height = config.height || canvas.height;
+    var color = config.color || '#000000';
+    var bgColor = config.bgColor;
+    var data = config.waveform || (config.sound && config.sound.waveform(width));
+
+    if(bgColor) {
+        context.fillStyle = bgColor;
+        context.fillRect(0, 0, width, height);
+    } else {
+        context.clearRect(0, 0, height, height);
+    }
+
+    context.strokeStyle = color;
+    context.beginPath();
+
+    for(var i = 0; i < data.length; i++) {
+        x = i + 0.5;
+        y = height - Math.round(height * data[i]);
+        context.moveTo(x, y);
+        context.lineTo(x, height);
+    }
+    context.stroke();
+
+    return canvas;
 };
+
+// var drawCircular = function(ctx, waveform, radius, origin, color, percent) {
+//     var step = (Math.PI * 2) / waveform.length,
+//         angle, x, y, magnitude;
+
+//     ctx.lineWidth = 1.5;
+//     ctx.strokeStyle = color;
+//     ctx.clearRect(0, 0, width, height);
+//     ctx.beginPath();
+
+//     for(var i = 0; i < waveform.length * percent; i++) {
+//         angle = i * step - Math.PI / 2;
+//         x = origin + radius * Math.cos(angle);
+//         y = origin + radius * Math.sin(angle);
+//         ctx.moveTo(x, y);
+
+//         magnitude = radius + radius * waveform[i];
+//         x = origin + magnitude * Math.cos(angle);
+//         y = origin + magnitude * Math.sin(angle);
+//         ctx.lineTo(x, y);
+//     }
+//     ctx.stroke();
+// };
 
 module.exports = Utils;
 
 },{}],28:[function(_dereq_,module,exports){
 'use strict';
 
-function Waveform() {
+function waveform() {
 
-    var audioBuffer,
-        waveformData;
+    var buffer,
+        waveform;
 
-    var compute = function(buffer, length) {
+    return function(audioBuffer, length) {
         if(!window.Float32Array || !window.AudioBuffer) { return []; }
 
         var sameBuffer = buffer === audioBuffer;
-        var sameLength = waveformData && waveformData.length === length;
-        if(sameBuffer && sameLength) { return waveformData; }
+        var sameLength = waveform && waveform.length === length;
+        if(sameBuffer && sameLength) { return waveform; }
 
-        //console.log('-------------------');
         //console.time('waveformData');
-        var waveform = new Float32Array(length),
-            chunk = Math.floor(buffer.length / length),
-            //chunk = buffer.length / length,
+        if(!waveform || waveform.length !== length) {
+            waveform = new Float32Array(length);
+        }
+
+        if(!audioBuffer) { return waveform; }
+
+        // cache for repeated calls
+        buffer = audioBuffer;
+
+        var chunk = Math.floor(buffer.length / length),
             resolution = 5, // 10
-            incr = Math.floor(chunk / resolution),
+            incr = Math.max(Math.floor(chunk / resolution), 1),
             greatest = 0;
 
-        if(incr < 1) { incr = 1; }
-
-        for (var i = 0, chnls = buffer.numberOfChannels; i < chnls; i++) {
+        for(var i = 0; i < buffer.numberOfChannels; i++) {
             // check each channel
             var channel = buffer.getChannelData(i);
-            //for (var j = length - 1; j >= 0; j--) {
-            for (var j = 0; j < length; j++) {
+            for(var j = 0; j < length; j++) {
                 // get highest value within the chunk
-                //var ch = j * chunk;
-                //for (var k = ch + chunk - 1; k >= ch; k -= incr) {
-                for (var k = j * chunk, l = k + chunk; k < l; k += incr) {
+                for(var k = j * chunk, l = k + chunk; k < l; k += incr) {
                     // select highest value from channels
                     var a = channel[k];
                     if(a < 0) { a = -a; }
-                    if (a > waveform[j]) {
+                    if(a > waveform[j]) {
                         waveform[j] = a;
                     }
                     // update highest overall for scaling
@@ -4005,54 +4075,18 @@ function Waveform() {
                 }
             }
         }
-        // scale up?
-        var scale = 1 / greatest,
-            len = waveform.length;
-        for (i = 0; i < len; i++) {
+        // scale up
+        var scale = 1 / greatest;
+        for(i = 0; i < waveform.length; i++) {
             waveform[i] *= scale;
         }
         //console.timeEnd('waveformData');
 
-        // cache for repeated calls
-        audioBuffer = buffer;
-        waveformData = waveform;
-
         return waveform;
     };
-
-    var draw = function(config) {
-        var x, y;
-        var canvas = config.canvas || document.createElement('canvas');
-        var width = config.width || canvas.width;
-        var height = config.height || canvas.height;
-        var color = config.color || '#333333';
-        var bgColor = config.bgColor || '#dddddd';
-        var buffer = config.sound ? config.sound.data : config.buffer || audioBuffer;
-        var data = compute(buffer, width);
-
-        var context = canvas.getContext('2d');
-        context.strokeStyle = color;
-        context.fillStyle = bgColor;
-        context.fillRect(0, 0, width, height);
-        context.beginPath();
-        for (var i = 0; i < data.length; i++) {
-            x = i + 0.5;
-            y = height - Math.round(height * data[i]);
-            context.moveTo(x, y);
-            context.lineTo(x, height);
-        }
-        context.stroke();
-
-        return canvas;
-    };
-
-    return Object.freeze({
-        compute: compute,
-        draw: draw
-    });
 }
 
-module.exports = Waveform;
+module.exports = waveform;
 
 },{}]},{},[1])(1)
 });

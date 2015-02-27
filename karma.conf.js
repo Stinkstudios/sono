@@ -54,8 +54,9 @@ module.exports = function(config) {
 
     // Start these browsers, currently available:
     browsers: [
-        'Chrome',
-        'Firefox'
+        'Chrome'
+        // ,
+        // 'Firefox'
     ],
 
     // If browser does not capture in given timeout [ms], kill it

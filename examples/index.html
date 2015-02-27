@@ -4,11 +4,11 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-	<title>Sono - Examples</title>
+	<title>sono - Examples</title>
 	<link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
-	<h1>Sono</h1>
+	<h1>sono</h1>
 
     <section>
         <nav>
@@ -50,13 +50,13 @@
         (function() {
             'use strict';
 
-            Sono.log();
+            sono.log();
 
             var support = document.querySelector('[data-js="support"]');
-            var info = '<li>Basic audio support: ' + Sono.isSupported + '</li>' +
-                       '<li>Web Audio support: ' + Sono.hasWebAudio + '</li>' +
-                       '<li>Touch locked (mobile): ' + Sono.isTouchLocked + '</li>' +
-                       '<li>Supported extensions: ' + Sono.extensions.join(', ') + '</li>';
+            var info = '<li>Basic audio support: ' + sono.isSupported + '</li>' +
+                       '<li>Web Audio support: ' + sono.hasWebAudio + '</li>' +
+                       '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
+                       '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
             support.innerHTML = info;
 
         }());

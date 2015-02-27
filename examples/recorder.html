@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Sono - Examples - Recorder</title>
+    <title>sono - Examples - Recorder</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -42,7 +42,7 @@
                 canvas = document.querySelector('[data-js="waveform"]');
 
             var onConnect = function(stream) {
-                sound = Sono.createSound(stream);
+                sound = sono.createSound(stream);
                 analyser = sound.effect.analyser(2048);
                 analyser.maxDecibels = -60;
                 context = canvas.getContext('2d');
@@ -51,7 +51,7 @@
 
                 recorder.start();
             };
-            var mic = Sono.utils.microphone(onConnect);
+            var mic = sono.utils.microphone(onConnect);
 
             button.disabled = false;
             button.addEventListener('click', function() {
@@ -78,7 +78,7 @@
                 document.body.appendChild(h3);
                 var el = document.createElement('div');
                 document.body.appendChild(el);
-                new Player(Sono.createSound(buffer), el);
+                new Player(sono.createSound(buffer), el);
             }
 
             function update() {

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Sono - Examples - Oscillator</title>
+    <title>sono - Examples - Oscillator</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -41,10 +41,10 @@
         (function() {
             'use strict';
 
-            Sono.log();
-            Sono.volume = 0.2;
+            sono.log();
+            sono.volume = 0.2;
 
-            var sineWave = Sono.createSound('sine'),
+            var sineWave = sono.createSound('sine'),
                 distort = sineWave.effect.distortion(),
                 analyser = sineWave.effect.analyser(2048),
                 waveform = document.querySelector('[data-js="waveform-back"]'),
@@ -68,7 +68,7 @@
             // freq slider
             info.innerHTML = sineWave.frequency.toFixed() + 'hz';
             freqSlider.addEventListener('change', function() {
-                var f = Sono.utils.getFrequency(this.value / 100);
+                var f = sono.utils.getFrequency(this.value / 100);
                 sineWave.frequency = f;
                 info.innerHTML = f.toFixed() + 'hz';
             });

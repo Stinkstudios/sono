@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Sono - Examples - Microphone</title>
+    <title>sono - Examples - Microphone</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -31,14 +31,14 @@
                 sound;
 
             var onConnect = function(stream) {
-                sound = Sono.createSound(stream);
+                sound = sono.createSound(stream);
                 sound.effect.delay(sound.gain, 1, 0.5);
                 var analyser = sound.effect.analyser(2048);
                 analyser.maxDecibels = -60;
                 new AnalyserDisplay(analyser, waveform);
             };
 
-            var mic = Sono.utils.microphone(onConnect);
+            var mic = sono.utils.microphone(onConnect);
 
             if(mic.isSupported) {
                 mic.connect();

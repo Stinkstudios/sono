@@ -100,25 +100,27 @@ describe('Sono playback', function() {
                 done();
             }, 500);
         });
+        afterEach(function() {
+            Sono.volume = 1;
+        });
+
         Sono.volume = 1;
         Sono.fade(0, 0.2);
-        // console.log('1:', Sono.context.currentTime.toFixed(3), Sono.volume.toFixed(3));
 
         it('should have faded to zero volume', function() {
-            // console.log('2:', Sono.context.currentTime.toFixed(3), Sono.volume.toFixed(3));
             expect(Sono.volume).to.eql(0);
         });
 
     });
 
     describe('fade sound', function() {
-        var sound = Sono.createSound({
-            type: 'sine'
-        });
-        sound.play();
-        sound.fade(0, 0.2);
+
+        var sound;
 
         beforeEach(function(done) {
+            sound = Sono.createSound({
+                type: 'sine'
+            }).play().fade(0, 0.2);
             setTimeout(function() {
                 done();
             }, 500);

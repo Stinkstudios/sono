@@ -1,0 +1,46 @@
+html {
+  height: 100%;
+  font: 62.5% sans-serif;
+}
+
+body {
+  background-color: #FFF;
+  color: #000;
+  font-family: Helvetica, sans-serif;
+  font-size: 1.6rem;
+  height: 100%;
+  line-height: 1.5;
+  margin: 0;
+}
+
+body {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 400;
+  margin: .5em 0;
+}
+
+h1 {
+  /*background-color: #eeeeee;*/
+  /*border-bottom: 2px solid #dddddd;*/
+  /*box-shadow: 0 0 8px rgba(0,0,0,0.5);
+  color: #333333;
+  margin: 0;
+  padding: 0.5em 1em;*/
+}
+
+h3 {
+  border-bottom: 1px solid #dddddd;
+}
+
+section {
+  /*padding: 2em;*/
+}
+

@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Sono - Examples - Destroy</title>
+    <title>sono - Examples - Errors</title>
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Destroy</h1>
+    <h1>Errors</h1>
 
     <section>
 
@@ -26,11 +26,11 @@
         (function() {
             'use strict';
 
-            Sono.log();
+            sono.log();
 
             var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
 
-            Sono.load({
+            /*sono.load({
                 id: 'bullet',
                 url: [
                     baseURL + 'bulletx.ogg',
@@ -38,14 +38,24 @@
                 ]
             });
 
-            Sono.load({
+            sono.load({
                 id: 'nonono',
                 url: [
                     baseURL + 'nonono.ogg',
                     baseURL + 'nonono.mp3'
                 ],
                 webAudio: false
+            });*/
+
+            var sound = sono.createSound({
+                type: 'sine'
             });
+            sound.play();
+            sound.fade(0, 0.2);
+
+            setTimeout(function() {
+                console.log(sound.volume);
+            }, 500);
 
         }());
     </script>

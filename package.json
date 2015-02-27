@@ -31,6 +31,7 @@
     "events": "^1.0.2",
     "exorcist": "^0.1.6",
     "gulp": "^3.8.11",
+    "gulp-cssnext": "^1.0.0",
     "gulp-derequire": "^2.0.0",
     "gulp-if": "^1.2.5",
     "gulp-jshint": "^1.9.2",
