@@ -1,7 +1,7 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self),o.Sono=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
 
-var Browser = _dereq_(21),
+var browser = _dereq_(21),
     file = _dereq_(23),
     Group = _dereq_(14),
     Loader = _dereq_(24),
@@ -15,8 +15,6 @@ function Sono() {
         context = (Ctx ? new Ctx() : null),
         destination = (context ? context.destination : null),
         group = new Group(context, destination),
-        gain = group.gain,
-        sounds = group.sounds,
         api;
 
     utils.setContext(context);
@@ -51,13 +49,8 @@ function Sono() {
      */
 
     var destroySound = function(soundOrId) {
-        if(!soundOrId) { return; }
-
-        sounds.some(function(sound) {
-            if(sound === soundOrId || sound.id === soundOrId) {
-                sound.destroy();
-                return true;
-            }
+        group.find(soundOrId, function(sound) {
+            sound.destroy();
         });
         return api;
     };
@@ -72,14 +65,7 @@ function Sono() {
      */
 
     var getSound = function(id) {
-        var sound;
-        sounds.some(function(item) {
-            if(item.id === id) {
-                sound = item;
-                return true;
-            }
-        });
-        return sound;
+        return group.find(id);
     };
 
     /*
@@ -87,13 +73,13 @@ function Sono() {
      */
 
     var createGroup = function(sounds) {
-        var group = new SoundGroup(context, gain);
+        var soundGroup = new SoundGroup(context, group.gain);
         if(sounds) {
             sounds.forEach(function(sound) {
-                group.add(sound);
+                soundGroup.add(sound);
             });
         }
-        return group;
+        return soundGroup;
     };
 
     /*
@@ -168,7 +154,7 @@ function Sono() {
 
     var add = function(config) {
         var soundContext = config && config.webAudio === false ? null : context;
-        var sound = new Sound(soundContext, gain);
+        var sound = new Sound(soundContext, group.gain);
         sound.isTouchLocked = isTouchLocked;
         if(config) {
             sound.id = config.id || '';
@@ -214,17 +200,23 @@ function Sono() {
     };
 
     var play = function(id, delay, offset) {
-        getSound(id).play(delay, offset);
+        group.find(id, function(sound) {
+            sound.play(delay, offset);
+        });
         return api;
     };
 
     var pause = function(id) {
-        getSound(id).pause();
+        group.find(id, function(sound) {
+            sound.pause();
+        });
         return api;
     };
 
     var stop = function(id) {
-        getSound(id).stop();
+        group.find(id, function(sound) {
+            sound.stop();
+        });
         return api;
     };
 
@@ -232,9 +224,9 @@ function Sono() {
      * Mobile touch lock
      */
 
-    var isTouchLocked = Browser.handleTouchLock(context, function() {
+    var isTouchLocked = browser.handleTouchLock(context, function() {
         isTouchLocked = false;
-        sounds.forEach(function(sound) {
+        group.sounds.forEach(function(sound) {
             sound.isTouchLocked = false;
         });
     });
@@ -248,7 +240,7 @@ function Sono() {
 
         // pause currently playing sounds and store refs
         function onHidden() {
-            sounds.forEach(function(sound) {
+            group.sounds.forEach(function(sound) {
                 if(sound.playing) {
                     sound.pause();
                     pageHiddenPaused.push(sound);
@@ -263,7 +255,7 @@ function Sono() {
             }
         }
 
-        Browser.handlePageVisibility(onHidden, onShown);
+        browser.handlePageVisibility(onHidden, onShown);
     }());
 
     /*
@@ -315,7 +307,7 @@ function Sono() {
         extensions: file.extensions,
         hasWebAudio: !!context,
         isSupported: file.extensions.length > 0,
-        gain: gain,
+        gain: group.gain,
         utils: utils,
         VERSION: VERSION
     };
@@ -1851,12 +1843,30 @@ function Group(context, destination) {
         sound.once('destroyed', remove);
     };
 
-    var remove = function(soundOrId) {
-        sounds.some(function(sound, index, sounds) {
+    var find = function(soundOrId, callback) {
+        var found;
+
+        if(!soundOrId && soundOrId !== 0) {
+            return found;
+        }
+
+        sounds.some(function(sound) {
             if(sound === soundOrId || sound.id === soundOrId) {
-                sounds.splice(index, 1);
+                found = sound;
                 return true;
             }
+        });
+
+        if(found && callback) {
+            callback(found);
+        }
+
+        return found;
+    };
+
+    var remove = function(soundOrId) {
+        find(soundOrId, function(sound) {
+            sounds.splice(sounds.indexOf(sound), 1);
         });
     };
 
@@ -1944,6 +1954,7 @@ function Group(context, destination) {
 
     api = {
         add: add,
+        find: find,
         remove: remove,
         play: play,
         pause: pause,
@@ -3153,9 +3164,9 @@ function ScriptSource(data, context) {
 
     var onPaused = function(event) {
         var buffer = event.outputBuffer;
-        for (var i = 0, l = buffer.numberOfChannels; i < l; i++) {
+        for (var i = 0; i < buffer.numberOfChannels; i++) {
             var channel = buffer.getChannelData(i);
-            for (var j = 0, len = channel.length; j < len; j++) {
+            for (var j = 0; j < channel.length; j++) {
                 channel[j] = 0;
             }
         }
@@ -3232,9 +3243,9 @@ module.exports = ScriptSource;
 },{}],21:[function(_dereq_,module,exports){
 'use strict';
 
-var Browser = {};
+var browser = {};
 
-Browser.handlePageVisibility = function(onHidden, onShown) {
+browser.handlePageVisibility = function(onHidden, onShown) {
     var hidden,
         visibilityChange;
 
@@ -3269,7 +3280,7 @@ Browser.handlePageVisibility = function(onHidden, onShown) {
     }
 };
 
-Browser.handleTouchLock = function(context, onUnlock) {
+browser.handleTouchLock = function(context, onUnlock) {
     var ua = navigator.userAgent,
         locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|SymbianOS/i);
 
@@ -3294,7 +3305,7 @@ Browser.handleTouchLock = function(context, onUnlock) {
     return locked;
 };
 
-module.exports = Browser;
+module.exports = browser;
 
 },{}],22:[function(_dereq_,module,exports){
 'use strict';
@@ -3877,35 +3888,37 @@ module.exports = SoundGroup;
 },{}],27:[function(_dereq_,module,exports){
 'use strict';
 
-var Microphone = _dereq_(25),
-    Waveform = _dereq_(28);
-
-var Utils = {};
+var Microphone = _dereq_(25);
 
 /*
  * audio context
  */
+var context;
 
-Utils.setContext = function(context) {
-    this._context = context;
+var setContext = function(value) {
+    context = value;
 };
 
 /*
- * audio buffer
+ * clone audio buffer
  */
 
-Utils.cloneBuffer = function(buffer) {
-    if(!this._context) { return buffer; }
+var cloneBuffer = function(buffer) {
+    if(!context) { return buffer; }
 
     var numChannels = buffer.numberOfChannels,
-        cloned = this._context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+        cloned = context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i));
     }
     return cloned;
 };
 
-Utils.reverseBuffer = function(buffer) {
+/*
+ * reverse audio buffer
+ */
+
+var reverseBuffer = function(buffer) {
     var numChannels = buffer.numberOfChannels;
     for (var i = 0; i < numChannels; i++) {
         Array.prototype.reverse.call(buffer.getChannelData(i));
@@ -3917,24 +3930,24 @@ Utils.reverseBuffer = function(buffer) {
  * ramp audio param
  */
 
-Utils.ramp = function(param, fromValue, toValue, duration) {
-    if(!this._context) { return; }
+var ramp = function(param, fromValue, toValue, duration) {
+    if(!context) { return; }
 
-    param.setValueAtTime(fromValue, this._context.currentTime);
-    param.linearRampToValueAtTime(toValue, this._context.currentTime + duration);
+    param.setValueAtTime(fromValue, context.currentTime);
+    param.linearRampToValueAtTime(toValue, context.currentTime + duration);
 };
 
 /*
  * get frequency from min to max by passing 0 to 1
  */
 
-Utils.getFrequency = function(value) {
-    if(!this._context) { return 0; }
+var getFrequency = function(value) {
+    if(!context) { return 0; }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     var minValue = 40;
-    var maxValue = this._context.sampleRate / 2;
+    var maxValue = context.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -3947,7 +3960,7 @@ Utils.getFrequency = function(value) {
  * microphone util
  */
 
-Utils.microphone = function(connected, denied, error) {
+var microphone = function(connected, denied, error) {
     return new Microphone(connected, denied, error);
 };
 
@@ -3955,7 +3968,7 @@ Utils.microphone = function(connected, denied, error) {
  * Format seconds as timecode string
  */
 
-Utils.timeCode = function(seconds, delim) {
+var timeCode = function(seconds, delim) {
     if(delim === undefined) { delim = ':'; }
     var h = Math.floor(seconds / 3600);
     var m = Math.floor((seconds % 3600) / 60);
@@ -3970,7 +3983,7 @@ Utils.timeCode = function(seconds, delim) {
  * waveform
  */
 
-Utils.drawWaveform = function(config) {
+var drawWaveform = function(config) {
     var x, y;
     var canvas = config.canvas || document.createElement('canvas');
     var context = config.context || canvas.getContext('2d');
@@ -4024,7 +4037,16 @@ Utils.drawWaveform = function(config) {
 //     ctx.stroke();
 // };
 
-module.exports = Utils;
+module.exports = Object.freeze({
+    setContext: setContext,
+    cloneBuffer: cloneBuffer,
+    reverseBuffer: reverseBuffer,
+    ramp: ramp,
+    getFrequency: getFrequency,
+    microphone: microphone,
+    timeCode: timeCode,
+    drawWaveform: drawWaveform
+});
 
 },{}],28:[function(_dereq_,module,exports){
 'use strict';
@@ -4032,21 +4054,21 @@ module.exports = Utils;
 function waveform() {
 
     var buffer,
-        waveform;
+        wave;
 
     return function(audioBuffer, length) {
         if(!window.Float32Array || !window.AudioBuffer) { return []; }
 
         var sameBuffer = buffer === audioBuffer;
-        var sameLength = waveform && waveform.length === length;
-        if(sameBuffer && sameLength) { return waveform; }
+        var sameLength = wave && wave.length === length;
+        if(sameBuffer && sameLength) { return wave; }
 
-        //console.time('waveformData');
-        if(!waveform || waveform.length !== length) {
-            waveform = new Float32Array(length);
+        //console.time('waveData');
+        if(!wave || wave.length !== length) {
+            wave = new Float32Array(length);
         }
 
-        if(!audioBuffer) { return waveform; }
+        if(!audioBuffer) { return wave; }
 
         // cache for repeated calls
         buffer = audioBuffer;
@@ -4065,8 +4087,8 @@ function waveform() {
                     // select highest value from channels
                     var a = channel[k];
                     if(a < 0) { a = -a; }
-                    if(a > waveform[j]) {
-                        waveform[j] = a;
+                    if(a > wave[j]) {
+                        wave[j] = a;
                     }
                     // update highest overall for scaling
                     if(a > greatest) {
@@ -4077,12 +4099,12 @@ function waveform() {
         }
         // scale up
         var scale = 1 / greatest;
-        for(i = 0; i < waveform.length; i++) {
-            waveform[i] *= scale;
+        for(i = 0; i < wave.length; i++) {
+            wave[i] *= scale;
         }
-        //console.timeEnd('waveformData');
+        //console.timeEnd('waveData');
 
-        return waveform;
+        return wave;
     };
 }
 

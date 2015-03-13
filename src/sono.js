@@ -1,6 +1,6 @@
 'use strict';
 
-var Browser = require('./lib/utils/browser.js'),
+var browser = require('./lib/utils/browser.js'),
     file = require('./lib/utils/file.js'),
     Group = require('./lib/group.js'),
     Loader = require('./lib/utils/loader.js'),
@@ -14,8 +14,6 @@ function Sono() {
         context = (Ctx ? new Ctx() : null),
         destination = (context ? context.destination : null),
         group = new Group(context, destination),
-        gain = group.gain,
-        sounds = group.sounds,
         api;
 
     utils.setContext(context);
@@ -50,13 +48,8 @@ function Sono() {
      */
 
     var destroySound = function(soundOrId) {
-        if(!soundOrId) { return; }
-
-        sounds.some(function(sound) {
-            if(sound === soundOrId || sound.id === soundOrId) {
-                sound.destroy();
-                return true;
-            }
+        group.find(soundOrId, function(sound) {
+            sound.destroy();
         });
         return api;
     };
@@ -71,14 +64,7 @@ function Sono() {
      */
 
     var getSound = function(id) {
-        var sound;
-        sounds.some(function(item) {
-            if(item.id === id) {
-                sound = item;
-                return true;
-            }
-        });
-        return sound;
+        return group.find(id);
     };
 
     /*
@@ -86,13 +72,13 @@ function Sono() {
      */
 
     var createGroup = function(sounds) {
-        var group = new SoundGroup(context, gain);
+        var soundGroup = new SoundGroup(context, group.gain);
         if(sounds) {
             sounds.forEach(function(sound) {
-                group.add(sound);
+                soundGroup.add(sound);
             });
         }
-        return group;
+        return soundGroup;
     };
 
     /*
@@ -167,7 +153,7 @@ function Sono() {
 
     var add = function(config) {
         var soundContext = config && config.webAudio === false ? null : context;
-        var sound = new Sound(soundContext, gain);
+        var sound = new Sound(soundContext, group.gain);
         sound.isTouchLocked = isTouchLocked;
         if(config) {
             sound.id = config.id || '';
@@ -213,17 +199,23 @@ function Sono() {
     };
 
     var play = function(id, delay, offset) {
-        getSound(id).play(delay, offset);
+        group.find(id, function(sound) {
+            sound.play(delay, offset);
+        });
         return api;
     };
 
     var pause = function(id) {
-        getSound(id).pause();
+        group.find(id, function(sound) {
+            sound.pause();
+        });
         return api;
     };
 
     var stop = function(id) {
-        getSound(id).stop();
+        group.find(id, function(sound) {
+            sound.stop();
+        });
         return api;
     };
 
@@ -231,9 +223,9 @@ function Sono() {
      * Mobile touch lock
      */
 
-    var isTouchLocked = Browser.handleTouchLock(context, function() {
+    var isTouchLocked = browser.handleTouchLock(context, function() {
         isTouchLocked = false;
-        sounds.forEach(function(sound) {
+        group.sounds.forEach(function(sound) {
             sound.isTouchLocked = false;
         });
     });
@@ -247,7 +239,7 @@ function Sono() {
 
         // pause currently playing sounds and store refs
         function onHidden() {
-            sounds.forEach(function(sound) {
+            group.sounds.forEach(function(sound) {
                 if(sound.playing) {
                     sound.pause();
                     pageHiddenPaused.push(sound);
@@ -262,7 +254,7 @@ function Sono() {
             }
         }
 
-        Browser.handlePageVisibility(onHidden, onShown);
+        browser.handlePageVisibility(onHidden, onShown);
     }());
 
     /*
@@ -314,7 +306,7 @@ function Sono() {
         extensions: file.extensions,
         hasWebAudio: !!context,
         isSupported: file.extensions.length > 0,
-        gain: gain,
+        gain: group.gain,
         utils: utils,
         VERSION: VERSION
     };

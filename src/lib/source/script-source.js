@@ -57,9 +57,9 @@ function ScriptSource(data, context) {
 
     var onPaused = function(event) {
         var buffer = event.outputBuffer;
-        for (var i = 0, l = buffer.numberOfChannels; i < l; i++) {
+        for (var i = 0; i < buffer.numberOfChannels; i++) {
             var channel = buffer.getChannelData(i);
-            for (var j = 0, len = channel.length; j < len; j++) {
+            for (var j = 0; j < channel.length; j++) {
                 channel[j] = 0;
             }
         }

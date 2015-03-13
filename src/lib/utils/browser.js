@@ -1,8 +1,8 @@
 'use strict';
 
-var Browser = {};
+var browser = {};
 
-Browser.handlePageVisibility = function(onHidden, onShown) {
+browser.handlePageVisibility = function(onHidden, onShown) {
     var hidden,
         visibilityChange;
 
@@ -37,7 +37,7 @@ Browser.handlePageVisibility = function(onHidden, onShown) {
     }
 };
 
-Browser.handleTouchLock = function(context, onUnlock) {
+browser.handleTouchLock = function(context, onUnlock) {
     var ua = navigator.userAgent,
         locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|SymbianOS/i);
 
@@ -62,4 +62,4 @@ Browser.handleTouchLock = function(context, onUnlock) {
     return locked;
 };
 
-module.exports = Browser;
+module.exports = browser;

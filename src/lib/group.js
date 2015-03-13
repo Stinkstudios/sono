@@ -27,12 +27,30 @@ function Group(context, destination) {
         sound.once('destroyed', remove);
     };
 
-    var remove = function(soundOrId) {
-        sounds.some(function(sound, index, sounds) {
+    var find = function(soundOrId, callback) {
+        var found;
+
+        if(!soundOrId && soundOrId !== 0) {
+            return found;
+        }
+
+        sounds.some(function(sound) {
             if(sound === soundOrId || sound.id === soundOrId) {
-                sounds.splice(index, 1);
+                found = sound;
                 return true;
             }
+        });
+
+        if(found && callback) {
+            callback(found);
+        }
+
+        return found;
+    };
+
+    var remove = function(soundOrId) {
+        find(soundOrId, function(sound) {
+            sounds.splice(sounds.indexOf(sound), 1);
         });
     };
 
@@ -120,6 +138,7 @@ function Group(context, destination) {
 
     api = {
         add: add,
+        find: find,
         remove: remove,
         play: play,
         pause: pause,

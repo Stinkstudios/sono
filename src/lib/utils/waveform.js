@@ -3,21 +3,21 @@
 function waveform() {
 
     var buffer,
-        waveform;
+        wave;
 
     return function(audioBuffer, length) {
         if(!window.Float32Array || !window.AudioBuffer) { return []; }
 
         var sameBuffer = buffer === audioBuffer;
-        var sameLength = waveform && waveform.length === length;
-        if(sameBuffer && sameLength) { return waveform; }
+        var sameLength = wave && wave.length === length;
+        if(sameBuffer && sameLength) { return wave; }
 
-        //console.time('waveformData');
-        if(!waveform || waveform.length !== length) {
-            waveform = new Float32Array(length);
+        //console.time('waveData');
+        if(!wave || wave.length !== length) {
+            wave = new Float32Array(length);
         }
 
-        if(!audioBuffer) { return waveform; }
+        if(!audioBuffer) { return wave; }
 
         // cache for repeated calls
         buffer = audioBuffer;
@@ -36,8 +36,8 @@ function waveform() {
                     // select highest value from channels
                     var a = channel[k];
                     if(a < 0) { a = -a; }
-                    if(a > waveform[j]) {
-                        waveform[j] = a;
+                    if(a > wave[j]) {
+                        wave[j] = a;
                     }
                     // update highest overall for scaling
                     if(a > greatest) {
@@ -48,12 +48,12 @@ function waveform() {
         }
         // scale up
         var scale = 1 / greatest;
-        for(i = 0; i < waveform.length; i++) {
-            waveform[i] *= scale;
+        for(i = 0; i < wave.length; i++) {
+            wave[i] *= scale;
         }
-        //console.timeEnd('waveformData');
+        //console.timeEnd('waveData');
 
-        return waveform;
+        return wave;
     };
 }
 

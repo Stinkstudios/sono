@@ -1,34 +1,36 @@
 'use strict';
 
-var Microphone = require('./microphone.js'),
-    Waveform = require('./waveform.js');
-
-var Utils = {};
+var Microphone = require('./microphone.js');
 
 /*
  * audio context
  */
+var context;
 
-Utils.setContext = function(context) {
-    this._context = context;
+var setContext = function(value) {
+    context = value;
 };
 
 /*
- * audio buffer
+ * clone audio buffer
  */
 
-Utils.cloneBuffer = function(buffer) {
-    if(!this._context) { return buffer; }
+var cloneBuffer = function(buffer) {
+    if(!context) { return buffer; }
 
     var numChannels = buffer.numberOfChannels,
-        cloned = this._context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+        cloned = context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i));
     }
     return cloned;
 };
 
-Utils.reverseBuffer = function(buffer) {
+/*
+ * reverse audio buffer
+ */
+
+var reverseBuffer = function(buffer) {
     var numChannels = buffer.numberOfChannels;
     for (var i = 0; i < numChannels; i++) {
         Array.prototype.reverse.call(buffer.getChannelData(i));
@@ -40,24 +42,24 @@ Utils.reverseBuffer = function(buffer) {
  * ramp audio param
  */
 
-Utils.ramp = function(param, fromValue, toValue, duration) {
-    if(!this._context) { return; }
+var ramp = function(param, fromValue, toValue, duration) {
+    if(!context) { return; }
 
-    param.setValueAtTime(fromValue, this._context.currentTime);
-    param.linearRampToValueAtTime(toValue, this._context.currentTime + duration);
+    param.setValueAtTime(fromValue, context.currentTime);
+    param.linearRampToValueAtTime(toValue, context.currentTime + duration);
 };
 
 /*
  * get frequency from min to max by passing 0 to 1
  */
 
-Utils.getFrequency = function(value) {
-    if(!this._context) { return 0; }
+var getFrequency = function(value) {
+    if(!context) { return 0; }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     var minValue = 40;
-    var maxValue = this._context.sampleRate / 2;
+    var maxValue = context.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -70,7 +72,7 @@ Utils.getFrequency = function(value) {
  * microphone util
  */
 
-Utils.microphone = function(connected, denied, error) {
+var microphone = function(connected, denied, error) {
     return new Microphone(connected, denied, error);
 };
 
@@ -78,7 +80,7 @@ Utils.microphone = function(connected, denied, error) {
  * Format seconds as timecode string
  */
 
-Utils.timeCode = function(seconds, delim) {
+var timeCode = function(seconds, delim) {
     if(delim === undefined) { delim = ':'; }
     var h = Math.floor(seconds / 3600);
     var m = Math.floor((seconds % 3600) / 60);
@@ -93,7 +95,7 @@ Utils.timeCode = function(seconds, delim) {
  * waveform
  */
 
-Utils.drawWaveform = function(config) {
+var drawWaveform = function(config) {
     var x, y;
     var canvas = config.canvas || document.createElement('canvas');
     var context = config.context || canvas.getContext('2d');
@@ -147,4 +149,13 @@ Utils.drawWaveform = function(config) {
 //     ctx.stroke();
 // };
 
-module.exports = Utils;
+module.exports = Object.freeze({
+    setContext: setContext,
+    cloneBuffer: cloneBuffer,
+    reverseBuffer: reverseBuffer,
+    ramp: ramp,
+    getFrequency: getFrequency,
+    microphone: microphone,
+    timeCode: timeCode,
+    drawWaveform: drawWaveform
+});
