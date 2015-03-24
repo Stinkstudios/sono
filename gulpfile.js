@@ -50,7 +50,7 @@ gulp.task('bundle', ['jshint'], bundle);
 gulp.task('release', function() {
   return browserify({
       entries: ['./src/sono.js'],
-      standalone: 'Sono',
+      standalone: 'sono',
       debug: true
     })
     .plugin(collapse)
@@ -144,6 +144,7 @@ gulp.task('stylesheets', function() {
     .pipe(cssnext({
         compress: false
     }))
+    .on('error', logError)
     .pipe(rename('styles.css'))
     .pipe(gulp.dest('./examples/css/'))
     .pipe(browserSync.reload({stream: true}));
