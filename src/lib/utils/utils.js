@@ -104,6 +104,9 @@ var drawWaveform = function(config) {
     var color = config.color || '#000000';
     var bgColor = config.bgColor;
     var data = config.waveform || (config.sound && config.sound.waveform(width));
+    var percent = config.percent || 1;
+    var offsetX = config.x || 0;
+    var offsetY = config.y || 0;
 
     if(bgColor) {
         context.fillStyle = bgColor;
@@ -115,9 +118,9 @@ var drawWaveform = function(config) {
     context.strokeStyle = color;
     context.beginPath();
 
-    for(var i = 0; i < data.length; i++) {
-        x = i + 0.5;
-        y = height - Math.round(height * data[i]);
+    for(var i = 0; i < data.length * percent; i++) {
+        x = offsetX + i + 0.5;
+        y = offsetY + height - Math.round(height * data[i]);
         context.moveTo(x, y);
         context.lineTo(x, height);
     }
