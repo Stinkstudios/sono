@@ -20,8 +20,14 @@ function Effect(context) {
         panning = new Panner(context),
         sourceNode;
 
+    var has = function(node) {
+        if(!node) { return false; }
+        return nodeList.indexOf(node) > -1;
+    };
+
     var add = function(node) {
         if(!node) { return; }
+        if(has(node)) { return node; }
         nodeList.push(node);
         updateConnections();
         return node;
@@ -29,6 +35,7 @@ function Effect(context) {
 
     var remove = function(node) {
         if(!node) { return; }
+        if(!has(node)) { return node; }
         var l = nodeList.length;
         for (var i = 0; i < l; i++) {
             if(node === nodeList[i]) {
@@ -55,7 +62,7 @@ function Effect(context) {
         context = null;
         destination = null;
         nodeList = [];
-        sourceNode && sourceNode.disconnect();
+        if(sourceNode) { sourceNode.disconnect(); }
         sourceNode = null;
     };
 
@@ -272,6 +279,7 @@ function Effect(context) {
         nodeList: nodeList,
         panning: panning,
 
+        has: has,
         add: add,
         remove: remove,
         removeAll: removeAll,
