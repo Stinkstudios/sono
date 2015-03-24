@@ -91,37 +91,8 @@ gulp.task('jshint', function() {
       'src/**/*.js',
       'test/**/*.js',
       'examples/**/*.js'
-    ])
-    .pipe(jshint({
-      'node': true,
-      'browser': true,
-      'es5': false,
-      'esnext': true,
-      'bitwise': false,
-      'camelcase': false,
-      'curly': true,
-      'eqeqeq': true,
-      'immed': true,
-      'latedef': true,
-      'newcap': true,
-      'noarg': true,
-      'quotmark': 'single',
-      'regexp': true,
-      'undef': true,
-      'unused': true,
-      'strict': true,
-      'expr': true, // stops complaints about 'to.be.true' etc in chai
-
-      'predef': [
-          'Modernizr',
-          'ga',
-          'describe',
-          'it',
-          'expect',
-          'beforeEach',
-          'afterEach'
-      ]
-  }))
+  ])
+  .pipe(jshint())
   .pipe(jshint.reporter('jshint-stylish'));
 });
 
