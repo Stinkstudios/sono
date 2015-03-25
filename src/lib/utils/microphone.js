@@ -11,8 +11,8 @@ function Microphone(connected, denied, error) {
     var connect = function() {
         if(!isSupported) { return; }
 
-        navigator.getUserMedia({audio:true}, function(stream) {
-            stream = stream;
+        navigator.getUserMedia({audio:true}, function(micStream) {
+            stream = micStream;
             connected(stream);
         }, function(e) {
             if(denied && e.name === 'PermissionDeniedError' || e === 'PERMISSION_DENIED') {
