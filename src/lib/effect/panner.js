@@ -18,6 +18,11 @@ function Panner(context) {
     node.setPosition(0, 0, 0);
     node.setOrientation(0, 0, 0);
 
+    var validify = function(num) {
+      if(typeof num !== 'number' || isNaN(num)) { return 0; }
+      return num;
+    };
+
     // simple vec3 object pool
     var vecPool = {
         pool: [],
@@ -42,8 +47,8 @@ function Panner(context) {
     };
 
     var globalUp = vecPool.get(0, 1, 0),
-        deg45 = Math.PI / 4,
-        deg90 = Math.PI / 2;
+        angle45 = Math.PI / 4,
+        angle90 = Math.PI / 2;
 
     // set the orientation of the source (where the audio is coming from)
     var setOrientation = function(node, fw) {
@@ -92,31 +97,28 @@ function Panner(context) {
         return vec3;
     };
 
-    var validify = function(num) {
-      if(typeof num !== 'number' || isNaN(num)) { return 0; }
-      if(num > 1) { num = 1; }
-      if(num < -1) { num = -1; }
-      return num;
-    };
-
     node.set = function(x, y, z) {
         var v = vecPool.get(x, y, z);
 
-        if(arguments.length === 1) {
-          // pan left to right with value from -1 to 1
-          x = v.x * deg45;
-          z = v.x + deg90;
+        console.log.call(console, 'pan: ' + JSON.stringify(v));
 
-          if (z > deg90) {
+        if(arguments.length === 1 && v.x) {
+          // pan left to right with value from -1 to 1
+          x = v.x;
+
+          if(x > 1) { x = 1; }
+          if(x < -1) { x = -1; }
+
+          // creates a nice curve with z
+          x = x * angle45;
+          z = x + angle90;
+
+          if (z > angle90) {
               z = Math.PI - z;
           }
 
-          // creates a nice curve with z
           v.x = Math.sin(x);
           v.z = Math.sin(z);
-
-          // node.setPosition(x, 0, z);
-
         }
         setPosition(node, v);
     };
