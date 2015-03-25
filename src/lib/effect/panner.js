@@ -19,20 +19,20 @@ function Panner(context) {
     node.setOrientation(0, 0, 0);
 
     // simple vec3 object pool
-    var VecPool = {
+    var vecPool = {
         pool: [],
         get: function(x, y, z) {
             var v = this.pool.length ? this.pool.pop() : { x: 0, y: 0, z: 0 };
             // check if a vector has been passed in
             if(x !== undefined && isNaN(x) && 'x' in x && 'y' in x && 'z' in x) {
-                v.x = x.x || 0;
-                v.y = x.y || 0;
-                v.z = x.z || 0;
+                v.x = validify(x.x);
+                v.y = validify(x.y);
+                v.z = validify(x.z);
             }
             else {
-                v.x = x || 0;
-                v.y = y || 0;
-                v.z = z || 0;
+                v.x = validify(x);
+                v.y = validify(y);
+                v.z = validify(z);
             }
             return v;
         },
@@ -41,33 +41,33 @@ function Panner(context) {
         }
     };
 
-    var globalUp = VecPool.get(0, 1, 0);
+    var globalUp = vecPool.get(0, 1, 0),
+        deg45 = Math.PI / 4,
+        deg90 = Math.PI / 2;
 
+    // set the orientation of the source (where the audio is coming from)
     var setOrientation = function(node, fw) {
-        // set the orientation of the source (where the audio is coming from)
-
         // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-        var up = VecPool.get(fw.x, fw.y, fw.z);
+        var up = vecPool.get(fw.x, fw.y, fw.z);
         cross(up, globalUp);
         cross(up, fw);
         normalize(up);
         normalize(fw);
         // set the audio context's listener position to match the camera position
         node.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-
         // return the vecs to the pool
-        VecPool.dispose(fw);
-        VecPool.dispose(up);
+        vecPool.dispose(fw);
+        vecPool.dispose(up);
     };
 
-    var setPosition = function(node, vec) {
-        node.setPosition(vec.x, vec.y, vec.z);
-        VecPool.dispose(vec);
+    var setPosition = function(nodeOrListener, vec) {
+        nodeOrListener.setPosition(vec.x, vec.y, vec.z);
+        vecPool.dispose(vec);
     };
 
     var setVelocity = function(node, vec) {
         node.setVelocity(vec.x, vec.y, vec.z);
-        VecPool.dispose(vec);
+        vecPool.dispose(vec);
     };
 
     // cross product of 2 vectors
@@ -92,66 +92,63 @@ function Panner(context) {
         return vec3;
     };
 
-    // pan left to right with value from -1 to 1
-    // creates a nice curve with z
-    node.setX = function(value) {
-        var deg45 = Math.PI / 4,
-            deg90 = deg45 * 2,
-            x = value * deg45,
-            z = x + deg90;
-
-        if (z > deg90) {
-            z = Math.PI - z;
-        }
-
-        x = Math.sin(x);
-        z = Math.sin(z);
-
-        node.setPosition(x, 0, z);
+    var validify = function(num) {
+      if(typeof num !== 'number' || isNaN(num)) { return 0; }
+      if(num > 1) { num = 1; }
+      if(num < -1) { num = -1; }
+      return num;
     };
 
-    /*var x = 0,
-        y = 0,
-        z = 0;
+    node.set = function(x, y, z) {
+        var v = vecPool.get(x, y, z);
 
-    Object.defineProperties(node, {
-        'x': {
-            get: function() { return x; },
-            set: function(value) {
-                x = value;
-                node.setPosition(x, y, z);
-            }
+        if(arguments.length === 1) {
+          // pan left to right with value from -1 to 1
+          x = v.x * deg45;
+          z = v.x + deg90;
+
+          if (z > deg90) {
+              z = Math.PI - z;
+          }
+
+          // creates a nice curve with z
+          v.x = Math.sin(x);
+          v.z = Math.sin(z);
+
+          // node.setPosition(x, 0, z);
+
         }
-    });*/
+        setPosition(node, v);
+    };
 
     // set the position the audio is coming from)
     node.setSourcePosition = function(x, y, z) {
-        setPosition(node, VecPool.get(x, y, z));
+        setPosition(node, vecPool.get(x, y, z));
     };
 
     // set the direction the audio is coming from)
     node.setSourceOrientation = function(x, y, z) {
-        setOrientation(node, VecPool.get(x, y, z));
+        setOrientation(node, vecPool.get(x, y, z));
     };
 
     // set the veloicty of the audio source (if moving)
     node.setSourceVelocity = function(x, y, z) {
-        setVelocity(node, VecPool.get(x, y, z));
+        setVelocity(node, vecPool.get(x, y, z));
     };
 
     // set the position of who or what is hearing the audio (could be camera or some character)
     node.setListenerPosition = function(x, y, z) {
-        setPosition(context.listener, VecPool.get(x, y, z));
+        setPosition(context.listener, vecPool.get(x, y, z));
     };
 
     // set the position of who or what is hearing the audio (could be camera or some character)
     node.setListenerOrientation = function(x, y, z) {
-        setOrientation(context.listener, VecPool.get(x, y, z));
+        setOrientation(context.listener, vecPool.get(x, y, z));
     };
 
     // set the velocity (if moving) of who or what is hearing the audio (could be camera or some character)
     node.setListenerVelocity = function(x, y, z) {
-        setVelocity(context.listener, VecPool.get(x, y, z));
+        setVelocity(context.listener, vecPool.get(x, y, z));
     };
 
     // helper to calculate velocity
@@ -159,7 +156,7 @@ function Panner(context) {
         var dx = currentPosition.x - lastPosition.x;
         var dy = currentPosition.y - lastPosition.y;
         var dz = currentPosition.z - lastPosition.z;
-        return VecPool.get(dx / deltaTime, dy / deltaTime, dz / deltaTime);
+        return vecPool.get(dx / deltaTime, dy / deltaTime, dz / deltaTime);
     };
 
     node.setDefaults = function(defaults) {

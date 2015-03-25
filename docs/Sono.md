@@ -706,10 +706,10 @@ Sono.effect.panner() returns Panner
 sound.effect.panner() returns Panner
 ```
 
-Update the panner node
+Update the panner node - x can be a vector and all params are optional
 
 ```javascript
-panner.setX(value)
+panner.set(x, y, z)
 panner.setSourcePosition(x, y, z)
 panner.setSourceOrientation(x, y, z)
 panner.setSourceVelocity(x, y, z)

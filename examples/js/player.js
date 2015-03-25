@@ -61,7 +61,7 @@ function Player(sound, el) {
     // pan slider
     var panner = sound.effect.panner();
     panSlider.addEventListener('change', function() {
-        panner.setX(this.value / 100);
+        panner.set(this.value / 100);
     });
 
     // update time and waveform
