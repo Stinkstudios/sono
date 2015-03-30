@@ -100,7 +100,7 @@ function Panner(context) {
     node.set = function(x, y, z) {
         var v = vecPool.get(x, y, z);
 
-        console.log.call(console, 'pan: ' + JSON.stringify(v));
+        // console.log.call(console, 'pan: ' + JSON.stringify(v));
 
         if(arguments.length === 1 && v.x) {
           // pan left to right with value from -1 to 1
@@ -159,6 +159,10 @@ function Panner(context) {
         var dy = currentPosition.y - lastPosition.y;
         var dz = currentPosition.z - lastPosition.z;
         return vecPool.get(dx / deltaTime, dy / deltaTime, dz / deltaTime);
+    };
+
+    node.getDefaults = function() {
+        return Panner.defaults;
     };
 
     node.setDefaults = function(defaults) {
