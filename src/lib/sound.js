@@ -22,7 +22,7 @@ function Sound(context, destination) {
         playbackRate = 1,
         playWhenReady,
         source,
-        api;
+        sound;
 
     if(context) {
         effect.setDestination(gain);
@@ -45,10 +45,10 @@ function Sound(context, destination) {
             loader.isTouchLocked = isTouchLocked;
             loader.once('loaded', function(file) {
                 createSource(file);
-                api.emit('loaded');
+                sound.emit('loaded', sound);
             });
         }
-        return api;
+        return sound;
     };
 
     /*
@@ -62,7 +62,7 @@ function Sound(context, destination) {
                     play(delay, offset);
                 }
             };
-            return api;
+            return sound;
         }
         playWhenReady = null;
         effect.setSource(source.sourceNode);
@@ -71,36 +71,36 @@ function Sound(context, destination) {
         }
 
         // update volume needed for no webaudio
-        if(!context) { api.volume = gain.gain.value; }
+        if(!context) { sound.volume = gain.gain.value; }
 
         source.play(delay, offset);
 
-        return api;
+        return sound;
     };
 
     var pause = function() {
-        // if(!source) { return api; }
+        // if(!source) { return sound; }
         source && source.pause();
-        return api;
+        return sound;
     };
 
     var stop = function() {
-        // if(!source) { return api; }
+        // if(!source) { return sound; }
         source && source.stop();
-        return api;
+        return sound;
     };
 
     var seek = function(percent) {
-        // if(!source) { return api; }
+        // if(!source) { return sound; }
         if(source) {
             stop();
             play(0, source.duration * percent);
         }
-        return api;
+        return sound;
     };
 
     var fade = function(volume, duration) {
-        if(!source) { return api; }
+        if(!source) { return sound; }
 
         if(context) {
             var  param = gain.gain;
@@ -113,7 +113,7 @@ function Sound(context, destination) {
             source.fade(volume, duration);
         }
 
-        return api;
+        return sound;
     };
 
     /*
@@ -129,8 +129,8 @@ function Sound(context, destination) {
         effect && effect.destroy();
         gain && gain.disconnect();
         loader && loader.destroy();
-        api.off('loaded');
-        api.off('ended');
+        sound.off('loaded');
+        sound.off('ended');
         gain = null;
         context = null;
         data = null;
@@ -138,8 +138,8 @@ function Sound(context, destination) {
         source = null;
         effect = null;
         loader = null;
-        api.emit('destroyed', api);
-        api.off('destroyed');
+        sound.emit('destroyed', sound);
+        sound.off('destroyed');
     };
 
     /*
@@ -151,12 +151,12 @@ function Sound(context, destination) {
 
         if(file.isAudioBuffer(data)) {
             source = new BufferSource(data, context, function() {
-                api.emit('ended');
+                sound.emit('ended');
             });
         }
         else if(file.isMediaElement(data)) {
             source = new MediaSource(data, context, function() {
-                api.emit('ended');
+                sound.emit('ended');
             });
         }
         else if(file.isMediaStream(data)) {
@@ -175,7 +175,7 @@ function Sound(context, destination) {
         effect.setSource(source.sourceNode);
 
         // window.setTimeout(function() {
-        api.emit('ready');
+        sound.emit('ready', sound);
         // }, 0);
 
         if(playWhenReady) {
@@ -183,7 +183,7 @@ function Sound(context, destination) {
         }
     };
 
-    api = Object.create(Emitter.prototype, {
+    sound = Object.create(Emitter.prototype, {
         _events: {
             value: {}
         },
@@ -289,8 +289,12 @@ function Sound(context, destination) {
             },
             set: function(value) {
                 loop = !!value;
-                if(source && source.hasOwnProperty('loop')) {
+                if(source && source.hasOwnProperty('loop') && source.loop !== loop) {
                   source.loop = loop;
+                  if(source.playing) {
+                    pause();
+                    play();
+                  }
                 }
             }
         },
@@ -355,7 +359,7 @@ function Sound(context, destination) {
         waveform: {
             value: function(length) {
                 if(!data) {
-                    api.once('ready', function() {
+                    sound.once('ready', function() {
                         waveform(data, length);
                     });
                 }
@@ -364,7 +368,7 @@ function Sound(context, destination) {
         }
     });
 
-    return Object.freeze(api);
+    return Object.freeze(sound);
 }
 
 module.exports = Sound;
