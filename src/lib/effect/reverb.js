@@ -1,10 +1,12 @@
 'use strict';
 
+var validify = require('../utils/validify.js').number;
+
 function Reverb(context, config) {
     config = config || {};
 
-    var time = config.time || 1,
-        decay = config.decay || 5,
+    var time = validify(config.time, 1),
+        decay = validify(config.decay, 5),
         reverse = !!config.reverse,
         rate = context.sampleRate,
         length,

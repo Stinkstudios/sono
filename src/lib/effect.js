@@ -154,8 +154,8 @@ function Effect(context) {
         return add(node);
     };
 
-    var echo = function(time, gain) {
-        return add(new Echo(context, time, gain));
+    var echo = function(config) {
+        return add(new Echo(context, config));
     };
 
     var distortion = function(amount) {

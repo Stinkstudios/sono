@@ -1,13 +1,17 @@
 'use strict';
 
-function Echo(context, delayTime, gainValue) {
+var validify = require('../utils/validify.js').number;
+
+function Echo(context, config) {
+    config = config || {};
+
     var input = context.createGain();
     var delay = context.createDelay();
     var gain = context.createGain();
     var output = context.createGain();
 
-    gain.gain.value = gainValue || 0.5;
-    delay.delayTime.value = delayTime || 0.5;
+    delay.delayTime.value = validify(config.delayTime, 0.5);
+    gain.gain.value = validify(config.feedback, 0.5);
 
     input.connect(delay);
     input.connect(output);

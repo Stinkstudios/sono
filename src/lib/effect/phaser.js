@@ -1,11 +1,10 @@
 'use strict';
 
+var validify = require('../utils/validify.js').number;
+
 function Phaser(context, config) {
     config = config || {};
-    var stages = config.stages || 8,
-        lfoFrequency = config.frequency || 0.5,
-        lfoGainValue = config.gain || 300,
-        feedbackGain = config.feedback || 0.5,
+    var stages = validify(config.stages, 8),
         filters = [],
         filter;
 
@@ -15,11 +14,11 @@ function Phaser(context, config) {
     var lfoGain = context.createGain();
     var output = context.createGain();
 
-    feedback.gain.value = feedbackGain;
+    feedback.gain.value = validify(config.feedback, 0.5);
 
     lfo.type = 'sine';
-    lfo.frequency.value = lfoFrequency;
-    lfoGain.gain.value = lfoGainValue;
+    lfo.frequency.value = validify(config.frequency, 0.5);
+    lfoGain.gain.value = validify(config.gain, 300);
 
     for (var i = 0; i < stages; i++) {
         filter = context.createBiquadFilter();

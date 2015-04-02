@@ -1,5 +1,7 @@
 'use strict';
 
+var validify = require('../utils/validify.js').number;
+
 function Panner(context) {
     var node = context.createPanner();
     // Default for stereo is 'HRTF' can also be 'equalpower'
@@ -17,11 +19,6 @@ function Panner(context) {
     // set to defaults (needed in Firefox)
     node.setPosition(0, 0, 0);
     node.setOrientation(0, 0, 0);
-
-    var validify = function(num) {
-      if(typeof num !== 'number' || isNaN(num)) { return 0; }
-      return num;
-    };
 
     // simple vec3 object pool
     var vecPool = {

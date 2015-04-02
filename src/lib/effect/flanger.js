@@ -1,11 +1,8 @@
 'use strict';
 
-function MonoFlanger(context, config) {
-    var feedbackGain = config.feedback || 0.5,
-        delayTime = config.delay || 0.005,
-        lfoGain = config.gain || 0.002,
-        lfoFreq = config.frequency || 0.25;
+var validify = require('../utils/validify.js').number;
 
+function MonoFlanger(context, config) {
     var input = context.createGain();
     var delay = context.createDelay();
     var feedback = context.createGain();
@@ -13,12 +10,12 @@ function MonoFlanger(context, config) {
     var gain = context.createGain();
     var output = context.createGain();
 
-    delay.delayTime.value = delayTime; // 5-25ms delay (0.005 > 0.025)
-    feedback.gain.value = feedbackGain; // 0 > 1
+    delay.delayTime.value = validify(config.delay, 0.005); // 5-25ms delay (0.005 > 0.025)
+    feedback.gain.value = validify(config.feedback, 0.5); // 0 > 1
 
     lfo.type = 'sine';
-    lfo.frequency.value = lfoFreq; // 0.05 > 5
-    gain.gain.value = lfoGain; // 0.0005 > 0.005
+    lfo.frequency.value = validify(config.gain, 0.002); // 0.05 > 5
+    gain.gain.value = validify(config.frequency, 0.25); // 0.0005 > 0.005
 
     input.connect(output);
     input.connect(delay);
@@ -29,11 +26,11 @@ function MonoFlanger(context, config) {
     lfo.connect(gain);
     gain.connect(delay.delayTime);
     lfo.start(0);
-    
+
     var node = input;
     node.name = 'Flanger';
     node._output = output;
-    
+
     Object.defineProperties(node, {
         delay: {
             get: function() { return delay.delayTime.value; },
@@ -57,11 +54,6 @@ function MonoFlanger(context, config) {
 }
 
 function StereoFlanger(context, config) {
-    var feedbackGain = config.feedback || 0.5,
-        delayTime = config.delay || 0.003,
-        lfoGain = config.gain || 0.005,
-        lfoFreq = config.frequency || 0.5;
-
     var input = context.createGain();
     var splitter = context.createChannelSplitter(2);
     var merger = context.createChannelMerger(2);
@@ -74,19 +66,19 @@ function StereoFlanger(context, config) {
     var delayR = context.createDelay();
     var output = context.createGain();
 
-    feedbackL.gain.value = feedbackR.gain.value = feedbackGain;
-    delayL.delayTime.value = delayR.delayTime.value = delayTime;
+    feedbackL.gain.value = feedbackR.gain.value = validify(config.feedback, 0.5);
+    delayL.delayTime.value = delayR.delayTime.value = validify(config.delay, 0.003);
 
     lfo.type = 'sine';
-    lfo.frequency.value = lfoFreq;
-    lfoGainL.gain.value = lfoGain;
-    lfoGainR.gain.value = 0 - lfoGain;
+    lfo.frequency.value = validify(config.frequency, 0.5);
+    lfoGainL.gain.value = validify(config.gain, 0.005);
+    lfoGainR.gain.value = 0 - lfoGainL.gain.value;
 
     input.connect(splitter);
-    
+
     splitter.connect(delayL, 0);
     splitter.connect(delayR, 1);
-    
+
     delayL.connect(feedbackL);
     delayR.connect(feedbackR);
 

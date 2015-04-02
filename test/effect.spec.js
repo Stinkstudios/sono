@@ -120,7 +120,7 @@ function effectTest(isWebAudio) {
         describe('echo', function() {
             it('should have expected api', function() {
                 expect(effect.echo).to.be.a('function');
-                expect(effect.echo.length).to.eql(2);
+                expect(effect.echo.length).to.eql(1);
                 expect(effect.echo()).to.be.an.instanceof(audioNode);
             });
             it('should add and remove node', function() {

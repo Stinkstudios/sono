@@ -1,8 +1,10 @@
 'use strict';
 
+var validify = require('../utils/validify.js').number;
+
 function Distortion(context, amount) {
 
-    amount = amount || 1;
+    amount = validify(amount, 1);
 
     var node = context.createWaveShaper();
 
