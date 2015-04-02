@@ -1,19 +1,26 @@
 'use strict';
 
 var validify = require('../utils/validify.js').number;
+var n = 22050;
 
 function Distortion(context, amount) {
 
     amount = validify(amount, 1);
 
     var node = context.createWaveShaper();
+    var curve = new Float32Array(n);
 
     // create waveShaper distortion curve from 0 to 1
     node.update = function(value) {
         amount = value;
+        if(amount <= 0) {
+          amount = 0;
+          this.curve = null;
+          return;
+        }
         var k = value * 100,
-            n = 22050,
-            curve = new Float32Array(n),
+            // n = 22050,
+            // curve = new Float32Array(n),
             deg = Math.PI / 180,
             x;
 
