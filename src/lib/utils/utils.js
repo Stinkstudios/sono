@@ -1,14 +1,15 @@
 'use strict';
 
 var Microphone = require('./microphone.js');
+var waveformer = require('./waveformer.js');
 
 /*
- * audio context
+ * audio audioContext
  */
-var context;
+var audioContext;
 
 var setContext = function(value) {
-    context = value;
+    audioContext = value;
 };
 
 /*
@@ -16,10 +17,10 @@ var setContext = function(value) {
  */
 
 var cloneBuffer = function(buffer) {
-    if(!context) { return buffer; }
+    if(!audioContext) { return buffer; }
 
     var numChannels = buffer.numberOfChannels,
-        cloned = context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+        cloned = audioContext.createBuffer(numChannels, buffer.length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i));
     }
@@ -43,10 +44,10 @@ var reverseBuffer = function(buffer) {
  */
 
 var ramp = function(param, fromValue, toValue, duration) {
-    if(!context) { return; }
+    if(!audioContext) { return; }
 
-    param.setValueAtTime(fromValue, context.currentTime);
-    param.linearRampToValueAtTime(toValue, context.currentTime + duration);
+    param.setValueAtTime(fromValue, audioContext.currentTime);
+    param.linearRampToValueAtTime(toValue, audioContext.currentTime + duration);
 };
 
 /*
@@ -54,12 +55,12 @@ var ramp = function(param, fromValue, toValue, duration) {
  */
 
 var getFrequency = function(value) {
-    if(!context) { return 0; }
+    if(!audioContext) { return 0; }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     var minValue = 40;
-    var maxValue = context.sampleRate / 2;
+    var maxValue = audioContext.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -91,67 +92,6 @@ var timeCode = function(seconds, delim) {
     return hr + mn + sc;
 };
 
-/*
- * waveform
- */
-
-var drawWaveform = function(config) {
-    var x, y;
-    var canvas = config.canvas || document.createElement('canvas');
-    var context = config.context || canvas.getContext('2d');
-    var width = config.width || canvas.width;
-    var height = config.height || canvas.height;
-    var color = config.color || '#000000';
-    var bgColor = config.bgColor;
-    var data = config.waveform || (config.sound && config.sound.waveform(width));
-    var percent = config.percent || 1;
-    var offsetX = config.x || 0;
-    var offsetY = config.y || 0;
-
-    if(bgColor) {
-        context.fillStyle = bgColor;
-        context.fillRect(0, 0, width, height);
-    } else {
-        context.clearRect(0, 0, height, height);
-    }
-
-    context.strokeStyle = color;
-    context.beginPath();
-
-    for(var i = 0; i < data.length * percent; i++) {
-        x = offsetX + i + 0.5;
-        y = offsetY + height - Math.round(height * data[i]);
-        context.moveTo(x, y);
-        context.lineTo(x, height);
-    }
-    context.stroke();
-
-    return canvas;
-};
-
-// var drawCircular = function(ctx, waveform, radius, origin, color, percent) {
-//     var step = (Math.PI * 2) / waveform.length,
-//         angle, x, y, magnitude;
-
-//     ctx.lineWidth = 1.5;
-//     ctx.strokeStyle = color;
-//     ctx.clearRect(0, 0, width, height);
-//     ctx.beginPath();
-
-//     for(var i = 0; i < waveform.length * percent; i++) {
-//         angle = i * step - Math.PI / 2;
-//         x = origin + radius * Math.cos(angle);
-//         y = origin + radius * Math.sin(angle);
-//         ctx.moveTo(x, y);
-
-//         magnitude = radius + radius * waveform[i];
-//         x = origin + magnitude * Math.cos(angle);
-//         y = origin + magnitude * Math.sin(angle);
-//         ctx.lineTo(x, y);
-//     }
-//     ctx.stroke();
-// };
-
 module.exports = Object.freeze({
     setContext: setContext,
     cloneBuffer: cloneBuffer,
@@ -160,5 +100,5 @@ module.exports = Object.freeze({
     getFrequency: getFrequency,
     microphone: microphone,
     timeCode: timeCode,
-    drawWaveform: drawWaveform
+    waveformer: waveformer
 });
