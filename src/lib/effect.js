@@ -49,6 +49,20 @@ function Effect(context) {
         return node;
     };
 
+    var toggle = function(node, force) {
+      force = !!force;
+      var hasNode = has(node);
+      if(arguments.length > 1 && hasNode === force) {
+        return api;
+      }
+      if(hasNode) {
+        remove(node);
+      } else {
+        add(node);
+      }
+      return api;
+    };
+
     var removeAll = function() {
         while(nodeList.length) {
             nodeList.pop().disconnect();
@@ -282,6 +296,7 @@ function Effect(context) {
         has: has,
         add: add,
         remove: remove,
+        toggle: toggle,
         removeAll: removeAll,
         destroy: destroy,
         setSource: setSource,
