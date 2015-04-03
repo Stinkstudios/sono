@@ -4,44 +4,63 @@ function Analyser(context, config) {
     config = config || {};
 
     var fftSize = config.fftSize || 512,
-        waveformData,
-        frequencyData,
+        floatDefault = !!config.float,
+        waveform,
+        frequencies,
         node = context.createAnalyser();
 
     node.fftSize = fftSize; // frequencyBinCount will be half this value
-
     node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
     node.minDecibels = config.minDecibels || node.minDecibels;
     node.maxDecibels = config.maxDecibels || node.maxDecibels;
-    // if(config.smoothing !== undefined) { node.smoothingTimeConstant = smoothing; }
-    // if(config.minDecibels !== undefined) { node.minDecibels = minDecibels; }
-    // if(config.maxDecibels !== undefined) { node.maxDecibels = maxDecibels; }
 
-    var updateFFTSize = function() {
-        if(fftSize !== node.fftSize || waveformData === undefined) {
-            waveformData = new Uint8Array(node.fftSize);
-            frequencyData = new Uint8Array(node.frequencyBinCount);
+    var needsUpdate = function(arr, float) {
+      if(!arr) { return true; }
+      if(node.fftSize !== fftSize) { return true; }
+      if(float && arr instanceof Uint8Array) { return true; }
+      return !(float && arr instanceof Float32Array);
+    };
+
+    var createArray = function(float, length) {
+      return float ? new Float32Array(length) : new Uint8Array(length);
+    };
+
+    node.getWaveform = function(float) {
+        if(!arguments.length) { float = floatDefault; }
+
+        if(needsUpdate(waveform, float)) {
             fftSize = node.fftSize;
+            waveform = createArray(float, fftSize);
         }
-    };
-    updateFFTSize();
 
-    node.getWaveform = function() {
-        updateFFTSize();
-        this.getByteTimeDomainData(waveformData);
-        return waveformData;
-    };
+        if(float) {
+          this.getFloatTimeDomainData(waveform);
+        } else {
+          this.getByteTimeDomainData(waveform);
+        }
 
-    node.getFrequencies = function() {
-        updateFFTSize();
-        this.getByteFrequencyData(frequencyData);
-        return frequencyData;
+        return waveform;
     };
 
-    // map native properties of AnalyserNode
+    node.getFrequencies = function(float) {
+        if(!arguments.length) { float = floatDefault; }
+
+        if(needsUpdate(frequencies, float)) {
+            fftSize = node.fftSize;
+            frequencies = createArray(float, node.frequencyBinCount);
+        }
+
+        if(float) {
+          this.getFloatFrequencyData(frequencies);
+        } else {
+          this.getByteFrequencyData(frequencies);
+        }
+
+        return frequencies;
+    };
+
     Object.defineProperties(node, {
         smoothing: {
-            // 0 to 1
             get: function() { return node.smoothingTimeConstant; },
             set: function(value) { node.smoothingTimeConstant = value; }
         }
