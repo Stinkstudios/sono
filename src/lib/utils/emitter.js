@@ -4,6 +4,7 @@ var EventEmitter = require('events').EventEmitter;
 
 function Emitter() {
     EventEmitter.call(this);
+    this.setMaxListeners(20);
 }
 
 Emitter.prototype = Object.create(EventEmitter.prototype);
