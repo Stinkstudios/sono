@@ -17,7 +17,7 @@ module.exports = function waveformer(config) {
         width = config.width || (canvas && canvas.width),
         height = config.height || (canvas && canvas.height),
         ctx, currentColor, waveform, length, i, value, x, y,
-        radius, innerRadius;
+        radius, innerRadius, centerX, centerY;
 
     if(!canvas && !config.context) {
       canvas = document.createElement('canvas');
@@ -30,8 +30,8 @@ module.exports = function waveformer(config) {
     if(shape === 'circular') {
       radius = config.radius || Math.min(height / 2, width / 2),
       innerRadius = config.innerRadius || radius / 2;
-      originX = originX || width / 2;
-      originY = originY || height / 2;
+      centerX = originX + width / 2;
+      centerY = originY + height / 2;
     }
 
     ctx = config.context || canvas.getContext('2d');
@@ -40,9 +40,9 @@ module.exports = function waveformer(config) {
     var clear = function() {
       if(bgColor) {
           ctx.fillStyle = bgColor;
-          ctx.fillRect(0, 0, width, height);
+          ctx.fillRect(originX, originY, width, height);
       } else {
-          ctx.clearRect(0, 0, width, height);
+          ctx.clearRect(originX, originY, width, height);
       }
 
       currentColor = null;
@@ -95,7 +95,7 @@ module.exports = function waveformer(config) {
       if(shape === 'circular') {
 
         waveform = getWaveform(wave, 360);
-        length = waveform.length * percent;
+        length = Math.floor(waveform.length * percent);
 
         var step = twoPI / length,
             angle, magnitude, sine, cosine;
@@ -109,14 +109,14 @@ module.exports = function waveformer(config) {
           sine = Math.sin(angle);
 
           if(style === 'fill') {
-            x = originX + innerRadius * cosine;
-            y = originY + innerRadius * sine;
+            x = centerX + innerRadius * cosine;
+            y = centerY + innerRadius * sine;
             ctx.moveTo(x, y);
           }
 
           magnitude = innerRadius + (radius - innerRadius) * value;
-          x = originX + magnitude * cosine;
-          y = originY + magnitude * sine;
+          x = centerX + magnitude * cosine;
+          y = centerY + magnitude * sine;
 
           if(style === 'line' && i === 0) {
             ctx.moveTo(x, y);
@@ -132,7 +132,8 @@ module.exports = function waveformer(config) {
       else {
 
         waveform = getWaveform(wave, width);
-        length = waveform.length * percent;
+        length = Math.min(waveform.length, width);
+        length = Math.floor(length * percent);
 
         for(i = 0; i < length; i++) {
           value = getValue(waveform[i]);
@@ -142,7 +143,7 @@ module.exports = function waveformer(config) {
             ctx.lineTo(x, y);
           }
 
-          x = originX + i + 0.5;
+          x = originX + i;
           y = originY + height - Math.round(height * value);
 
           if(style === 'fill') {
