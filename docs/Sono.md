@@ -1,4 +1,4 @@
-# Sono
+# sono
 
 [View source code](../src/sono.js)
 
@@ -7,19 +7,19 @@
 Create a Sound object
 
 ```javascript
-Sono.createSound(config); returns Sound
+sono.createSound(config); returns Sound
 ```
 
-[View source code](../src/sono.js#L41-58)
+[View source code](../src/sono.js#L34-44)
 
 #### Examples
 
 Create and load:
 
 ```javascript
-var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
-var sound = Sono.createSound('audio/foo.ogg');
-var sound = Sono.createSound({
+var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = sono.createSound('audio/foo.ogg');
+var sound = sono.createSound({
 	id: 'foo',
 	url: ['audio/foo.ogg', 'audio/foo.mp3'],
 	loop: true,
@@ -31,18 +31,18 @@ From existing HTMLMediaElement:
 
 ```javascript
 var audioEl = document.querySelector('audio');
-var audioElSound = Sono.createSound(audioEl);
+var audioElSound = sono.createSound(audioEl);
 
 var videoEl = document.querySelector('video');
-var videoElSound = Sono.createSound(videoEl);
+var videoElSound = sono.createSound(videoEl);
 ```
 
 Create an oscillator:
 
 ```javascript
-var sineWave = Sono.createSound('sine');
+var sineWave = sono.createSound('sine');
 
-var squareWave = Sono.createSound('square');
+var squareWave = sono.createSound('square');
 squareWave.frequency = 200;
 ```
 
@@ -50,21 +50,21 @@ User microphone stream:
 
 ```javascript
 // Use the [microphone utility](#utils):
-var mic = Sono.utils.microphone(function(stream) {
-	var micSound = Sono.createSound(stream);
+var mic = sono.utils.microphone(function(stream) {
+	var micSound = sono.createSound(stream);
 });
 mic.connect();
 
 // or your own implementation
 navigator.getUserMedia({audio:true}, function(stream) {
-	var micSound = Sono.createSound(stream);
+	var micSound = sono.createSound(stream);
 });
 ```
 
 Script processor:
 
 ```javascript
-var script = Sono.createSound({
+var script = sono.createSound({
 	bufferSize: 1024,
 	channels: 1,
 	callback: function(event) {
@@ -77,11 +77,11 @@ var script = Sono.createSound({
 });
 ```
 
-XHR arraybuffer loaded outside of Sono:
+XHR arraybuffer loaded outside of sono:
 ```javascript
 var sound;
-Sono.context.decodeAudioData(xhrResponse, function(buffer) {
-	sound = Sono.createSound(buffer);
+sono.context.decodeAudioData(xhrResponse, function(buffer) {
+	sound = sono.createSound(buffer);
 });
 ```
 
@@ -89,75 +89,75 @@ A sound can be assigned an `id` property which can be used to retrieve it later,
 
 ```javascript
 // create a sound with an id:
-var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 sound.id = 'foo';
 
-var sound = Sono.createSound({
+var sound = sono.createSound({
 	id: 'foo',
 	url: ['audio/foo.ogg', 'audio/foo.mp3']
 });
 
 // then somewhere else in your app:
-var foo = Sono.getSound('foo');
+var foo = sono.getSound('foo');
 foo.play();
 // or
-Sono.play('foo');
+sono.play('foo');
 ```
 
 ## destroySound
 
-Remove a sound from Sono
+Remove a sound from sono
 
 ```javascript
-Sono.destroySound(soundOrId)
+sono.destroySound(soundOrId)
 ```
 
-[View source code](../src/sono.js#L64-79)
+[View source code](../src/sono.js#L50-55)
 
 #### Examples
 
 ```javascript
-var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 sound.id = 'bar';
 
 // either will work
-Sono.destroySound(sound);
-Sono.destroySound('bar');
+sono.destroySound(sound);
+sono.destroySound('bar');
 ```
 
 ## destroyAll
 
-Remove all sounds from Sono
+Remove all sounds from sono
 
 ```javascript
-Sono.destroyAll()
+sono.destroyAll()
 ```
 
-[View source code](../src/sono.js#L81-84)
+[View source code](../src/sono.js#L57-60)
 
 #### Examples
 
 ```javascript
-Sono.destroyAll();
+sono.destroyAll();
 ```
 
 
 ## getSound
 
 ```javascript
-Sono.getSound(id)
+sono.getSound(id)
 ```
 
-[View source code](../src/sono.js#L90-L99)
+[View source code](../src/sono.js#L66-68)
 
 #### Examples
 
 ```javascript
-var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 sound.id = 'bar';
 
 // somewhere else
-var sound = Sono.getSound('bar');
+var sound = sono.getSound('bar');
 ```
 
 
@@ -166,17 +166,17 @@ var sound = Sono.getSound('bar');
 Create a group to control multiple sounds together
 
 ```javascript
-Sono.createGroup(sounds)
+sono.createGroup(sounds)
 ```
 
-[View source code](../src/sono.js#L105-L113)
+[View source code](../src/sono.js#L74-82)
 
 #### Examples
 
 ```javascript
-var group = Sono.createGroup();
-group.add(Sono.createSound('sine'));
-group.add(Sono.createSound('square'));
+var group = sono.createGroup();
+group.add(sono.createSound('sine'));
+group.add(sono.createSound('square'));
 var echo = group.effect.echo();
 group.play();
 ```
@@ -184,26 +184,26 @@ group.play();
 
 ## load
 
-Load a sound and add to Sono
+Load a sound and add to sono
 
 ```javascript
-Sono.load(config) returns Sound
+sono.load(config) returns Sound
 ```
 
-[View source code](../src/sono.js#L119-160)
+[View source code](../src/sono.js#L88-165)
 
 #### Examples
 
 Load first file compatible with browser from an array
 
 ```javascript
-var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = sono.load(['audio/foo.ogg', 'audio/foo.mp3']);
 ```
 
 Load a single sound with config options and callbacks
 
 ```javascript
-var sound = Sono.load({
+var sound = sono.load({
 	id: 'foo',
 	url: ['audio/foo.ogg', 'audio/foo.mp3'],
 	loop: true,
@@ -217,10 +217,10 @@ var sound = Sono.load({
 });
 ```
 
-Sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `Sono.getSound`, `Sono.play`, `Sono.pause` and `Sono.stop` methods:
+sono.load also accepts an array of sound config objects. All the sounds will be loaded and can later be accessed through their `id` properties using the `sono.getSound`, `sono.play`, `sono.pause` and `sono.stop` methods:
 
 ```javascript
-var sounds = Sono.load({
+var sounds = sono.load({
 	url: [
 		{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
 		{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
@@ -231,8 +231,8 @@ var sounds = Sono.load({
 			console.log(sound.id);
 		});
 		// sound instances can be retrieved or controlled by id:
-		var soundA = Sono.getSound('a');
-		Sono.play('b');
+		var soundA = sono.getSound('a');
+		sono.play('b');
 	},
 	onProgress: function(progress) {
 		// update progress bar
@@ -243,18 +243,18 @@ var sounds = Sono.load({
 Specific file:
 
 ```javascript
-var sound = Sono.load('audio/foo.ogg');
+var sound = sono.load('audio/foo.ogg');
 ```
 
 Check file support manually:
 
 
 ```javascript
-var extension = Sono.canPlay.ogg ? 'ogg' : 'mp3';
-var sound = Sono.load('audio/foo.' + extension);
+var extension = sono.canPlay.ogg ? 'ogg' : 'mp3';
+var sound = sono.load('audio/foo.' + extension);
 
-if(Sono.canPlay.mp3) {
-	var sound = Sono.load('audio/foo.mp3');
+if(sono.canPlay.mp3) {
+	var sound = sono.load('audio/foo.mp3');
 }
 
 ```
@@ -262,14 +262,14 @@ if(Sono.canPlay.mp3) {
 Load and play immediately:
 
 ```javascript
-var sound = Sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play();
+var sound = sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play();
 
 ```
 
 Bind to scope:
 
 ```javascript
-var sound = Sono.load({
+var sound = sono.load({
 	url: ['audio/foo.ogg', 'audio/foo.mp3'],
 	onComplete: this.onSoundLoaded,
 	onProgress: this.onSoundProgress,
@@ -280,106 +280,106 @@ var sound = Sono.load({
 ## controls
 
 ```
-Sono.mute() returns Sono
-Sono.unMute() returns Sono
-Sono.volume (get/set)
-Sono.fade(volume, duration) returns Sono
-Sono.pauseAll() returns Sono
-Sono.resumeAll() returns Sono
-Sono.stopAll() returns Sono
-Sono.play(id, delay, offset) returns Sono
-Sono.pause(id) returns Sono
-Sono.stop(id) returns Sono
+sono.mute() returns sono
+sono.unMute() returns sono
+sono.volume (get/set)
+sono.fade(volume, duration) returns sono
+sono.pauseAll() returns sono
+sono.resumeAll() returns sono
+sono.stopAll() returns sono
+sono.play(id, delay, offset) returns sono
+sono.pause(id) returns sono
+sono.stop(id) returns sono
 ```
 
-[View source code](../src/sono.js#L186-238)
+[View source code](../src/sono.js#L171-220)
 
 #### Examples
 
 ```javascript
 // mute master volume
-Sono.mute();
+sono.mute();
 // un-mute master volume
-Sono.unMute();
+sono.unMute();
 // set master volume to 50%
-Sono.volume = 0.5;
+sono.volume = 0.5;
 // get master volume
-console.log(Sono.volume); // 0.5
+console.log(sono.volume); // 0.5
 // fade out master volume to 0 over 2 seconds
-Sono.fade(0, 2);
+sono.fade(0, 2);
 // pause all currently playing
-Sono.pauseAll();
+sono.pauseAll();
 // resume all currently paused
-Sono.resumeAll();
+sono.resumeAll();
 // stop all currently playing or paused
-Sono.stopAll();
+sono.stopAll();
 // play sound by id after a 1 second delay
-Sono.play('foo', 1);
+sono.play('foo', 1);
 // pause sound by id
-Sono.pause('foo');
+sono.pause('foo');
 // stop sound by id
-Sono.stop('foo');
+sono.stop('foo');
 ```
 
 
 ## log
 
-```javascript
-Sono.log()
+```
+sono.log()
 ```
 
-[View source code](../src/sono.js#L289-308)
+[View source code](../src/sono.js#L264-283)
 
 #### Examples
 
 Log version number and browser audio support info to the console:
 
 ```javascript
-Sono.log(); // Sono 0.0.5 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
+sono.log(); // sono 0.0.5 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
 ```
 
 ## getters
 
 ```
-Sono.canPlay returns Object
-Sono.context returns WebAudioContext
-Sono.effect returns Effect
-Sono.extensions returns Array
-Sono.hasWebAudio returns boolean
-Sono.isSupported returns boolean
-Sono.gain returns GainNode
-Sono.sounds returns Array
-Sono.utils returns Utils
+sono.canPlay returns Object
+sono.context returns WebAudioContext
+sono.effect returns Effect
+sono.extensions returns Array
+sono.hasWebAudio returns boolean
+sono.isSupported returns boolean
+sono.gain returns GainNode
+sono.sounds returns Array
+sono.utils returns Utils
 ```
 
-[View source code](../src/sono.js#L314-360)
+[View source code](../src/sono.js#L285-337)
 
 #### Examples
 
 ```javascript
 // what file types can the current browser handle?
-Sono.canPlay.ogg; // boolean
-Sono.canPlay.mp3; // boolean
-Sono.canPlay.opus; // boolean
-Sono.canPlay.wav; // boolean
-Sono.canPlay.m4a; // boolean
+sono.canPlay.ogg; // boolean
+sono.canPlay.mp3; // boolean
+sono.canPlay.opus; // boolean
+sono.canPlay.wav; // boolean
+sono.canPlay.m4a; // boolean
 
 // access to the WebAudio context
-var webAudioContext = Sono.context;
+var webAudioContext = sono.context;
 
 // is WebAudio supported in the current browser?
-if(Sono.hasWebAudio) {
+if(sono.hasWebAudio) {
 	// do something
 }
 
 // is audio supported at all in the browser?
-var hasAudioSupport = Sono.isSupported;
+var hasAudioSupport = sono.isSupported;
 
 // access to the master Gain node
-Sono.gain
+sono.gain
 
-// access array of sounds in Sono
-Sono.sounds.forEach(function(sound) {
+// access array of sounds in sono
+sono.sounds.forEach(function(sound) {
 	console.log(sound);
 });
 ```
@@ -393,7 +393,6 @@ Sound.pause() returns Sound
 Sound.stop() returns Sound
 Sound.seek(percent) returns Sound
 Sound.fade(volume, duration) returns Sound
-Sound.on('ended', fn) returns Sound
 Sound.destroy()
 Sound.currentTime returns Number
 Sound.data returns Object
@@ -409,6 +408,13 @@ Sound.playing returns Boolean
 Sound.playbackRate returns Number
 Sound.progress returns Number
 Sound.volume returns Number
+
+Sound.on('ready', fn) returns Sound
+Sound.on('play', fn) returns Sound
+Sound.on('pause', fn) returns Sound
+Sound.on('stop', fn) returns Sound
+Sound.on('ended', fn) returns Sound
+Sound.on('destroy', fn) returns Sound
 ```
 
 [View source code](../src/sound.js)
@@ -416,7 +422,7 @@ Sound.volume returns Number
 #### Examples
 
 ```javascript
-var sound = Sono.createSound({
+var sound = sono.createSound({
 	id: 'foo',
 	url: ['audio/foo.ogg', 'audio/foo.mp3'],
 	loop: true,
@@ -434,10 +440,25 @@ sound.seek(0.5);
 sound.playbackRate = 2;
 // play sound at half speed
 sound.playbackRate = 0.5;
-// get callback when sound ends
-sound.on('ended', function() {
-	console.log('ended');
-});
+// get callbacks when state changes
+sound.on('ready', function() {
+		console.log('ready');
+	})
+	.on('play', function() {
+		console.log('play');
+	})
+	.on('pause', function() {
+		console.log('pause');
+	})
+	.on('stop', function() {
+		console.log('stop');
+	})
+	.on('ended', function() {
+		console.log('ended');
+	})
+	.on('destroy', function() {
+		console.log('destroy');
+	});
 ```
 
 
@@ -450,16 +471,18 @@ sound.on('ended', function() {
 Add and remove effects
 
 ```javascript
-Sono.effect.add(node) returns AudioNode
-Sono.effect.remove(node) returns AudioNode
-Sono.effect.removeAll()
+sono.effect.has(node) returns Boolean
+sono.effect.add(node) returns AudioNode
+sono.effect.remove(node) returns AudioNode
+sono.effect.removeAll()
 
+Sound.effect.has(node) returns Boolean
 Sound.effect.add(node) returns AudioNode
 Sound.effect.remove(node) returns AudioNode
 Sound.effect.removeAll()
 ```
 
-[View source code](../src/lib/effect.js#L21-48)
+[View source code](../src/lib/effect.js#L23-50)
 
 #### Examples
 
@@ -476,7 +499,7 @@ sound.effect.removeAll();
 Create an AnalyserNode and add to chain
 
 ```javascript
-Sono.effect.analyser(fftSize)
+sono.effect.analyser(fftSize)
 Sound.effect.analyser(fftSize)
 ```
 
@@ -486,7 +509,7 @@ Sound.effect.analyser(fftSize)
 
 ```javascript
 var video = document.querySelector('video');
-var sound = Sono.createSound(video);
+var sound = sono.createSound(video);
 var analyser = sound.effect.analyser(2048);
 var frequencies, waveform, magnitude, percent, i;
 
@@ -518,16 +541,16 @@ draw();
 Apply compression processing (lowers the volume of the loudest parts of the signal and raises the volume of the softest parts)
 
 ```javascript
-Sono.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
+sono.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
 Sound.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
 ```
 
-[View source code](../src/lib/effect.js#L116-140)
+[View source code](../src/lib/effect.js#L133-156)
 
 #### Examples
 
 ```javascript
-var compressor = Sono.effect.compressor();
+var compressor = sono.effect.compressor();
 // min decibels to start compressing at from -100 to 0
 compressor.threshold.value = -24;
 // decibel value to start curve to compressed value from 0 to 40
@@ -547,20 +570,20 @@ compressor.release.value = 0.25;
 Create a reverb effect by passing an audio buffer of a pre-recorded reverb impulse
 
 ```javascript
-Sono.effect.convolver(impulseResponse) returns Convolver
+sono.effect.convolver(impulseResponse) returns Convolver
 Sound.effect.convolver(impulseResponse) returns Convolver
 ```
 
-[View source code](../src/lib/effect.js#L142-147)
+[View source code](../src/lib/effect.js#L158-163)
 
 #### Examples
 
 ```javascript
-var reverb = Sono.effect.convolver();
+var reverb = sono.effect.convolver();
 var applyImpulse = function(sound) {
 	reverb.buffer = sound.data;
 };
-Sono.load(['impulse.ogg', 'impulse.mp3'], applyImpulse);
+sono.load(['impulse.ogg', 'impulse.mp3'], applyImpulse);
 ```
 
 ## delay
@@ -568,11 +591,11 @@ Sono.load(['impulse.ogg', 'impulse.mp3'], applyImpulse);
 Delay the sound playback
 
 ```javascript
-Sono.effect.delay(time) returns Delay
+sono.effect.delay(time) returns Delay
 Sound.effect.delay(time) returns Delay
 ```
 
-[View source code](../src/lib/effect.js#L149-153)
+[View source code](../src/lib/effect.js#L165-169)
 
 #### Examples
 
@@ -585,8 +608,8 @@ var delay = sound.effect.delay(1);
 Create a distortion effect
 
 ```javascript
-Sono.effect.distortion(amount) returns Distortion
-Sono.effect.distortion(amount) returns Distortion
+sono.effect.distortion(amount) returns Distortion
+sono.effect.distortion(amount) returns Distortion
 ```
 
 [View source code](../src/lib/effect/distortion.js)
@@ -604,7 +627,7 @@ distortion.amount = 0.8; // [0,1]
 Create a repeating echo or delay effect
 
 ```javascript
-Sono.effect.echo(delayTime, gainValue) returns Echo
+sono.effect.echo(delayTime, gainValue) returns Echo
 Sound.effect.echo(delayTime, gainValue) returns Echo
 ```
 
@@ -622,15 +645,15 @@ echo.update(3, 0.5); // [seconds, gain]
 Create a filter effect
 
 ```javascript
-Sono.effect.filter(type, frequency, quality, gain) returns BiquadFilter
-Sono.effect.lowpass(frequency, quality, gain) returns BiquadFilter
-Sono.effect.highpass(frequency, quality, gain) returns BiquadFilter
-Sono.effect.bandpass(frequency, quality, gain) returns BiquadFilter
-Sono.effect.lowshelf(frequency, quality, gain) returns BiquadFilter
-Sono.effect.highshelf(frequency, quality, gain) returns BiquadFilter
-Sono.effect.peaking(frequency, quality, gain) returns BiquadFilter
-Sono.effect.notch(frequency, quality, gain) returns BiquadFilter
-Sono.effect.allpass(frequency, quality, gain) returns BiquadFilter
+sono.effect.filter(type, frequency, quality, gain) returns BiquadFilter
+sono.effect.lowpass(frequency, quality, gain) returns BiquadFilter
+sono.effect.highpass(frequency, quality, gain) returns BiquadFilter
+sono.effect.bandpass(frequency, quality, gain) returns BiquadFilter
+sono.effect.lowshelf(frequency, quality, gain) returns BiquadFilter
+sono.effect.highshelf(frequency, quality, gain) returns BiquadFilter
+sono.effect.peaking(frequency, quality, gain) returns BiquadFilter
+sono.effect.notch(frequency, quality, gain) returns BiquadFilter
+sono.effect.allpass(frequency, quality, gain) returns BiquadFilter
 
 Sound.effect.filter(type, frequency, quality, gain) returns BiquadFilter
 Sound.effect.lowpass(frequency, quality, gain) returns BiquadFilter
@@ -665,7 +688,7 @@ lowpass.update(600, 1);
 ## flanger
 
 ```javascript
-Sono.effect.flanger() returns Flanger
+sono.effect.flanger() returns Flanger
 ```
 
 [View source code](../src/lib/effect/flanger.js)
@@ -673,7 +696,7 @@ Sono.effect.flanger() returns Flanger
 #### Examples
 
 ```javascript
-var flanger = Sono.effect.flanger({
+var flanger = sono.effect.flanger({
 	delay: 0.005,
 	frequency: 0.025,
 	gain: 0.002,
@@ -684,16 +707,16 @@ var flanger = Sono.effect.flanger({
 ## gain
 
 ```javascript
-Sono.effect.gain(value) returns Gain
+sono.effect.gain(value) returns Gain
 ```
 
-[View source code](../src/lib/effect.js#L211-217)
+[View source code](../src/lib/effect.js#L223-229)
 
 #### Examples
 
 ```javascript
-var gain = Sono.effect.gain();
-Sono.effect.add(gain);
+var gain = sono.effect.gain();
+sono.effect.add(gain);
 gain.gain.value = 0.5;
 ```
 
@@ -702,7 +725,7 @@ gain.gain.value = 0.5;
 Create a panner node
 
 ```javascript
-Sono.effect.panner() returns Panner
+sono.effect.panner() returns Panner
 sound.effect.panner() returns Panner
 ```
 
@@ -722,10 +745,10 @@ panner.calculateVelocity(currentPosition, lastPosition, deltaTime) returns Vec3
 Modify global values for panning
 
 ```javascript
-Sono.effect.panning.setDefaults(object)
-Sono.effect.panning.setListenerPosition(x, y, z)
-Sono.effect.panning.setListenerOrientation(x, y, z)
-Sono.effect.panning.setListenerVelocity(x, y, z)
+sono.effect.panning.setDefaults(object)
+sono.effect.panning.setListenerPosition(x, y, z)
+sono.effect.panning.setListenerOrientation(x, y, z)
+sono.effect.panning.setListenerVelocity(x, y, z)
 ```
 
 [View source code](../src/lib/effect/panner.js)
@@ -745,7 +768,7 @@ panner.setSourceOrientation(x, y, z);
 panner.setSourceOrientation(vec3);
 
 // set defaults for all subsequent panner nodes:
-Sono.effect.panning.setDefaults({
+sono.effect.panning.setDefaults({
     distanceModel: 'linear',
     refDistance: 1,
     maxDistance: 1000,
@@ -753,14 +776,14 @@ Sono.effect.panning.setDefaults({
 });
 
 // update global listener position and orientation to 3d camera Vectors
-Sono.effect.panning.setListenerOrientation(camera.forward);
-Sono.effect.panning.setListenerPosition(camera.position);
+sono.effect.panning.setListenerOrientation(camera.forward);
+sono.effect.panning.setListenerPosition(camera.position);
 ```
 
 ## phaser
 
 ```javascript
-Sono.effect.phaser() returns Phaser
+sono.effect.phaser() returns Phaser
 ```
 
 [View source code](../src/lib/effect/phaser.js)
@@ -768,7 +791,7 @@ Sono.effect.phaser() returns Phaser
 #### Examples
 
 ```javascript
-var phaser = Sono.effect.phaser({
+var phaser = sono.effect.phaser({
 	stages: 4,
 	frequency: 0.5,
 	gain: 300,
@@ -781,7 +804,7 @@ var phaser = Sono.effect.phaser({
 Record audio from the mix or microphone to a new audio buffer
 
 ```javascript
-Sono.effect.recorder(passThrough) returns Recorder
+sono.effect.recorder(passThrough) returns Recorder
 Sound.effect.recorder(passThrough) returns Recorder
 ```
 
@@ -803,7 +826,7 @@ Record a sound mix or microphone stream
 var recorder;
 
 var onMicConnected = function(stream) {
-	var micSound = Sono.createSound(stream);
+	var micSound = sono.createSound(stream);
 	// add recorder, setting passThrough to false
 	// to avoid feedback loop between mic and speakers
 	recorder = micSound.effect.recorder(false);
@@ -812,18 +835,18 @@ var onMicConnected = function(stream) {
 
 stopButton.addEventListener('click', function() {
 	var buffer = recorder.stop();
-	var recordedSound = Sono.createSound(buffer);
+	var recordedSound = sono.createSound(buffer);
 	recordedSound.play();
 });
 
-var mic = Sono.utils.microphone(onMicConnected);
+var mic = sono.utils.microphone(onMicConnected);
 mic.connect();
 ```
 
 ## reverb
 
 ```javascript
-Sono.effect.reverb(seconds, decay, reverse) returns Reverb
+sono.effect.reverb(seconds, decay, reverse) returns Reverb
 ```
 
 [View source code](../src/lib/effect/reverb.js)
@@ -831,7 +854,7 @@ Sono.effect.reverb(seconds, decay, reverse) returns Reverb
 #### Examples
 
 ```javascript
-var reverb = Sono.effect.reverb(2, 0.5);
+var reverb = sono.effect.reverb(2, 0.5);
 // change the time and decay
 reverb.update(2, 0.5);
 ```
@@ -839,17 +862,17 @@ reverb.update(2, 0.5);
 ## script
 
 ```javascript
-Sono.effect.script(config) returns ScriptProcessor
+sono.effect.script(config) returns ScriptProcessor
 ```
 
-[View source code](../src/lib/effect.js#L239-268)
+[View source code](../src/lib/effect.js#L247-276)
 
 #### Examples
 
 White noise
 
 ```javascript
-var script = Sono.effect.script({
+var script = sono.effect.script({
 	bufferSize: 1024,
 	channels: 1,
 	callback: function(event) {
@@ -871,9 +894,9 @@ var script = Sono.effect.script({
 Get user microphone
 
 ```javascript
-var mic = Sono.utils.microphone(function(stream) {
+var mic = sono.utils.microphone(function(stream) {
     // user allowed mic - got stream
-	var micSound = Sono.createSound(stream);
+	var micSound = sono.createSound(stream);
 }, function() {
 	// user denied mic
 }, function(e) {
@@ -885,13 +908,13 @@ mic.connect();
 Convert currentTime seconds into time code string
 
 ```javascript
-var timeCode = Sono.utils.timeCode(217.8); // '03:37'
+var timeCode = sono.utils.timeCode(217.8); // '03:37'
 ```
 
 Get a sound's waveform and draw it to a canvas element
 
 ```javascript
-var wave = Sono.utils.waveform();
+var wave = sono.utils.waveform();
 var canvas = wave.draw({
     sound: sound,
     width: 200,
@@ -902,7 +925,7 @@ var canvas = wave.draw({
 
 // or supply your own canvas el:
 var canvasEl = document.querySelector('canvas');
-var wave = Sono.utils.waveform();
+var wave = sono.utils.waveform();
 wave.draw({
     sound: sound,
     canvas: canvas,
@@ -914,11 +937,11 @@ wave.draw({
 Clone an AudioBuffer
 
 ```javascript
-var cloned = Sono.utils.cloneBuffer(sound.data);
+var cloned = sono.utils.cloneBuffer(sound.data);
 ```
 
 Reverse an AudioBuffer
 
 ```javascript
-var reversed = Sono.utils.reverseBuffer(sound.data);
+var reversed = sono.utils.reverseBuffer(sound.data);
 ```

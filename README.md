@@ -1,4 +1,4 @@
-# Sono
+# sono
 
 A JavaScript library for working with audio
 
@@ -21,20 +21,20 @@ A JavaScript library for working with audio
 
 ## Usage
 
-### Adding sounds to Sono
+### Adding sounds to sono
 
 New sounds are created through the `createSound` method.
 
-If you pass in an array of URLs, Sono will use the first one that matches the browser's capabilities:
+If you pass in an array of URLs, sono will use the first one that matches the browser's capabilities:
 
 ```javascript
-var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 ```
 
 You can pass a configuration object:
 
 ```javascript
-var sound = Sono.createSound({
+var sound = sono.createSound({
     id: 'foo',
     url: ['audio/foo.ogg', 'audio/foo.mp3'],
     volume: 0.5,
@@ -46,13 +46,13 @@ You can also supply media elements from the DOM:
 
 ```javascript
 var audioEl = document.querySelector('audio');
-var audioElSound = Sono.createSound(audioEl);
+var audioElSound = sono.createSound(audioEl);
 
 var videoEl = document.querySelector('video');
-var videoElSound = Sono.createSound(videoEl);
+var videoElSound = sono.createSound(videoEl);
 ```
 
-[Further examples, covering all valid sound sources](docs/Sono.md#createsound)
+[Further examples, covering all valid sound sources](docs/sono.md#createsound)
 
 
 ### Loading sounds
@@ -60,7 +60,7 @@ var videoElSound = Sono.createSound(videoEl);
 You can load sounds and specify callbacks for completion and progress:
 
 ```javascript
-var sound = Sono.load({
+var sound = sono.load({
     id: 'foo',
     loop: true,
     volume: 0.2,
@@ -73,7 +73,7 @@ var sound = Sono.load({
     }
 });
 
-var sounds = Sono.load({
+var sounds = sono.load({
     url: [
         { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
         { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
@@ -87,19 +87,19 @@ var sounds = Sono.load({
 });
 ```
 
-[Further examples](docs/Sono.md#load)
+[Further examples](docs/sono.md#load)
 
 
 ### Adding effects
 
-Effect and processing nodes can be chained to individual sounds or to the overall mix, via Sono.effect or sound.effect.
+Effect and processing nodes can be chained to individual sounds or to the overall mix, via sono.effect or sound.effect.
 
-Sono extends native Web Audio nodes to add capabilities and make them easy to work with.
+sono extends native Web Audio nodes to add capabilities and make them easy to work with.
 
 For example, apply a reverb effect to all sounds:
 
 ```javascript
-var reverb = Sono.effect.reverb(2, 0.5);
+var reverb = sono.effect.reverb(2, 0.5);
 // change the time and decay
 reverb.update(2, 0.5);
 ```
@@ -107,14 +107,14 @@ reverb.update(2, 0.5);
 Or apply an echo effect to a specific sound:
 
 ```javascript
-var sound = Sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 var echo = sound.effect.echo(0.8, 0.5);
 // change the delay time and feedback amount:
 echo.delay = 0.5;
 echo.feedback = 0.9;
 ```
 
-[Further examples and full list of effects](docs/Sono.md#effects)
+[Further examples and full list of effects](docs/sono.md#effects)
 
 
 ### Utils
@@ -122,7 +122,7 @@ echo.feedback = 0.9;
 Get a sound's waveform as a canvas element
 
 ```javascript
-var wave = Sono.utils.waveform();
+var wave = sono.utils.waveform();
 var canvas = wave.draw({
     sound: sound,
     width: 200,
@@ -135,16 +135,16 @@ var canvas = wave.draw({
 Crossfade two sounds
 
 ```javascript
-Sono.utils.crossFade(soundA, soundB, 1);
+sono.utils.crossFade(soundA, soundB, 1);
 ```
 
 Convert currentTime seconds into time code string
 
 ```javascript
-var timeCode = Sono.utils.timeCode(217.8); // '03:37'
+var timeCode = sono.utils.timeCode(217.8); // '03:37'
 ```
 
-[Further examples and full list of utils](docs/Sono.md#utils)
+[Further examples and full list of utils](docs/sono.md#utils)
 
 
 ## Dev setup
