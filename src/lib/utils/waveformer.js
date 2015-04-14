@@ -36,7 +36,6 @@ module.exports = function waveformer(config) {
     }
 
     ctx = config.context || canvas.getContext('2d');
-    ctx.lineWidth = lineWidth;
 
     var clear = function() {
       if(bgColor) {
@@ -45,6 +44,8 @@ module.exports = function waveformer(config) {
       } else {
           ctx.clearRect(originX, originY, width, height);
       }
+
+      ctx.lineWidth = lineWidth;
 
       currentColor = null;
 
@@ -133,7 +134,7 @@ module.exports = function waveformer(config) {
       else {
 
         waveform = getWaveform(wave, width);
-        length = Math.min(waveform.length, width);
+        length = Math.min(waveform.length, width - lineWidth / 2);
         length = Math.floor(length * percent);
 
         for(i = 0; i < length; i++) {
@@ -146,7 +147,7 @@ module.exports = function waveformer(config) {
 
           x = originX + i;
           y = originY + height - Math.round(height * value);
-          y = Math.min(y, originY + height - lineWidth);
+          y = Math.floor(Math.min(y, originY + height - lineWidth / 2));
 
           if(style === 'fill') {
             ctx.moveTo(x, y);
