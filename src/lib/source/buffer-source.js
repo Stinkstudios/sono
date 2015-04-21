@@ -34,9 +34,9 @@ function BufferSource(buffer, context, onEnded) {
         while(offset > api.duration) { offset = offset % api.duration; }
 
         createSourceNode();
-        sourceNode.loop = loop;
         sourceNode.onended = endedHandler;
         sourceNode.start(delay, offset);
+        sourceNode.loop = loop;
         sourceNode.playbackRate.value = playbackRate;
 
         startedAt = context.currentTime - offset;
