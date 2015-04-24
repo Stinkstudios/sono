@@ -50,6 +50,7 @@ function FakeContext() {
             // filter:
             type:0,
             frequency: param(),
+            Q: param(),
             // delay
             delayTime: param(),
             // convolver
