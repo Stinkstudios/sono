@@ -4,6 +4,7 @@ var validify = require('../utils/validify.js').number;
 
 function Panner(context) {
     var node = context.createPanner();
+
     // Default for stereo is 'HRTF' can also be 'equalpower'
     node.panningModel = Panner.defaults.panningModel;
 
@@ -96,8 +97,6 @@ function Panner(context) {
 
     node.set = function(x, y, z) {
         var v = vecPool.get(x, y, z);
-
-        // console.log.call(console, 'pan: ' + JSON.stringify(v));
 
         if(arguments.length === 1 && v.x) {
           // pan left to right with value from -1 to 1

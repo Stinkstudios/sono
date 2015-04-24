@@ -62,6 +62,11 @@ function Analyser(context, config) {
         return frequencies;
     };
 
+    node.update = function() {
+      node.getWaveform();
+      node.getFrequencies();
+    };
+
     Object.defineProperties(node, {
         smoothing: {
             get: function() { return node.smoothingTimeConstant; },

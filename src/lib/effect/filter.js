@@ -1,5 +1,7 @@
 'use strict';
 
+// https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
+
 function Filter(context, type, frequency, quality, gain) {
     // Frequency between 40Hz and half of the sampling rate
     var minFrequency = 40;
@@ -11,6 +13,8 @@ function Filter(context, type, frequency, quality, gain) {
     if(frequency !== undefined) { node.frequency.value = frequency; }
     if(quality !== undefined) { node.Q.value = quality; }
     if(gain !== undefined) { node.gain.value = gain; }
+
+    // For lowpass and highpass Q indicates how peaked the frequency is around the cutoff. The greater the value is, the greater is the peak
 
 
     var getFrequency = function(value) {

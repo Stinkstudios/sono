@@ -180,40 +180,40 @@ function Effect(context) {
         return add(new Distortion(context, amount));
     };
 
-    var filter = function(type, frequency, quality, gain) {
-        return add(new Filter(context, type, frequency, quality, gain));
+    var filter = function(type, frequency, q, gain) {
+        return add(new Filter(context, type, frequency, q, gain));
     };
 
-    var lowpass = function(frequency, quality, gain) {
-        return filter('lowpass', frequency, quality, gain);
+    var lowpass = function(frequency, peak) {
+        return filter('lowpass', frequency, peak);
     };
 
-    var highpass = function(frequency, quality, gain) {
-        return filter('highpass', frequency, quality, gain);
+    var highpass = function(frequency, peak) {
+        return filter('highpass', frequency, peak);
     };
 
-    var bandpass = function(frequency, quality, gain) {
-        return filter('bandpass', frequency, quality, gain);
+    var bandpass = function(frequency, quality) {
+        return filter('bandpass', frequency, quality);
     };
 
-    var lowshelf = function(frequency, quality, gain) {
-        return filter('lowshelf', frequency, quality, gain);
+    var lowshelf = function(frequency, gain) {
+        return filter('lowshelf', frequency, 0, gain);
     };
 
-    var highshelf = function(frequency, quality, gain) {
-        return filter('highshelf', frequency, quality, gain);
+    var highshelf = function(frequency, gain) {
+        return filter('highshelf', frequency, 0, gain);
     };
 
-    var peaking = function(frequency, quality, gain) {
-        return filter('peaking', frequency, quality, gain);
+    var peaking = function(frequency, width, gain) {
+        return filter('peaking', frequency, width, gain);
     };
 
-    var notch = function(frequency, quality, gain) {
-        return filter('notch', frequency, quality, gain);
+    var notch = function(frequency, width, gain) {
+        return filter('notch', frequency, width, gain);
     };
 
-    var allpass = function(frequency, quality, gain) {
-        return filter('allpass', frequency, quality, gain);
+    var allpass = function(frequency, q) {
+        return filter('allpass', frequency, q);
     };
 
     var flanger = function(config) {

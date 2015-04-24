@@ -24,17 +24,22 @@ function Reverb(context, config) {
     node.name = 'Reverb';
     node._output = output;
 
-    node.update = function(config) {
-        if(config.time !== undefined) {
-            time = config.time;
-            length = rate * time;
-            impulseResponse = context.createBuffer(2, length, rate);
+    node.update = function(opt) {
+        if(opt.time !== undefined) {
+            time = opt.time;
+            length = Math.floor(rate * time);
+            impulseResponse = length ? context.createBuffer(2, length, rate) : null;
         }
-        if(config.decay !== undefined) {
-            decay = config.decay;
+        if(opt.decay !== undefined) {
+            decay = opt.decay;
         }
-        if(config.reverse !== undefined) {
-            reverse = config.reverse;
+        if(opt.reverse !== undefined) {
+            reverse = opt.reverse;
+        }
+
+        if(!impulseResponse) {
+          reverb.buffer = null;
+          return;
         }
 
         var left = impulseResponse.getChannelData(0),
@@ -61,16 +66,16 @@ function Reverb(context, config) {
         time: {
             get: function() { return time; },
             set: function(value) {
-                console.log('set time:', value);
+                console.log.call(console, '1 set time:', value);
                 if(value === time) { return; }
-                this.update({time: time});
+                this.update({time: value});
             }
         },
         decay: {
             get: function() { return decay; },
             set: function(value) {
                 if(value === decay) { return; }
-                this.update({decay: decay});
+                this.update({decay: value});
             }
         },
         reverse: {
