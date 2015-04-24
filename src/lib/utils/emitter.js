@@ -14,7 +14,10 @@ Emitter.prototype.off = function(type, listener) {
     if (listener) {
         return this.removeListener(type, listener);
     }
-    return this.removeAllListeners(type);
+    if (type) {
+        return this.removeAllListeners(type);
+    }
+    return this.removeAllListeners();
 };
 
 module.exports = Emitter;
