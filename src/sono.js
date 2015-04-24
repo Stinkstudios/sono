@@ -97,19 +97,19 @@ function Sono() {
             onComplete = config.onComplete,
             onError = config.onError,
             thisArg = config.thisArg || config.context || api,
-            url = config.url || config,
+            src = config.src || config.url || config,
             sound,
             loader;
 
-        if(file.containsURL(url)) {
+        if(file.containsURL(src)) {
             sound = queue(config);
             loader = sound.loader;
         }
-        else if(Array.isArray(url) && file.containsURL(url[0].url) ) {
+        else if(Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
             sound = [];
             loader = new Loader.Group();
 
-            url.forEach(function(file) {
+            src.forEach(function(file) {
                 sound.push(queue(file, loader));
             });
         }

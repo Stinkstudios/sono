@@ -117,10 +117,10 @@ File.isURL = function(data) {
 };
 
 File.containsURL = function(config) {
-    if(!config) { return false; }
-    // string, array or object with url property that is string or array
-    var url = config.url || config;
-    return this.isURL(url) || (Array.isArray(url) && this.isURL(url[0]));
+    if(!config || this.isMediaElement(config)) { return false; }
+    // string, array or object with src property that is string or array
+    var src = config.src || config.url || config;
+    return this.isURL(src) || (Array.isArray(src) && this.isURL(src[0]));
 };
 
 module.exports = File;
