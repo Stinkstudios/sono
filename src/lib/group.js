@@ -24,7 +24,7 @@ function Group(context, destination) {
 
         sounds.push(sound);
 
-        sound.once('destroyed', remove);
+        sound.once('destroy', remove);
     };
 
     var find = function(soundOrId, callback) {

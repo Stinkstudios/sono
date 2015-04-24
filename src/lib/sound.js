@@ -34,13 +34,13 @@ function Sound(context, destination) {
      */
 
     var load = function(config) {
-        var url = file.getSupportedFile(config.url || config);
+        var src = file.getSupportedFile(config.src || config.url || config);
 
         if(source && data && data.tagName) {
-            source.load(url);
+            source.load(src);
         }
         else {
-            loader = loader || new Loader(url);
+            loader = loader || new Loader(src);
             loader.audioContext = !!config.asMediaElement ? null : context;
             loader.isTouchLocked = isTouchLocked;
             loader.once('loaded', function(file) {
@@ -66,34 +66,36 @@ function Sound(context, destination) {
         }
         playWhenReady = null;
         effect.setSource(source.sourceNode);
-        if(source.hasOwnProperty('loop')) {
-            source.loop = loop;
-        }
 
         // update volume needed for no webaudio
         if(!context) { sound.volume = gain.gain.value; }
 
         source.play(delay, offset);
 
+        if(source.hasOwnProperty('loop')) {
+            source.loop = loop;
+        }
+
+        sound.emit('play', sound);
+
         return sound;
     };
 
     var pause = function() {
-        // if(!source) { return sound; }
         source && source.pause();
+        sound.emit('pause', sound);
         return sound;
     };
 
     var stop = function() {
-        // if(!source) { return sound; }
         source && source.stop();
+        sound.emit('stop', sound);
         return sound;
     };
 
     var seek = function(percent) {
-        // if(!source) { return sound; }
         if(source) {
-            stop();
+            source.stop();
             play(0, source.duration * percent);
         }
         return sound;
@@ -121,10 +123,6 @@ function Sound(context, destination) {
      */
 
     var destroy = function() {
-        // if(source) { source.destroy(); }
-        // if(effect) { effect.destroy(); }
-        // if(gain) { gain.disconnect(); }
-        // if(loader) { loader.destroy(); }
         source && source.destroy();
         effect && effect.destroy();
         gain && gain.disconnect();
@@ -138,8 +136,8 @@ function Sound(context, destination) {
         source = null;
         effect = null;
         loader = null;
-        sound.emit('destroyed', sound);
-        sound.off('destroyed');
+        sound.emit('destroy', sound);
+        sound.off('destroy');
     };
 
     /*
@@ -174,9 +172,7 @@ function Sound(context, destination) {
 
         effect.setSource(source.sourceNode);
 
-        // window.setTimeout(function() {
         sound.emit('ready', sound);
-        // }, 0);
 
         if(playWhenReady) {
             playWhenReady();
@@ -219,7 +215,9 @@ function Sound(context, destination) {
                 return source ? source.currentTime : 0;
             },
             set: function(value) {
-                stop();
+                // var silent = sound.playing;
+                source && source.stop();
+                // play(0, value, silent);
                 play(0, value);
             }
         },
@@ -242,7 +240,6 @@ function Sound(context, destination) {
         },
         ended: {
             get: function() {
-                // return source ? source.ended : false;
                 return !!source && source.ended;
             }
         },
@@ -251,7 +248,7 @@ function Sound(context, destination) {
                 return source ? source.frequency : 0;
             },
             set: function(value) {
-                if(source) {
+                if(source && source.hasOwnProperty('frequency')) {
                     source.frequency = value;
                 }
             }
@@ -289,24 +286,19 @@ function Sound(context, destination) {
             },
             set: function(value) {
                 loop = !!value;
+
                 if(source && source.hasOwnProperty('loop') && source.loop !== loop) {
                   source.loop = loop;
-                  if(source.playing) {
-                    pause();
-                    play();
-                  }
                 }
             }
         },
         paused: {
             get: function() {
-                // return source ? source.paused : false;
                 return !!source && source.paused;
             }
         },
         playing: {
             get: function() {
-                // return source ? source.playing : false;
                 return !!source && source.playing;
             }
         },
