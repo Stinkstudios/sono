@@ -36,6 +36,7 @@ function BufferSource(buffer, context, onEnded) {
         createSourceNode();
         sourceNode.onended = endedHandler;
         sourceNode.start(delay, offset);
+
         sourceNode.loop = loop;
         sourceNode.playbackRate.value = playbackRate;
 
@@ -142,6 +143,9 @@ function BufferSource(buffer, context, onEnded) {
             },
             set: function(value) {
                 loop = !!value;
+                if(sourceNode) {
+                    sourceNode.loop = loop;
+                }
             }
         },
         paused: {
