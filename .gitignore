@@ -49,3 +49,4 @@ dploy.yaml
 node_modules/
 bower_components/
 .sass-cache/
+labs/
