@@ -1,65 +1,651 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-	<title>sono - Examples</title>
-	<link href="css/styles.css" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>sono - examples</title>
+  <link href="css/styles.css" rel="stylesheet">
+  <link href="css/paraiso.light.css" rel="stylesheet">
 </head>
+
 <body>
-	<h1>sono</h1>
 
-    <section>
-        <nav>
-            <h2>Examples</h2>
-            <ul>
-                <li><a href="player.html">Player</a></li>
-                <li><a href="effects.html">Effects</a></li>
-                <li><a href="fade.html">Fade</a></li>
-                <li><a href="destroy.html">Destroy</a></li>
-                <li><a href="oscillator.html">Oscillator</a></li>
-                <li><a href="microphone.html">Microphone</a></li>
-                <li><a href="playback-rate.html">Playback rate</a></li>
-                <li><a href="video.html">Video Element</a></li>
-                <li><a href="html-audio.html">Audio Element</a></li>
-                <li><a href="threed.html">3d panning</a></li>
-                <li><a href="reverse.html">Reverse</a></li>
-                <li><a href="recorder.html">Recorder</a></li>
-            </ul>
-        </nav>
+  <!-- minimized player -->
 
-        <h2>Browser support</h2>
-        <ul data-js="support"></ul>
-    </section>
+  <div class="PlayerTop" data-js="playerTop">
+    <div class="PlayerTop-control" data-js="inner">
+      <div class="PlayerTop-play"></div>
+      <div class="PlayerTop-pause"></div>
+    </div>
+    <canvas class="PlayerTop-canvas" width="400" height="60" data-js="wave"></canvas>
+  </div>
 
-    <script>
-        // Test with no WebAudio
-        if(window.location.search.slice(1) === 'nowebaudio') {
-            window.AudioContext = window.webkitAudioContext = undefined;
+  <!-- title player -->
 
-            var links = document.querySelectorAll('a');
-            [].forEach.call(links, function(link) {
-                link.setAttribute('href', link.getAttribute('href') + '?nowebaudio');
-            });
+  <section>
+    <header>
+      <h1>sono</h1>
+    </header>
+    <div class="Player is-active" data-js="player">
+      <div class="Player-inner">
+        <div class="Player-control" data-js="inner">
+          <div class="Player-play"></div>
+          <div class="Player-pause"></div>
+        </div>
+        <div class="Player-mask Player-maskA">
+          <div class="Player-half Player-halfA" data-js="progressA"></div>
+        </div>
+        <div class="Player-mask Player-maskB">
+          <div class="Player-half Player-halfB" data-js="progressB"></div>
+        </div>
+      </div>
+      <canvas class="Player-canvas" width="760" height="760"></canvas>
+    </div>
+    <pre><code class="js">
+      var sound = sono.createSound({
+        src: [
+          'dnb-loop-3.ogg',
+          'dnb-loop-3.mp3'
+        ],
+        loop: false,
+        volume: 1
+      });
+    </code></pre>
+  </section>
+
+  <!-- controls -->
+
+  <section>
+    <header>
+      <h2>controls</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="volume">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="pan">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="rate">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="loop">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle">
+            <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+          </div>
+        </div>
+        <output class="Control-output" data-js="output"></output>
+      </div>
+
+      <div class="Control" data-js="reverse">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle">
+            <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+          </div>
+        </div>
+        <output class="Control-output" data-js="output"></output>
+      </div>
+
+    </div>
+
+    <pre><code class="js">
+      // set volume to 50%
+      sound.volume = 0.5;
+
+      // add panning control to the sound
+      var panner = sound.effect.panner();
+      // pan fully left
+      panner.set(-1);
+
+      // set playback rate to 50%
+      sound.playbackRate = 0.5;
+
+      // toggle loop
+      sound.loop = true;
+
+      // reverse the sound
+      sono.utils.reverseBuffer(sound.data);
+    </code></pre>
+
+  </section>
+
+  <!-- echo -->
+
+  <section>
+    <header>
+      <h2>echo</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="echoDelay">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="echoFeedback">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <pre><code class="js">
+      // add an echo effect to the sound
+      var echo = sound.effect.echo({
+        delayTime: 0,
+        feedback: 0
+      });
+      // change delay time and feedback amount
+      echo.delay = 1;
+      echo.feedback = 1;
+    </code></pre>
+
+  </section>
+
+  <!-- distortion -->
+
+  <section>
+    <header>
+      <h2>distortion</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="distortionToggle">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle">
+            <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+          </div>
+        </div>
+        <output class="Control-output" data-js="output"></output>
+      </div>
+
+      <div class="Control" data-js="distortion">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <pre><code class="js">
+      // add a distortion effect to the sound
+      var distortion = sound.effect.distortion(0);
+      // change delay time and feedback amount
+      distortion.amount = 1;
+    </code></pre>
+
+  </section>
+
+  <!-- waveformer -->
+
+  <section>
+    <header>
+      <h2>waveformer</h2>
+    </header>
+
+    <div class="Controls" data-js="waveforms">
+        <canvas width="500" height="500"></canvas>
+    </div>
+
+    <pre><code class="js">
+      var analyser = sound.effect.analyser({
+        fftSize: 256,
+        smoothingTimeConstant: 0.7
+      });
+      var waveformer = sono.utils.waveformer({
+        x: 0,
+        y: 0,
+        width: 250,
+        height: 250,
+        shape: 'circular',
+        style: 'fill',
+        lineWidth: 1.5,
+        waveform: analyser.getFrequencies(false),
+        color: function(position, length) {
+          var hue = (position / length) * 360;
+          return 'hsl(' + hue + ', 100%, 40%)';
+        },
+        transform: function(value) {
+          return 0.4 + value / 256 * 0.4;
         }
-    </script>
-	<script src="../dist/sono.js"></script>
-    <script src="js/player.js"></script>
-    <script>
-        (function() {
-            'use strict';
+      });
 
-            sono.log();
+      function update() {
+        window.requestAnimationFrame(update);
+        analyser.getFrequencies();
+        waveformer();
+      }
+      update();
+    </code></pre>
 
-            var support = document.querySelector('[data-js="support"]');
-            var info = '<li>Basic audio support: ' + sono.isSupported + '</li>' +
-                       '<li>Web Audio support: ' + sono.hasWebAudio + '</li>' +
-                       '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
-                       '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
-            support.innerHTML = info;
+  </section>
 
-        }());
-    </script>
+  <!-- reverb -->
+
+  <section>
+    <header>
+      <h2>reverb</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="reverbToggle">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle">
+            <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+          </div>
+        </div>
+        <output class="Control-output" data-js="output"></output>
+      </div>
+
+      <div class="Control" data-js="reverbTime">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="reverbDecay">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="reverbReverse">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle">
+            <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+          </div>
+        </div>
+        <output class="Control-output" data-js="output"></output>
+      </div>
+
+      <pre><code class="js">
+        var reverb = sound.effect.reverb({
+          time: 1,
+          decay: 5
+        });
+        // update values
+        reverb.time = 2;
+        reverb.decay = 6;
+        reverb.reverse = true;
+      </code></pre>
+
+  </section>
+
+  <!-- flanger -->
+
+  <section>
+    <header>
+      <h2>flanger</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="flangerToggle">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle">
+            <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+          </div>
+        </div>
+        <output class="Control-output" data-js="output"></output>
+      </div>
+
+      <div class="Control" data-js="flangerDelay">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="flangerLFOGain">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="flangerLFOFrequency">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="flangerFeedback">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <pre><code class="js">
+      var flanger = sound.effect.flanger({
+        stereo: true,
+        delay: 0.003
+      });
+      // update values
+      flanger.delay = 0.003;
+      flanger.lfoGain = 0.005;
+      flanger.lfoFrequency = 0.5;
+      flanger.feedback = 0.5;
+    </code></pre>
+
+  </section>
+
+  <!-- fade -->
+
+  <section>
+    <header>
+      <h2>fade</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="fadeToggle">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle">
+            <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+          </div>
+        </div>
+        <output class="Control-output" data-js="output"></output>
+      </div>
+
+      <div class="Control" data-js="fadeTime">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <pre><code class="js">
+      // fade sound volume to 0 over 1 second
+      sound.fade(0, 1);
+      // fade master volume to 0 over 1 second
+      sono.fade(0, 1);
+    </code></pre>
+
+  </section>
+
+  <!-- highpass filter -->
+
+  <section>
+    <header>
+      <h2>highpass filter</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="highpassFrequency">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="highpassQ">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="highpassDetune">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <pre><code class="js">
+      var highpass = sound.effect.highpass();
+      highpass.frequency.value = 400;
+      highpass.Q.value = 20;
+      highpass.detune.value = 100;
+    </code></pre>
+
+  </section>
+
+  <!-- lowshelf filter -->
+
+  <section>
+    <header>
+      <h2>lowshelf filter</h2>
+    </header>
+
+    <div class="Controls">
+
+      <div class="Control" data-js="lowshelfFrequency">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="lowshelfGain">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+      <div class="Control" data-js="lowshelfDetune">
+        <h3 class="Control-name" data-js="name"></h3>
+        <div class="Control-inner">
+          <div class="Control-circle" data-js="wheel">
+            <div class="Control-mark Control-mark--line"></div>
+          </div>
+        </div>
+        <div class="Control-inner">
+          <div class="Control-bound" data-js="min"></div>
+          <output class="Control-output" data-js="output"></output>
+          <div class="Control-bound" data-js="max"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <pre><code class="js">
+      // bass boost
+      var lowshelf = sound.effect.lowshelf();
+      lowshelf.frequency.value = 80;
+      lowshelf.gain.value = 10;
+    </code></pre>
+
+  </section>
+
+  <section>
+    <header>
+      <h2>more examples</h2>
+    </header>
+    <nav>
+      <ul>
+        <li><a href="threed.html">3d</a></li>
+        <li><a href="oscillator.html">oscillator</a></li>
+        <li><a href="recorder.html">recorder</a></li>
+        <li><a href="video.html">video</a></li>
+      </ul>
+    </nav>
+  </section>
+
+  <footer>
+    <h2>current browser</h2>
+    <ul data-js="info"></ul>
+  </footer>
+
+  <script>
+    if (window.location.search.slice(1) === 'nowebaudio') {
+      window.AudioContext = window.webkitAudioContext = undefined;
+    }
+  </script>
+  <script src="js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script src="../dist/sono.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/example.js"></script>
 </body>
+
 </html>

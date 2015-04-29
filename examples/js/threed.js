@@ -234,7 +234,7 @@ Hero.prototype.overlap = function(overlapMeshList) {
     return null;
 };
 
-function ThreeBase(fov, near, far) {
+function ThreeBase(el, fov, near, far) {
     this.scene = new THREE.Scene();
     this.clock = new THREE.Clock();
     this.deltaTime = 0;
@@ -257,7 +257,7 @@ function ThreeBase(fov, near, far) {
     } else {
       this.renderer = new THREE.CanvasRenderer();
     }
-    document.body.appendChild(this.renderer.domElement);
+    el.appendChild(this.renderer.domElement);
     this.size();
     //this.render();
 
@@ -286,8 +286,8 @@ ThreeBase.prototype.size = function(width) {
     this.renderer.setSize(this.width, this.height);
 };
 
-function ThreeScene() {
-    ThreeBase.call(this, 45);
+function ThreeScene(el) {
+    ThreeBase.call(this, el, 45);
 
     this.createScene();
     this.createLights();

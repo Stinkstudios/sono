@@ -1,0 +1,111 @@
+
+:root {
+    --control-bg: #bbcccc;
+    --control-markColor: white;
+    --control-markWidth: 10px;
+}
+
+.Controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.Control {
+  /*border: 1px dashed red;*/
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 250px;
+  pointer-events: none;
+}
+
+.Control-name {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.Control-inner {
+  align-items: baseline;
+  display: flex;
+  justify-content: center;
+  user-select: none;
+}
+
+.Control-circle {
+  background-color: var(--control-bg);
+  border-radius: 50%;
+  height: 100px;
+  padding: 10px;
+  pointer-events: all;
+  width: 100px;
+  text-align: center;
+}
+
+.Control-output {
+  display: block;
+  font-size: 18px;
+  margin: 8px 0;
+  width: 100px;
+  text-align: center;
+}
+
+.Control-bound {
+  flex: 1 0;
+  font-size: 14px;
+}
+
+.Control-mark {
+  display: inline-block;
+  pointer-events: none;
+}
+
+.Control-mark--arrow {
+  border-bottom: 25px solid var(--control-markColor);
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  height: 0;
+  width: 0;
+}
+
+.Control-mark--line {
+  border: calc(var(--control-markWidth) / 2) solid var(--control-markColor);
+  height: 32px;
+  margin-top: 8px;
+  width: 0;
+}
+
+.Control-mark--tick {
+  border-bottom: var(--control-markWidth) solid var(--control-markColor);
+  border-right: var(--control-markWidth) solid var(--control-markColor);
+  height: 40px;
+  margin-top: 18px;
+  transform: rotate(45deg);
+  width: 20px;
+}
+
+.Control-mark--cross {
+  background-color: var(--control-markColor);
+  height: 60px;
+  margin-top: 20px;
+  transform: rotate(45deg);
+  width: var(--control-markWidth);
+}
+
+.Control-mark--cross::after {
+  background-color: var(--control-markColor);
+  content: "";
+  display: inline-block;
+  height: 60px;
+  transform: rotate(90deg);
+  width: var(--control-markWidth);
+}
+
+.Control-canvas {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 40px;
+}
