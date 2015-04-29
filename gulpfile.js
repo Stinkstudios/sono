@@ -47,24 +47,41 @@ bundler.on('update', bundle); // on any dep update, runs the bundler
 gulp.task('bundle', ['jshint'], bundle);
 
 // release bundle with extra compression (can't get collapse to work with watchify)
-gulp.task('release', function() {
-  return browserify({
-      entries: ['./src/sono.js'],
-      standalone: 'sono',
-      debug: true
-    })
-    .plugin(collapse)
-    .bundle()
-    .on('error', logError)
-    .pipe(exorcist('./dist/sono.js.map'))
-    .pipe(source('sono.js'))
+function bundleRelease(min) {
+  var bundler = browserify({
+    entries: ['./src/sono.js'],
+    standalone: 'sono',
+    debug: !min
+  });
+
+  if(min) {
+    bundler = bundler.plugin(collapse);
+  }
+
+  var stream = bundler.bundle()
+    .on('error', logError);
+
+  if(!min) {
+    stream = stream.pipe(exorcist('./dist/sono.js.map'));
+  }
+
+  stream = stream.pipe(source('sono.js'))
     .pipe(buffer())
     .pipe(derequire())
-    .pipe(strip())
-    .pipe(gulp.dest('./dist/'))
-    .pipe(rename({ extname: '.min.js' }))
-    .pipe(uglify())
-    .pipe(gulp.dest('./dist/'));
+    .pipe(strip());
+
+  if(min) {
+    return stream.pipe(rename({ extname: '.min.js' }))
+      .pipe(uglify())
+      .pipe(gulp.dest('./dist/'));
+  } else {
+    return stream.pipe(gulp.dest('./dist/'));
+  }
+}
+
+gulp.task('release', function() {
+  bundleRelease(true);
+  bundleRelease(false);
 });
 
 // connect browsers
@@ -90,7 +107,8 @@ gulp.task('jshint', function() {
       './gulpfile.js',
       'src/**/*.js',
       'test/**/*.js',
-      'examples/**/*.js'
+      'examples/**/*.js',
+      '!examples/js/highlight.pack.js'
   ])
   .pipe(jshint())
   .pipe(jshint.reporter('jshint-stylish'));
@@ -107,9 +125,7 @@ gulp.task('watch', function() {
 // default
 gulp.task('default', ['connect', 'watch', 'bundle']);
 
-
-// examples
-
+// css for examples
 gulp.task('stylesheets', function() {
   gulp.src('examples/css/index.css')
     .pipe(cssnext({

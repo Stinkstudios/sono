@@ -29,7 +29,7 @@ module.exports = function(config) {
 
     // Browserify config (all optional)
     browserify: {
-      // debug: true
+      debug: true
     },
 
     // Add browserify to preprocessors
