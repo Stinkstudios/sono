@@ -192,8 +192,8 @@ function Effect(context) {
         return filter('highpass', frequency, peak);
     };
 
-    var bandpass = function(frequency, quality) {
-        return filter('bandpass', frequency, quality);
+    var bandpass = function(frequency, width) {
+        return filter('bandpass', frequency, width);
     };
 
     var lowshelf = function(frequency, gain) {
@@ -212,8 +212,8 @@ function Effect(context) {
         return filter('notch', frequency, width, gain);
     };
 
-    var allpass = function(frequency, q) {
-        return filter('allpass', frequency, q);
+    var allpass = function(frequency, sharpness) {
+        return filter('allpass', frequency, sharpness);
     };
 
     var flanger = function(config) {

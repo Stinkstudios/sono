@@ -1,21 +1,16 @@
 'use strict';
 
 // https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
+// For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
+// The greater the value is, the greater is the peak
 
-function Filter(context, type, frequency, quality, gain) {
+function Filter(context, type, frequency, q, gain) {
     // Frequency between 40Hz and half of the sampling rate
     var minFrequency = 40;
     var maxFrequency = context.sampleRate / 2;
 
     var node = context.createBiquadFilter();
     node.type = type;
-
-    if(frequency !== undefined) { node.frequency.value = frequency; }
-    if(quality !== undefined) { node.Q.value = quality; }
-    if(gain !== undefined) { node.gain.value = gain; }
-
-    // For lowpass and highpass Q indicates how peaked the frequency is around the cutoff. The greater the value is, the greater is the peak
-
 
     var getFrequency = function(value) {
         // Logarithm (base 2) to compute how many octaves fall in the range.
@@ -26,23 +21,19 @@ function Filter(context, type, frequency, quality, gain) {
         return maxFrequency * multiplier;
     };
 
-    node.update = function(frequency, gain) {
-        if(frequency !== undefined) {
-            this.frequency.value = frequency;
-        }
-        if(gain !== undefined) {
-            this.gain.value = gain;
-        }
+    node.set = function(frequency, q, gain) {
+      if (frequency !== undefined) { node.frequency.value = frequency; }
+      if (q !== undefined) { node.Q.value = q; }
+      if (gain !== undefined) { node.gain.value = gain; }
+      return node;
     };
 
-    node.setByPercent = function(percent, quality, gain) {
-        // set filter frequency based on value from 0 to 1
-        node.frequency.value = getFrequency(percent);
-        if(quality !== undefined) { node.Q.value = quality; }
-        if(gain !== undefined) { node.gain.value = gain; }
+    // set filter frequency based on value from 0 to 1
+    node.setByPercent = function(percent, q, gain) {
+        return node.set(getFrequency(percent), q, gain);
     };
 
-    return node;
+    return node.set(frequency, q, gain);
 }
 
 module.exports = Filter;
