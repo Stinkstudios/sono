@@ -2,7 +2,7 @@
 
 A JavaScript library for working with audio
 
-<http://prototypes.stinkdigital.com/webaudio/sono/examples/>
+<http://stinkdigital.github.io/sono/examples/>
 
 ## Features
 
@@ -36,58 +36,20 @@ You can pass a configuration object:
 ```javascript
 var sound = sono.createSound({
     id: 'foo',
-    url: ['audio/foo.ogg', 'audio/foo.mp3'],
+    src: ['audio/foo.ogg', 'audio/foo.mp3'],
     volume: 0.5,
     loop: true
 });
 ```
 
-You can also supply media elements from the DOM:
+You can also supply media elements from the DOM (watch out for patchy browser support!):
 
 ```javascript
-var audioEl = document.querySelector('audio');
-var audioElSound = sono.createSound(audioEl);
-
 var videoEl = document.querySelector('video');
 var videoElSound = sono.createSound(videoEl);
 ```
 
 [Further examples, covering all valid sound sources](docs/sono.md#createsound)
-
-
-### Loading sounds
-
-You can load sounds and specify callbacks for completion and progress:
-
-```javascript
-var sound = sono.load({
-    id: 'foo',
-    loop: true,
-    volume: 0.2,
-    url: ['audio/foo.ogg', 'audio/foo.mp3'],
-    onComplete: function(sound) {
-        // do something
-    },
-    onProgress: function(progress) {
-        // update progress
-    }
-});
-
-var sounds = sono.load({
-    url: [
-        { id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
-        { id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
-    ],
-    onComplete: function(sounds) {
-        // retrieve sound instances from array or by id
-    },
-    onProgress: function(progress) {
-        // update progress bar
-    }
-});
-```
-
-[Further examples](docs/sono.md#load)
 
 
 ### Adding effects
@@ -99,16 +61,24 @@ sono extends native Web Audio nodes to add capabilities and make them easy to wo
 For example, apply a reverb effect to all sounds:
 
 ```javascript
-var reverb = sono.effect.reverb(2, 0.5);
-// change the time and decay
-reverb.update(2, 0.5);
+var reverb = sono.effect.reverb({
+  time: 1,
+  decay: 5
+});
+// change time, decay and reverse the reverb
+reverb.time = 2;
+reverb.decay = 6;
+reverb.reverse = true;
 ```
 
 Or apply an echo effect to a specific sound:
 
 ```javascript
 var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
-var echo = sound.effect.echo(0.8, 0.5);
+var echo = sound.effect.echo({
+  delay: 0.8,
+  feedback: 0.5
+});
 // change the delay time and feedback amount:
 echo.delay = 0.5;
 echo.feedback = 0.9;
@@ -117,34 +87,13 @@ echo.feedback = 0.9;
 [Further examples and full list of effects](docs/sono.md#effects)
 
 
-### Utils
+### Further documentation
 
-Get a sound's waveform as a canvas element
+[sound object api](docs/sono.md#sound)
 
-```javascript
-var wave = sono.utils.waveform();
-var canvas = wave.draw({
-    sound: sound,
-    width: 200,
-    height: 100,
-    color: '#333333',
-    bgColor: '#DDDDDD'
-});
-```
+[loading sounds](docs/sono.md#load)
 
-Crossfade two sounds
-
-```javascript
-sono.utils.crossFade(soundA, soundB, 1);
-```
-
-Convert currentTime seconds into time code string
-
-```javascript
-var timeCode = sono.utils.timeCode(217.8); // '03:37'
-```
-
-[Further examples and full list of utils](docs/sono.md#utils)
+[utils](docs/sono.md#utils)
 
 
 ## Dev setup
