@@ -28,7 +28,7 @@ function Sono() {
      * HTMLMediaElement
      * Filename string (e.g. 'foo.ogg')
      * Oscillator type string (i.e. 'sine', 'square', 'sawtooth', 'triangle')
-     * ScriptProcessor config object (e.g. { bufferSize: 1024, channels: 1, callback: fn, thisArg: self })
+     * ScriptProcessor config object (e.g. { bufferSize: 1024, channels: 1, callback: fn })
      */
 
     var createSound = function(config) {
@@ -86,18 +86,7 @@ function Sono() {
      */
 
     var load = function(config) {
-        if(!config) {
-            throw {
-                name: 'ArgumentException',
-                message: 'Sono.load: param config is undefined'
-            };
-        }
-
-        var onProgress = config.onProgress,
-            onComplete = config.onComplete,
-            onError = config.onError,
-            thisArg = config.thisArg || config.context || api,
-            src = config.src || config.url || config,
+        var src = config.src || config.url || config,
             sound,
             loader;
 
@@ -117,21 +106,21 @@ function Sono() {
             return null;
         }
 
-        if(onProgress) {
+        if (config.onProgress) {
             loader.on('progress', function(progress) {
-                onProgress.call(thisArg, progress);
+                config.onProgress(progress);
             });
         }
-        if(onComplete) {
+        if (config.onComplete) {
             loader.once('complete', function() {
                 loader.off('progress');
-                onComplete.call(thisArg, sound);
+                config.onComplete(sound);
             });
         }
         loader.once('error', function(err) {
             loader.off('error');
-            if(onError) {
-                onError.call(thisArg, err);
+            if (config.onError) {
+                config.onError(err);
             } else {
                 console.warn.call(console, err);
             }
