@@ -4,7 +4,7 @@
 
 ## createSound
 
-Create a Sound object
+Create a sound object
 
 ```javascript
 sono.createSound(config); returns Sound
@@ -21,7 +21,7 @@ var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
 var sound = sono.createSound('audio/foo.ogg');
 var sound = sono.createSound({
 	id: 'foo',
-	url: ['audio/foo.ogg', 'audio/foo.mp3'],
+	src: ['audio/foo.ogg', 'audio/foo.mp3'],
 	loop: true,
 	volume: 0.5
 });
@@ -49,7 +49,7 @@ squareWave.frequency = 200;
 User microphone stream:
 
 ```javascript
-// Use the [microphone utility](#utils):
+// using the microphone utility:
 var mic = sono.utils.microphone(function(stream) {
 	var micSound = sono.createSound(stream);
 });
@@ -68,9 +68,8 @@ var script = sono.createSound({
 	bufferSize: 1024,
 	channels: 1,
 	callback: function(event) {
-		var output = event.outputBuffer.getChannelData(0);
-	    var l = output.length;
-	    for (var i = 0; i < l; i++) {
+			var output = event.outputBuffer.getChannelData(0);
+	    for (var i = 0; i < output.length; i++) {
 	        output[i] = Math.random();
 	    }
 	}
@@ -153,8 +152,10 @@ sono.getSound(id)
 #### Examples
 
 ```javascript
-var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
-sound.id = 'bar';
+var sound = sono.createSound({
+	id: 'bar',
+	src: ['audio/foo.ogg', 'audio/foo.mp3']
+});
 
 // somewhere else
 var sound = sono.getSound('bar');
@@ -190,7 +191,7 @@ Load a sound and add to sono
 sono.load(config) returns Sound
 ```
 
-[View source code](../src/sono.js#L88-165)
+[View source code](../src/sono.js#L88-154)
 
 #### Examples
 
@@ -205,7 +206,7 @@ Load a single sound with config options and callbacks
 ```javascript
 var sound = sono.load({
 	id: 'foo',
-	url: ['audio/foo.ogg', 'audio/foo.mp3'],
+	src: ['audio/foo.ogg', 'audio/foo.mp3'],
 	loop: true,
 	volume: 0.2,
 	onComplete: function(sound) {
@@ -222,8 +223,8 @@ sono.load also accepts an array of sound config objects. All the sounds will be 
 ```javascript
 var sounds = sono.load({
 	url: [
-		{ id: 'a', url: ['audio/foo.ogg', 'audio/foo.mp3'] },
-		{ id: 'b', url: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
+		{ id: 'a', src: ['audio/foo.ogg', 'audio/foo.mp3'] },
+		{ id: 'b', src: ['audio/bar.ogg', 'audio/bar.mp3'], loop: true, volume: 0.5 }
 	],
 	onComplete: function(sounds) {
 		// loading complete
@@ -248,7 +249,6 @@ var sound = sono.load('audio/foo.ogg');
 
 Check file support manually:
 
-
 ```javascript
 var extension = sono.canPlay.ogg ? 'ogg' : 'mp3';
 var sound = sono.load('audio/foo.' + extension);
@@ -256,7 +256,6 @@ var sound = sono.load('audio/foo.' + extension);
 if(sono.canPlay.mp3) {
 	var sound = sono.load('audio/foo.mp3');
 }
-
 ```
 
 Load and play immediately:
@@ -266,16 +265,6 @@ var sound = sono.load(['audio/foo.ogg', 'audio/foo.mp3']).play();
 
 ```
 
-Bind to scope:
-
-```javascript
-var sound = sono.load({
-	url: ['audio/foo.ogg', 'audio/foo.mp3'],
-	onComplete: this.onSoundLoaded,
-	onProgress: this.onSoundProgress,
-	context: this
-});
-```
 
 ## controls
 
@@ -292,7 +281,7 @@ sono.pause(id) returns sono
 sono.stop(id) returns sono
 ```
 
-[View source code](../src/sono.js#L171-220)
+[View source code](../src/sono.js#L160-209)
 
 #### Examples
 
@@ -328,14 +317,14 @@ sono.stop('foo');
 sono.log()
 ```
 
-[View source code](../src/sono.js#L264-283)
+[View source code](../src/sono.js#L253-272)
 
 #### Examples
 
 Log version number and browser audio support info to the console:
 
 ```javascript
-sono.log(); // sono 0.0.5 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
+sono.log(); // sono 0.1.0 Supported:true WebAudioAPI:true TouchLocked:false Extensions:ogg,mp3,opus,wav,m4a
 ```
 
 ## getters
@@ -352,7 +341,7 @@ sono.sounds returns Array
 sono.utils returns Utils
 ```
 
-[View source code](../src/sono.js#L285-337)
+[View source code](../src/sono.js#L274-326)
 
 #### Examples
 
@@ -395,7 +384,7 @@ Sound.seek(percent) returns Sound
 Sound.fade(volume, duration) returns Sound
 Sound.destroy()
 Sound.currentTime returns Number
-Sound.data returns Object
+Sound.data returns AudioBuffer, MediaElement or config object
 Sound.duration returns Number
 Sound.effect returns Effect
 Sound.ended returns Boolean
@@ -476,10 +465,10 @@ sono.effect.add(node) returns AudioNode
 sono.effect.remove(node) returns AudioNode
 sono.effect.removeAll()
 
-Sound.effect.has(node) returns Boolean
-Sound.effect.add(node) returns AudioNode
-Sound.effect.remove(node) returns AudioNode
-Sound.effect.removeAll()
+sound.effect.has(node) returns Boolean
+sound.effect.add(node) returns AudioNode
+sound.effect.remove(node) returns AudioNode
+sound.effect.removeAll()
 ```
 
 [View source code](../src/lib/effect.js#L23-50)
@@ -487,7 +476,10 @@ Sound.effect.removeAll()
 #### Examples
 
 ```javascript
-var echo = sound.effect.echo(2, 0.5);
+var echo = sound.effect.echo({
+		delay: 2,
+	  feedback: 0.5
+});
 sound.effect.remove(echo);
 sound.effect.add(echo);
 sound.effect.distortion(0.5);
@@ -499,8 +491,8 @@ sound.effect.removeAll();
 Create an AnalyserNode and add to chain
 
 ```javascript
-sono.effect.analyser(fftSize)
-Sound.effect.analyser(fftSize)
+sono.effect.analyser(options)
+sound.effect.analyser(options)
 ```
 
 [View source code](../src/lib/effect/analyser.js)
@@ -510,8 +502,12 @@ Sound.effect.analyser(fftSize)
 ```javascript
 var video = document.querySelector('video');
 var sound = sono.createSound(video);
-var analyser = sound.effect.analyser(2048);
-var frequencies, waveform, magnitude, percent, i;
+var analyser = sono.effect.analyser({
+	fftSize: 2048,
+	smoothingTimeConstant: 0.7
+});
+
+var frequencies, waveform, magnitude, normalised, i;
 
 function draw() {
 	window.requestAnimationFrame(draw);
@@ -520,7 +516,7 @@ function draw() {
 
 	for (i = 0; i < frequencies.length; i++) {
 		magnitude = frequencies[i];
-		percent = magnitude / 256;
+		normalised = magnitude / 256;
 		// draw some visualisation
 	}
 
@@ -528,7 +524,7 @@ function draw() {
 
 	for (i = 0; i < waveform.length; i++) {
 		magnitude = waveform[i];
-		percent = magnitude / 256;
+		normalised = magnitude / 256;
 		// draw some visualisation
 	}
 }
@@ -542,7 +538,7 @@ Apply compression processing (lowers the volume of the loudest parts of the sign
 
 ```javascript
 sono.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
-Sound.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
+sound.effect.compressor(threshold, knee, ratio, reduction, attack, release) returns Compressor
 ```
 
 [View source code](../src/lib/effect.js#L133-156)
@@ -571,7 +567,7 @@ Create a reverb effect by passing an audio buffer of a pre-recorded reverb impul
 
 ```javascript
 sono.effect.convolver(impulseResponse) returns Convolver
-Sound.effect.convolver(impulseResponse) returns Convolver
+sound.effect.convolver(impulseResponse) returns Convolver
 ```
 
 [View source code](../src/lib/effect.js#L158-163)
@@ -592,7 +588,7 @@ Delay the sound playback
 
 ```javascript
 sono.effect.delay(time) returns Delay
-Sound.effect.delay(time) returns Delay
+sound.effect.delay(time) returns Delay
 ```
 
 [View source code](../src/lib/effect.js#L165-169)
@@ -627,8 +623,8 @@ distortion.amount = 0.8; // [0,1]
 Create a repeating echo or delay effect
 
 ```javascript
-sono.effect.echo(delayTime, gainValue) returns Echo
-Sound.effect.echo(delayTime, gainValue) returns Echo
+sono.effect.echo(options) returns Echo
+sound.effect.echo(options) returns Echo
 ```
 
 [View source code](../src/lib/effect/echo.js)
@@ -636,8 +632,12 @@ Sound.effect.echo(delayTime, gainValue) returns Echo
 #### Examples
 
 ```javascript
-var echo = sound.effect.echo(2, 0.5);
-echo.update(3, 0.5); // [seconds, gain]
+var echo = sound.effect.echo({
+	delay: 0.8,
+  feedback: 0.5
+});
+echo.delay = 3;
+echo.feedback = 0.8;
 ```
 
 ## filter
@@ -645,32 +645,32 @@ echo.update(3, 0.5); // [seconds, gain]
 Create a filter effect
 
 ```javascript
-sono.effect.filter(type, frequency, quality, gain) returns BiquadFilter
-sono.effect.lowpass(frequency, quality, gain) returns BiquadFilter
-sono.effect.highpass(frequency, quality, gain) returns BiquadFilter
-sono.effect.bandpass(frequency, quality, gain) returns BiquadFilter
-sono.effect.lowshelf(frequency, quality, gain) returns BiquadFilter
-sono.effect.highshelf(frequency, quality, gain) returns BiquadFilter
-sono.effect.peaking(frequency, quality, gain) returns BiquadFilter
-sono.effect.notch(frequency, quality, gain) returns BiquadFilter
-sono.effect.allpass(frequency, quality, gain) returns BiquadFilter
+sono.effect.filter(type, frequency, q, gain) returns BiquadFilter
+sono.effect.lowpass(frequency, peak) returns BiquadFilter
+sono.effect.highpass(frequency, peak) returns BiquadFilter
+sono.effect.bandpass(frequency, width) returns BiquadFilter
+sono.effect.lowshelf(frequency, gain) returns BiquadFilter
+sono.effect.highshelf(frequency, gain) returns BiquadFilter
+sono.effect.peaking(frequency, width, gain) returns BiquadFilter
+sono.effect.notch(frequency, width, gain) returns BiquadFilter
+sono.effect.allpass(frequency, sharpness) returns BiquadFilter
 
-Sound.effect.filter(type, frequency, quality, gain) returns BiquadFilter
-Sound.effect.lowpass(frequency, quality, gain) returns BiquadFilter
-Sound.effect.highpass(frequency, quality, gain) returns BiquadFilter
-Sound.effect.bandpass(frequency, quality, gain) returns BiquadFilter
-Sound.effect.lowshelf(frequency, quality, gain) returns BiquadFilter
-Sound.effect.highshelf(frequency, quality, gain) returns BiquadFilter
-Sound.effect.peaking(frequency, quality, gain) returns BiquadFilter
-Sound.effect.notch(frequency, quality, gain) returns BiquadFilter
-Sound.effect.allpass(frequency, quality, gain) returns BiquadFilter
+sound.effect.filter(type, frequency, q, gain) returns BiquadFilter
+sound.effect.lowpass(frequency, peak) returns BiquadFilter
+sound.effect.highpass(frequency, peak) returns BiquadFilter
+sound.effect.bandpass(frequency, width) returns BiquadFilter
+sound.effect.lowshelf(frequency, gain) returns BiquadFilter
+sound.effect.highshelf(frequency, gain) returns BiquadFilter
+sound.effect.peaking(frequency, width, gain) returns BiquadFilter
+sound.effect.notch(frequency, width, gain) returns BiquadFilter
+sound.effect.allpass(frequency, sharpness) returns BiquadFilter
 ```
 
 Update the filter node
 
 ```javascript
-BiquadFilter.setByPercent(percent, quality, gain)
-BiquadFilter.update(frequency, gain)
+filter.set(frequency, q, gain)
+filter.setByPercent(percent, q, gain)
 ```
 
 [View source code](../src/lib/effect/filter.js)
@@ -680,9 +680,9 @@ BiquadFilter.update(frequency, gain)
 ```javascript
 var lowpass = sound.effect.lowpass(800);
 lowpass.frequency.value = 600;
-lowpass.gain.value = 600;
+lowpass.Q.value = 10;
 lowpass.setByPercent(0.5);
-lowpass.update(600, 1);
+lowpass.set(200, 18);
 ```
 
 ## flanger
@@ -759,7 +759,7 @@ sono.effect.panning.setListenerVelocity(x, y, z)
 // create a panner for a sound
 var panner = sound.effect.panner();
 // pan full left
-panner.setX(-1);
+panner.set(-1);
 // update the 3d position (accepts xyz or a 3d vector)
 panner.setSourcePosition(x, y, z);
 panner.setSourcePosition(vec3);
@@ -805,7 +805,7 @@ Record audio from the mix or microphone to a new audio buffer
 
 ```javascript
 sono.effect.recorder(passThrough) returns Recorder
-Sound.effect.recorder(passThrough) returns Recorder
+sound.effect.recorder(passThrough) returns Recorder
 ```
 
 Controls
@@ -911,29 +911,6 @@ Convert currentTime seconds into time code string
 var timeCode = sono.utils.timeCode(217.8); // '03:37'
 ```
 
-Get a sound's waveform and draw it to a canvas element
-
-```javascript
-var wave = sono.utils.waveform();
-var canvas = wave.draw({
-    sound: sound,
-    width: 200,
-    height: 100,
-    color: '#333333',
-    bgColor: '#DDDDDD'
-});
-
-// or supply your own canvas el:
-var canvasEl = document.querySelector('canvas');
-var wave = sono.utils.waveform();
-wave.draw({
-    sound: sound,
-    canvas: canvas,
-    color: '#333333',
-    bgColor: '#DDDDDD'
-});
-```
-
 Clone an AudioBuffer
 
 ```javascript
@@ -944,4 +921,80 @@ Reverse an AudioBuffer
 
 ```javascript
 var reversed = sono.utils.reverseBuffer(sound.data);
+```
+
+Get a sound's waveform and draw it to a canvas element:
+
+```javascript
+var wave = sono.utils.waveformer({
+    sound: sound,
+    width: 200,
+    height: 100,
+    color: '#333333',
+    bgColor: '#DDDDDD'
+});
+document.body.appendChild(wave.canvas);
+
+// or supply your own canvas el
+var canvasEl = document.querySelector('canvas');
+var wave = sono.utils.waveformer({
+    waveform: sound.waveform(canvasEl.width),
+    canvas: canvas,
+    color: 'green'
+});
+
+// color can be a function
+var waveformer = sono.utils.waveformer({
+    waveform: sound.waveform(canvasEl.width),
+    canvas: canvasEl,
+		color: function(position, length) {
+			return position / length < sound.progress ? 'red' : 'yellow';
+		}
+});
+// update the waveformer as the sound progresses
+function update() {
+	window.requestAnimationFrame(update);
+	waveformer();
+}
+update();
+
+// shape can be circular
+var waveformer = sono.utils.waveformer({
+		shape: 'circular',
+    sound: sound,
+    canvas: canvasEl,
+		color: 'black'
+});
+```
+
+Draw the output of an AnalyserNode to a canvas:
+
+```javascript
+var sound = sono.createSound('foo.ogg');
+var analyser = sono.effect.analyser({
+	fftSize: 512,
+	smoothingTimeConstant: 0.7
+});
+
+var waveformer = sono.utils.waveformer({
+    waveform: analyser.getFrequencies(),
+    canvas: document.querySelector('canvas'),
+		color: function(position, length) {
+			var hue = (position / length) * 360;
+			return 'hsl(' + hue + ', 100%, 40%)';
+		},
+		// normalise the value from the analyser
+		transform: function(value) {
+			return value / 256;
+		}
+});
+// update the waveform
+function update() {
+	window.requestAnimationFrame(update);
+	// request frequencies from the analyser
+	analyser.getFrequencies();
+	// update the waveformer display
+	waveformer();
+}
+update();
 ```
