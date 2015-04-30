@@ -15,13 +15,17 @@
 
   var onConnect = function(stream) {
     sound = sono.createSound(stream);
+    recorder = sound.effect.recorder(true);
     analyser = sound.effect.analyser(1024);
     analyser.maxDecibels = -60;
-    recorder = sound.effect.recorder(false);
     recorder.start();
     update();
   };
   var mic = sono.utils.microphone(onConnect);
+
+  if (!mic.isSupported) {
+    document.querySelector('[data-js="warning"]').classList.add('is-visible');
+  }
 
   var toggle = function() {
       if(recorder && recorder.isRecording) {

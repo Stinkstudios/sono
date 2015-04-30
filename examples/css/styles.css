@@ -351,6 +351,7 @@ nav a {
 }
 
 footer {
+  padding: 20px 0;
   text-align: center;
   width: 100%;
 }
@@ -360,7 +361,7 @@ footer ul {
   border-radius: 8px;
   box-sizing: border-box;
   color: #4f424c;
-  margin: 20px auto;
+  margin: 0 auto;
   max-width: 616px;
   min-width: 300px;
   padding: 20px 60px;
@@ -733,4 +734,16 @@ footer ul {
   border: 1px solid #ddd;
   border-radius: 8px;
   margin-top: 40px;
+}
+
+.Control-warning {
+  color: tomato;
+  display: none;
+  padding: 40px;
+  text-align: center;
+  font-size: 24px;
+}
+
+.Control-warning.is-visible {
+  display: block;
 }

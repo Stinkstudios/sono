@@ -244,50 +244,6 @@
 
   </section>
 
-  <!-- waveformer -->
-
-  <section>
-    <header>
-      <h2>waveformer</h2>
-    </header>
-
-    <div class="Controls" data-js="waveforms">
-        <canvas width="500" height="500"></canvas>
-    </div>
-
-    <pre><code class="js">
-      var analyser = sound.effect.analyser({
-        fftSize: 256,
-        smoothingTimeConstant: 0.7
-      });
-      var waveformer = sono.utils.waveformer({
-        x: 0,
-        y: 0,
-        width: 250,
-        height: 250,
-        shape: 'circular',
-        style: 'fill',
-        lineWidth: 1.5,
-        waveform: analyser.getFrequencies(false),
-        color: function(position, length) {
-          var hue = (position / length) * 360;
-          return 'hsl(' + hue + ', 100%, 40%)';
-        },
-        transform: function(value) {
-          return 0.4 + value / 256 * 0.4;
-        }
-      });
-
-      function update() {
-        window.requestAnimationFrame(update);
-        analyser.getFrequencies();
-        waveformer();
-      }
-      update();
-    </code></pre>
-
-  </section>
-
   <!-- reverb -->
 
   <section>
@@ -617,6 +573,52 @@
 
   </section>
 
+  <!-- waveformer -->
+
+  <section>
+    <header>
+      <h2>waveformer</h2>
+    </header>
+
+    <div class="Controls" data-js="waveforms">
+        <canvas width="500" height="500"></canvas>
+    </div>
+
+    <pre><code class="js">
+      var analyser = sound.effect.analyser({
+        fftSize: 256,
+        smoothingTimeConstant: 0.7
+      });
+      var waveformer = sono.utils.waveformer({
+        x: 0,
+        y: 0,
+        width: 250,
+        height: 250,
+        shape: 'circular',
+        style: 'fill',
+        lineWidth: 1.5,
+        waveform: analyser.getFrequencies(false),
+        color: function(position, length) {
+          var hue = (position / length) * 360;
+          return 'hsl(' + hue + ', 100%, 40%)';
+        },
+        transform: function(value) {
+          return 0.4 + value / 256 * 0.4;
+        }
+      });
+
+      function update() {
+        window.requestAnimationFrame(update);
+        analyser.getFrequencies();
+        waveformer();
+      }
+      update();
+    </code></pre>
+
+  </section>
+
+  <!-- more -->
+
   <section>
     <header>
       <h2>more examples</h2>
@@ -630,6 +632,8 @@
       </ul>
     </nav>
   </section>
+
+  <!-- browser -->
 
   <footer>
     <h2>current browser</h2>
