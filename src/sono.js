@@ -9,7 +9,7 @@ var browser = require('./lib/utils/browser.js'),
     utils = require('./lib/utils/utils.js');
 
 function Sono() {
-    var VERSION = '0.0.8',
+    var VERSION = '0.0.9',
         Ctx = (window.AudioContext || window.webkitAudioContext),
         context = (Ctx ? new Ctx() : null),
         destination = (context ? context.destination : null),
