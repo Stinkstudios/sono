@@ -68,11 +68,6 @@ function Panner(context) {
         vecPool.dispose(vec);
     };
 
-    var setVelocity = function(node, vec) {
-        node.setVelocity(vec.x, vec.y, vec.z);
-        vecPool.dispose(vec);
-    };
-
     // cross product of 2 vectors
     var cross = function ( a, b ) {
         var ax = a.x, ay = a.y, az = a.z;
@@ -129,11 +124,6 @@ function Panner(context) {
         setOrientation(node, vecPool.get(x, y, z));
     };
 
-    // set the veloicty of the audio source (if moving)
-    node.setSourceVelocity = function(x, y, z) {
-        setVelocity(node, vecPool.get(x, y, z));
-    };
-
     // set the position of who or what is hearing the audio (could be camera or some character)
     node.setListenerPosition = function(x, y, z) {
         setPosition(context.listener, vecPool.get(x, y, z));
@@ -142,19 +132,6 @@ function Panner(context) {
     // set the position of who or what is hearing the audio (could be camera or some character)
     node.setListenerOrientation = function(x, y, z) {
         setOrientation(context.listener, vecPool.get(x, y, z));
-    };
-
-    // set the velocity (if moving) of who or what is hearing the audio (could be camera or some character)
-    node.setListenerVelocity = function(x, y, z) {
-        setVelocity(context.listener, vecPool.get(x, y, z));
-    };
-
-    // helper to calculate velocity
-    node.calculateVelocity = function(currentPosition, lastPosition, deltaTime) {
-        var dx = currentPosition.x - lastPosition.x;
-        var dy = currentPosition.y - lastPosition.y;
-        var dz = currentPosition.z - lastPosition.z;
-        return vecPool.get(dx / deltaTime, dy / deltaTime, dz / deltaTime);
     };
 
     node.getDefaults = function() {

@@ -735,11 +735,8 @@ Update the panner node - x can be a vector and all params are optional
 panner.set(x, y, z)
 panner.setSourcePosition(x, y, z)
 panner.setSourceOrientation(x, y, z)
-panner.setSourceVelocity(x, y, z)
 panner.setListenerPosition(x, y, z)
 panner.setListenerOrientation(x, y, z)
-panner.setListenerVelocity(x, y, z)
-panner.calculateVelocity(currentPosition, lastPosition, deltaTime) returns Vec3
 ```
 
 Modify global values for panning
@@ -748,7 +745,6 @@ Modify global values for panning
 sono.effect.panning.setDefaults(object)
 sono.effect.panning.setListenerPosition(x, y, z)
 sono.effect.panning.setListenerOrientation(x, y, z)
-sono.effect.panning.setListenerVelocity(x, y, z)
 ```
 
 [View source code](../src/lib/effect/panner.js)

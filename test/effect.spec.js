@@ -73,7 +73,6 @@ function effectTest(isWebAudio) {
                 expect(effect.panning.setDefaults).to.be.a('function');
                 expect(effect.panning.setListenerPosition).to.be.a('function');
                 expect(effect.panning.setListenerOrientation).to.be.a('function');
-                expect(effect.panning.setListenerVelocity).to.be.a('function');
             });
         });
 
@@ -177,11 +176,8 @@ function effectTest(isWebAudio) {
                 expect(panner).to.be.an.instanceof(audioNode);
                 expect(panner.setListenerPosition).to.be.a('function');
                 expect(panner.setListenerOrientation).to.be.a('function');
-                expect(panner.setListenerVelocity).to.be.a('function');
                 expect(panner.setSourcePosition).to.be.a('function');
                 expect(panner.setSourceOrientation).to.be.a('function');
-                expect(panner.setSourceVelocity).to.be.a('function');
-                expect(panner.calculateVelocity).to.be.a('function');
             });
         });
 
