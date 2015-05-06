@@ -16,9 +16,9 @@
 
     <div class="Controls">
 
-      <video controls preload="auto" width="854" height="480">
-          <source src="video/SD2015.mp4" type="video/mp4">
-          <source src="video/SD2015.webm" type="video/webm">
+      <video controls preload="auto" width="854" height="480" crossorigin="anonymous">
+          <source src="http://prototypes.stinkdigital.com/webaudio/sono/examples/video/SD2015.mp4" type="video/mp4">
+          <source src="http://prototypes.stinkdigital.com/webaudio/sono/examples/video/SD2015.webm" type="video/webm">
       </video>
 
     </div>
@@ -90,11 +90,15 @@
   <script src="js/highlight.pack.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
   <script src="../dist/sono.js"></script>
-  <script src="js/player.js"></script>
   <script src="js/ui.js"></script>
   <script>
       (function() {
           'use strict';
+
+          var sono = window.sono;
+          var ui = window.ui;
+
+          sono.log();
 
           var video,
               sound,
