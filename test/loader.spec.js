@@ -4,7 +4,8 @@ var Sono = require('../src/sono.js');
 
 describe('Sono loader', function() {
 
-    var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+    // var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+    var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
 
     describe('single', function() {
         var sound,

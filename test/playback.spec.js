@@ -6,7 +6,8 @@ describe('Sono playback', function() {
 
     this.timeout(5000);
 
-    var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+    // var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+    var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
 
     describe('create', function() {
         var config = {
