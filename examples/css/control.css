@@ -113,11 +113,17 @@
 .Control-warning {
   color: tomato;
   display: none;
-  padding: 40px;
+  padding: 40px 80px;
   text-align: center;
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .Control-warning.is-visible {
   display: block;
+}
+
+@media (--mobile) {
+  .Control-warning {
+    font-size: 16px;
+  }
 }

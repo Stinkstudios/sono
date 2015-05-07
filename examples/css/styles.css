@@ -334,6 +334,10 @@ code {
   width: 80%;
 }
 
+code ul {
+  margin-left: 3.5em;
+}
+
 @media (max-width: 400px) {
   code {
     font-size: 60%;
@@ -341,32 +345,13 @@ code {
 }
 
 nav {
-  padding: 50px 0;
+  padding: 40px 0 50px;
   text-align: center;
 }
 
 nav a {
   text-decoration: underline;
   font-size: 32px;
-}
-
-footer {
-  padding: 20px 0;
-  text-align: center;
-  width: 100%;
-}
-
-footer ul {
-  background-color: #e7e9db;
-  border-radius: 8px;
-  box-sizing: border-box;
-  color: #4f424c;
-  margin: 0 auto;
-  max-width: 616px;
-  min-width: 300px;
-  padding: 20px 60px;
-  text-align: left;
-  width: 80%;
 }
 
 /*! Components */
@@ -739,11 +724,17 @@ footer ul {
 .Control-warning {
   color: tomato;
   display: none;
-  padding: 40px;
+  padding: 40px 80px;
   text-align: center;
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .Control-warning.is-visible {
   display: block;
+}
+
+@media (max-width: 400px) {
+  .Control-warning {
+    font-size: 16px;
+  }
 }
