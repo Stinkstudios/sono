@@ -22,7 +22,7 @@ var el = document.createElement('audio');
 if(el) {
     tests.forEach(function(test) {
         var canPlayType = !!el.canPlayType(test.type);
-        if(canPlayType) {
+        if(canPlayType && File.extensions.indexOf(test.ext) === -1) {
             File.extensions.push(test.ext);
         }
         File.canPlay[test.ext] = canPlayType;
