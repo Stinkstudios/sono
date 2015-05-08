@@ -1,5 +1,7 @@
 # sono
 
+[![NPM version](https://badge.fury.io/js/sono.svg)](http://badge.fury.io/js/sono) [![Bower version](https://badge.fury.io/bo/sono.svg)](http://badge.fury.io/bo/sono) [![Build Status](https://secure.travis-ci.org/ianmcgregor/sono.png)](https://travis-ci.org/ianmcgregor/sono)
+
 A JavaScript library for working with audio
 
 <http://stinkdigital.github.io/sono/examples/>
