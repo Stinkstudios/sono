@@ -43,6 +43,13 @@
       </div>
       <canvas class="Player-canvas" width="760" height="760"></canvas>
     </div>
+    <!-- upload -->
+    <div class="Controls">
+      <span class="Upload">
+        <span data-js="upload-text">upload file</span>
+        <input type="file" accept="audio/*" data-js="upload">
+      </span>
+    </div>
     <pre><code class="js">
       var sound = sono.createSound({
         src: [
@@ -57,7 +64,7 @@
 
   <!-- browser -->
 
-  <section>
+  <section class="Info">
     <header>
       <h2>current browser</h2>
     </header>

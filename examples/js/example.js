@@ -8,25 +8,25 @@
 
   var info = document.querySelector('[data-js="info"]');
   info.innerHTML = '<li>Audio support: ' + sono.isSupported + '</li>' +
-             '<li>Web Audio support: ' + sono.hasWebAudio + '</li>' +
-             '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
-             '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
+    '<li>Web Audio support: ' + sono.hasWebAudio + '</li>' +
+    '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
+    '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
 
   // var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
   var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
 
   var sound,
-      panner,
-      analyser,
-      distortion,
-      echo,
-      flanger,
-      highpass,
-      lowshelf,
-      reverb,
-      waveformsExample,
-      player,
-      playerTop;
+    panner,
+    analyser,
+    distortion,
+    echo,
+    flanger,
+    highpass,
+    lowshelf,
+    reverb,
+    waveformsExample,
+    player,
+    playerTop;
 
   sound = sono.createSound({
     src: [
@@ -45,7 +45,9 @@
     feedback: 0.2
   });
 
-  flanger = sono.effect.flanger({stereo: true});
+  flanger = sono.effect.flanger({
+    stereo: true
+  });
   sono.effect.remove(flanger);
 
   highpass = sono.effect.highpass(20);
@@ -194,292 +196,320 @@
    * waveforms
    */
 
-   function createWaveformsExample() {
+  function createWaveformsExample() {
 
-     var analyser = sono.effect.analyser({
-       fftSize: 256,
-       smoothingTimeConstant: 0.7
-     }),
-     waveformers = [],
-     el = document.querySelector('[data-js="waveforms"]'),
-     canvas = el.querySelector('canvas'),
-     context = canvas.getContext('2d'),
-     examples = [
-       {
-         x: 0,
-         y: 0,
-         width: 250,
-         height: 250,
-         shape: 'circular',
-         style: 'fill',
-         lineWidth: 1.5,
-         waveform: analyser.getFrequencies(false),
-         color: function(position, length) {
-           var hue = (position / length) * 360;
-           return 'hsl(' + hue + ', 100%, 40%)';
-         },
-         transform: function(value) {
-           return 0.4 + value / 256 * 0.4;
-         }
-       },
-       {
-         x: 250,
-         y: 0,
-         width: 250,
-         height: 250,
-         style: 'line',
-         lineWidth: 1,
-         waveform: analyser.getWaveform(false),
-         color: function(position, length) {
-           var hue = (position / length) * 360;
-           return 'hsl(' + hue + ', 100%, 40%)';
-         },
-         transform: function(value) {
-           return value / 256;
-         }
-       },
-       {
-         x: 0,
-         y: 250,
-         width: 250,
-         height: 250,
-         shape: 'circular',
-         style: 'line',
-         lineWidth: 1.5,
-         sound: sound,
-         color: 'black'
-       },
-       {
-         x: 250,
-         y: 350,
-         width: 250,
-         height: 100,
-         style: 'line',
-         lineWidth: 4,
-         sound: sound,
-         color: function(position, length) {
-           var hue = (position / length) * 360;
-           return 'hsl(' + hue + ', 100%, 40%)';
-         },
-         transform: function(value) {
-           return value;
-         }
-       }
-     ];
+    var analyser = sono.effect.analyser({
+        fftSize: 256,
+        smoothingTimeConstant: 0.7
+      }),
+      waveformers = [],
+      el = document.querySelector('[data-js="waveforms"]'),
+      canvas = el.querySelector('canvas'),
+      context = canvas.getContext('2d'),
+      examples = [{
+        x: 0,
+        y: 0,
+        width: 250,
+        height: 250,
+        shape: 'circular',
+        style: 'fill',
+        lineWidth: 1.5,
+        waveform: analyser.getFrequencies(false),
+        color: function(position, length) {
+          var hue = (position / length) * 360;
+          return 'hsl(' + hue + ', 100%, 40%)';
+        },
+        transform: function(value) {
+          return 0.4 + value / 256 * 0.4;
+        }
+      }, {
+        x: 250,
+        y: 0,
+        width: 250,
+        height: 250,
+        style: 'line',
+        lineWidth: 1,
+        waveform: analyser.getWaveform(false),
+        color: function(position, length) {
+          var hue = (position / length) * 360;
+          return 'hsl(' + hue + ', 100%, 40%)';
+        },
+        transform: function(value) {
+          return value / 256;
+        }
+      }, {
+        x: 0,
+        y: 250,
+        width: 250,
+        height: 250,
+        shape: 'circular',
+        style: 'line',
+        lineWidth: 1.5,
+        sound: sound,
+        color: 'black'
+      }, {
+        x: 250,
+        y: 350,
+        width: 250,
+        height: 100,
+        style: 'line',
+        lineWidth: 4,
+        sound: sound,
+        color: function(position, length) {
+          var hue = (position / length) * 360;
+          return 'hsl(' + hue + ', 100%, 40%)';
+        },
+        transform: function(value) {
+          return value;
+        }
+      }];
 
-     examples.forEach(function(example) {
-       example.context = context;
-       waveformers.push(sono.utils.waveformer(example));
-     });
+    examples.forEach(function(example) {
+      example.context = context;
+      waveformers.push(sono.utils.waveformer(example));
+    });
 
-     return function() {
-       analyser.getFrequencies();
-       analyser.getWaveform();
-       waveformers.forEach(function(waveformer) {
-         waveformer();
-       });
-     };
-   }
+    return function() {
+      analyser.getFrequencies();
+      analyser.getWaveform();
+      waveformers.forEach(function(waveformer) {
+        waveformer();
+      });
+    };
+  }
 
-   /*
-    * reverb
-    */
+  /*
+   * reverb
+   */
 
-   ui.createToggle({
-     el: document.querySelector('[data-js="reverbToggle"]'),
-     name: 'Active',
-     value: true
-   }, function(value) {
-     sono.effect.toggle(reverb, value);
-   });
+  ui.createToggle({
+    el: document.querySelector('[data-js="reverbToggle"]'),
+    name: 'Active',
+    value: true
+  }, function(value) {
+    sono.effect.toggle(reverb, value);
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="reverbTime"]'),
-     name: 'Time',
-     min: 0,
-     max: 5,
-     value: reverb.time
-   }, function(value) {
-     reverb.time = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="reverbTime"]'),
+    name: 'Time',
+    min: 0,
+    max: 5,
+    value: reverb.time
+  }, function(value) {
+    reverb.time = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="reverbDecay"]'),
-     name: 'Decay',
-     min: 0,
-     max: 10,
-     value: reverb.decay
-   }, function(value) {
-     reverb.decay = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="reverbDecay"]'),
+    name: 'Decay',
+    min: 0,
+    max: 10,
+    value: reverb.decay
+  }, function(value) {
+    reverb.decay = value;
+  });
 
-   ui.createToggle({
-     el: document.querySelector('[data-js="reverbReverse"]'),
-     name: 'reverse',
-     value: false
-   }, function(value) {
-     reverb.reverse = value;
-   });
+  ui.createToggle({
+    el: document.querySelector('[data-js="reverbReverse"]'),
+    name: 'reverse',
+    value: false
+  }, function(value) {
+    reverb.reverse = value;
+  });
 
-   /*
-    * flanger
-    */
+  /*
+   * flanger
+   */
 
-   ui.createToggle({
-     el: document.querySelector('[data-js="flangerToggle"]'),
-     name: 'Active',
-     value: false
-   }, function(value) {
-     sono.effect.toggle(flanger, value);
-   });
+  ui.createToggle({
+    el: document.querySelector('[data-js="flangerToggle"]'),
+    name: 'Active',
+    value: false
+  }, function(value) {
+    sono.effect.toggle(flanger, value);
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="flangerDelay"]'),
-     name: 'Delay',
-     min: 0.005,
-     max: 0.05,
-     value: flanger.delay
-   }, function(value) {
-     flanger.delay = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="flangerDelay"]'),
+    name: 'Delay',
+    min: 0.005,
+    max: 0.05,
+    value: flanger.delay
+  }, function(value) {
+    flanger.delay = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="flangerLFOGain"]'),
-     name: 'LFO Gain',
-     min: 0.0005,
-     max: 0.005,
-     value: flanger.lfoGain
-   }, function(value) {
-     flanger.lfoGain = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="flangerLFOGain"]'),
+    name: 'LFO Gain',
+    min: 0.0005,
+    max: 0.005,
+    value: flanger.lfoGain
+  }, function(value) {
+    flanger.lfoGain = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="flangerLFOFrequency"]'),
-     name: 'LFO Frequency',
-     min: 0.05,
-     max: 5.0,
-     value: flanger.lfoFrequency
-   }, function(value) {
-     flanger.lfoFrequency = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="flangerLFOFrequency"]'),
+    name: 'LFO Frequency',
+    min: 0.05,
+    max: 5.0,
+    value: flanger.lfoFrequency
+  }, function(value) {
+    flanger.lfoFrequency = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="flangerFeedback"]'),
-     name: 'Feedback',
-     min: 0.0,
-     max: 0.9,
-     value: flanger.feedback
-   }, function(value) {
-     flanger.feedback = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="flangerFeedback"]'),
+    name: 'Feedback',
+    min: 0.0,
+    max: 0.9,
+    value: flanger.feedback
+  }, function(value) {
+    flanger.feedback = value;
+  });
 
-   /*
-    * fade
-    */
+  /*
+   * fade
+   */
 
-   var fadeTime = 1;
+  var fadeTime = 1;
 
-   ui.createToggle({
-     el: document.querySelector('[data-js="fadeToggle"]'),
-     name: 'Toggle',
-     value: false
-   }, function(value) {
-     sono.fade(value ? 0 : 1, fadeTime);
-   });
+  ui.createToggle({
+    el: document.querySelector('[data-js="fadeToggle"]'),
+    name: 'Toggle',
+    value: false
+  }, function(value) {
+    sono.fade(value ? 0 : 1, fadeTime);
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="fadeTime"]'),
-     name: 'Time',
-     min: 0,
-     max: 10,
-     value: fadeTime
-   }, function(value) {
-     fadeTime = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="fadeTime"]'),
+    name: 'Time',
+    min: 0,
+    max: 10,
+    value: fadeTime
+  }, function(value) {
+    fadeTime = value;
+  });
 
-   /*
-    * highpass filter
-    */
+  /*
+   * highpass filter
+   */
 
-   ui.createControl({
-     el: document.querySelector('[data-js="highpassFrequency"]'),
-     name: 'Frequency',
-     min: 20,
-     max: sono.context.sampleRate / 2,
-     value: 20,
-     places: 0
-   }, function(value) {
-     highpass.frequency.value = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="highpassFrequency"]'),
+    name: 'Frequency',
+    min: 20,
+    max: sono.context.sampleRate / 2,
+    value: 20,
+    places: 0
+  }, function(value) {
+    highpass.frequency.value = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="highpassQ"]'),
-     name: 'Peak',
-     min: 0.0001,
-     max: 40,
-     value: highpass.Q.value
-   }, function(value) {
-     highpass.Q.value = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="highpassQ"]'),
+    name: 'Peak',
+    min: 0.0001,
+    max: 40,
+    value: highpass.Q.value
+  }, function(value) {
+    highpass.Q.value = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="highpassDetune"]'),
-     name: 'Detune',
-     min: -1000,
-     max: 1000,
-     places: 2,
-     value: highpass.detune.value
-   }, function(value) {
-     highpass.detune.value = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="highpassDetune"]'),
+    name: 'Detune',
+    min: -1000,
+    max: 1000,
+    places: 2,
+    value: highpass.detune.value
+  }, function(value) {
+    highpass.detune.value = value;
+  });
 
-   /*
-    * lowshelf filter
-    */
+  /*
+   * lowshelf filter
+   */
 
-   ui.createControl({
-     el: document.querySelector('[data-js="lowshelfFrequency"]'),
-     name: 'Frequency',
-     min: 20,
-     max: sono.context.sampleRate / 2,
-     value: 80,
-     places: 0
-   }, function(value) {
-     lowshelf.frequency.value = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="lowshelfFrequency"]'),
+    name: 'Frequency',
+    min: 20,
+    max: sono.context.sampleRate / 2,
+    value: 80,
+    places: 0
+  }, function(value) {
+    lowshelf.frequency.value = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="lowshelfGain"]'),
-     name: 'Peak',
-     min: -40,
-     max: 40,
-     value: lowshelf.gain.value
-   }, function(value) {
-     lowshelf.gain.value = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="lowshelfGain"]'),
+    name: 'Peak',
+    min: -40,
+    max: 40,
+    value: lowshelf.gain.value
+  }, function(value) {
+    lowshelf.gain.value = value;
+  });
 
-   ui.createControl({
-     el: document.querySelector('[data-js="lowshelfDetune"]'),
-     name: 'Detune',
-     min: -1000,
-     max: 1000,
-     value: lowshelf.detune.value
-   }, function(value) {
-     lowshelf.detune.value = value;
-   });
+  ui.createControl({
+    el: document.querySelector('[data-js="lowshelfDetune"]'),
+    name: 'Detune',
+    min: -1000,
+    max: 1000,
+    value: lowshelf.detune.value
+  }, function(value) {
+    lowshelf.detune.value = value;
+  });
 
-   /*
-    * update
-    */
+  /*
+   * upload
+   */
 
-   function update() {
-     window.requestAnimationFrame(update);
-     if(sound.playing) {
-       player();
-       playerTop();
-       waveformsExample();
-     }
-   }
-   update();
+  var upload = document.querySelector('[data-js="upload"]');
+  var uploadText = document.querySelector('[data-js="upload-text"]');
+  upload.addEventListener('change', function(event) {
+    var playing = sound.playing;
+    sound.stop();
+    uploadText.innerHTML = 'loading...';
+
+    var file = event.currentTarget.files[0];
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      //console.log(event.target.result);
+      sono.context.decodeAudioData(
+        event.target.result,
+        function(buffer) {
+          sound.data = buffer;
+          if (playing) {
+            sound.play();
+          }
+          uploadText.innerHTML = 'upload file';
+        },
+        function(e) {
+          console.error('ERROR: context.decodeAudioData:', e);
+          uploadText.innerHTML = 'error';
+        }
+      );
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  /*
+   * update
+   */
+
+  function update() {
+    window.requestAnimationFrame(update);
+    if (sound.playing) {
+      player();
+      playerTop();
+      waveformsExample();
+    }
+  }
+  update();
 
 }());

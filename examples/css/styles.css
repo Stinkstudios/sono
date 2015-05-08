@@ -738,3 +738,37 @@ nav a {
     font-size: 16px;
   }
 }
+
+.Info pre {
+  padding-top: 20px;
+}
+
+.Upload {
+  background-color: #bbcccc;
+  border-radius: 8px;
+  color: white;
+  font-size: 24px;
+  height: 50px;
+  line-height: 50px;
+  overflow: hidden;
+  padding: 10px;
+  pointer-events: all;
+  position: relative;
+  text-align: center;
+  width: 200px;
+}
+.Upload input {
+  background: white;
+  cursor: pointer;
+  display: block;
+  filter: alpha(opacity=0);
+  font-size: 100px;
+  min-height: 100%;
+  min-width: 100%;
+  opacity: 0;
+  outline: none;
+  position: absolute;
+  right: 0;
+  text-align: right;
+  top: 0;
+}
