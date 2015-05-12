@@ -18,7 +18,7 @@ function Panner(context) {
     node.coneOuterAngle = Panner.defaults.coneOuterAngle;
     node.coneOuterGain = Panner.defaults.coneOuterGain;
     // set to defaults (needed in Firefox)
-    node.setPosition(0, 0, 0);
+    node.setPosition(0, 0, 1);
     node.setOrientation(0, 0, 0);
 
     // simple vec3 object pool
@@ -64,6 +64,7 @@ function Panner(context) {
     };
 
     var setPosition = function(nodeOrListener, vec) {
+      console.log.call(console, 'setpos', vec.x, vec.y, vec.z);
         nodeOrListener.setPosition(vec.x, vec.y, vec.z);
         vecPool.dispose(vec);
     };
