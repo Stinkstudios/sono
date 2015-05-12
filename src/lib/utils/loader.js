@@ -56,9 +56,7 @@ function Loader(url) {
                 progress = 1;
                 dispatchComplete(buffer);
             },
-            function(e) {
-                emitter.emit('error', e);
-            }
+            errorHandler
         );
     };
 
@@ -97,7 +95,6 @@ function Loader(url) {
 
     var errorHandler = function(event) {
         window.clearTimeout(timeout);
-        // emitter.emit('error', (data && data.error));
 
         var message = event;
 
@@ -106,7 +103,7 @@ function Loader(url) {
         }
 
         if(request) {
-            message = 'XHR Error: code ' + (request.statusText || request.status) + ' ' + url;
+            message = 'XHR Error: ' + request.status + ' ' + request.statusText + ' ' + url;
         }
 
         emitter.emit('error', message);

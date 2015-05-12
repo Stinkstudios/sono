@@ -87,25 +87,26 @@ function Sono() {
 
     var load = function(config) {
         var src = config.src || config.url || config,
-            sound,
-            loader;
+            sound, loader;
 
         if(file.containsURL(src)) {
             sound = queue(config);
             loader = sound.loader;
-        }
-        else if(Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
+        } else if(Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
             sound = [];
             loader = new Loader.Group();
-
             src.forEach(function(file) {
                 sound.push(queue(file, loader));
             });
-        }
-        else {
+        } else {
+            var errorMessage = 'sono.load: No audio file URLs found in config.';
+            if (config.onError) {
+              config.onError('[ERROR] ' + errorMessage);
+            } else {
+              throw new Error(errorMessage);
+            }
             return null;
         }
-
         if (config.onProgress) {
             loader.on('progress', function(progress) {
                 config.onProgress(progress);
@@ -122,7 +123,7 @@ function Sono() {
             if (config.onError) {
                 config.onError(err);
             } else {
-                console.warn.call(console, err);
+                console.error.call(console, '[ERROR] sono.load: ' + err);
             }
         });
         loader.start();
@@ -136,7 +137,6 @@ function Sono() {
         if(loaderGroup) {
             loaderGroup.add(sound.loader);
         }
-
         return sound;
     };
 
