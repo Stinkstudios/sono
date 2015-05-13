@@ -88,25 +88,26 @@ function Sono() {
 
     var load = function(config) {
         var src = config.src || config.url || config,
-            sound,
-            loader;
+            sound, loader;
 
         if(file.containsURL(src)) {
             sound = queue(config);
             loader = sound.loader;
-        }
-        else if(Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
+        } else if(Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
             sound = [];
             loader = new Loader.Group();
-
             src.forEach(function(file) {
                 sound.push(queue(file, loader));
             });
-        }
-        else {
+        } else {
+            var errorMessage = 'sono.load: No audio file URLs found in config.';
+            if (config.onError) {
+              config.onError('[ERROR] ' + errorMessage);
+            } else {
+              throw new Error(errorMessage);
+            }
             return null;
         }
-
         if (config.onProgress) {
             loader.on('progress', function(progress) {
                 config.onProgress(progress);
@@ -123,7 +124,7 @@ function Sono() {
             if (config.onError) {
                 config.onError(err);
             } else {
-                console.warn.call(console, err);
+                console.error.call(console, '[ERROR] sono.load: ' + err);
             }
         });
         loader.start();
@@ -137,7 +138,6 @@ function Sono() {
         if(loaderGroup) {
             loaderGroup.add(sound.loader);
         }
-
         return sound;
     };
 
@@ -1449,7 +1449,7 @@ function Panner(context) {
     node.coneOuterAngle = Panner.defaults.coneOuterAngle;
     node.coneOuterGain = Panner.defaults.coneOuterGain;
     // set to defaults (needed in Firefox)
-    node.setPosition(0, 0, 0);
+    node.setPosition(0, 0, 1);
     node.setOrientation(0, 0, 0);
 
     // simple vec3 object pool
@@ -3566,9 +3566,7 @@ function Loader(url) {
                 progress = 1;
                 dispatchComplete(buffer);
             },
-            function(e) {
-                emitter.emit('error', e);
-            }
+            errorHandler
         );
     };
 
@@ -3607,7 +3605,6 @@ function Loader(url) {
 
     var errorHandler = function(event) {
         window.clearTimeout(timeout);
-        // emitter.emit('error', (data && data.error));
 
         var message = event;
 
@@ -3616,7 +3613,7 @@ function Loader(url) {
         }
 
         if(request) {
-            message = 'XHR Error: code ' + (request.statusText || request.status) + ' ' + url;
+            message = 'XHR Error: ' + request.status + ' ' + request.statusText + ' ' + url;
         }
 
         emitter.emit('error', message);

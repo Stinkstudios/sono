@@ -64,7 +64,6 @@ function Panner(context) {
     };
 
     var setPosition = function(nodeOrListener, vec) {
-      console.log.call(console, 'setpos', vec.x, vec.y, vec.z);
         nodeOrListener.setPosition(vec.x, vec.y, vec.z);
         vecPool.dispose(vec);
     };
