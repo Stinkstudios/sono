@@ -43,11 +43,16 @@ var reverseBuffer = function(buffer) {
  * ramp audio param
  */
 
-var ramp = function(param, fromValue, toValue, duration) {
+var ramp = function(param, fromValue, toValue, duration, linear) {
     if(!audioContext) { return; }
 
     param.setValueAtTime(fromValue, audioContext.currentTime);
-    param.linearRampToValueAtTime(toValue, audioContext.currentTime + duration);
+
+    if (linear) {
+        param.linearRampToValueAtTime(toValue, audioContext.currentTime + duration);
+    } else {
+        param.exponentialRampToValueAtTime(toValue, audioContext.currentTime + duration);
+    }
 };
 
 /*
