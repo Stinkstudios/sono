@@ -12,11 +12,9 @@ function SoundGroup(context, destination) {
     var getSource = function() {
         if(!sounds.length) { return; }
 
-        sounds.sort(function(a, b) {
+        src = sounds.slice(0).sort(function(a, b) {
             return b.duration - a.duration;
-        });
-
-        src = sounds[0];
+        })[0];
     };
 
     var add = api.add;
