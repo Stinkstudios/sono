@@ -87,8 +87,8 @@ function Sound(context, destination) {
         return sound;
     };
 
-    var stop = function() {
-        source && source.stop();
+    var stop = function(delay) {
+        source && source.stop(delay || 0);
         sound.emit('stop', sound);
         return sound;
     };
