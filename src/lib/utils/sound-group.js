@@ -3,8 +3,8 @@
 var Group = require('../group.js');
 
 function SoundGroup(context, destination) {
-    var api = new Group(context, destination),
-        sounds = api.sounds,
+    var group = new Group(context, destination),
+        sounds = group.sounds,
         playbackRate = 1,
         loop = false,
         src;
@@ -17,21 +17,21 @@ function SoundGroup(context, destination) {
         })[0];
     };
 
-    var add = api.add;
-    api.add = function(sound) {
+    var add = group.add;
+    group.add = function(sound) {
         add(sound);
         getSource();
-        return api;
+        return group;
     };
 
-    var remove = api.rmeove;
-    api.remove = function(soundOrId) {
+    var remove = group.rmeove;
+    group.remove = function(soundOrId) {
         remove(soundOrId);
         getSource();
-        return api;
+        return group;
     };
 
-    Object.defineProperties(api, {
+    Object.defineProperties(group, {
         currentTime: {
             get: function() {
                 return src ? src.currentTime : 0;
@@ -92,7 +92,7 @@ function SoundGroup(context, destination) {
         }
     });
 
-    return api;
+    return group;
 
 }
 

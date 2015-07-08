@@ -7,7 +7,7 @@ function Group(context, destination) {
         effect = new Effect(context),
         gain = effect.gain(),
         preMuteVolume = 1,
-        api;
+        group;
 
     if(context) {
         effect.setSource(gain);
@@ -25,6 +25,8 @@ function Group(context, destination) {
         sounds.push(sound);
 
         sound.once('destroy', remove);
+
+        return group;
     };
 
     var find = function(soundOrId, callback) {
@@ -52,6 +54,7 @@ function Group(context, destination) {
         find(soundOrId, function(sound) {
             sounds.splice(sounds.indexOf(sound), 1);
         });
+        return group;
     };
 
     /*
@@ -62,6 +65,7 @@ function Group(context, destination) {
         sounds.forEach(function(sound) {
             sound.play(delay, offset);
         });
+        return group;
     };
 
     var pause = function() {
@@ -70,6 +74,7 @@ function Group(context, destination) {
                 sound.pause();
             }
         });
+        return group;
     };
 
     var resume = function() {
@@ -78,27 +83,37 @@ function Group(context, destination) {
                 sound.play();
             }
         });
+        return group;
     };
 
     var stop = function() {
         sounds.forEach(function(sound) {
             sound.stop();
         });
+        return group;
     };
 
     var seek = function(percent) {
         sounds.forEach(function(sound) {
             sound.seek(percent);
         });
+        return group;
     };
 
     var mute = function() {
-        preMuteVolume = api.volume;
-        api.volume = 0;
+        preMuteVolume = group.volume;
+        group.volume = 0;
+        return group;
     };
 
     var unMute = function() {
-        api.volume = preMuteVolume || 1;
+        group.volume = preMuteVolume || 1;
+        return group;
+    };
+
+    var setVolume = function(value) {
+        group.volume = value;
+        return group;
     };
 
     var fade = function(volume, duration) {
@@ -119,7 +134,7 @@ function Group(context, destination) {
             });
         }
 
-        return this;
+        return group;
     };
 
     /*
@@ -136,7 +151,7 @@ function Group(context, destination) {
      * Api
      */
 
-    api = {
+    group = {
         add: add,
         find: find,
         remove: remove,
@@ -145,6 +160,7 @@ function Group(context, destination) {
         resume: resume,
         stop: stop,
         seek: seek,
+        setVolume: setVolume,
         mute: mute,
         unMute: unMute,
         fade: fade,
@@ -155,7 +171,7 @@ function Group(context, destination) {
      * Getters & Setters
      */
 
-    Object.defineProperties(api, {
+    Object.defineProperties(group, {
         effect: {
             value: effect
         },
@@ -189,8 +205,7 @@ function Group(context, destination) {
         }
     });
 
-    return api;
-    // return Object.freeze(api);
+    return group;
 }
 
 module.exports = Group;
