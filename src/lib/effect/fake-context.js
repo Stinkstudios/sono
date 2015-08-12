@@ -51,6 +51,7 @@ function FakeContext() {
             type:0,
             frequency: param(),
             Q: param(),
+            detune: param(),
             // delay
             delayTime: param(),
             // convolver
