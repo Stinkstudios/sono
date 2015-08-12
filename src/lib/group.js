@@ -198,7 +198,7 @@ function Group(context, destination) {
                 }
                 sounds.forEach(function(sound) {
                     if (!sound.context) {
-                        sound.volume = value;
+                        sound.groupVolume = value;
                     }
                 });
             }

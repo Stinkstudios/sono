@@ -348,6 +348,17 @@ function Sound(context, destination) {
                 }
             }
         },
+        // for media element source
+        groupVolume: {
+            get: function() {
+                return source.groupVolume;
+            },
+            set: function(value) {
+                if(source && source.hasOwnProperty('groupVolume')) {
+                    source.groupVolume = value;
+                }
+            }
+        },
         waveform: {
             value: function(length) {
                 if(!data) {

@@ -10,6 +10,8 @@ function MediaSource(el, context, onEnded) {
         playbackRate = 1,
         playing = false,
         sourceNode = null,
+        groupVolume = 1,
+        volume = 1,
         api = {};
 
     var createSourceNode = function() {
@@ -38,6 +40,7 @@ function MediaSource(el, context, onEnded) {
     var play = function(delay, offset) {
         clearTimeout(delayTimeout);
 
+        el.volume = volume * groupVolume;
         el.playbackRate = playbackRate;
 
         if(offset) {
@@ -105,22 +108,21 @@ function MediaSource(el, context, onEnded) {
      * Fade for no webaudio
      */
 
-    var fade = function(volume, duration) {
-        if(!el) { return api; }
+    var fade = function(toVolume, duration) {
         if(context) { return api; }
 
         function ramp(value, step) {
             fadeTimeout = setTimeout(function() {
-                el.volume = el.volume + ( value - el.volume ) * 0.2;
-                if(Math.abs(el.volume - value) > 0.05) {
+                api.volume = api.volume + ( value - api.volume ) * 0.2;
+                if(Math.abs(api.volume - value) > 0.05) {
                     return ramp(value, step);
                 }
-                el.volume = value;
+                api.volume = value;
             }, step * 1000);
         }
 
         window.clearTimeout(fadeTimeout);
-        ramp(volume, duration / 10);
+        ramp(toVolume, duration / 10);
 
         return api;
     };
@@ -237,12 +239,24 @@ function MediaSource(el, context, onEnded) {
         },
         volume: {
             get: function() {
-                return el ? el.volume : 1;
+                return volume;
             },
             set: function(value) {
                 window.clearTimeout(fadeTimeout);
+                volume = value;
                 if(el) {
-                    el.volume = value;
+                    el.volume = volume * groupVolume;
+                }
+            }
+        },
+        groupVolume: {
+            get: function() {
+                return groupVolume;
+            },
+            set: function(value) {
+                groupVolume = value;
+                if(el) {
+                    el.volume = volume * groupVolume;
                 }
             }
         }
