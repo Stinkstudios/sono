@@ -357,6 +357,9 @@ function Sound(context, destination) {
                 }
                 return waveform(data, length);
             }
+        },
+        userData: {
+            value: {}
         }
     });
 
