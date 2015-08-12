@@ -1194,6 +1194,7 @@ function FakeContext() {
             type:0,
             frequency: param(),
             Q: param(),
+            detune: param(),
             // delay
             delayTime: param(),
             // convolver
@@ -1870,7 +1871,7 @@ function Group(context, destination) {
         effect = new Effect(context),
         gain = effect.gain(),
         preMuteVolume = 1,
-        api;
+        group;
 
     if(context) {
         effect.setSource(gain);
@@ -1888,6 +1889,8 @@ function Group(context, destination) {
         sounds.push(sound);
 
         sound.once('destroy', remove);
+
+        return group;
     };
 
     var find = function(soundOrId, callback) {
@@ -1915,6 +1918,7 @@ function Group(context, destination) {
         find(soundOrId, function(sound) {
             sounds.splice(sounds.indexOf(sound), 1);
         });
+        return group;
     };
 
     /*
@@ -1925,6 +1929,7 @@ function Group(context, destination) {
         sounds.forEach(function(sound) {
             sound.play(delay, offset);
         });
+        return group;
     };
 
     var pause = function() {
@@ -1933,6 +1938,7 @@ function Group(context, destination) {
                 sound.pause();
             }
         });
+        return group;
     };
 
     var resume = function() {
@@ -1941,27 +1947,37 @@ function Group(context, destination) {
                 sound.play();
             }
         });
+        return group;
     };
 
     var stop = function() {
         sounds.forEach(function(sound) {
             sound.stop();
         });
+        return group;
     };
 
     var seek = function(percent) {
         sounds.forEach(function(sound) {
             sound.seek(percent);
         });
+        return group;
     };
 
     var mute = function() {
-        preMuteVolume = api.volume;
-        api.volume = 0;
+        preMuteVolume = group.volume;
+        group.volume = 0;
+        return group;
     };
 
     var unMute = function() {
-        api.volume = preMuteVolume || 1;
+        group.volume = preMuteVolume || 1;
+        return group;
+    };
+
+    var setVolume = function(value) {
+        group.volume = value;
+        return group;
     };
 
     var fade = function(volume, duration) {
@@ -1982,7 +1998,7 @@ function Group(context, destination) {
             });
         }
 
-        return this;
+        return group;
     };
 
     /*
@@ -1999,7 +2015,7 @@ function Group(context, destination) {
      * Api
      */
 
-    api = {
+    group = {
         add: add,
         find: find,
         remove: remove,
@@ -2008,6 +2024,7 @@ function Group(context, destination) {
         resume: resume,
         stop: stop,
         seek: seek,
+        setVolume: setVolume,
         mute: mute,
         unMute: unMute,
         fade: fade,
@@ -2018,7 +2035,7 @@ function Group(context, destination) {
      * Getters & Setters
      */
 
-    Object.defineProperties(api, {
+    Object.defineProperties(group, {
         effect: {
             value: effect
         },
@@ -2045,15 +2062,14 @@ function Group(context, destination) {
                 }
                 sounds.forEach(function(sound) {
                     if (!sound.context) {
-                        sound.volume = value;
+                        sound.groupVolume = value;
                     }
                 });
             }
         }
     });
 
-    return api;
-    // return Object.freeze(api);
+    return group;
 }
 
 module.exports = Group;
@@ -2148,8 +2164,8 @@ function Sound(context, destination) {
         return sound;
     };
 
-    var stop = function() {
-        source && source.stop();
+    var stop = function(delay) {
+        source && source.stop(delay || 0);
         sound.emit('stop', sound);
         return sound;
     };
@@ -2409,6 +2425,17 @@ function Sound(context, destination) {
                 }
             }
         },
+        // for media element source
+        groupVolume: {
+            get: function() {
+                return source.groupVolume;
+            },
+            set: function(value) {
+                if(source && source.hasOwnProperty('groupVolume')) {
+                    source.groupVolume = value;
+                }
+            }
+        },
         waveform: {
             value: function(length) {
                 if(!data) {
@@ -2418,6 +2445,9 @@ function Sound(context, destination) {
                 }
                 return waveform(data, length);
             }
+        },
+        userData: {
+            value: {}
         }
     });
 
@@ -2628,6 +2658,8 @@ function MediaSource(el, context, onEnded) {
         playbackRate = 1,
         playing = false,
         sourceNode = null,
+        groupVolume = 1,
+        volume = 1,
         api = {};
 
     var createSourceNode = function() {
@@ -2656,6 +2688,7 @@ function MediaSource(el, context, onEnded) {
     var play = function(delay, offset) {
         clearTimeout(delayTimeout);
 
+        el.volume = volume * groupVolume;
         el.playbackRate = playbackRate;
 
         if(offset) {
@@ -2723,22 +2756,21 @@ function MediaSource(el, context, onEnded) {
      * Fade for no webaudio
      */
 
-    var fade = function(volume, duration) {
-        if(!el) { return api; }
+    var fade = function(toVolume, duration) {
         if(context) { return api; }
 
         function ramp(value, step) {
             fadeTimeout = setTimeout(function() {
-                el.volume = el.volume + ( value - el.volume ) * 0.2;
-                if(Math.abs(el.volume - value) > 0.05) {
+                api.volume = api.volume + ( value - api.volume ) * 0.2;
+                if(Math.abs(api.volume - value) > 0.05) {
                     return ramp(value, step);
                 }
-                el.volume = value;
+                api.volume = value;
             }, step * 1000);
         }
 
         window.clearTimeout(fadeTimeout);
-        ramp(volume, duration / 10);
+        ramp(toVolume, duration / 10);
 
         return api;
     };
@@ -2855,12 +2887,24 @@ function MediaSource(el, context, onEnded) {
         },
         volume: {
             get: function() {
-                return el ? el.volume : 1;
+                return volume;
             },
             set: function(value) {
                 window.clearTimeout(fadeTimeout);
+                volume = value;
                 if(el) {
-                    el.volume = value;
+                    el.volume = volume * groupVolume;
+                }
+            }
+        },
+        groupVolume: {
+            get: function() {
+                return groupVolume;
+            },
+            set: function(value) {
+                groupVolume = value;
+                if(el) {
+                    el.volume = volume * groupVolume;
                 }
             }
         }
@@ -3836,8 +3880,8 @@ module.exports = Microphone;
 var Group = _dereq_('../group.js');
 
 function SoundGroup(context, destination) {
-    var api = new Group(context, destination),
-        sounds = api.sounds,
+    var group = new Group(context, destination),
+        sounds = group.sounds,
         playbackRate = 1,
         loop = false,
         src;
@@ -3845,28 +3889,26 @@ function SoundGroup(context, destination) {
     var getSource = function() {
         if(!sounds.length) { return; }
 
-        sounds.sort(function(a, b) {
+        src = sounds.slice(0).sort(function(a, b) {
             return b.duration - a.duration;
-        });
-
-        src = sounds[0];
+        })[0];
     };
 
-    var add = api.add;
-    api.add = function(sound) {
+    var add = group.add;
+    group.add = function(sound) {
         add(sound);
         getSource();
-        return api;
+        return group;
     };
 
-    var remove = api.rmeove;
-    api.remove = function(soundOrId) {
+    var remove = group.rmeove;
+    group.remove = function(soundOrId) {
         remove(soundOrId);
         getSource();
-        return api;
+        return group;
     };
 
-    Object.defineProperties(api, {
+    Object.defineProperties(group, {
         currentTime: {
             get: function() {
                 return src ? src.currentTime : 0;
@@ -3927,7 +3969,7 @@ function SoundGroup(context, destination) {
         }
     });
 
-    return api;
+    return group;
 
 }
 
@@ -3979,11 +4021,16 @@ var reverseBuffer = function(buffer) {
  * ramp audio param
  */
 
-var ramp = function(param, fromValue, toValue, duration) {
+var ramp = function(param, fromValue, toValue, duration, linear) {
     if(!audioContext) { return; }
 
     param.setValueAtTime(fromValue, audioContext.currentTime);
-    param.linearRampToValueAtTime(toValue, audioContext.currentTime + duration);
+
+    if (linear) {
+        param.linearRampToValueAtTime(toValue, audioContext.currentTime + duration);
+    } else {
+        param.exponentialRampToValueAtTime(toValue, audioContext.currentTime + duration);
+    }
 };
 
 /*
