@@ -39,8 +39,7 @@ function bundle() {
     .pipe(rename({ extname: '.min.js' }))
     .pipe(strip())
     .pipe(uglify())
-    .pipe(gulp.dest('./dist/'))
-    .pipe(browserSync.reload({stream: true}));
+    .pipe(gulp.dest('./dist/'));
 }
 
 bundler.on('update', bundle); // on any dep update, runs the bundler
@@ -87,18 +86,15 @@ gulp.task('release', function() {
 // connect browsers
 gulp.task('connect', function() {
   browserSync.init({
-    browser: 'google chrome',
     server: {
-      baseDir: './',
-      startPath: 'examples/index.html'
+      baseDir: ['./', 'examples']
     },
-    reloadDelay: 100
+    files: [
+      'dist/*',
+      'examples/**/*'
+    ],
+    reloadDebounce: 500
   });
-});
-
-// reload browsers
-gulp.task('reload', function() {
-  browserSync.reload();
 });
 
 // js hint
@@ -118,8 +114,6 @@ gulp.task('jshint', function() {
 gulp.task('watch', function() {
   gulp.watch('test/**/*.js', ['jshint']);
   gulp.watch('examples/**/*.css', ['stylesheets']);
-  gulp.watch('examples/**/*.html', ['reload']);
-  gulp.watch('examples/**/*.js', ['reload']);
 });
 
 // default
@@ -133,6 +127,5 @@ gulp.task('stylesheets', function() {
     }))
     .on('error', logError)
     .pipe(rename('styles.css'))
-    .pipe(gulp.dest('./examples/css/'))
-    .pipe(browserSync.reload({stream: true}));
+    .pipe(gulp.dest('./examples/css/'));
 });
