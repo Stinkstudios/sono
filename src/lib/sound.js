@@ -104,8 +104,9 @@ function Sound(context, destination) {
     var fade = function(volume, duration) {
         if(!source) { return sound; }
 
+        var param = gain.gain;
+
         if(context) {
-            var  param = gain.gain;
             var time = context.currentTime;
             param.cancelScheduledValues(time);
             param.setValueAtTime(param.value, time);
@@ -113,6 +114,7 @@ function Sound(context, destination) {
         }
         else if(typeof source.fade === 'function') {
             source.fade(volume, duration);
+            param.value = volume;
         }
 
         return sound;
