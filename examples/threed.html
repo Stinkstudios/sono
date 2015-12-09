@@ -23,27 +23,27 @@
     <div class="Controls" data-js="container"></div>
 
     <pre><code class="js">
-      var panner = sound.effect.panner();
+    var panner = sound.effect.panner();
 
-      // set max distance before the sound gain is zero
-      panner.maxDistance = 1000;
+    // set max distance before the sound gain is zero
+    panner.maxDistance = 1000;
 
-      // set source position to the position vector of sound source
-      pan.setSourcePosition(speaker.position);
+    // set source position to the position vector of sound source
+    pan.setSourcePosition(speaker.position);
 
-      // set source orientation to the normalised position vector of the speaker
-      pan.setSourceOrientation(speaker.position);
+    // set source orientation to the normalised position vector of the speaker
+    pan.setSourceOrientation(speaker.position);
 
-      function update() {
-          window.requestAnimationFrame(update);
+    function update() {
+      window.requestAnimationFrame(update);
 
-          // set listener orientation to the forward vector of the hero
-          pan.setListenerOrientation(hero.forward);
+      // set listener orientation to the forward vector of the hero
+      pan.setListenerOrientation(hero.forward);
 
-          // set listener position to the position vector of the hero
-          pan.setListenerPosition(hero.position);
-      }
-      update();
+      // set listener position to the position vector of the hero
+      pan.setListenerPosition(hero.position);
+    }
+    update();
     </code></pre>
 
   </section>
@@ -68,7 +68,7 @@
               console.log(el);
               var scene = new ThreeScene(el);
 
-              var sound = sono.createSound(['audio/music.ogg', 'audio/music.mp3']);
+              var sound = sono.createSound(['audio/dnb-loop.ogg', 'audio/dnb-loop.mp3']);
               sound.loop = true;
 
               var pan = sound.effect.panner();

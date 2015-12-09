@@ -87,7 +87,7 @@ gulp.task('release', function() {
 gulp.task('connect', function() {
   browserSync.init({
     server: {
-      baseDir: ['./', 'examples']
+      baseDir: ['./']
     },
     files: [
       'dist/*',
