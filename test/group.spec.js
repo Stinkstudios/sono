@@ -2,8 +2,7 @@
 
 var Sono = require('../src/sono.js');
 
-// var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
-var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
+var baseURL = 'http://stinkdigital.github.io/sono/examples/audio/';
 
 describe('Group', function() {
 
