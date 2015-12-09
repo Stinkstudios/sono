@@ -46,6 +46,9 @@ dploy.yaml
 
 # FOLDERS
 
+!examples/audio/*.mp3
+!examples/audio/*.ogg
+examples/audio/other
 node_modules/
 bower_components/
 .sass-cache/

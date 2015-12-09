@@ -12,7 +12,7 @@
     '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
     '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
 
-  var baseURL = '/audio/';
+  var baseURL = 'examples/audio/';
   // var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
   // var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
 
@@ -31,8 +31,8 @@
 
   sound = sono.createSound({
     src: [
-      baseURL + 'dnb-loop-3.ogg',
-      baseURL + 'dnb-loop-3.mp3'
+      baseURL + 'dnb-loop.ogg',
+      baseURL + 'dnb-loop.mp3'
     ],
     loop: true
   });
