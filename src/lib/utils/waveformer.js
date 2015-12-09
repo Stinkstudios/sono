@@ -67,9 +67,9 @@ module.exports = function waveformer(config) {
       }
     };
 
-    var getValue = function(value) {
+    var getValue = function(value, position, length) {
       if(typeof transform === 'function') {
-        return transform(value);
+        return transform(value, position, length);
       }
       return value;
     };
@@ -103,7 +103,7 @@ module.exports = function waveformer(config) {
             angle, magnitude, sine, cosine;
 
         for (i = 0; i < length; i++) {
-          value = getValue(waveform[i]);
+          value = getValue(waveform[i], i, length);
           updateColor(i, length, value);
 
           angle = i * step - halfPI;
@@ -138,7 +138,7 @@ module.exports = function waveformer(config) {
         length = Math.floor(length * percent);
 
         for(i = 0; i < length; i++) {
-          value = getValue(waveform[i]);
+          value = getValue(waveform[i], i, length);
           updateColor(i, length, value);
 
           if(style === 'line' && i > 0) {
