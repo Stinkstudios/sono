@@ -1,337 +1,4 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sono = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
-'use strict';
-
-var browser = _dereq_('./lib/utils/browser.js'),
-    file = _dereq_('./lib/utils/file.js'),
-    Group = _dereq_('./lib/group.js'),
-    Loader = _dereq_('./lib/utils/loader.js'),
-    Sound = _dereq_('./lib/sound.js'),
-    SoundGroup = _dereq_('./lib/utils/sound-group.js'),
-    utils = _dereq_('./lib/utils/utils.js');
-
-function Sono() {
-    var VERSION = '0.0.9',
-        Ctx = (window.AudioContext || window.webkitAudioContext),
-        context = (Ctx ? new Ctx() : null),
-        destination = (context ? context.destination : null),
-        group = new Group(context, destination),
-        api;
-
-    utils.setContext(context);
-
-    /*
-     * Create Sound
-     *
-     * Accepted values for param config:
-     * Object config e.g. { id:'foo', url:['foo.ogg', 'foo.mp3'] }
-     * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
-     * ArrayBuffer
-     * HTMLMediaElement
-     * Filename string (e.g. 'foo.ogg')
-     * Oscillator type string (i.e. 'sine', 'square', 'sawtooth', 'triangle')
-     * ScriptProcessor config object (e.g. { bufferSize: 1024, channels: 1, callback: fn })
-     */
-
-    var createSound = function(config) {
-        // try to load if config contains URLs
-        if(file.containsURL(config)) {
-            return load(config);
-        }
-
-        var sound = add(config);
-        sound.data = config.data || config;
-
-        return sound;
-    };
-
-    /*
-     * Destroy
-     */
-
-    var destroySound = function(soundOrId) {
-        group.find(soundOrId, function(sound) {
-            sound.destroy();
-        });
-        return api;
-    };
-
-    var destroyAll = function() {
-        group.destroy();
-        return api;
-    };
-
-    /*
-     * Get Sound by id
-     */
-
-    var getSound = function(id) {
-        return group.find(id);
-    };
-
-    /*
-     * Create group
-     */
-
-    var createGroup = function(sounds) {
-        var soundGroup = new SoundGroup(context, group.gain);
-        if(sounds) {
-            sounds.forEach(function(sound) {
-                soundGroup.add(sound);
-            });
-        }
-        return soundGroup;
-    };
-
-    /*
-     * Loading
-     */
-
-    var load = function(config) {
-        var src = config.src || config.url || config,
-            sound, loader;
-
-        if(file.containsURL(src)) {
-            sound = queue(config);
-            loader = sound.loader;
-        } else if(Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
-            sound = [];
-            loader = new Loader.Group();
-            src.forEach(function(file) {
-                sound.push(queue(file, loader));
-            });
-        } else {
-            var errorMessage = 'sono.load: No audio file URLs found in config.';
-            if (config.onError) {
-              config.onError('[ERROR] ' + errorMessage);
-            } else {
-              throw new Error(errorMessage);
-            }
-            return null;
-        }
-        if (config.onProgress) {
-            loader.on('progress', function(progress) {
-                config.onProgress(progress);
-            });
-        }
-        if (config.onComplete) {
-            loader.once('complete', function() {
-                loader.off('progress');
-                config.onComplete(sound);
-            });
-        }
-        loader.once('error', function(err) {
-            loader.off('error');
-            if (config.onError) {
-                config.onError(err);
-            } else {
-                console.error.call(console, '[ERROR] sono.load: ' + err);
-            }
-        });
-        loader.start();
-
-        return sound;
-    };
-
-    var queue = function(config, loaderGroup) {
-        var sound = add(config).load(config);
-
-        if(loaderGroup) {
-            loaderGroup.add(sound.loader);
-        }
-        return sound;
-    };
-
-    var add = function(config) {
-        var soundContext = config && config.webAudio === false ? null : context;
-        var sound = new Sound(soundContext, group.gain);
-        sound.isTouchLocked = isTouchLocked;
-        if(config) {
-            sound.id = config.id || '';
-            sound.loop = !!config.loop;
-            sound.volume = config.volume;
-        }
-        group.add(sound);
-        return sound;
-    };
-
-    /*
-     * Controls
-     */
-
-    var mute = function() {
-        group.mute();
-        return api;
-    };
-
-    var unMute = function() {
-        group.unMute();
-        return api;
-    };
-
-    var fade = function(volume, duration) {
-        group.fade(volume, duration);
-        return api;
-    };
-
-    var pauseAll = function() {
-        group.pause();
-        return api;
-    };
-
-    var resumeAll = function() {
-        group.resume();
-        return api;
-    };
-
-    var stopAll = function() {
-        group.stop();
-        return api;
-    };
-
-    var play = function(id, delay, offset) {
-        group.find(id, function(sound) {
-            sound.play(delay, offset);
-        });
-        return api;
-    };
-
-    var pause = function(id) {
-        group.find(id, function(sound) {
-            sound.pause();
-        });
-        return api;
-    };
-
-    var stop = function(id) {
-        group.find(id, function(sound) {
-            sound.stop();
-        });
-        return api;
-    };
-
-    /*
-     * Mobile touch lock
-     */
-
-    var isTouchLocked = browser.handleTouchLock(context, function() {
-        isTouchLocked = false;
-        group.sounds.forEach(function(sound) {
-            sound.isTouchLocked = false;
-        });
-    });
-
-    /*
-     * Page visibility events
-     */
-
-    (function() {
-        var pageHiddenPaused = [];
-
-        // pause currently playing sounds and store refs
-        function onHidden() {
-            group.sounds.forEach(function(sound) {
-                if(sound.playing) {
-                    sound.pause();
-                    pageHiddenPaused.push(sound);
-                }
-            });
-        }
-
-        // play sounds that got paused when page was hidden
-        function onShown() {
-            while(pageHiddenPaused.length) {
-                pageHiddenPaused.pop().play();
-            }
-        }
-
-        browser.handlePageVisibility(onHidden, onShown);
-    }());
-
-    /*
-     * Log version & device support info
-     */
-
-    var log = function() {
-        var title = 'sono ' + VERSION,
-            info = 'Supported:' + api.isSupported +
-                   ' WebAudioAPI:' + api.hasWebAudio +
-                   ' TouchLocked:' + isTouchLocked +
-                   ' Extensions:' + file.extensions;
-
-        if(navigator.userAgent.indexOf('Chrome') > -1) {
-            var args = [
-                    '%c ♫ ' + title +
-                    ' ♫ %c ' + info + ' ',
-                    'color: #FFFFFF; background: #379F7A',
-                    'color: #1F1C0D; background: #E0FBAC'
-                ];
-            console.log.apply(console, args);
-        }
-        else if (window.console && window.console.log.call) {
-            console.log.call(console, title + ' ' + info);
-        }
-    };
-
-    api = {
-        createSound: createSound,
-        destroySound: destroySound,
-        destroyAll: destroyAll,
-        getSound: getSound,
-        createGroup: createGroup,
-        load: load,
-        mute: mute,
-        unMute: unMute,
-        fade: fade,
-        pauseAll: pauseAll,
-        resumeAll: resumeAll,
-        stopAll: stopAll,
-        play: play,
-        pause: pause,
-        stop: stop,
-        log: log,
-
-        canPlay: file.canPlay,
-        context: context,
-        effect: group.effect,
-        extensions: file.extensions,
-        hasWebAudio: !!context,
-        isSupported: file.extensions.length > 0,
-        gain: group.gain,
-        utils: utils,
-        VERSION: VERSION
-    };
-
-    /*
-     * Getters & Setters
-     */
-
-    Object.defineProperties(api, {
-        isTouchLocked: {
-            get: function() {
-                return isTouchLocked;
-            }
-        },
-        sounds: {
-            get: function() {
-                return group.sounds.slice(0);
-            }
-        },
-        volume: {
-            get: function() {
-                return group.volume;
-            },
-            set: function(value) {
-                group.volume = value;
-            }
-        }
-    });
-
-    return Object.freeze(api);
-}
-
-module.exports = new Sono();
-
-},{"./lib/group.js":14,"./lib/sound.js":15,"./lib/utils/browser.js":21,"./lib/utils/file.js":23,"./lib/utils/loader.js":24,"./lib/utils/sound-group.js":26,"./lib/utils/utils.js":27}],2:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -415,18 +82,11 @@ EventEmitter.prototype.emit = function(type) {
         break;
       // slower
       default:
-        len = arguments.length;
-        args = new Array(len - 1);
-        for (i = 1; i < len; i++)
-          args[i - 1] = arguments[i];
+        args = Array.prototype.slice.call(arguments, 1);
         handler.apply(this, args);
     }
   } else if (isObject(handler)) {
-    len = arguments.length;
-    args = new Array(len - 1);
-    for (i = 1; i < len; i++)
-      args[i - 1] = arguments[i];
-
+    args = Array.prototype.slice.call(arguments, 1);
     listeners = handler.slice();
     len = listeners.length;
     for (i = 0; i < len; i++)
@@ -464,7 +124,6 @@ EventEmitter.prototype.addListener = function(type, listener) {
 
   // Check for listener leak
   if (isObject(this._events[type]) && !this._events[type].warned) {
-    var m;
     if (!isUndefined(this._maxListeners)) {
       m = this._maxListeners;
     } else {
@@ -583,7 +242,7 @@ EventEmitter.prototype.removeAllListeners = function(type) {
 
   if (isFunction(listeners)) {
     this.removeListener(type, listeners);
-  } else {
+  } else if (listeners) {
     // LIFO order
     while (listeners.length)
       this.removeListener(type, listeners[listeners.length - 1]);
@@ -604,15 +263,20 @@ EventEmitter.prototype.listeners = function(type) {
   return ret;
 };
 
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
 EventEmitter.listenerCount = function(emitter, type) {
-  var ret;
-  if (!emitter._events || !emitter._events[type])
-    ret = 0;
-  else if (isFunction(emitter._events[type]))
-    ret = 1;
-  else
-    ret = emitter._events[type].length;
-  return ret;
+  return emitter.listenerCount(type);
 };
 
 function isFunction(arg) {
@@ -631,7 +295,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],3:[function(_dereq_,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 'use strict';
 
 var Analyser = _dereq_('./effect/analyser.js'),
@@ -965,7 +629,7 @@ function Effect(context) {
 
 module.exports = Effect;
 
-},{"./effect/analyser.js":4,"./effect/distortion.js":5,"./effect/echo.js":6,"./effect/fake-context.js":7,"./effect/filter.js":8,"./effect/flanger.js":9,"./effect/panner.js":10,"./effect/phaser.js":11,"./effect/recorder.js":12,"./effect/reverb.js":13}],4:[function(_dereq_,module,exports){
+},{"./effect/analyser.js":3,"./effect/distortion.js":4,"./effect/echo.js":5,"./effect/fake-context.js":6,"./effect/filter.js":7,"./effect/flanger.js":8,"./effect/panner.js":9,"./effect/phaser.js":10,"./effect/recorder.js":11,"./effect/reverb.js":12}],3:[function(_dereq_,module,exports){
 'use strict';
 
 function Analyser(context, config) {
@@ -1047,7 +711,7 @@ function Analyser(context, config) {
 
 module.exports = Analyser;
 
-},{}],5:[function(_dereq_,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 'use strict';
 
 var validify = _dereq_('../utils/validify.js').number;
@@ -1098,7 +762,7 @@ function Distortion(context, amount) {
 
 module.exports = Distortion;
 
-},{"../utils/validify.js":28}],6:[function(_dereq_,module,exports){
+},{"../utils/validify.js":27}],5:[function(_dereq_,module,exports){
 'use strict';
 
 var validify = _dereq_('../utils/validify.js').number;
@@ -1140,7 +804,7 @@ function Echo(context, config) {
 
 module.exports = Echo;
 
-},{"../utils/validify.js":28}],7:[function(_dereq_,module,exports){
+},{"../utils/validify.js":27}],6:[function(_dereq_,module,exports){
 'use strict';
 
 function FakeContext() {
@@ -1255,7 +919,7 @@ function FakeContext() {
 
 module.exports = FakeContext;
 
-},{}],8:[function(_dereq_,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 'use strict';
 
 // https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
@@ -1296,7 +960,7 @@ function Filter(context, type, frequency, q, gain) {
 
 module.exports = Filter;
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],8:[function(_dereq_,module,exports){
 'use strict';
 
 var validify = _dereq_('../utils/validify.js').number;
@@ -1429,7 +1093,7 @@ function Flanger(context, config) {
 
 module.exports = Flanger;
 
-},{"../utils/validify.js":28}],10:[function(_dereq_,module,exports){
+},{"../utils/validify.js":27}],9:[function(_dereq_,module,exports){
 'use strict';
 
 var validify = _dereq_('../utils/validify.js').number;
@@ -1592,7 +1256,7 @@ Panner.defaults = {
 
 module.exports = Panner;
 
-},{"../utils/validify.js":28}],11:[function(_dereq_,module,exports){
+},{"../utils/validify.js":27}],10:[function(_dereq_,module,exports){
 'use strict';
 
 var validify = _dereq_('../utils/validify.js').number;
@@ -1663,7 +1327,7 @@ function Phaser(context, config) {
 
 module.exports = Phaser;
 
-},{"../utils/validify.js":28}],12:[function(_dereq_,module,exports){
+},{"../utils/validify.js":27}],11:[function(_dereq_,module,exports){
 'use strict';
 
 function Recorder(context, passThrough) {
@@ -1766,7 +1430,7 @@ function Recorder(context, passThrough) {
 
 module.exports = Recorder;
 
-},{}],13:[function(_dereq_,module,exports){
+},{}],12:[function(_dereq_,module,exports){
 'use strict';
 
 var validify = _dereq_('../utils/validify.js').number;
@@ -1861,7 +1525,7 @@ function Reverb(context, config) {
 
 module.exports = Reverb;
 
-},{"../utils/validify.js":28}],14:[function(_dereq_,module,exports){
+},{"../utils/validify.js":27}],13:[function(_dereq_,module,exports){
 'use strict';
 
 var Effect = _dereq_('./effect.js');
@@ -2074,7 +1738,7 @@ function Group(context, destination) {
 
 module.exports = Group;
 
-},{"./effect.js":3}],15:[function(_dereq_,module,exports){
+},{"./effect.js":2}],14:[function(_dereq_,module,exports){
 'use strict';
 
 var BufferSource = _dereq_('./source/buffer-source.js'),
@@ -2458,7 +2122,7 @@ function Sound(context, destination) {
 
 module.exports = Sound;
 
-},{"./effect.js":3,"./source/buffer-source.js":16,"./source/media-source.js":17,"./source/microphone-source.js":18,"./source/oscillator-source.js":19,"./source/script-source.js":20,"./utils/emitter.js":22,"./utils/file.js":23,"./utils/loader.js":24,"./utils/waveform.js":29}],16:[function(_dereq_,module,exports){
+},{"./effect.js":2,"./source/buffer-source.js":15,"./source/media-source.js":16,"./source/microphone-source.js":17,"./source/oscillator-source.js":18,"./source/script-source.js":19,"./utils/emitter.js":21,"./utils/file.js":22,"./utils/loader.js":23,"./utils/waveform.js":28}],15:[function(_dereq_,module,exports){
 'use strict';
 
 function BufferSource(buffer, context, onEnded) {
@@ -2647,7 +2311,7 @@ function BufferSource(buffer, context, onEnded) {
 
 module.exports = BufferSource;
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],16:[function(_dereq_,module,exports){
 'use strict';
 
 function MediaSource(el, context, onEnded) {
@@ -2917,7 +2581,7 @@ function MediaSource(el, context, onEnded) {
 
 module.exports = MediaSource;
 
-},{}],18:[function(_dereq_,module,exports){
+},{}],17:[function(_dereq_,module,exports){
 'use strict';
 
 function MicrophoneSource(stream, context) {
@@ -3048,7 +2712,7 @@ function MicrophoneSource(stream, context) {
 
 module.exports = MicrophoneSource;
 
-},{}],19:[function(_dereq_,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 'use strict';
 
 function OscillatorSource(type, context) {
@@ -3197,7 +2861,7 @@ function OscillatorSource(type, context) {
 
 module.exports = OscillatorSource;
 
-},{}],20:[function(_dereq_,module,exports){
+},{}],19:[function(_dereq_,module,exports){
 'use strict';
 
 function ScriptSource(data, context) {
@@ -3333,7 +2997,7 @@ function ScriptSource(data, context) {
 
 module.exports = ScriptSource;
 
-},{}],21:[function(_dereq_,module,exports){
+},{}],20:[function(_dereq_,module,exports){
 'use strict';
 
 var browser = {};
@@ -3400,7 +3064,7 @@ browser.handleTouchLock = function(context, onUnlock) {
 
 module.exports = browser;
 
-},{}],22:[function(_dereq_,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 'use strict';
 
 var EventEmitter = _dereq_('events').EventEmitter;
@@ -3425,7 +3089,7 @@ Emitter.prototype.off = function(type, listener) {
 
 module.exports = Emitter;
 
-},{"events":2}],23:[function(_dereq_,module,exports){
+},{"events":1}],22:[function(_dereq_,module,exports){
 'use strict';
 
 var File = {
@@ -3553,7 +3217,7 @@ File.containsURL = function(config) {
 
 module.exports = File;
 
-},{}],24:[function(_dereq_,module,exports){
+},{}],23:[function(_dereq_,module,exports){
 'use strict';
 
 var Emitter = _dereq_('./emitter.js');
@@ -3816,7 +3480,7 @@ Loader.Group = function() {
 
 module.exports = Loader;
 
-},{"./emitter.js":22}],25:[function(_dereq_,module,exports){
+},{"./emitter.js":21}],24:[function(_dereq_,module,exports){
 'use strict';
 
 function Microphone(connected, denied, error) {
@@ -3876,7 +3540,7 @@ function Microphone(connected, denied, error) {
 
 module.exports = Microphone;
 
-},{}],26:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 'use strict';
 
 var Group = _dereq_('../group.js');
@@ -3977,7 +3641,7 @@ function SoundGroup(context, destination) {
 
 module.exports = SoundGroup;
 
-},{"../group.js":14}],27:[function(_dereq_,module,exports){
+},{"../group.js":13}],26:[function(_dereq_,module,exports){
 'use strict';
 
 var Microphone = _dereq_('./microphone.js');
@@ -4088,7 +3752,7 @@ module.exports = Object.freeze({
     waveformer: waveformer
 });
 
-},{"./microphone.js":25,"./waveformer.js":30}],28:[function(_dereq_,module,exports){
+},{"./microphone.js":24,"./waveformer.js":29}],27:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = Object.freeze({
@@ -4099,7 +3763,7 @@ module.exports = Object.freeze({
   }
 });
 
-},{}],29:[function(_dereq_,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 'use strict';
 
 function waveform() {
@@ -4161,7 +3825,7 @@ function waveform() {
 
 module.exports = waveform;
 
-},{}],30:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 'use strict';
 
 var halfPI = Math.PI / 2;
@@ -4231,9 +3895,9 @@ module.exports = function waveformer(config) {
       }
     };
 
-    var getValue = function(value) {
+    var getValue = function(value, position, length) {
       if(typeof transform === 'function') {
-        return transform(value);
+        return transform(value, position, length);
       }
       return value;
     };
@@ -4267,7 +3931,7 @@ module.exports = function waveformer(config) {
             angle, magnitude, sine, cosine;
 
         for (i = 0; i < length; i++) {
-          value = getValue(waveform[i]);
+          value = getValue(waveform[i], i, length);
           updateColor(i, length, value);
 
           angle = i * step - halfPI;
@@ -4302,7 +3966,7 @@ module.exports = function waveformer(config) {
         length = Math.floor(length * percent);
 
         for(i = 0; i < length; i++) {
-          value = getValue(waveform[i]);
+          value = getValue(waveform[i], i, length);
           updateColor(i, length, value);
 
           if(style === 'line' && i > 0) {
@@ -4333,6 +3997,339 @@ module.exports = function waveformer(config) {
     return update;
 };
 
-},{}]},{},[1])(1)
+},{}],30:[function(_dereq_,module,exports){
+'use strict';
+
+var browser = _dereq_('./lib/utils/browser.js'),
+    file = _dereq_('./lib/utils/file.js'),
+    Group = _dereq_('./lib/group.js'),
+    Loader = _dereq_('./lib/utils/loader.js'),
+    Sound = _dereq_('./lib/sound.js'),
+    SoundGroup = _dereq_('./lib/utils/sound-group.js'),
+    utils = _dereq_('./lib/utils/utils.js');
+
+function Sono() {
+    var VERSION = '0.0.9',
+        Ctx = (window.AudioContext || window.webkitAudioContext),
+        context = (Ctx ? new Ctx() : null),
+        destination = (context ? context.destination : null),
+        group = new Group(context, destination),
+        api;
+
+    utils.setContext(context);
+
+    /*
+     * Create Sound
+     *
+     * Accepted values for param config:
+     * Object config e.g. { id:'foo', url:['foo.ogg', 'foo.mp3'] }
+     * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
+     * ArrayBuffer
+     * HTMLMediaElement
+     * Filename string (e.g. 'foo.ogg')
+     * Oscillator type string (i.e. 'sine', 'square', 'sawtooth', 'triangle')
+     * ScriptProcessor config object (e.g. { bufferSize: 1024, channels: 1, callback: fn })
+     */
+
+    var createSound = function(config) {
+        // try to load if config contains URLs
+        if(file.containsURL(config)) {
+            return load(config);
+        }
+
+        var sound = add(config);
+        sound.data = config.data || config;
+
+        return sound;
+    };
+
+    /*
+     * Destroy
+     */
+
+    var destroySound = function(soundOrId) {
+        group.find(soundOrId, function(sound) {
+            sound.destroy();
+        });
+        return api;
+    };
+
+    var destroyAll = function() {
+        group.destroy();
+        return api;
+    };
+
+    /*
+     * Get Sound by id
+     */
+
+    var getSound = function(id) {
+        return group.find(id);
+    };
+
+    /*
+     * Create group
+     */
+
+    var createGroup = function(sounds) {
+        var soundGroup = new SoundGroup(context, group.gain);
+        if(sounds) {
+            sounds.forEach(function(sound) {
+                soundGroup.add(sound);
+            });
+        }
+        return soundGroup;
+    };
+
+    /*
+     * Loading
+     */
+
+    var load = function(config) {
+        var src = config.src || config.url || config,
+            sound, loader;
+
+        if(file.containsURL(src)) {
+            sound = queue(config);
+            loader = sound.loader;
+        } else if(Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
+            sound = [];
+            loader = new Loader.Group();
+            src.forEach(function(file) {
+                sound.push(queue(file, loader));
+            });
+        } else {
+            var errorMessage = 'sono.load: No audio file URLs found in config.';
+            if (config.onError) {
+              config.onError('[ERROR] ' + errorMessage);
+            } else {
+              throw new Error(errorMessage);
+            }
+            return null;
+        }
+        if (config.onProgress) {
+            loader.on('progress', function(progress) {
+                config.onProgress(progress);
+            });
+        }
+        if (config.onComplete) {
+            loader.once('complete', function() {
+                loader.off('progress');
+                config.onComplete(sound);
+            });
+        }
+        loader.once('error', function(err) {
+            loader.off('error');
+            if (config.onError) {
+                config.onError(err);
+            } else {
+                console.error.call(console, '[ERROR] sono.load: ' + err);
+            }
+        });
+        loader.start();
+
+        return sound;
+    };
+
+    var queue = function(config, loaderGroup) {
+        var sound = add(config).load(config);
+
+        if(loaderGroup) {
+            loaderGroup.add(sound.loader);
+        }
+        return sound;
+    };
+
+    var add = function(config) {
+        var soundContext = config && config.webAudio === false ? null : context;
+        var sound = new Sound(soundContext, group.gain);
+        sound.isTouchLocked = isTouchLocked;
+        if(config) {
+            sound.id = config.id || '';
+            sound.loop = !!config.loop;
+            sound.volume = config.volume;
+        }
+        group.add(sound);
+        return sound;
+    };
+
+    /*
+     * Controls
+     */
+
+    var mute = function() {
+        group.mute();
+        return api;
+    };
+
+    var unMute = function() {
+        group.unMute();
+        return api;
+    };
+
+    var fade = function(volume, duration) {
+        group.fade(volume, duration);
+        return api;
+    };
+
+    var pauseAll = function() {
+        group.pause();
+        return api;
+    };
+
+    var resumeAll = function() {
+        group.resume();
+        return api;
+    };
+
+    var stopAll = function() {
+        group.stop();
+        return api;
+    };
+
+    var play = function(id, delay, offset) {
+        group.find(id, function(sound) {
+            sound.play(delay, offset);
+        });
+        return api;
+    };
+
+    var pause = function(id) {
+        group.find(id, function(sound) {
+            sound.pause();
+        });
+        return api;
+    };
+
+    var stop = function(id) {
+        group.find(id, function(sound) {
+            sound.stop();
+        });
+        return api;
+    };
+
+    /*
+     * Mobile touch lock
+     */
+
+    var isTouchLocked = browser.handleTouchLock(context, function() {
+        isTouchLocked = false;
+        group.sounds.forEach(function(sound) {
+            sound.isTouchLocked = false;
+        });
+    });
+
+    /*
+     * Page visibility events
+     */
+
+    (function() {
+        var pageHiddenPaused = [];
+
+        // pause currently playing sounds and store refs
+        function onHidden() {
+            group.sounds.forEach(function(sound) {
+                if(sound.playing) {
+                    sound.pause();
+                    pageHiddenPaused.push(sound);
+                }
+            });
+        }
+
+        // play sounds that got paused when page was hidden
+        function onShown() {
+            while(pageHiddenPaused.length) {
+                pageHiddenPaused.pop().play();
+            }
+        }
+
+        browser.handlePageVisibility(onHidden, onShown);
+    }());
+
+    /*
+     * Log version & device support info
+     */
+
+    var log = function() {
+        var title = 'sono ' + VERSION,
+            info = 'Supported:' + api.isSupported +
+                   ' WebAudioAPI:' + api.hasWebAudio +
+                   ' TouchLocked:' + isTouchLocked +
+                   ' Extensions:' + file.extensions;
+
+        if(navigator.userAgent.indexOf('Chrome') > -1) {
+            var args = [
+                    '%c ♫ ' + title +
+                    ' ♫ %c ' + info + ' ',
+                    'color: #FFFFFF; background: #379F7A',
+                    'color: #1F1C0D; background: #E0FBAC'
+                ];
+            console.log.apply(console, args);
+        }
+        else if (window.console && window.console.log.call) {
+            console.log.call(console, title + ' ' + info);
+        }
+    };
+
+    api = {
+        createSound: createSound,
+        destroySound: destroySound,
+        destroyAll: destroyAll,
+        getSound: getSound,
+        createGroup: createGroup,
+        load: load,
+        mute: mute,
+        unMute: unMute,
+        fade: fade,
+        pauseAll: pauseAll,
+        resumeAll: resumeAll,
+        stopAll: stopAll,
+        play: play,
+        pause: pause,
+        stop: stop,
+        log: log,
+
+        canPlay: file.canPlay,
+        context: context,
+        effect: group.effect,
+        extensions: file.extensions,
+        hasWebAudio: !!context,
+        isSupported: file.extensions.length > 0,
+        gain: group.gain,
+        utils: utils,
+        VERSION: VERSION
+    };
+
+    /*
+     * Getters & Setters
+     */
+
+    Object.defineProperties(api, {
+        isTouchLocked: {
+            get: function() {
+                return isTouchLocked;
+            }
+        },
+        sounds: {
+            get: function() {
+                return group.sounds.slice(0);
+            }
+        },
+        volume: {
+            get: function() {
+                return group.volume;
+            },
+            set: function(value) {
+                group.volume = value;
+            }
+        }
+    });
+
+    return Object.freeze(api);
+}
+
+module.exports = new Sono();
+
+},{"./lib/group.js":13,"./lib/sound.js":14,"./lib/utils/browser.js":20,"./lib/utils/file.js":22,"./lib/utils/loader.js":23,"./lib/utils/sound-group.js":25,"./lib/utils/utils.js":26}]},{},[30])(30)
 });
 //# sourceMappingURL=sono.js.map
