@@ -69,7 +69,7 @@ function effectTest(isWebAudio) {
 
         describe('panning', function() {
             it('should have expected api', function() {
-                expect(effect.panning).to.be.an('object');
+                expect(effect.panning).to.exist;
                 expect(effect.panning.setDefaults).to.be.a('function');
                 expect(effect.panning.setListenerPosition).to.be.a('function');
                 expect(effect.panning.setListenerOrientation).to.be.a('function');

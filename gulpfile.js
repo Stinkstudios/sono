@@ -4,7 +4,7 @@ var browserify = require('browserify'),
     buffer = require('vinyl-buffer'),
     chalk = require('chalk'),
     collapse = require('bundle-collapser/plugin'),
-    cssnext = require('gulp-cssnext'),
+    postcss = require('gulp-postcss'),
     derequire = require('gulp-derequire'),
     exorcist = require('exorcist'),
     gulp = require('gulp'),
@@ -122,9 +122,16 @@ gulp.task('default', ['connect', 'watch', 'bundle']);
 // css for examples
 gulp.task('stylesheets', function() {
   gulp.src('examples/css/index.css')
-    .pipe(cssnext({
-        compress: false
-    }))
+    .pipe(postcss([
+        require('postcss-import')(),
+        require('postcss-custom-media')(),
+        require('postcss-custom-properties')(),
+        require('postcss-calc')(),
+        require('autoprefixer')({
+            browsers: ['last 2 version'],
+            cascade: false
+        })
+    ]))
     .on('error', logError)
     .pipe(rename('styles.css'))
     .pipe(gulp.dest('./examples/css/'));

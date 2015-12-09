@@ -365,6 +365,7 @@ nav a {
   width: 760px;
   position: relative;
   margin: 0 auto;
+  z-index: 1;
 }
 
 @media (max-width: 760px) {
@@ -372,8 +373,7 @@ nav a {
     height: 456px;
     width: 456px;
     -webkit-transform: scale(0.6) translate(-40%, -40%);
-        -ms-transform: scale(0.6) translate(-40%, -40%);
-            transform: scale(0.6) translate(-40%, -40%);
+    transform: scale(0.6) translate(-40%, -40%);
   }
 }
 
@@ -382,8 +382,7 @@ nav a {
     height: 304px;
     width: 304px;
     -webkit-transform: scale(0.4) translate(-80%, -80%);
-        -ms-transform: scale(0.4) translate(-80%, -80%);
-            transform: scale(0.4) translate(-80%, -80%);
+    transform: scale(0.4) translate(-80%, -80%);
   }
 }
 
@@ -425,8 +424,7 @@ nav a {
   left: 50%;
   top: 50%;
   -webkit-transform: translate(-40%, -50%);
-      -ms-transform: translate(-40%, -50%);
-          transform: translate(-40%, -50%);
+  transform: translate(-40%, -50%);
 }
 
 .Player-pause {
@@ -438,8 +436,7 @@ nav a {
   position: absolute;
   top: 50%;
   -webkit-transform: translate(-50%, -50%);
-      -ms-transform: translate(-50%, -50%);
-          transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
   width: 20px;
 }
 
@@ -475,11 +472,9 @@ nav a {
   border-bottom-right-radius: 0;
   left: -100%;
   -webkit-transform-origin: right center;
-      -ms-transform-origin: right center;
-          transform-origin: right center;
+  transform-origin: right center;
   -webkit-transform: rotate(0deg);
-      -ms-transform: rotate(0deg);
-          transform: rotate(0deg);
+  transform: rotate(0deg);
 }
 
 .Player-halfB {
@@ -488,11 +483,9 @@ nav a {
   border-bottom-left-radius: 0;
   left: 100%;
   -webkit-transform-origin: left center;
-      -ms-transform-origin: left center;
-          transform-origin: left center;
+  transform-origin: left center;
   -webkit-transform: rotate(0deg);
-      -ms-transform: rotate(0deg);
-          transform: rotate(0deg);
+  transform: rotate(0deg);
 }
 
 /*
@@ -502,7 +495,6 @@ nav a {
 .PlayerTop {
   background-color: #e7e9db;
   border-bottom: 1px solid white;
-  display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
@@ -510,18 +502,17 @@ nav a {
   position: fixed;
   top: 0;
   -webkit-transform: translateY(-100%);
-      -ms-transform: translateY(-100%);
-          transform: translateY(-100%);
-  -webkit-transition: -webkit-transform 0.3s ease-out;
-          transition: transform 0.3s ease-out;
+  transform: translateY(-100%);
+  transition: -webkit-transform 0.3s ease-out;
+  transition: transform 0.3s ease-out;
+  transition: transform 0.3s ease-out, -webkit-transform 0.3s ease-out;
   width: 100%;
   z-index: 2;
 }
 
 .PlayerTop.is-active {
   -webkit-transform: translateY(0);
-      -ms-transform: translateY(0);
-          transform: translateY(0);
+  transform: translateY(0);
 }
 
 .PlayerTop-control {
@@ -545,8 +536,7 @@ nav a {
   left: 50%;
   top: 50%;
   -webkit-transform: translate(-40%, -50%);
-      -ms-transform: translate(-40%, -50%);
-          transform: translate(-40%, -50%);
+  transform: translate(-40%, -50%);
 }
 
 .PlayerTop-pause {
@@ -558,8 +548,7 @@ nav a {
   position: absolute;
   top: 50%;
   -webkit-transform: translate(-50%, -50%);
-      -ms-transform: translate(-50%, -50%);
-          transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
   width: 8px;
 }
 
@@ -572,43 +561,35 @@ nav a {
 }
 
 .Controls {
-  -webkit-box-align: center;
   -webkit-align-items: center;
-      -ms-flex-align: center;
-          align-items: center;
-  display: -webkit-box;
+  -ms-flex-align: center;
+  align-items: center;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
   -webkit-flex-wrap: wrap;
-      -ms-flex-wrap: wrap;
-          flex-wrap: wrap;
-  -webkit-box-pack: center;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
   -webkit-justify-content: center;
-      -ms-flex-pack: center;
-          justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
   width: 100%;
 }
 
 .Control {
   /*border: 1px dashed red;*/
-  -webkit-box-align: center;
   -webkit-align-items: center;
-      -ms-flex-align: center;
-          align-items: center;
-  display: -webkit-box;
+  -ms-flex-align: center;
+  align-items: center;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
   -webkit-flex-direction: column;
-      -ms-flex-direction: column;
-          flex-direction: column;
-  -webkit-box-pack: center;
+  -ms-flex-direction: column;
+  flex-direction: column;
   -webkit-justify-content: center;
-      -ms-flex-pack: center;
-          justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
   min-width: 250px;
   pointer-events: none;
 }
@@ -619,22 +600,19 @@ nav a {
 }
 
 .Control-inner {
-  -webkit-box-align: baseline;
   -webkit-align-items: baseline;
-      -ms-flex-align: baseline;
-          align-items: baseline;
-  display: -webkit-box;
+  -ms-flex-align: baseline;
+  align-items: baseline;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: center;
   -webkit-justify-content: center;
-      -ms-flex-pack: center;
-          justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
   -webkit-user-select: none;
-     -moz-user-select: none;
-      -ms-user-select: none;
-          user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .Control-circle {
@@ -656,10 +634,9 @@ nav a {
 }
 
 .Control-bound {
-  -webkit-box-flex: 1;
   -webkit-flex: 1 0;
-      -ms-flex: 1 0;
-          flex: 1 0;
+  -ms-flex: 1 0;
+  flex: 1 0;
   font-size: 14px;
 }
 
@@ -689,8 +666,7 @@ nav a {
   height: 40px;
   margin-top: 18px;
   -webkit-transform: rotate(45deg);
-      -ms-transform: rotate(45deg);
-          transform: rotate(45deg);
+  transform: rotate(45deg);
   width: 20px;
 }
 
@@ -699,8 +675,7 @@ nav a {
   height: 60px;
   margin-top: 20px;
   -webkit-transform: rotate(45deg);
-      -ms-transform: rotate(45deg);
-          transform: rotate(45deg);
+  transform: rotate(45deg);
   width: 10px;
 }
 
@@ -710,8 +685,7 @@ nav a {
   display: inline-block;
   height: 60px;
   -webkit-transform: rotate(90deg);
-      -ms-transform: rotate(90deg);
-          transform: rotate(90deg);
+  transform: rotate(90deg);
   width: 10px;
 }
 

@@ -12,8 +12,9 @@
     '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
     '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
 
+  var baseURL = '/audio/';
   // var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
-  var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
+  // var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
 
   var sound,
     panner,
@@ -98,6 +99,16 @@
   /*
    * controls
    */
+
+  ui.createControl({
+    el: document.querySelector('[data-js="master-volume"]'),
+    name: 'Master Volume',
+    min: 0,
+    max: 1,
+    value: 1
+  }, function(value) {
+    sono.volume = value;
+  });
 
   ui.createControl({
     el: document.querySelector('[data-js="volume"]'),
@@ -398,11 +409,13 @@
    * highpass filter
    */
 
+  var maxFreq = (sono.context && sono.context.sampleRate / 2) || 0;
+
   ui.createControl({
     el: document.querySelector('[data-js="highpassFrequency"]'),
     name: 'Frequency',
     min: 20,
-    max: sono.context.sampleRate / 2,
+    max: maxFreq,
     value: 20,
     places: 0
   }, function(value) {
@@ -438,7 +451,7 @@
     el: document.querySelector('[data-js="lowshelfFrequency"]'),
     name: 'Frequency',
     min: 20,
-    max: sono.context.sampleRate / 2,
+    max: maxFreq,
     value: 80,
     places: 0
   }, function(value) {
