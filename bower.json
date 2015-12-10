@@ -1,11 +1,11 @@
 {
   "name": "sono",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/Stinkdigital/sono",
   "authors": [
     "Ian McGregor <ian@stinkdigital.com>"
   ],
-  "description": "A JavaScript library for working with audio",
+  "description": "A library for making stuff with Web Audio",
   "main": "dist/sono.min.js",
   "moduleType": [
     "node",

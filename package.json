@@ -1,7 +1,7 @@
 {
   "name": "sono",
-  "version": "0.1.0",
-  "description": "A JavaScript library for working with audio",
+  "version": "0.1.1",
+  "description": "A library for making stuff with Web Audio",
   "keywords": [
     "WebAudio",
     "Web Audio",

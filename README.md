@@ -1,10 +1,10 @@
 # sono
 
-[![NPM version](https://badge.fury.io/js/sono.svg)](http://badge.fury.io/js/sono) [![Bower version](https://badge.fury.io/bo/sono.svg)](http://badge.fury.io/bo/sono) [![Build Status](https://secure.travis-ci.org/ianmcgregor/sono.png)](https://travis-ci.org/ianmcgregor/sono)
+[![NPM version](https://badge.fury.io/js/sono.svg)](http://badge.fury.io/js/sono) [![Build Status](https://secure.travis-ci.org/ianmcgregor/sono.png)](https://travis-ci.org/ianmcgregor/sono)
 
-A JavaScript library for working with audio
+A library for making stuff with Web Audio
 
-<http://stinkdigital.github.io/sono/examples/>
+<http://stinkdigital.github.io/sono/>
 
 ## Features
 
@@ -18,8 +18,9 @@ A JavaScript library for working with audio
 
 ## Installation
 
-* npm: ```npm install sono --save-dev```
-* bower: ```bower install sono --save-dev```
+```
+npm install sono --save
+```
 
 ## Usage
 
