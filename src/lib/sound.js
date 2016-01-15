@@ -151,12 +151,12 @@ function Sound(context, destination) {
 
         if(file.isAudioBuffer(data)) {
             source = new BufferSource(data, context, function() {
-                sound.emit('ended');
+                sound.emit('ended', sound);
             });
         }
         else if(file.isMediaElement(data)) {
             source = new MediaSource(data, context, function() {
-                sound.emit('ended');
+                sound.emit('ended', sound);
             });
         }
         else if(file.isMediaStream(data)) {
