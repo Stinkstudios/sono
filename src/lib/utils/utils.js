@@ -4,12 +4,28 @@ var Microphone = require('./microphone.js');
 var waveformer = require('./waveformer.js');
 
 /*
- * audio audioContext
+ * audio ctx
  */
-var audioContext;
+var ctx;
 
-var setContext = function(value) {
-    audioContext = value;
+var getContext = function() {
+    if (ctx) { return ctx; }
+
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+
+    ctx = (Ctx ? new Ctx() : null);
+
+    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+
+    var isSuspended = ctx && ctx.state === 'suspended';
+
+    if (isSuspended && typeof ctx.resume === 'function') {
+        window.setTimeout(function() {
+            ctx.resume();
+        }, 1000);
+    }
+
+    return ctx;
 };
 
 /*
@@ -17,10 +33,10 @@ var setContext = function(value) {
  */
 
 var cloneBuffer = function(buffer) {
-    if(!audioContext) { return buffer; }
+    if (!ctx) { return buffer; }
 
     var numChannels = buffer.numberOfChannels,
-        cloned = audioContext.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+        cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i));
     }
@@ -44,14 +60,14 @@ var reverseBuffer = function(buffer) {
  */
 
 var ramp = function(param, fromValue, toValue, duration, linear) {
-    if(!audioContext) { return; }
+    if (!ctx) { return; }
 
-    param.setValueAtTime(fromValue, audioContext.currentTime);
+    param.setValueAtTime(fromValue, ctx.currentTime);
 
     if (linear) {
-        param.linearRampToValueAtTime(toValue, audioContext.currentTime + duration);
+        param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
     } else {
-        param.exponentialRampToValueAtTime(toValue, audioContext.currentTime + duration);
+        param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
     }
 };
 
@@ -60,12 +76,12 @@ var ramp = function(param, fromValue, toValue, duration, linear) {
  */
 
 var getFrequency = function(value) {
-    if(!audioContext) { return 0; }
+    if (!ctx) { return 0; }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     var minValue = 40;
-    var maxValue = audioContext.sampleRate / 2;
+    var maxValue = ctx.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -87,7 +103,7 @@ var microphone = function(connected, denied, error) {
  */
 
 var timeCode = function(seconds, delim) {
-    if(delim === undefined) { delim = ':'; }
+    if (delim === undefined) { delim = ':'; }
     var h = Math.floor(seconds / 3600);
     var m = Math.floor((seconds % 3600) / 60);
     var s = Math.floor((seconds % 3600) % 60);
@@ -98,7 +114,7 @@ var timeCode = function(seconds, delim) {
 };
 
 module.exports = Object.freeze({
-    setContext: setContext,
+    getContext: getContext,
     cloneBuffer: cloneBuffer,
     reverseBuffer: reverseBuffer,
     ramp: ramp,

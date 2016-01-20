@@ -9,14 +9,11 @@ var browser = require('./lib/utils/browser.js'),
     utils = require('./lib/utils/utils.js');
 
 function Sono() {
-    var VERSION = '0.0.9',
-        Ctx = (window.AudioContext || window.webkitAudioContext),
-        context = (Ctx ? new Ctx() : null),
+    var VERSION = '0.1.2',
+        context = utils.getContext(),
         destination = (context ? context.destination : null),
         group = new Group(context, destination),
         api;
-
-    utils.setContext(context);
 
     /*
      * Create Sound
@@ -255,6 +252,7 @@ function Sono() {
             info = 'Supported:' + api.isSupported +
                    ' WebAudioAPI:' + api.hasWebAudio +
                    ' TouchLocked:' + isTouchLocked +
+                   ' State:' + (context && context.state) +
                    ' Extensions:' + file.extensions;
 
         if(navigator.userAgent.indexOf('Chrome') > -1) {

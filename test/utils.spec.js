@@ -5,8 +5,6 @@ var Utils = require('../src/lib/utils/utils.js');
 
 describe('Utils', function() {
 
-    Utils.setContext(Sono.context);
-
     describe('buffer', function() {
         var buffer = Sono.context.createBuffer(1, 4096, Sono.context.sampleRate);
 

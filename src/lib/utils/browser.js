@@ -42,23 +42,29 @@ browser.handleTouchLock = function(context, onUnlock) {
         locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|SymbianOS/i);
 
     var unlock = function() {
-        document.body.removeEventListener('touchstart', unlock);
+        if (context && context.state === 'suspended') {
+            context.resume().then(function() {
+                var buffer = context.createBuffer(1, 1, 22050);
+                var source = context.createBufferSource();
+                source.buffer = buffer;
+                source.connect(context.destination);
+                source.start(0);
+                source.stop(0);
+                source.disconnect();
 
-        if(context) {
-            var buffer = context.createBuffer(1, 1, 22050);
-            var source = context.createBufferSource();
-            source.buffer = buffer;
-            source.connect(context.destination);
-            source.start(0);
-            source.disconnect();
+                document.body.removeEventListener('touchend', unlock);
+                onUnlock();
+            });
+        } else {
+            document.body.removeEventListener('touchend', unlock);
+            onUnlock();
         }
-
-        onUnlock();
     };
 
-    if(locked) {
-        document.body.addEventListener('touchstart', unlock, false);
+    if (locked) {
+        document.body.addEventListener('touchend', unlock, false);
     }
+
     return locked;
 };
 
