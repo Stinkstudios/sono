@@ -1,4 +1,5 @@
 'use strict';
+var work = require('webworkify');
 
 function Analyser(context, config) {
     config = config || {};
@@ -14,6 +15,13 @@ function Analyser(context, config) {
     node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
     node.minDecibels = config.minDecibels || node.minDecibels;
     node.maxDecibels = config.maxDecibels || node.maxDecibels;
+
+    var worker = work(require('../utils/analyserWorker.js'));
+    var amplitudeCallback;
+
+    worker.onmessage = (e) => {
+        callback(e.data);
+    };
 
     var needsUpdate = function(arr, float) {
       if(!arr) { return true; }
@@ -60,6 +68,19 @@ function Analyser(context, config) {
         }
 
         return frequencies;
+    };
+
+    node.getAmplitude = function(callback) {
+        amplitudeCallback = amplitudeCallback || callback;
+        let f = new Float32Array(node.frequencyBinCount);
+        node.getFloatFrequencyData(f);
+
+        worker.postMessage({
+            sum: 0,
+            length: f.byteLength,
+            numSamples: node.fftSize / 2,
+            b: f.buffer
+        }, [f.buffer]);
     };
 
     node.update = function() {
