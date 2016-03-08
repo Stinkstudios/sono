@@ -1,6 +1,6 @@
 {
   "name": "@stinkdigital/sono",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A library for making stuff with Web Audio",
   "keywords": [
     "WebAudio",
@@ -22,8 +22,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "events": "^1.1.0",
-    "webworkify": "^1.1.0"
+    "events": "^1.1.0"
   },
   "devDependencies": {
     "autoprefixer": "^6.1.2",

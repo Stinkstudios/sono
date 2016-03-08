@@ -632,85 +632,119 @@ module.exports = Effect;
 },{"./effect/analyser.js":3,"./effect/distortion.js":4,"./effect/echo.js":5,"./effect/fake-context.js":6,"./effect/filter.js":7,"./effect/flanger.js":8,"./effect/panner.js":9,"./effect/phaser.js":10,"./effect/recorder.js":11,"./effect/reverb.js":12}],3:[function(_dereq_,module,exports){
 'use strict';
 
+
 function Analyser(context, config) {
-    config = config || {};
+  config = config || {};
 
-    var fftSize = config.fftSize || 512,
-        freqFloat = !!config.float,
-        waveFloat = !!config.float,
-        waveform,
-        frequencies,
-        node = context.createAnalyser();
+  var fftSize = config.fftSize || 512,
+    freqFloat = !!config.float,
+    waveFloat = !!config.float,
+    waveform,
+    frequencies,
+    node = context.createAnalyser();
 
-    node.fftSize = fftSize; // frequencyBinCount will be half this value
-    node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
-    node.minDecibels = config.minDecibels || node.minDecibels;
-    node.maxDecibels = config.maxDecibels || node.maxDecibels;
+  node.fftSize = fftSize; // frequencyBinCount will be half this value
+  node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
+  node.minDecibels = config.minDecibels || node.minDecibels;
+  node.maxDecibels = config.maxDecibels || node.maxDecibels;
 
-    var needsUpdate = function(arr, float) {
-      if(!arr) { return true; }
-      if(node.fftSize !== fftSize) { return true; }
-      if(float && arr instanceof Uint8Array) { return true; }
-      return !float && arr instanceof Float32Array;
-    };
+  //the worker returns a normalized value 
+  //first a sum of all magnitudes devided by the byteLength, then devide  by half the fft (1channel)
+  var workerBlob = new Blob(["onmessage=function(e){var data=e.data;var f=new Float32Array(data.b);for(var i=0;i<f.length;i++){data.sum+=f[i]}data.sum/=f.length;postMessage(Math.max(1.0-(data.sum/data.numSamples*-1.0),0))};"]);
+  var blobURL = URL.createObjectURL(workerBlob);
+  var worker = new Worker(blobURL);
 
-    var createArray = function(float, length) {
-      return float ? new Float32Array(length) : new Uint8Array(length);
-    };
+  var amplitudeCallback;
 
-    node.getWaveform = function(float) {
-        if(!arguments.length) { float = waveFloat; }
+  worker.onmessage = function(e) {
+    if (amplitudeCallback) {
+      amplitudeCallback(e.data);
+    }
+  };
 
-        if(needsUpdate(waveform, float)) {
-            fftSize = node.fftSize;
-            waveFloat = float;
-            waveform = createArray(float, fftSize);
-        }
+  var needsUpdate = function(arr, float) {
+    if (!arr) {
+      return true;
+    }
+    if (node.fftSize !== fftSize) {
+      return true;
+    }
+    if (float && arr instanceof Uint8Array) {
+      return true;
+    }
+    return !float && arr instanceof Float32Array;
+  };
 
-        if(float) {
-            this.getFloatTimeDomainData(waveform);
-        } else {
-            this.getByteTimeDomainData(waveform);
-        }
+  var createArray = function(float, length) {
+    return float ? new Float32Array(length) : new Uint8Array(length);
+  };
 
-        return waveform;
-    };
+  node.getWaveform = function(float) {
+    if (!arguments.length) { float = waveFloat; }
 
-    node.getFrequencies = function(float) {
-        if(!arguments.length) { float = freqFloat; }
+    if (needsUpdate(waveform, float)) {
+      fftSize = node.fftSize;
+      waveFloat = float;
+      waveform = createArray(float, fftSize);
+    }
 
-        if(needsUpdate(frequencies, float)) {
-            fftSize = node.fftSize;
-            freqFloat = float;
-            frequencies = createArray(float, node.frequencyBinCount);
-        }
+    if (float) {
+      this.getFloatTimeDomainData(waveform);
+    } else {
+      this.getByteTimeDomainData(waveform);
+    }
 
-        if(float) {
-            this.getFloatFrequencyData(frequencies);
-        } else {
-            this.getByteFrequencyData(frequencies);
-        }
+    return waveform;
+  };
 
-        return frequencies;
-    };
+  node.getFrequencies = function(float) {
+    if (!arguments.length) { float = freqFloat; }
 
-    node.update = function() {
-      node.getWaveform();
-      node.getFrequencies();
-    };
+    if (needsUpdate(frequencies, float)) {
+      fftSize = node.fftSize;
+      freqFloat = float;
+      frequencies = createArray(float, node.frequencyBinCount);
+    }
 
-    Object.defineProperties(node, {
-        smoothing: {
-            get: function() { return node.smoothingTimeConstant; },
-            set: function(value) { node.smoothingTimeConstant = value; }
-        }
-    });
+    if (float) {
+      this.getFloatFrequencyData(frequencies);
+    } else {
+      this.getByteFrequencyData(frequencies);
+    }
 
-    return node;
+    return frequencies;
+  };
+
+  node.getAmplitude = function(callback) {
+    amplitudeCallback = amplitudeCallback || callback;
+    var f = new Float32Array(node.frequencyBinCount);
+    node.getFloatFrequencyData(f);
+    worker.postMessage({
+      sum: 0,
+      length: f.byteLength,
+      numSamples: node.fftSize / 2,
+      b: f.buffer
+    }, [f.buffer]);
+  };
+
+  node.update = function() {
+    node.getWaveform();
+    node.getFrequencies();
+  };
+
+  Object.defineProperties(node, {
+    smoothing: {
+      get: function() {
+        return node.smoothingTimeConstant;
+      },
+      set: function(value) { node.smoothingTimeConstant = value; }
+    }
+  });
+
+  return node;
 }
 
 module.exports = Analyser;
-
 },{}],4:[function(_dereq_,module,exports){
 'use strict';
 
@@ -4031,7 +4065,7 @@ var browser = _dereq_('./lib/utils/browser.js'),
     utils = _dereq_('./lib/utils/utils.js');
 
 function Sono() {
-    var VERSION = '0.1.2',
+    var VERSION = '0.1.5',
         context = utils.getContext(),
         destination = (context ? context.destination : null),
         group = new Group(context, destination),

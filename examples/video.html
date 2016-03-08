@@ -166,10 +166,6 @@
               });
           }
 
-          function onAmplitude(amp){
-
-          }
-
           function createAnalyserDisplay(analyserNode, canvas) {
 
               var context = canvas.getContext('2d'),
@@ -183,7 +179,8 @@
                   percent,
                   hue;
 
-                  console.log(analyserNode);
+              function onAmplitude(amp){
+              }
 
               function draw() {
                   window.requestAnimationFrame(draw);
@@ -194,7 +191,7 @@
                   freqByteData = analyserNode.getFrequencies();
                   waveByteData = analyserNode.getWaveform();
 
-                  //analyserNode.getAmplitude(onAmplitude);
+                  analyserNode.getAmplitude(onAmplitude);
 
                   for (var i = 0, l = freqByteData.length; i < l; i++) {
                       magnitude = freqByteData[i];

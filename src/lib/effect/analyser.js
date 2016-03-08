@@ -1,101 +1,115 @@
 'use strict';
-var work = require('webworkify');
+
 
 function Analyser(context, config) {
-    config = config || {};
+  config = config || {};
 
-    var fftSize = config.fftSize || 512,
-        freqFloat = !!config.float,
-        waveFloat = !!config.float,
-        waveform,
-        frequencies,
-        node = context.createAnalyser();
+  var fftSize = config.fftSize || 512,
+    freqFloat = !!config.float,
+    waveFloat = !!config.float,
+    waveform,
+    frequencies,
+    node = context.createAnalyser();
 
-    node.fftSize = fftSize; // frequencyBinCount will be half this value
-    node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
-    node.minDecibels = config.minDecibels || node.minDecibels;
-    node.maxDecibels = config.maxDecibels || node.maxDecibels;
+  node.fftSize = fftSize; // frequencyBinCount will be half this value
+  node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
+  node.minDecibels = config.minDecibels || node.minDecibels;
+  node.maxDecibels = config.maxDecibels || node.maxDecibels;
 
-    var worker = work(require('../utils/analyserWorker.js'));
-    var amplitudeCallback;
+  //the worker returns a normalized value 
+  //first a sum of all magnitudes devided by the byteLength, then devide  by half the fft (1channel)
+  var workerBlob = new Blob(["onmessage=function(e){var data=e.data;var f=new Float32Array(data.b);for(var i=0;i<f.length;i++){data.sum+=f[i]}data.sum/=f.length;postMessage(Math.max(1.0-(data.sum/data.numSamples*-1.0),0))};"]);
+  var blobURL = URL.createObjectURL(workerBlob);
+  var worker = new Worker(blobURL);
 
-    worker.onmessage = (e) => {
-        callback(e.data);
-    };
+  var amplitudeCallback;
 
-    var needsUpdate = function(arr, float) {
-      if(!arr) { return true; }
-      if(node.fftSize !== fftSize) { return true; }
-      if(float && arr instanceof Uint8Array) { return true; }
-      return !float && arr instanceof Float32Array;
-    };
+  worker.onmessage = function(e) {
+    if (amplitudeCallback) {
+      amplitudeCallback(e.data);
+    }
+  };
 
-    var createArray = function(float, length) {
-      return float ? new Float32Array(length) : new Uint8Array(length);
-    };
+  var needsUpdate = function(arr, float) {
+    if (!arr) {
+      return true;
+    }
+    if (node.fftSize !== fftSize) {
+      return true;
+    }
+    if (float && arr instanceof Uint8Array) {
+      return true;
+    }
+    return !float && arr instanceof Float32Array;
+  };
 
-    node.getWaveform = function(float) {
-        if(!arguments.length) { float = waveFloat; }
+  var createArray = function(float, length) {
+    return float ? new Float32Array(length) : new Uint8Array(length);
+  };
 
-        if(needsUpdate(waveform, float)) {
-            fftSize = node.fftSize;
-            waveFloat = float;
-            waveform = createArray(float, fftSize);
-        }
+  node.getWaveform = function(float) {
+    if (!arguments.length) { float = waveFloat; }
 
-        if(float) {
-            this.getFloatTimeDomainData(waveform);
-        } else {
-            this.getByteTimeDomainData(waveform);
-        }
+    if (needsUpdate(waveform, float)) {
+      fftSize = node.fftSize;
+      waveFloat = float;
+      waveform = createArray(float, fftSize);
+    }
 
-        return waveform;
-    };
+    if (float) {
+      this.getFloatTimeDomainData(waveform);
+    } else {
+      this.getByteTimeDomainData(waveform);
+    }
 
-    node.getFrequencies = function(float) {
-        if(!arguments.length) { float = freqFloat; }
+    return waveform;
+  };
 
-        if(needsUpdate(frequencies, float)) {
-            fftSize = node.fftSize;
-            freqFloat = float;
-            frequencies = createArray(float, node.frequencyBinCount);
-        }
+  node.getFrequencies = function(float) {
+    if (!arguments.length) { float = freqFloat; }
 
-        if(float) {
-            this.getFloatFrequencyData(frequencies);
-        } else {
-            this.getByteFrequencyData(frequencies);
-        }
+    if (needsUpdate(frequencies, float)) {
+      fftSize = node.fftSize;
+      freqFloat = float;
+      frequencies = createArray(float, node.frequencyBinCount);
+    }
 
-        return frequencies;
-    };
+    if (float) {
+      this.getFloatFrequencyData(frequencies);
+    } else {
+      this.getByteFrequencyData(frequencies);
+    }
 
-    node.getAmplitude = function(callback) {
-        amplitudeCallback = amplitudeCallback || callback;
-        let f = new Float32Array(node.frequencyBinCount);
-        node.getFloatFrequencyData(f);
+    return frequencies;
+  };
 
-        worker.postMessage({
-            sum: 0,
-            length: f.byteLength,
-            numSamples: node.fftSize / 2,
-            b: f.buffer
-        }, [f.buffer]);
-    };
+  node.getAmplitude = function(callback) {
+    amplitudeCallback = amplitudeCallback || callback;
+    var f = new Float32Array(node.frequencyBinCount);
+    node.getFloatFrequencyData(f);
+    worker.postMessage({
+      sum: 0,
+      length: f.byteLength,
+      numSamples: node.fftSize / 2,
+      b: f.buffer
+    }, [f.buffer]);
+  };
 
-    node.update = function() {
-      node.getWaveform();
-      node.getFrequencies();
-    };
+  node.update = function() {
+    node.getWaveform();
+    node.getFrequencies();
+  };
 
-    Object.defineProperties(node, {
-        smoothing: {
-            get: function() { return node.smoothingTimeConstant; },
-            set: function(value) { node.smoothingTimeConstant = value; }
-        }
-    });
+  Object.defineProperties(node, {
+    smoothing: {
+      get: function() {
+        return node.smoothingTimeConstant;
+      },
+      set: function(value) { node.smoothingTimeConstant = value; }
+    }
+  });
 
-    return node;
+  return node;
 }
 
 module.exports = Analyser;
