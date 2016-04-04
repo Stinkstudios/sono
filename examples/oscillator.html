@@ -169,11 +169,15 @@
             }
           });
 
+          function pitchCallback(obj) {
+
+          }
+          
           var count = 0;
 
           function draw() {
               window.requestAnimationFrame(draw);
-
+              analyser.getPitch(pitchCallback);
               count++;
 
               if (count % 3 === 0) {

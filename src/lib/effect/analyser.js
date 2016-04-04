@@ -18,15 +18,48 @@ function Analyser(context, config) {
 
   //the worker returns a normalized value 
   //first a sum of all magnitudes devided by the byteLength, then devide  by half the fft (1channel)
-  var workerBlob = new Blob(["onmessage=function(e){var data=e.data;var f=new Float32Array(data.b);for(var i=0;i<f.length;i++){data.sum+=f[i]}data.sum/=f.length;postMessage(Math.max(1.0-(data.sum/data.numSamples*-1.0),0))};"]);
-  var blobURL = URL.createObjectURL(workerBlob);
-  var worker = new Worker(blobURL);
+  var amplitudeBlob = new Blob(["onmessage=function(e){var data=e.data;var f=new Float32Array(data.b);for(var i=0;i<f.length;i++){data.sum+=f[i]}data.sum/=f.length;postMessage(Math.max(1.0-(data.sum/data.numSamples*-1.0),0))};"]);
+  var pitchBlob = new Blob(["onmessage=function(e){var data=e.data;var sampleRate=data.sampleRate;var buf=new Float32Array(data.b);var SIZE=buf.length;var MAX_SAMPLES=Math.floor(SIZE/2);var best_offset=-1;var best_correlation=0;var rms=0;var foundGoodCorrelation=false;var correlations=new Array(MAX_SAMPLES);for(var i=0;i<SIZE;i++){var val=buf[i];rms+=val*val}rms=Math.sqrt(rms/SIZE);if(rms<0.01){postMessage(-1)}else{var lastCorrelation=1;for(var offset=0;offset<MAX_SAMPLES;offset++){var correlation=0;for(var i=0;i<MAX_SAMPLES;i++){correlation+=Math.abs((buf[i])-(buf[i+offset]))}correlation=1-(correlation/MAX_SAMPLES);correlations[offset]=correlation;if((correlation>0.9)&&(correlation>lastCorrelation)){foundGoodCorrelation=true;if(correlation>best_correlation){best_correlation=correlation;best_offset=offset}}else if(foundGoodCorrelation){var shift=(correlations[best_offset+1]-correlations[best_offset-1])/correlations[best_offset];postMessage(sampleRate/(best_offset+(8*shift)))}lastCorrelation=correlation}if(best_correlation>0.01){postMessage(sampleRate/best_offset)}else{postMessage(-1)}}};"]);
+  var amplitudeBlobURL = URL.createObjectURL(amplitudeBlob);
+  var amplitudeWorker = new Worker(amplitudeBlobURL);
+  var pitchBlobURL = URL.createObjectURL(pitchBlob);
+  var pitchWorker = new Worker(pitchBlobURL);
 
   var amplitudeCallback;
+  var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  var pitchCallback;
+  var pitchCallbackObject = {
+    hertz:undefined, //number
+    note:undefined, //string
+    detuneCents:undefined, //number
+    detune:undefined, //string
+  };
 
-  worker.onmessage = function(e) {
+  amplitudeWorker.onmessage = function(e) {
     if (amplitudeCallback) {
       amplitudeCallback(e.data);
+    }
+  };
+
+  pitchWorker.onmessage = function(e) {
+    if (pitchCallback) {
+      var Hz = e.data;
+      if(Hz !== -1){
+        var note =  noteFromPitch( Hz );
+        var detune = centsOffFromPitch( Hz, note );
+        pitchCallbackObject.hertz = Hz;
+        pitchCallbackObject.note = noteStrings[note%12];;
+        pitchCallbackObject.detuneCents = detune;
+        if (detune == 0 ) {
+          pitchCallbackObject.detune = "";
+        } else {
+          if (detune < 0)
+            pitchCallbackObject.detune = "flat";
+          else
+            pitchCallbackObject.detune = "sharp";
+          }
+      }
+      pitchCallback(pitchCallbackObject);
     }
   };
 
@@ -65,6 +98,29 @@ function Analyser(context, config) {
     return waveform;
   };
 
+  var noteFromPitch =  function( frequency ) {
+    var noteNum = 12 * (Math.log( frequency / 440 )/Math.log(2) );
+    return Math.round( noteNum ) + 69;
+  }
+
+  var frequencyFromNoteNumber = function( note ) {
+    return 440 * Math.pow(2,(note-69)/12);
+  }
+
+  var centsOffFromPitch = function( frequency, note ) {
+    return Math.floor( 1200 * Math.log( frequency / frequencyFromNoteNumber( note ))/Math.log(2) );
+  }
+
+  node.getPitch = function(callback){
+    pitchCallback = pitchCallback || callback;
+    var f = new Float32Array(node.frequencyBinCount);
+    node.getFloatTimeDomainData(f);
+    pitchWorker.postMessage({
+      sampleRate: context.sampleRate,
+      b: f.buffer
+    }, [f.buffer]);
+  };
+
   node.getFrequencies = function(float) {
     if (!arguments.length) { float = freqFloat; }
 
@@ -87,7 +143,7 @@ function Analyser(context, config) {
     amplitudeCallback = amplitudeCallback || callback;
     var f = new Float32Array(node.frequencyBinCount);
     node.getFloatFrequencyData(f);
-    worker.postMessage({
+    amplitudeWorker.postMessage({
       sum: 0,
       length: f.byteLength,
       numSamples: node.fftSize / 2,
