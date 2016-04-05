@@ -9,7 +9,7 @@ var browser = require('./lib/utils/browser.js'),
     utils = require('./lib/utils/utils.js');
 
 function Sono() {
-    var VERSION = '0.1.5',
+    var VERSION = '0.1.6',
         context = utils.getContext(),
         destination = (context ? context.destination : null),
         group = new Group(context, destination),
@@ -289,6 +289,7 @@ function Sono() {
 
         canPlay: file.canPlay,
         context: context,
+        getOfflineContext: utils.getOfflineContext,
         effect: group.effect,
         extensions: file.extensions,
         hasWebAudio: !!context,

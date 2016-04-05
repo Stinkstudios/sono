@@ -7,6 +7,7 @@ var waveformer = require('./waveformer.js');
  * audio ctx
  */
 var ctx;
+var offlineCtx;
 
 var getContext = function() {
     if (ctx) { return ctx; }
@@ -27,6 +28,25 @@ var getContext = function() {
 
     return ctx;
 };
+
+/*
+In contrast with a standard AudioContext, an OfflineAudioContext doesn't render
+the audio to the device hardware;
+instead, it generates it, as fast as it can, and outputs the result to an AudioBuffer.
+*/
+var getOfflineContext = function(numOfChannels, length, sampleRate) {
+    if (offlineCtx) { return offlineCtx; }
+    numOfChannels = numOfChannels || 2;
+    sampleRate = sampleRate || 44100;
+    length = sampleRate || numOfChannels;
+
+    var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+
+    offlineCtx = (OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null);
+
+    return offlineCtx;
+};
+
 
 /*
  * clone audio buffer
@@ -115,6 +135,7 @@ var timeCode = function(seconds, delim) {
 
 module.exports = Object.freeze({
     getContext: getContext,
+    getOfflineContext: getOfflineContext,
     cloneBuffer: cloneBuffer,
     reverseBuffer: reverseBuffer,
     ramp: ramp,

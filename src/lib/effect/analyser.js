@@ -31,6 +31,7 @@ function Analyser(context, config) {
   var pitchCallbackObject = {
     hertz:undefined, //number
     note:undefined, //string
+    noteIndex:undefined, //int
     detuneCents:undefined, //number
     detune:undefined, //string
   };
@@ -48,7 +49,8 @@ function Analyser(context, config) {
         var note =  noteFromPitch( Hz );
         var detune = centsOffFromPitch( Hz, note );
         pitchCallbackObject.hertz = Hz;
-        pitchCallbackObject.note = noteStrings[note%12];;
+        pitchCallbackObject.noteIndex = note%12;
+        pitchCallbackObject.note = noteStrings[note%12];
         pitchCallbackObject.detuneCents = detune;
         if (detune == 0 ) {
           pitchCallbackObject.detune = "";
@@ -88,8 +90,7 @@ function Analyser(context, config) {
       waveFloat = float;
       waveform = createArray(float, fftSize);
     }
-
-    if (float) {
+    if (float && this.getFloatTimeDomainData) {
       this.getFloatTimeDomainData(waveform);
     } else {
       this.getByteTimeDomainData(waveform);
@@ -113,9 +114,9 @@ function Analyser(context, config) {
 
   node.getPitch = function(callback){
     pitchCallback = pitchCallback || callback;
-    var f = new Float32Array(node.frequencyBinCount);
-    node.getFloatTimeDomainData(f);
-    pitchWorker.postMessage({
+      var f = new Float32Array(node.fftSize);
+      f.set(node.getWaveform(true));
+      pitchWorker.postMessage({
       sampleRate: context.sampleRate,
       b: f.buffer
     }, [f.buffer]);
@@ -141,8 +142,8 @@ function Analyser(context, config) {
 
   node.getAmplitude = function(callback) {
     amplitudeCallback = amplitudeCallback || callback;
-    var f = new Float32Array(node.frequencyBinCount);
-    node.getFloatFrequencyData(f);
+    var f = new Float32Array(node.fftSize);
+    f.set(node.getFrequencies(true));
     amplitudeWorker.postMessage({
       sum: 0,
       length: f.byteLength,
