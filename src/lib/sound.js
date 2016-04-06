@@ -320,6 +320,11 @@ function Sound(context, destination) {
                 return source ? source.progress : 0;
             }
         },
+        sourceNode: {
+            get:function() {
+                return source ? source.sourceNode : undefined;
+            }
+        },
         volume: {
             get: function() {
                 if(context) {
