@@ -1,31 +1,38 @@
-'use strict';
-
-var File = {
-    extensions: [],
-    canPlay: {}
-};
+const extensions = [];
+const canPlay = {};
 
 /*
  * Initial tests
  */
 
-var tests = [
-    { ext: 'ogg', type: 'audio/ogg; codecs="vorbis"' },
-    { ext: 'mp3', type: 'audio/mpeg;' },
-    { ext: 'opus', type: 'audio/ogg; codecs="opus"' },
-    { ext: 'wav', type: 'audio/wav; codecs="1"' },
-    { ext: 'm4a', type: 'audio/x-m4a;' },
-    { ext: 'm4a', type: 'audio/aac;' }
-];
+const tests = [{
+    ext: 'ogg',
+    type: 'audio/ogg; codecs="vorbis"'
+}, {
+    ext: 'mp3',
+    type: 'audio/mpeg;'
+}, {
+    ext: 'opus',
+    type: 'audio/ogg; codecs="opus"'
+}, {
+    ext: 'wav',
+    type: 'audio/wav; codecs="1"'
+}, {
+    ext: 'm4a',
+    type: 'audio/x-m4a;'
+}, {
+    ext: 'm4a',
+    type: 'audio/aac;'
+}];
 
-var el = document.createElement('audio');
-if(el) {
+let el = document.createElement('audio');
+if (el) {
     tests.forEach(function(test) {
-        var canPlayType = !!el.canPlayType(test.type);
-        if(canPlayType && File.extensions.indexOf(test.ext) === -1) {
-            File.extensions.push(test.ext);
+        const canPlayType = !!el.canPlayType(test.type);
+        if (canPlayType && extensions.indexOf(test.ext) === -1) {
+            extensions.push(test.ext);
         }
-        File.canPlay[test.ext] = canPlayType;
+        canPlay[test.ext] = canPlayType;
     });
     el = null;
 }
@@ -34,11 +41,14 @@ if(el) {
  * find a supported file
  */
 
-File.getFileExtension = function(url) {
+function getFileExtension(url) {
+    if (typeof url !== 'string') {
+        return '';
+    }
     // from DataURL
-    if(url.slice(0, 5) === 'data:') {
-        var match = url.match(/data:audio\/(ogg|mp3|opus|wav|m4a)/i);
-        if(match && match.length > 1) {
+    if (url.slice(0, 5) === 'data:') {
+        const match = url.match(/data:audio\/(ogg|mp3|opus|wav|m4a)/i);
+        if (match && match.length > 1) {
             return match[1].toLowerCase();
         }
     }
@@ -46,81 +56,105 @@ File.getFileExtension = function(url) {
     url = url.split('?')[0];
     url = url.slice(url.lastIndexOf('/') + 1);
 
-    var a = url.split('.');
-    if(a.length === 1 || (a[0] === '' && a.length === 2)) {
+    const a = url.split('.');
+    if (a.length === 1 || (a[0] === '' && a.length === 2)) {
         return '';
     }
-    return a.pop().toLowerCase();
-};
+    return a.pop()
+        .toLowerCase();
+}
 
-File.getSupportedFile = function(fileNames) {
-    var name;
+function getSupportedFile(fileNames) {
+    let name;
 
-    if(Array.isArray(fileNames)) {
+    if (Array.isArray(fileNames)) {
         // if array get the first one that works
-        fileNames.some(function(item) {
-            name = item;
-            var ext = this.getFileExtension(item);
-            return this.extensions.indexOf(ext) > -1;
-        }, this);
-    }
-    else if(typeof fileNames === 'object') {
+        for (let i = 0; i < fileNames.length; i++) {
+            name = fileNames[i];
+            const ext = getFileExtension(name);
+            if (extensions.indexOf(ext) > -1) {
+                break;
+            }
+        }
+    } else if (typeof fileNames === 'object') {
         // if not array and is object
-        Object.keys(fileNames).some(function(key) {
-            name = fileNames[key];
-            var ext = this.getFileExtension(name);
-            return this.extensions.indexOf(ext) > -1;
-        }, this);
+        Object.keys(fileNames)
+            .some(function(key) {
+                name = fileNames[key];
+                const ext = getFileExtension(name);
+                return extensions.indexOf(ext) > -1;
+            });
     }
     // if string just return
     return name || fileNames;
-};
+}
 
 /*
  * infer file types
  */
 
-File.isAudioBuffer = function(data) {
+function isAudioBuffer(data) {
     return !!(data &&
-              window.AudioBuffer &&
-              data instanceof window.AudioBuffer);
-};
+        window.AudioBuffer &&
+        data instanceof window.AudioBuffer);
+}
 
-File.isMediaElement = function(data) {
+function isArrayBuffer(data) {
     return !!(data &&
-              window.HTMLMediaElement &&
-              data instanceof window.HTMLMediaElement);
-};
+        window.ArrayBuffer &&
+        data instanceof window.ArrayBuffer);
+}
 
-File.isMediaStream = function(data) {
+function isMediaElement(data) {
     return !!(data &&
-              typeof data.getAudioTracks === 'function' &&
-              data.getAudioTracks().length &&
-              window.MediaStreamTrack &&
-              data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
-};
+        window.HTMLMediaElement &&
+        data instanceof window.HTMLMediaElement);
+}
 
-File.isOscillatorType = function(data) {
+function isMediaStream(data) {
+    return !!(data &&
+        typeof data.getAudioTracks === 'function' &&
+        data.getAudioTracks()
+        .length &&
+        window.MediaStreamTrack &&
+        data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
+}
+
+function isOscillatorType(data) {
     return !!(data && typeof data === 'string' &&
-             (data === 'sine' || data === 'square' ||
-              data === 'sawtooth' || data === 'triangle'));
-};
+        (data === 'sine' || data === 'square' ||
+            data === 'sawtooth' || data === 'triangle'));
+}
 
-File.isScriptConfig = function(data) {
+function isScriptConfig(data) {
     return !!(data && typeof data === 'object' &&
-              data.bufferSize && data.channels && data.callback);
-};
+        data.bufferSize && data.channels && data.callback);
+}
 
-File.isURL = function(data) {
+function isURL(data) {
     return !!(data && typeof data === 'string' &&
-             (data.indexOf('.') > -1 || data.slice(0, 5) === 'data:'));
-};
+        (data.indexOf('.') > -1 || data.slice(0, 5) === 'data:'));
+}
 
-File.containsURL = function(config) {
-    if(!config || this.isMediaElement(config)) { return false; }
-    // string, array or object with src property that is string or array
-    var src = config.src || config.url || config;
-    return this.isURL(src) || (Array.isArray(src) && this.isURL(src[0]));
-};
+function containsURL(config) {
+    if (!config || isMediaElement(config)) {
+        return false;
+    }
+    // string, array or object with src/url/data property that is string, array or arraybuffer
+    const src = config.src || config.url || config.data || config;
+    return isURL(src) || isArrayBuffer(src) || (Array.isArray(src) && isURL(src[0]));
+}
 
-module.exports = File;
+export default {
+    canPlay,
+    containsURL,
+    extensions,
+    getFileExtension,
+    getSupportedFile,
+    isAudioBuffer,
+    isMediaElement,
+    isMediaStream,
+    isOscillatorType,
+    isScriptConfig,
+    isURL
+};

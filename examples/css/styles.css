@@ -372,7 +372,6 @@ nav a {
   .Player {
     height: 456px;
     width: 456px;
-    -webkit-transform: scale(0.6) translate(-40%, -40%);
     transform: scale(0.6) translate(-40%, -40%);
   }
 }
@@ -381,7 +380,6 @@ nav a {
   .Player {
     height: 304px;
     width: 304px;
-    -webkit-transform: scale(0.4) translate(-80%, -80%);
     transform: scale(0.4) translate(-80%, -80%);
   }
 }
@@ -400,7 +398,7 @@ nav a {
   left: 0;
   position: absolute;
   top: 0;
-  z-index: -1;
+  z-index: 0;
 }
 
 .Player-control {
@@ -423,7 +421,6 @@ nav a {
   position: absolute;
   left: 50%;
   top: 50%;
-  -webkit-transform: translate(-40%, -50%);
   transform: translate(-40%, -50%);
 }
 
@@ -435,7 +432,6 @@ nav a {
   left: 50%;
   position: absolute;
   top: 50%;
-  -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
   width: 20px;
 }
@@ -471,9 +467,7 @@ nav a {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   left: -100%;
-  -webkit-transform-origin: right center;
   transform-origin: right center;
-  -webkit-transform: rotate(0deg);
   transform: rotate(0deg);
 }
 
@@ -482,9 +476,7 @@ nav a {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   left: 100%;
-  -webkit-transform-origin: left center;
   transform-origin: left center;
-  -webkit-transform: rotate(0deg);
   transform: rotate(0deg);
 }
 
@@ -495,23 +487,18 @@ nav a {
 .PlayerTop {
   background-color: #e7e9db;
   border-bottom: 1px solid white;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
   height: 60px;
   position: fixed;
   top: 0;
-  -webkit-transform: translateY(-100%);
   transform: translateY(-100%);
-  transition: -webkit-transform 0.3s ease-out;
   transition: transform 0.3s ease-out;
-  transition: transform 0.3s ease-out, -webkit-transform 0.3s ease-out;
   width: 100%;
   z-index: 2;
 }
 
 .PlayerTop.is-active {
-  -webkit-transform: translateY(0);
   transform: translateY(0);
 }
 
@@ -535,7 +522,6 @@ nav a {
   position: absolute;
   left: 50%;
   top: 50%;
-  -webkit-transform: translate(-40%, -50%);
   transform: translate(-40%, -50%);
 }
 
@@ -547,7 +533,6 @@ nav a {
   left: 50%;
   position: absolute;
   top: 50%;
-  -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
   width: 8px;
 }
@@ -561,16 +546,12 @@ nav a {
 }
 
 .Controls {
-  -webkit-align-items: center;
   -ms-flex-align: center;
   align-items: center;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-flex-wrap: wrap;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
-  -webkit-justify-content: center;
   -ms-flex-pack: center;
   justify-content: center;
   width: 100%;
@@ -578,16 +559,12 @@ nav a {
 
 .Control {
   /*border: 1px dashed red;*/
-  -webkit-align-items: center;
   -ms-flex-align: center;
   align-items: center;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-flex-direction: column;
   -ms-flex-direction: column;
   flex-direction: column;
-  -webkit-justify-content: center;
   -ms-flex-pack: center;
   justify-content: center;
   min-width: 250px;
@@ -600,13 +577,10 @@ nav a {
 }
 
 .Control-inner {
-  -webkit-align-items: baseline;
   -ms-flex-align: baseline;
   align-items: baseline;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-justify-content: center;
   -ms-flex-pack: center;
   justify-content: center;
   -webkit-user-select: none;
@@ -634,7 +608,6 @@ nav a {
 }
 
 .Control-bound {
-  -webkit-flex: 1 0;
   -ms-flex: 1 0;
   flex: 1 0;
   font-size: 14px;
@@ -665,7 +638,6 @@ nav a {
   border-right: 10px solid white;
   height: 40px;
   margin-top: 18px;
-  -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
   width: 20px;
 }
@@ -674,7 +646,6 @@ nav a {
   background-color: white;
   height: 60px;
   margin-top: 20px;
-  -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
   width: 10px;
 }
@@ -684,7 +655,6 @@ nav a {
   content: "";
   display: inline-block;
   height: 60px;
-  -webkit-transform: rotate(90deg);
   transform: rotate(90deg);
   width: 10px;
 }

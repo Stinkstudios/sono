@@ -1,52 +1,49 @@
-'use strict';
+import {number} from '../utils/validify.js';
 
-var validify = require('../utils/validify.js').number;
+export default function Reverb(context, config = {}) {
+    const rate = context.sampleRate;
 
-function Reverb(context, config) {
-    config = config || {};
+    let time = number(config.time, 1);
+    let decay = number(config.decay, 5);
+    let reverse = !!config.reverse;
+    let length;
+    let impulseResponse;
 
-    var time = validify(config.time, 1),
-        decay = validify(config.decay, 5),
-        reverse = !!config.reverse,
-        rate = context.sampleRate,
-        length,
-        impulseResponse;
-
-    var input = context.createGain();
-    var reverb = context.createConvolver();
-    var output = context.createGain();
+    const input = context.createGain();
+    const reverb = context.createConvolver();
+    const output = context.createGain();
 
     input.connect(reverb);
     input.connect(output);
     reverb.connect(output);
 
-    var node = input;
+    const node = input;
     node.name = 'Reverb';
     node._output = output;
 
     node.update = function(opt) {
-        if(opt.time !== undefined) {
+        if (typeof opt.time !== 'undefined') {
             time = opt.time;
             length = Math.floor(rate * time);
             impulseResponse = length ? context.createBuffer(2, length, rate) : null;
         }
-        if(opt.decay !== undefined) {
+        if (typeof opt.decay !== 'undefined') {
             decay = opt.decay;
         }
-        if(opt.reverse !== undefined) {
+        if (typeof opt.reverse !== 'undefined') {
             reverse = opt.reverse;
         }
 
-        if(!impulseResponse) {
-          reverb.buffer = null;
-          return;
+        if (!impulseResponse) {
+            reverb.buffer = null;
+            return;
         }
 
-        var left = impulseResponse.getChannelData(0),
-            right = impulseResponse.getChannelData(1),
-            n, e;
+        const left = impulseResponse.getChannelData(0);
+        const right = impulseResponse.getChannelData(1);
+        let n, e;
 
-        for (var i = 0; i < length; i++) {
+        for (let i = 0; i < length; i++) {
             n = reverse ? length - i : i;
             e = Math.pow(1 - n / length, decay);
             left[i] = (Math.random() * 2 - 1) * e;
@@ -64,30 +61,45 @@ function Reverb(context, config) {
 
     Object.defineProperties(node, {
         time: {
-            get: function() { return time; },
+            get: function() {
+                return time;
+            },
             set: function(value) {
-                console.log.call(console, '1 set time:', value);
-                if(value === time) { return; }
-                this.update({time: value});
+                if (value === time) {
+                    return;
+                }
+                this.update({
+                    time: value
+                });
             }
         },
         decay: {
-            get: function() { return decay; },
+            get: function() {
+                return decay;
+            },
             set: function(value) {
-                if(value === decay) { return; }
-                this.update({decay: value});
+                if (value === decay) {
+                    return;
+                }
+                this.update({
+                    decay: value
+                });
             }
         },
         reverse: {
-            get: function() { return reverse; },
+            get: function() {
+                return reverse;
+            },
             set: function(value) {
-                if(value === reverse) { return; }
-                this.update({reverse: !!value});
+                if (value === reverse) {
+                    return;
+                }
+                this.update({
+                    reverse: !!value
+                });
             }
         }
     });
 
     return node;
 }
-
-module.exports = Reverb;

@@ -1,260 +1,272 @@
-'use strict';
+import Analyser from './effect/analyser';
+import Distortion from './effect/distortion';
+import Echo from './effect/echo';
+import FakeContext from './effect/fake-context';
+import Filter from './effect/filter';
+import Flanger from './effect/flanger';
+import Panner from './effect/panner';
+import Phaser from './effect/phaser';
+import Recorder from './effect/recorder';
+import Reverb from './effect/reverb';
 
-var Analyser = require('./effect/analyser.js'),
-    Distortion = require('./effect/distortion.js'),
-    Echo = require('./effect/echo.js'),
-    FakeContext = require('./effect/fake-context.js'),
-    Filter = require('./effect/filter.js'),
-    Flanger = require('./effect/flanger.js'),
-    Panner = require('./effect/panner.js'),
-    Phaser = require('./effect/phaser.js'),
-    Recorder = require('./effect/recorder.js'),
-    Reverb = require('./effect/reverb.js');
-
-function Effect(context) {
+export default function Effect(context) {
     context = context || new FakeContext();
+    const panning = new Panner(context);
 
-    var api,
+    let api = null,
         destination,
         nodeList = [],
-        panning = new Panner(context),
         sourceNode;
 
-    var has = function(node) {
-        if(!node) { return false; }
-        return nodeList.indexOf(node) > -1;
-    };
-
-    var add = function(node) {
-        if(!node) { return; }
-        if(has(node)) { return node; }
-        nodeList.push(node);
-        updateConnections();
-        return node;
-    };
-
-    var remove = function(node) {
-        if(!node) { return; }
-        if(!has(node)) { return node; }
-        var l = nodeList.length;
-        for (var i = 0; i < l; i++) {
-            if(node === nodeList[i]) {
-                nodeList.splice(i, 1);
-                break;
-            }
-        }
-        var output = node._output || node;
-        output.disconnect();
-        updateConnections();
-        return node;
-    };
-
-    var toggle = function(node, force) {
-      force = !!force;
-      var hasNode = has(node);
-      if(arguments.length > 1 && hasNode === force) {
-        return api;
-      }
-      if(hasNode) {
-        remove(node);
-      } else {
-        add(node);
-      }
-      return api;
-    };
-
-    var removeAll = function() {
-        while(nodeList.length) {
-            nodeList.pop().disconnect();
-        }
-        updateConnections();
-        return api;
-    };
-
-    var destroy = function() {
-        removeAll();
-        context = null;
-        destination = null;
-        nodeList = [];
-        if(sourceNode) { sourceNode.disconnect(); }
-        sourceNode = null;
-    };
-
-    var connect = function(a, b) {
+    function connect(a, b) {
         //console.log('> connect', (a.name || a.constructor.name), 'to', (b.name || b.constructor.name));
 
-        var output = a._output || a;
+        const output = a._output || a;
         //console.log('> disconnect output: ', (a.name || a.constructor.name));
         output.disconnect();
-        //console.log('> connect output: ', (a.name || a.constructor.name), 'to input:', (b.name || b.constructor.name));
+        //console.log('> connect output: ',(a.name || a.constructor.name), 'to input:', (b.name || b.constructor.name));
         output.connect(b);
-    };
+    }
 
-    var connectToDestination = function(node) {
-        var l = nodeList.length,
-            lastNode = l ? nodeList[l - 1] : sourceNode;
+    function connectToDestination(node) {
+        const l = nodeList.length;
+        const lastNode = l ? nodeList[l - 1] : sourceNode;
 
-        if(lastNode) {
+        if (lastNode) {
             connect(lastNode, node);
         }
 
         destination = node;
-    };
+    }
 
-    var updateConnections = function() {
-        if(!sourceNode) { return; }
+    function updateConnections() {
+        if (!sourceNode) {
+            return;
+        }
 
         //console.log('updateConnections:', nodeList.length);
 
-        var node,
+        let node,
             prev;
 
-        for (var i = 0; i < nodeList.length; i++) {
+        for (let i = 0; i < nodeList.length; i++) {
             node = nodeList[i];
             //console.log(i, node);
             prev = i === 0 ? sourceNode : nodeList[i - 1];
             connect(prev, node);
         }
 
-        if(destination) {
+        if (destination) {
             connectToDestination(destination);
         }
-    };
+    }
+
+    function has(node) {
+        if (!node) {
+            return false;
+        }
+        return nodeList.indexOf(node) > -1;
+    }
+
+    function add(node) {
+        if (!node) {
+            return null;
+        }
+        if (has(node)) {
+            return node;
+        }
+        nodeList.push(node);
+        updateConnections();
+        return node;
+    }
+
+    function remove(node) {
+        if (!node) {
+            return null;
+        }
+        if (!has(node)) {
+            return node;
+        }
+        const l = nodeList.length;
+        for (let i = 0; i < l; i++) {
+            if (node === nodeList[i]) {
+                nodeList.splice(i, 1);
+                break;
+            }
+        }
+        const output = node._output || node;
+        output.disconnect();
+        updateConnections();
+        return node;
+    }
+
+    function toggle(node, force) {
+        force = !!force;
+        const hasNode = has(node);
+        if (arguments.length > 1 && hasNode === force) {
+            return api;
+        }
+        if (hasNode) {
+            remove(node);
+        } else {
+            add(node);
+        }
+        return api;
+    }
+
+    function removeAll() {
+        while (nodeList.length) {
+            nodeList.pop()
+                .disconnect();
+        }
+        updateConnections();
+        return api;
+    }
+
+    function destroy() {
+        removeAll();
+        context = null;
+        destination = null;
+        nodeList = [];
+        if (sourceNode) {
+            sourceNode.disconnect();
+        }
+        sourceNode = null;
+    }
 
     /*
      * Effects
      */
 
-    var analyser = function(config) {
+    function analyser(config) {
         return add(new Analyser(context, config));
-    };
+    }
 
     // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
-    var compressor = function(config) {
-        config = config || {};
-
-        var node = context.createDynamicsCompressor();
+    function compressor(options) {
+        const node = context.createDynamicsCompressor();
 
         node.update = function(config) {
             // min decibels to start compressing at from -100 to 0
-            node.threshold.value = config.threshold !== undefined ? config.threshold : -24;
+            node.threshold.value = typeof config.threshold !== 'undefined' ? config.threshold : -24;
             // decibel value to start curve to compressed value from 0 to 40
-            node.knee.value = config.knee !== undefined ? config.knee : 30;
+            node.knee.value = typeof config.knee !== 'undefined' ? config.knee : 30;
             // amount of change per decibel from 1 to 20
-            node.ratio.value = config.ratio !== undefined ? config.ratio : 12;
+            node.ratio.value = typeof config.ratio !== 'undefined' ? config.ratio : 12;
             // gain reduction currently applied by compressor from -20 to 0
-            node.reduction.value = config.reduction !== undefined ? config.reduction : -10;
+            // node.reduction.value = typeof config.reduction !== 'undefined' ? config.reduction : -10;)
             // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
-            node.attack.value = config.attack !== undefined ? config.attack : 0.0003;
+            node.attack.value = typeof config.attack !== 'undefined' ? config.attack : 0.0003;
             // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
-            node.release.value = config.release !== undefined ? config.release : 0.25;
+            node.release.value = typeof config.release !== 'undefined' ? config.release : 0.25;
         };
 
-        node.update(config);
+        node.update(options || {});
 
         return add(node);
-    };
+    }
 
-    var convolver = function(impulseResponse) {
+    function convolver(impulseResponse) {
         // impulseResponse is an audio file buffer
-        var node = context.createConvolver();
+        const node = context.createConvolver();
         node.buffer = impulseResponse;
         return add(node);
-    };
+    }
 
-    var delay = function(time) {
-        var node = context.createDelay();
-        if(time !== undefined) { node.delayTime.value = time; }
+    function delay(time) {
+        const node = context.createDelay();
+        if (typeof time !== 'undefined') {
+            node.delayTime.value = time;
+        }
         return add(node);
-    };
+    }
 
-    var echo = function(config) {
+    function echo(config) {
         return add(new Echo(context, config));
-    };
+    }
 
-    var distortion = function(amount) {
+    function distortion(amount) {
         // Float32Array defining curve (values are interpolated)
         //node.curve
         // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
         //node.oversample = '2x';
         return add(new Distortion(context, amount));
-    };
+    }
 
-    var filter = function(type, frequency, q, gain) {
-        return add(new Filter(context, type, frequency, q, gain));
-    };
+    function filter(type, frequency, q, gain) {
+        return add(new Filter(context, {type, frequency, q, gain}));
+    }
 
-    var lowpass = function(frequency, peak) {
-        return filter('lowpass', frequency, peak);
-    };
+    function lowpass(frequency, peak) {
+        return filter('lowpass', {frequency, q: peak});
+    }
 
-    var highpass = function(frequency, peak) {
-        return filter('highpass', frequency, peak);
-    };
+    function highpass(frequency, peak) {
+        return filter('highpass', {frequency, q: peak});
+    }
 
-    var bandpass = function(frequency, width) {
-        return filter('bandpass', frequency, width);
-    };
+    function bandpass(frequency, width) {
+        return filter('bandpass', {frequency, q: width});
+    }
 
-    var lowshelf = function(frequency, gain) {
-        return filter('lowshelf', frequency, 0, gain);
-    };
+    function lowshelf(frequency, gain) {
+        return filter('lowshelf', {frequency, q: 0, gain});
+    }
 
-    var highshelf = function(frequency, gain) {
-        return filter('highshelf', frequency, 0, gain);
-    };
+    function highshelf(frequency, gain) {
+        return filter('highshelf', {frequency, q: 0, gain});
+    }
 
-    var peaking = function(frequency, width, gain) {
-        return filter('peaking', frequency, width, gain);
-    };
+    function peaking(frequency, width, gain) {
+        return filter('peaking', {frequency, q: width, gain});
+    }
 
-    var notch = function(frequency, width, gain) {
-        return filter('notch', frequency, width, gain);
-    };
+    function notch(frequency, width, gain) {
+        return filter('notch', {frequency, q: width, gain});
+    }
 
-    var allpass = function(frequency, sharpness) {
-        return filter('allpass', frequency, sharpness);
-    };
+    function allpass(frequency, sharpness) {
+        return filter('allpass', {frequency, q: sharpness});
+    }
 
-    var flanger = function(config) {
+    function flanger(config) {
         return add(new Flanger(context, config));
-    };
+    }
 
-    var gain = function(value) {
-        var node = context.createGain();
-        if(value !== undefined) {
+    function gainNode(value) {
+        const node = context.createGain();
+        if (typeof value !== 'undefined') {
             node.gain.value = value;
         }
         return node;
-    };
+    }
 
-    var panner = function() {
+    function panner() {
         return add(new Panner(context));
-    };
+    }
 
-    var phaser = function(config) {
+    function phaser(config) {
         return add(new Phaser(context, config));
-    };
+    }
 
-    var recorder = function(passThrough) {
+    function recorder(passThrough) {
         return add(new Recorder(context, passThrough));
-    };
+    }
 
-    var reverb = function(seconds, decay, reverse) {
+    function reverb(seconds, decay, reverse) {
         return add(new Reverb(context, seconds, decay, reverse));
-    };
+    }
 
-    var script = function(config) {
-        config = config || {};
+    function script(config = {}) {
         // bufferSize 256 - 16384 (pow 2)
-        var bufferSize = config.bufferSize || 1024;
-        var inputChannels = config.inputChannels === undefined ? 0 : inputChannels;
-        var outputChannels = config.outputChannels === undefined ? 1 : outputChannels;
+        const bufferSize = config.bufferSize || 1024;
+        const inputChannels = typeof config.inputChannels === 'undefined' ? 0 : config.inputChannels;
+        const outputChannels = typeof config.outputChannels === 'undefined' ? 1 : config.outputChannels;
 
-        var node = context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
+        const node = context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
 
-        var thisArg = config.thisArg || config.context || node;
-        var callback = config.callback || function() {};
+        const thisArg = config.thisArg || config.context || node;
+        const callback = config.callback || function() {};
 
         // available props:
         /*
@@ -264,69 +276,67 @@ function Effect(context) {
         */
         // Example: generate noise
         /*
-        var output = event.outputBuffer.getChannelData(0);
-        var l = output.length;
-        for (var i = 0; i < l; i++) {
+        const output = event.outputBuffer.getChannelData(0);
+        const l = output.length;
+        for (let i = 0; i < l; i++) {
             output[i] = Math.random();
         }
         */
         node.onaudioprocess = callback.bind(thisArg);
 
         return add(node);
-    };
+    }
 
-    var setSource = function(node) {
+    function setSource(node) {
         sourceNode = node;
         updateConnections();
         return node;
-    };
+    }
 
-    var setDestination = function(node) {
+    function setDestination(node) {
         connectToDestination(node);
         return node;
-    };
+    }
 
     //
 
     api = {
-        context: context,
-        nodeList: nodeList,
-        panning: panning,
+        context,
+        nodeList,
+        panning,
 
-        has: has,
-        add: add,
-        remove: remove,
-        toggle: toggle,
-        removeAll: removeAll,
-        destroy: destroy,
-        setSource: setSource,
-        setDestination: setDestination,
+        has,
+        add,
+        remove,
+        toggle,
+        removeAll,
+        destroy,
+        setSource,
+        setDestination,
 
-        analyser: analyser,
-        compressor: compressor,
-        convolver: convolver,
-        delay: delay,
-        echo: echo,
-        distortion: distortion,
-        filter: filter,
-        lowpass: lowpass,
-        highpass: highpass,
-        bandpass: bandpass,
-        lowshelf: lowshelf,
-        highshelf: highshelf,
-        peaking: peaking,
-        notch: notch,
-        allpass: allpass,
-        flanger: flanger,
-        gain: gain,
-        panner: panner,
-        phaser: phaser,
-        recorder: recorder,
-        reverb: reverb,
-        script: script
+        analyser,
+        compressor,
+        convolver,
+        delay,
+        echo,
+        distortion,
+        filter,
+        lowpass,
+        highpass,
+        bandpass,
+        lowshelf,
+        highshelf,
+        peaking,
+        notch,
+        allpass,
+        flanger,
+        gain: gainNode,
+        panner,
+        phaser,
+        recorder,
+        reverb,
+        script
     };
 
     return Object.freeze(api);
 }
-
-module.exports = Effect;

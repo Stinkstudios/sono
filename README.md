@@ -101,15 +101,27 @@ echo.feedback = 0.9;
 
 ## Dev setup
 
-To install dependencies:
+Install dependencies:
 
 ```
 $ npm install
 ```
 
-To run tests:
+Run tests:
 
 ```
 $ npm install -g karma-cli
-$ karma start
+$ npm test
+```
+
+Build bundles:
+
+```
+$ npm run build
+```
+
+Watch and continuous tests:
+
+```
+$ npm start
 ```

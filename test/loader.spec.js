@@ -1,20 +1,15 @@
-'use strict';
-
-var Sono = require('../src/sono.js');
-
-describe('Sono loader', function() {
-
-    var baseURL = 'http://stinkdigital.github.io/sono/examples/audio/';
+describe('sono loader', function() {
+    this.timeout(5000);
 
     describe('single', function() {
         var sound,
             progress = 0;
 
         beforeEach(function(done) {
-            Sono.load({
+            sono.load({
                 url: [
-                    baseURL + 'hit.ogg',
-                    baseURL + 'hit.mp3'
+                    window.baseURL + 'hit.ogg',
+                    window.baseURL + 'hit.mp3'
                 ],
                 onComplete: function(loadedSound) {
                     sound = loadedSound;
@@ -27,40 +22,44 @@ describe('Sono loader', function() {
             });
         });
 
-        it('should have loaded sound', function(){
-            expect(sound).to.exist;
-            expect(progress).to.eql(1);
-            expect(Sono.getSound(sound.id)).to.exist;
-            expect(sound.loader).to.exist;
-            expect(sound.loader.data).to.exist;
-            expect(sound.play).to.be.a('function');
-            Sono.destroySound(sound);
-            expect(Sono.getSound(sound.id)).to.not.exist;
+        it('should have loaded sound', function() {
+            expect(sound)
+                .to.exist;
+            expect(progress)
+                .to.eql(1);
+            expect(sono.getSound(sound.id))
+                .to.exist;
+            expect(sound.loader)
+                .to.exist;
+            expect(sound.loader.data)
+                .to.exist;
+            expect(sound.play)
+                .to.be.a('function');
+            sono.destroySound(sound);
+            expect(sono.getSound(sound.id))
+                .to.not.exist;
         });
     });
 
     describe('multiple', function() {
         var sounds,
             progress = 0,
-            multiple = [
-                {
-                    id: 'bullet',
-                    url: [
-                        baseURL + 'bullet.ogg',
-                        baseURL + 'bullet.mp3'
-                    ]
-                },
-                {
-                    id: 'collect',
-                    url: [
-                        baseURL + 'collect.ogg',
-                        baseURL + 'collect.mp3'
-                    ]
-                }
-            ];
+            multiple = [{
+                id: 'bullet',
+                url: [
+                    window.baseURL + 'bullet.ogg',
+                    window.baseURL + 'bullet.mp3'
+                ]
+            }, {
+                id: 'collect',
+                url: [
+                    window.baseURL + 'collect.ogg',
+                    window.baseURL + 'collect.mp3'
+                ]
+            }];
 
         beforeEach(function(done) {
-            Sono.load({
+            sono.load({
                 url: multiple,
                 onComplete: function(loadedSounds) {
                     sounds = loadedSounds;
@@ -72,15 +71,23 @@ describe('Sono loader', function() {
             });
         });
 
-        it('should have loaded sound', function(){
-            expect(sounds).to.exist;
-            expect(progress).to.eql(1);
-            expect(sounds.length).to.eql(2);
-            expect(Sono.getSound(multiple[0].id).id).to.eql(multiple[0].id);
-            expect(Sono.getSound(multiple[1].id).id).to.eql(multiple[1].id);
-            expect(sounds[0].play).to.be.a('function');
-            Sono.destroySound(sounds[0]);
-            Sono.destroySound(sounds[1]);
+        it('should have loaded sound', function() {
+            expect(sounds)
+                .to.exist;
+            expect(progress)
+                .to.eql(1);
+            expect(sounds.length)
+                .to.eql(2);
+            expect(sono.getSound(multiple[0].id)
+                    .id)
+                .to.eql(multiple[0].id);
+            expect(sono.getSound(multiple[1].id)
+                    .id)
+                .to.eql(multiple[1].id);
+            expect(sounds[0].play)
+                .to.be.a('function');
+            sono.destroySound(sounds[0]);
+            sono.destroySound(sounds[1]);
         });
     });
 
@@ -88,13 +95,12 @@ describe('Sono loader', function() {
         var sound,
             progress = 0,
             el = [
-                baseURL + 'select.ogg',
-                baseURL + 'select.mp3'
+                window.baseURL + 'select.ogg',
+                window.baseURL + 'select.mp3'
             ];
 
         beforeEach(function(done) {
-            var self = this;
-            Sono.load({
+            sono.load({
                 url: el,
                 onComplete: function(loadedSound) {
                     sound = loadedSound;
@@ -104,21 +110,28 @@ describe('Sono loader', function() {
                 onProgress: function(p) {
                     progress = p;
                 },
-                context: self,
                 asMediaElement: true
             });
         });
 
-        it('should have loaded sound', function(){
-            expect(sound).to.exist;
-            expect(progress).to.eql(1);
-            expect(Sono.getSound(sound.id)).to.exist;
-            expect(sound.loader).to.exist;
-            expect(sound.loader.data).to.exist;
-            expect(sound.play).to.be.a('function');
-            expect(sound.data).to.be.an.instanceof(window.HTMLMediaElement);
-            Sono.destroySound(sound);
-            expect(Sono.getSound(sound.id)).to.not.exist;
+        it('should have loaded sound', function() {
+            expect(sound)
+                .to.exist;
+            expect(progress)
+                .to.eql(1);
+            expect(sono.getSound(sound.id))
+                .to.exist;
+            expect(sound.loader)
+                .to.exist;
+            expect(sound.loader.data)
+                .to.exist;
+            expect(sound.play)
+                .to.be.a('function');
+            expect(sound.data)
+                .to.be.an.instanceof(window.HTMLMediaElement);
+            sono.destroySound(sound);
+            expect(sono.getSound(sound.id))
+                .to.not.exist;
         });
     });
 
@@ -127,11 +140,11 @@ describe('Sono loader', function() {
             progress = 0;
 
         beforeEach(function(done) {
-            Sono.load({
+            sono.load({
                 id: 'hit',
                 url: [
-                    baseURL + 'hit.ogg',
-                    baseURL + 'hit.mp3'
+                    window.baseURL + 'hit.ogg',
+                    window.baseURL + 'hit.mp3'
                 ],
                 loop: true,
                 volume: 0.5,
@@ -145,18 +158,28 @@ describe('Sono loader', function() {
             });
         });
 
-        it('should have loaded sound', function(){
-            expect(sound).to.exist;
-            expect(progress).to.eql(1);
-            expect(Sono.getSound(sound.id)).to.exist;
-            expect(sound.id).to.eql('hit');
-            expect(sound.loop).to.be.true;
-            expect(sound.volume).to.eql(0.5);
-            expect(sound.loader).to.exist;
-            expect(sound.loader.data).to.exist;
-            expect(sound.play).to.be.a('function');
-            Sono.destroySound(sound);
-            expect(Sono.getSound(sound.id)).to.not.exist;
+        it('should have loaded sound', function() {
+            expect(sound)
+                .to.exist;
+            expect(progress)
+                .to.eql(1);
+            expect(sono.getSound(sound.id))
+                .to.exist;
+            expect(sound.id)
+                .to.eql('hit');
+            expect(sound.loop)
+                .to.be.true;
+            expect(sound.volume)
+                .to.eql(0.5);
+            expect(sound.loader)
+                .to.exist;
+            expect(sound.loader.data)
+                .to.exist;
+            expect(sound.play)
+                .to.be.a('function');
+            sono.destroySound(sound);
+            expect(sono.getSound(sound.id))
+                .to.not.exist;
         });
     });
 

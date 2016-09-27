@@ -1,18 +1,12 @@
-'use strict';
-
-var Sono = require('../src/sono.js');
-
-var baseURL = 'http://stinkdigital.github.io/sono/examples/audio/';
-
 describe('Group', function() {
 
     describe('createGroup', function() {
         it('should have expected api', function() {
-            expect(Sono.createGroup).to.be.a('function');
-            expect(Sono.createGroup.length).to.eql(1);
+            expect(sono.createGroup).to.be.a('function');
+            expect(sono.createGroup.length).to.eql(1);
         });
         it('should return new Group', function() {
-            var group = Sono.createGroup();
+            const group = sono.createGroup();
             expect(group).to.exist;
         });
     });
@@ -21,11 +15,11 @@ describe('Group', function() {
         var sound;
 
         beforeEach(function(done) {
-            sound = Sono.load({
+            sound = sono.load({
                 id: 'foo',
                 url: [
-                    baseURL + 'bullet.ogg',
-                    baseURL + 'bullet.mp3'
+                    window.baseURL + 'bullet.ogg',
+                    window.baseURL + 'bullet.mp3'
                 ],
                 onComplete: function() {
                     done();
@@ -34,11 +28,11 @@ describe('Group', function() {
         });
 
         afterEach(function() {
-            Sono.destroySound(sound.id);
+            sono.destroySound(sound.id);
         });
 
         it('should return new Group', function() {
-            var group = Sono.createGroup();
+            const group = sono.createGroup();
             expect(group).to.exist;
             group.add(sound);
             expect(group.sounds.length).to.eql(1);
@@ -46,7 +40,7 @@ describe('Group', function() {
     });
 
     describe('control', function() {
-        var group = Sono.createGroup();
+        const group = sono.createGroup();
 
         it('should have zero volume', function() {
             group.volume = 0;

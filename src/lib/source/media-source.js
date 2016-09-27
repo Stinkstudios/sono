@@ -1,7 +1,6 @@
-'use strict';
-
-function MediaSource(el, context, onEnded) {
-    var ended = false,
+export default function MediaSource(el, context, onEnded) {
+    const api = {};
+    let ended = false,
         endedCallback = onEnded,
         delayTimeout,
         fadeTimeout,
@@ -11,46 +10,77 @@ function MediaSource(el, context, onEnded) {
         playing = false,
         sourceNode = null,
         groupVolume = 1,
-        volume = 1,
-        api = {};
+        volume = 1;
 
-    var createSourceNode = function() {
-        if(!sourceNode && context) {
+    function createSourceNode() {
+        if (!sourceNode && context) {
             sourceNode = context.createMediaElementSource(el);
         }
         return sourceNode;
-    };
+    }
 
     /*
      * Load
      */
 
-    var load = function(url) {
+    function load(url) {
         el.src = url;
         el.load();
         ended = false;
         paused = false;
         playing = false;
-    };
+    }
 
     /*
      * Controls
      */
 
-    var play = function(delay, offset) {
+    function readyHandler() {
+        el.removeEventListener('canplaythrough', readyHandler);
+        if (playing) {
+            el.play();
+        }
+    }
+
+    /*
+     * Ended handler
+     */
+
+    function endedHandler() {
+
+        if (loop) {
+            el.currentTime = 0;
+            // fixes bug where server doesn't support seek:
+            if (el.currentTime > 0) {
+                el.load();
+            }
+            el.play();
+
+            return;
+        }
+
+        ended = true;
+        paused = false;
+        playing = false;
+
+        if (typeof endedCallback === 'function') {
+            endedCallback(api);
+        }
+    }
+
+    function play(delay, offset) {
         clearTimeout(delayTimeout);
 
         el.volume = volume * groupVolume;
         el.playbackRate = playbackRate;
 
-        if(offset) {
+        if (offset) {
             el.currentTime = offset;
         }
 
-        if(delay) {
+        if (delay) {
             delayTimeout = setTimeout(play, delay);
-        }
-        else {
+        } else {
             // el.load();
             el.play();
         }
@@ -62,60 +92,63 @@ function MediaSource(el, context, onEnded) {
         el.removeEventListener('ended', endedHandler);
         el.addEventListener('ended', endedHandler, false);
 
-        if(el.readyState < 4) {
+        console.debug('el.readyState', el.readyState);
+        if (el.readyState < 1) {
             el.removeEventListener('canplaythrough', readyHandler);
             el.addEventListener('canplaythrough', readyHandler, false);
             el.load();
             el.play();
         }
-    };
+    }
 
-    var readyHandler = function() {
-        el.removeEventListener('canplaythrough', readyHandler);
-        if(playing) {
-            el.play();
-        }
-    };
-
-    var pause = function() {
+    function pause() {
         clearTimeout(delayTimeout);
 
-        if(!el) { return; }
+        if (!el) {
+            return;
+        }
 
         el.pause();
         playing = false;
         paused = true;
-    };
+    }
 
-    var stop = function() {
+    function stop() {
         clearTimeout(delayTimeout);
 
-        if(!el) { return; }
+        if (!el) {
+            return;
+        }
 
         el.pause();
 
         try {
             el.currentTime = 0;
             // fixes bug where server doesn't support seek:
-            if(el.currentTime > 0) { el.load(); }
-        } catch(e) {}
+            if (el.currentTime > 0) {
+                el.load();
+            }
+        } catch (e) {}
 
         playing = false;
         paused = false;
-    };
+    }
 
     /*
      * Fade for no webaudio
      */
 
-    var fade = function(toVolume, duration) {
-        if(context) { return api; }
+    function fade(toVolume, duration) {
+        if (context) {
+            return api;
+        }
 
         function ramp(value, step) {
-            fadeTimeout = setTimeout(function() {
-                api.volume = api.volume + ( value - api.volume ) * 0.2;
-                if(Math.abs(api.volume - value) > 0.05) {
-                    return ramp(value, step);
+            fadeTimeout = window.setTimeout(() => {
+                api.volume = api.volume + (value - api.volume) * 0.2;
+                if (Math.abs(api.volume - value) > 0.05) {
+                    ramp(value, step);
+                    return;
                 }
                 api.volume = value;
             }, step * 1000);
@@ -125,32 +158,13 @@ function MediaSource(el, context, onEnded) {
         ramp(toVolume, duration / 10);
 
         return api;
-    };
-
-    /*
-     * Ended handler
-     */
-
-    var endedHandler = function() {
-        ended = true;
-        paused = false;
-        playing = false;
-
-        if(loop) {
-            el.currentTime = 0;
-            // fixes bug where server doesn't support seek:
-            if(el.currentTime > 0) { el.load(); }
-            play();
-        } else if(typeof endedCallback === 'function') {
-            endedCallback(api);
-        }
-    };
+    }
 
     /*
      * Destroy
      */
 
-    var destroy = function() {
+    function destroy() {
         el.removeEventListener('ended', endedHandler);
         el.removeEventListener('canplaythrough', readyHandler);
         stop();
@@ -158,7 +172,7 @@ function MediaSource(el, context, onEnded) {
         context = null;
         endedCallback = null;
         sourceNode = null;
-    };
+    }
 
     /*
      * Getters & Setters
@@ -217,7 +231,7 @@ function MediaSource(el, context, onEnded) {
             },
             set: function(value) {
                 playbackRate = value;
-                if(el) {
+                if (el) {
                     el.playbackRate = playbackRate;
                 }
             }
@@ -244,7 +258,7 @@ function MediaSource(el, context, onEnded) {
             set: function(value) {
                 window.clearTimeout(fadeTimeout);
                 volume = value;
-                if(el) {
+                if (el) {
                     el.volume = volume * groupVolume;
                 }
             }
@@ -255,7 +269,7 @@ function MediaSource(el, context, onEnded) {
             },
             set: function(value) {
                 groupVolume = value;
-                if(el) {
+                if (el) {
                     el.volume = volume * groupVolume;
                 }
             }
@@ -264,5 +278,3 @@ function MediaSource(el, context, onEnded) {
 
     return Object.freeze(api);
 }
-
-module.exports = MediaSource;

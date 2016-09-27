@@ -1,27 +1,22 @@
-'use strict';
-
-var Sono = require('../src/sono.js');
-// var Sound = require('../src/lib/sound.js');
-
 describe('Destroy', function() {
 
     var sound;
 
     beforeEach(function() {
-        Sono.destroyAll();
+        sono.destroyAll();
     });
 
     it('should have one sound', function() {
-        sound = Sono.createSound({
+        sound = sono.createSound({
             id: 'sine',
             type: 'sine'
         });
-        expect(Sono.sounds.length).to.eql(1);
+        expect(sono.sounds.length).to.eql(1);
     });
 
     it('should have zero sounds', function() {
         sound.destroy();
-        expect(Sono.sounds.length).to.eql(0);
+        expect(sono.sounds.length).to.eql(0);
     });
 
 });

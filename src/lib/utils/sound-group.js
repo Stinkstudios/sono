@@ -1,30 +1,29 @@
-'use strict';
+import Group from '../group';
 
-var Group = require('../group.js');
-
-function SoundGroup(context, destination) {
-    var group = new Group(context, destination),
-        sounds = group.sounds,
-        playbackRate = 1,
+export default function SoundGroup(context, destination) {
+    const group = new Group(context, destination);
+    const sounds = group.sounds;
+    let playbackRate = 1,
         loop = false,
         src;
 
-    var getSource = function() {
-        if(!sounds.length) { return; }
+    function getSource() {
+        if (!sounds.length) {
+            return;
+        }
 
-        src = sounds.slice(0).sort(function(a, b) {
-            return b.duration - a.duration;
-        })[0];
-    };
+        src = sounds.slice(0)
+            .sort((a, b) => b.duration - a.duration)[0];
+    }
 
-    var add = group.add;
+    const add = group.add;
     group.add = function(sound) {
         add(sound);
         getSource();
         return group;
     };
 
-    var remove = group.rmeove;
+    const remove = group.rmeove;
     group.remove = function(soundOrId) {
         remove(soundOrId);
         getSource();
@@ -93,7 +92,4 @@ function SoundGroup(context, destination) {
     });
 
     return group;
-
 }
-
-module.exports = SoundGroup;

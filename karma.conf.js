@@ -1,69 +1,60 @@
-// Karma configuration
-
 module.exports = function(config) {
-  config.set({
+    config.set({
 
-    // base path, that will be used to resolve files and exclude
-    basePath: '',
+        // base path, that will be used to resolve files and exclude
+        basePath: '',
 
-    plugins: [
-      'karma-mocha',
-      'karma-chai',
-      'karma-browserify',
-      'karma-chrome-launcher',
-      'karma-firefox-launcher'
-    ],
+        plugins: [
+            'karma-mocha',
+            'karma-chai',
+            'karma-chrome-launcher',
+            'karma-firefox-launcher'
+        ],
 
-    // frameworks to use
-    frameworks: ['browserify', 'mocha', 'chai'],
+        // frameworks to use
+        frameworks: ['mocha', 'chai'],
 
-    // list of files / patterns to load in the browser
-    files: [
-      'test/**/*.js'
-    ],
+        // list of files / patterns to load in the browser
+        files: [
+            'dist/sono.js',
+            'test/helper.js',
+            'test/**/*.js'
+        ],
 
-    // list of files to exclude
-    exclude: [
+        // list of files to exclude
+        exclude: [
+            // 'test/source.spec.js'
+        ],
 
-    ],
+        // test results reporter to use
+        // possible values: 'dots', 'progress'
+        reporters: ['progress'],
 
-    // Browserify config (all optional)
-    browserify: {
-      debug: true
-    },
+        // web server port
+        port: 9876,
 
-    // Add browserify to preprocessors
-    preprocessors: {'test/**/*.js': ['browserify']},
+        // enable / disable colors in the output (reporters and logs)
+        colors: true,
 
-    // test results reporter to use
-    // possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
-    reporters: ['progress'],
+        // level of logging
+        // possible values: config.LOG_DISABLE || config.LOG_ERROR ||
+        // config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
+        logLevel: config.LOG_WARN,
 
-    // web server port
-    port: 9876,
+        // enable / disable watching file and executing tests whenever any file changes
+        autoWatch: true,
 
-    // enable / disable colors in the output (reporters and logs)
-    colors: true,
+        // Start these browsers, currently available:
+        browsers: [
+            'Chrome',
+            'Firefox'
+        ],
 
-    // level of logging
-    // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-    logLevel: config.LOG_WARN,
+        // If browser does not capture in given timeout [ms], kill it
+        captureTimeout: 60000,
 
-    // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: true,
-
-    // Start these browsers, currently available:
-    browsers: [
-        'Chrome'
-        // ,
-        // 'Firefox'
-    ],
-
-    // If browser does not capture in given timeout [ms], kill it
-    captureTimeout: 60000,
-
-    // Continuous Integration mode
-    // if true, it capture browsers, run tests and exit
-    singleRun: false
-  });
+        // Continuous Integration mode
+        // if true, it capture browsers, run tests and exit
+        singleRun: false
+    });
 };

@@ -1,30 +1,27 @@
-'use strict';
+import {number} from '../utils/validify.js';
 
-var validify = require('../utils/validify.js').number;
-var n = 22050;
+const n = 22050;
 
-function Distortion(context, amount) {
+export default function Distortion(context, amount) {
 
-    amount = validify(amount, 1);
+    amount = number(amount, 1);
 
-    var node = context.createWaveShaper();
-    var curve = new Float32Array(n);
+    const node = context.createWaveShaper();
+    const curve = new Float32Array(n);
 
     // create waveShaper distortion curve from 0 to 1
     node.update = function(value) {
         amount = value;
-        if(amount <= 0) {
-          amount = 0;
-          this.curve = null;
-          return;
+        if (amount <= 0) {
+            amount = 0;
+            this.curve = null;
+            return;
         }
-        var k = value * 100,
-            // n = 22050,
-            // curve = new Float32Array(n),
-            deg = Math.PI / 180,
-            x;
+        const k = value * 100;
+        const deg = Math.PI / 180;
+        let x;
 
-        for (var i = 0; i < n; i++) {
+        for (let i = 0; i < n; i++) {
             x = i * 2 / n - 1;
             curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
         }
@@ -34,16 +31,18 @@ function Distortion(context, amount) {
 
     Object.defineProperties(node, {
         amount: {
-            get: function() { return amount; },
-            set: function(value) { this.update(value); }
+            get: function() {
+                return amount;
+            },
+            set: function(value) {
+                this.update(value);
+            }
         }
     });
 
-    if(amount !== undefined) {
+    if (typeof amount !== 'undefined') {
         node.update(amount);
     }
 
     return node;
 }
-
-module.exports = Distortion;

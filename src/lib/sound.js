@@ -1,62 +1,91 @@
-'use strict';
+import BufferSource from './source/buffer-source';
+import Effect from './effect';
+import Emitter from './utils/emitter';
+import file from './utils/file';
+import Loader from './utils/loader';
+import MediaSource from './source/media-source';
+import MicrophoneSource from './source/microphone-source';
+import OscillatorSource from './source/oscillator-source';
+import ScriptSource from './source/script-source';
+import waveform from './utils/waveform.js';
 
-var BufferSource = require('./source/buffer-source.js'),
-    Effect = require('./effect.js'),
-    Emitter = require('./utils/emitter.js'),
-    file = require('./utils/file.js'),
-    Loader = require('./utils/loader.js'),
-    MediaSource = require('./source/media-source.js'),
-    MicrophoneSource = require('./source/microphone-source.js'),
-    OscillatorSource = require('./source/oscillator-source.js'),
-    ScriptSource = require('./source/script-source.js'),
-    waveform = require('./utils/waveform.js')();
-
-function Sound(context, destination) {
-    var id,
+export default function Sound(context, destination) {
+    let id,
         data,
         effect = new Effect(context),
         gain = effect.gain(),
+        wave = waveform(),
         isTouchLocked = false,
         loader,
         loop = false,
         playbackRate = 1,
         playWhenReady,
-        source,
-        sound;
+        source;
 
-    if(context) {
+    let sound = null;
+
+    if (context) {
         effect.setDestination(gain);
         gain.connect(destination || context.destination);
+    }
+
+    /*
+     * Create source
+     */
+
+    function createSource(value) {
+        data = value;
+
+        if (file.isAudioBuffer(data)) {
+            source = new BufferSource(data, context, () => sound.emit('ended', sound));
+        } else if (file.isMediaElement(data)) {
+            source = new MediaSource(data, context, () => sound.emit('ended', sound));
+        } else if (file.isMediaStream(data)) {
+            source = new MicrophoneSource(data, context);
+        } else if (file.isOscillatorType((data && data.type) || data)) {
+            source = new OscillatorSource(data.type || data, context);
+        } else if (file.isScriptConfig(data)) {
+            source = new ScriptSource(data, context);
+        } else {
+            throw new Error('Cannot detect data type: ' + data);
+        }
+
+        effect.setSource(source.sourceNode);
+
+        sound.emit('ready', sound);
+
+        if (playWhenReady) {
+            playWhenReady();
+        }
     }
 
     /*
      * Load
      */
 
-    var load = function(config) {
-        var src = file.getSupportedFile(config.src || config.url || config);
+    function load(config) {
+        const src = file.getSupportedFile(config.src || config.url || config.data || config);
 
-        if(source && data && data.tagName) {
+        if (source && data && data.tagName) {
             source.load(src);
-        }
-        else {
+        } else {
             loader = loader || new Loader(src);
             loader.audioContext = !!config.asMediaElement ? null : context;
             loader.isTouchLocked = isTouchLocked;
-            loader.once('loaded', function(file) {
-                createSource(file);
+            loader.once('loaded', function(fileData) {
+                createSource(fileData);
                 sound.emit('loaded', sound);
             });
         }
         return sound;
-    };
+    }
 
     /*
      * Controls
      */
 
-    var play = function(delay, offset) {
-        if(!source || isTouchLocked) {
+    function play(delay, offset) {
+        if (!source || isTouchLocked) {
             playWhenReady = function() {
                 if (source) {
                     play(delay, offset);
@@ -68,63 +97,66 @@ function Sound(context, destination) {
         effect.setSource(source.sourceNode);
 
         // update volume needed for no webaudio
-        if(!context) { sound.volume = gain.gain.value; }
+        if (!context) {
+            sound.volume = gain.gain.value;
+        }
 
         source.play(delay, offset);
 
-        if(source.hasOwnProperty('loop')) {
+        if (source.hasOwnProperty('loop')) {
             source.loop = loop;
         }
 
         sound.emit('play', sound);
 
         return sound;
-    };
+    }
 
-    var pause = function() {
+    function pause() {
         source && source.pause();
         sound.emit('pause', sound);
         return sound;
-    };
+    }
 
-    var stop = function(delay) {
+    function stop(delay) {
         source && source.stop(delay || 0);
         sound.emit('stop', sound);
         return sound;
-    };
+    }
 
-    var seek = function(percent) {
-        if(source) {
+    function seek(percent) {
+        if (source) {
             source.stop();
             play(0, source.duration * percent);
         }
         return sound;
-    };
+    }
 
-    var fade = function(volume, duration) {
-        if(!source) { return sound; }
+    function fade(volume, duration) {
+        if (!source) {
+            return sound;
+        }
 
-        var param = gain.gain;
+        const param = gain.gain;
 
-        if(context) {
-            var time = context.currentTime;
+        if (context) {
+            const time = context.currentTime;
             param.cancelScheduledValues(time);
             param.setValueAtTime(param.value, time);
             param.linearRampToValueAtTime(volume, time + duration);
-        }
-        else if(typeof source.fade === 'function') {
+        } else if (typeof source.fade === 'function') {
             source.fade(volume, duration);
             param.value = volume;
         }
 
         return sound;
-    };
+    }
 
     /*
      * Destroy
      */
 
-    var destroy = function() {
+    function destroy() {
         source && source.destroy();
         effect && effect.destroy();
         gain && gain.disconnect();
@@ -138,48 +170,10 @@ function Sound(context, destination) {
         source = null;
         effect = null;
         loader = null;
+        wave = null;
         sound.emit('destroy', sound);
         sound.off('destroy');
-    };
-
-    /*
-     * Create source
-     */
-
-    var createSource = function(value) {
-        data = value;
-
-        if(file.isAudioBuffer(data)) {
-            source = new BufferSource(data, context, function() {
-                sound.emit('ended', sound);
-            });
-        }
-        else if(file.isMediaElement(data)) {
-            source = new MediaSource(data, context, function() {
-                sound.emit('ended', sound);
-            });
-        }
-        else if(file.isMediaStream(data)) {
-            source = new MicrophoneSource(data, context);
-        }
-        else if(file.isOscillatorType((data && data.type) || data)) {
-            source = new OscillatorSource(data.type || data, context);
-        }
-        else if(file.isScriptConfig(data)) {
-            source = new ScriptSource(data, context);
-        }
-        else {
-            throw new Error('Cannot detect data type: ' + data);
-        }
-
-        effect.setSource(source.sourceNode);
-
-        sound.emit('ready', sound);
-
-        if(playWhenReady) {
-            playWhenReady();
-        }
-    };
+    }
 
     sound = Object.create(Emitter.prototype, {
         _events: {
@@ -217,7 +211,7 @@ function Sound(context, destination) {
                 return source ? source.currentTime : 0;
             },
             set: function(value) {
-                // var silent = sound.playing;
+                // const silent = sound.playing;
                 source && source.stop();
                 // play(0, value, silent);
                 play(0, value);
@@ -227,8 +221,10 @@ function Sound(context, destination) {
             get: function() {
                 return data;
             },
-            set : function(value) {
-                if(!value) { return; }
+            set: function(value) {
+                if (!value) {
+                    return;
+                }
                 createSource(value);
             }
         },
@@ -250,7 +246,7 @@ function Sound(context, destination) {
                 return source ? source.frequency : 0;
             },
             set: function(value) {
-                if(source && source.hasOwnProperty('frequency')) {
+                if (source && source.hasOwnProperty('frequency')) {
                     source.frequency = value;
                 }
             }
@@ -269,10 +265,10 @@ function Sound(context, destination) {
         isTouchLocked: {
             set: function(value) {
                 isTouchLocked = value;
-                if(loader) {
+                if (loader) {
                     loader.isTouchLocked = value;
                 }
-                if(!value && playWhenReady) {
+                if (!value && playWhenReady) {
                     playWhenReady();
                 }
             }
@@ -289,8 +285,8 @@ function Sound(context, destination) {
             set: function(value) {
                 loop = !!value;
 
-                if(source && source.hasOwnProperty('loop') && source.loop !== loop) {
-                  source.loop = loop;
+                if (source && source.hasOwnProperty('loop') && source.loop !== loop) {
+                    source.loop = loop;
                 }
             }
         },
@@ -310,8 +306,8 @@ function Sound(context, destination) {
             },
             set: function(value) {
                 playbackRate = value;
-                if(source) {
-                  source.playbackRate = playbackRate;
+                if (source) {
+                    source.playbackRate = playbackRate;
                 }
             }
         },
@@ -321,35 +317,36 @@ function Sound(context, destination) {
             }
         },
         sourceNode: {
-            get:function() {
-                return source ? source.sourceNode : undefined;
+            get: function() {
+                return source ? source.sourceNode : null;
             }
         },
         volume: {
             get: function() {
-                if(context) {
+                if (context) {
                     return gain.gain.value;
                 }
-                if(source && source.hasOwnProperty('volume')) {
+                if (source && source.hasOwnProperty('volume')) {
                     return source.volume;
                 }
                 return 1;
             },
             set: function(value) {
-                if(isNaN(value)) { return; }
+                if (isNaN(value)) {
+                    return;
+                }
 
-                var param = gain.gain;
+                const param = gain.gain;
 
-                if(context) {
-                    var time = context.currentTime;
+                if (context) {
+                    const time = context.currentTime;
                     param.cancelScheduledValues(time);
                     param.value = value;
                     param.setValueAtTime(value, time);
-                }
-                else {
+                } else {
                     param.value = value;
 
-                    if(source && source.hasOwnProperty('volume')) {
+                    if (source && source.hasOwnProperty('volume')) {
                         source.volume = value;
                     }
                 }
@@ -361,19 +358,17 @@ function Sound(context, destination) {
                 return source.groupVolume;
             },
             set: function(value) {
-                if(source && source.hasOwnProperty('groupVolume')) {
+                if (source && source.hasOwnProperty('groupVolume')) {
                     source.groupVolume = value;
                 }
             }
         },
         waveform: {
             value: function(length) {
-                if(!data) {
-                    sound.once('ready', function() {
-                        waveform(data, length);
-                    });
+                if (!data) {
+                    sound.once('ready', () => wave(data, length));
                 }
-                return waveform(data, length);
+                return wave(data, length);
             }
         },
         userData: {
@@ -384,4 +379,11 @@ function Sound(context, destination) {
     return Object.freeze(sound);
 }
 
-module.exports = Sound;
+// expose for unit tests
+Sound.__source = {
+    BufferSource,
+    MediaSource,
+    MicrophoneSource,
+    OscillatorSource,
+    ScriptSource
+};
