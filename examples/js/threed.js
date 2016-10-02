@@ -60,7 +60,9 @@ function Room(width, depth, height) {
     depth = depth || 512;
     height = height || 256;
 
-    var material = new THREE.MeshLambertMaterial({ color: '#ffffff' });
+    var material = new THREE.MeshLambertMaterial({
+        color: '#ffffff'
+    });
 
     this.ground = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material);
     this.ground.rotation.x = -Math.PI / 2;
@@ -104,7 +106,11 @@ Room.prototype.createWall = function(material, length, height) {
 
 function Hero(materials) {
     var material = (materials instanceof Array) ? new THREE.MeshFaceMaterial(materials) : materials;
-    if(!material) { material = new THREE.MeshLambertMaterial({ color: '#0000ff' }); }
+    if (!material) {
+        material = new THREE.MeshLambertMaterial({
+            color: '#0000ff'
+        });
+    }
     THREE.Mesh.call(this, new THREE.BoxGeometry(64, 64, 64), material);
 
     this.groundedY = 32;
@@ -141,26 +147,23 @@ Hero.prototype.constructor = Hero;
 Hero.prototype.preUpdate = function(deltaTime, elapsedTime) {
 
     function lerp(from, to, percent) {
-        return from + ( to - from ) * percent;
+        return from + (to - from) * percent;
     }
 
-    if(this.keyInput.left()) {
+    if (this.keyInput.left()) {
         this.angle += this.rotSpeed;
-    }
-    else if(this.keyInput.right()) {
+    } else if (this.keyInput.right()) {
         this.angle -= this.rotSpeed;
     }
     this.quaternion.setFromAxisAngle(this.up, this.angle);
     this.forward.set(0, 0, 1);
     this.forward.applyQuaternion(this.quaternion);
 
-    if(this.keyInput.up()) {
+    if (this.keyInput.up()) {
         this.velocity.z = lerp(this.velocity.z, this.maxSpeed, 0.2);
-    }
-    else if(this.keyInput.down()) {
+    } else if (this.keyInput.down()) {
         this.velocity.z = lerp(this.velocity.z, -this.maxSpeed, 0.2);
-    }
-    else {
+    } else {
         this.velocity.z *= 0.5;
     }
 
@@ -168,13 +171,13 @@ Hero.prototype.preUpdate = function(deltaTime, elapsedTime) {
 
     // jumping and gravity
 
-    if(!this.jumping && this.keyInput.space()) {
+    if (!this.jumping && this.keyInput.space()) {
         this.velocity.y = 10;
         this.jumping = true;
         this.jumpedAt = elapsedTime;
     }
 
-    if(this.jumping && elapsedTime - this.jumpedAt > 1) {
+    if (this.jumping && elapsedTime - this.jumpedAt > 1) {
         this.jumping = false;
     }
     var gravity = -400;
@@ -191,7 +194,7 @@ Hero.prototype.update = function() {
 
     // quick collide with floor
 
-    if(this.position.y < this.groundedY) {
+    if (this.position.y < this.groundedY) {
         this.position.y = this.groundedY;
         this.velocity.y = 0;
     }
@@ -201,13 +204,12 @@ Hero.prototype.collide = function(collidableMeshList) {
     var bounce = 2;
 
     var object = this.overlap(collidableMeshList);
-    if(object) {
+    if (object) {
         var inFront = this.forward.dot(object.position) > 0;
-        if(inFront && this.velocity.z > 0) {
+        if (inFront && this.velocity.z > 0) {
             //this.velocity.z = 0;
             this.velocity.z *= -bounce;
-        }
-        else if(!inFront && this.velocity.z < 0) {
+        } else if (!inFront && this.velocity.z < 0) {
             //this.velocity.z = 0;
             this.velocity.z *= -bounce;
         }
@@ -226,7 +228,7 @@ Hero.prototype.overlap = function(overlapMeshList) {
 
         this.raycaster.set(this.position, directionVector.normalize());
         var collisions = this.raycaster.intersectObjects(overlapMeshList);
-        if(collisions.length > 0 && collisions[0].distance < minDistance) {
+        if (collisions.length > 0 && collisions[0].distance < minDistance) {
             var object = collisions[0].object;
             return object;
         }
@@ -253,16 +255,16 @@ function ThreeBase(el, fov, near, far) {
 
     // renderer
     if (window.WebGLRenderingContext) {
-      this.renderer = new THREE.WebGLRenderer();
+        this.renderer = new THREE.WebGLRenderer();
     } else {
-      this.renderer = new THREE.CanvasRenderer();
+        this.renderer = new THREE.CanvasRenderer();
     }
     el.appendChild(this.renderer.domElement);
     this.size();
     //this.render();
 
     // resize
-    window.addEventListener( 'resize', this.size.bind(this), false );
+    window.addEventListener('resize', this.size.bind(this), false);
 }
 
 ThreeBase.prototype.render = function() {
@@ -305,7 +307,7 @@ ThreeScene.prototype.update = function(deltaTime, elapsedTime) {
 
     this.hero.collide(this.room.walls);
 
-    this.speaker.scale.x = this.speaker.scale.y = 2 + Math.sin(elapsedTime * 12)/4;
+    this.speaker.scale.x = this.speaker.scale.y = 2 + Math.sin(elapsedTime * 12) / 4;
 
     this.hero.update();
 };
@@ -316,9 +318,11 @@ ThreeScene.prototype.createScene = function() {
 
     var materials = [];
     var faces = ['left', 'right', 'top', 'bottom', 'front', 'back'];
-    for ( var i = 0; i < faces.length; i ++ ) {
-        var tex = THREE.ImageUtils.loadTexture( 'img/' + faces[i] + '.png');
-        var mat = new THREE.MeshPhongMaterial({ map: tex });
+    for (var i = 0; i < faces.length; i++) {
+        var tex = THREE.ImageUtils.loadTexture('img/' + faces[i] + '.png');
+        var mat = new THREE.MeshPhongMaterial({
+            map: tex
+        });
         materials.push(mat);
     }
 
@@ -326,7 +330,9 @@ ThreeScene.prototype.createScene = function() {
     this.hero.position.z = 64;
     this.room.add(this.hero);
 
-    this.speaker = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 16), new THREE.MeshPhongMaterial({ color: 0x22ee22 }));
+    this.speaker = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 16), new THREE.MeshPhongMaterial({
+        color: 0x22ee22
+    }));
     this.speaker.position.set(-100, 24, 200);
     this.room.add(this.speaker);
 };
@@ -342,6 +348,7 @@ ThreeScene.prototype.createLights = function() {
     this.scene.add(this.ambientLight);
 
     this.directionalLight = new THREE.DirectionalLight(0x444444);
-    this.directionalLight.position.set(1, 0, 1).normalize();
+    this.directionalLight.position.set(1, 0, 1)
+        .normalize();
     this.scene.add(this.directionalLight);
 };

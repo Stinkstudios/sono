@@ -1,7 +1,6 @@
-'use strict';
-
-function BufferSource(buffer, context, onEnded) {
-    var ended = false,
+export default function BufferSource(buffer, context, onEnded) {
+    const api = {};
+    let ended = false,
         endedCallback = onEnded,
         loop = false,
         paused = false,
@@ -9,29 +8,67 @@ function BufferSource(buffer, context, onEnded) {
         playbackRate = 1,
         playing = false,
         sourceNode = null,
-        startedAt = 0,
-        api = {};
+        startedAt = 0;
 
-    var createSourceNode = function() {
-        if(!sourceNode && context) {
+    function createSourceNode() {
+        if (!sourceNode && context) {
             sourceNode = context.createBufferSource();
             sourceNode.buffer = buffer;
         }
         return sourceNode;
-    };
+    }
 
     /*
      * Controls
      */
 
-    var play = function(delay, offset) {
-        if(playing) { return; }
+    function stop() {
+        if (sourceNode) {
+            sourceNode.onended = null;
+            try {
+                sourceNode.disconnect();
+                sourceNode.stop(0);
+            } catch (e) {}
+            sourceNode = null;
+        }
+
+        paused = false;
+        pausedAt = 0;
+        playing = false;
+        startedAt = 0;
+    }
+
+    function pause() {
+        const elapsed = context.currentTime - startedAt;
+        stop();
+        pausedAt = elapsed;
+        playing = false;
+        paused = true;
+    }
+
+    function endedHandler() {
+        stop();
+        ended = true;
+        if (typeof endedCallback === 'function') {
+            endedCallback(api);
+        }
+    }
+
+    function play(delay, offset = 0) {
+        if (playing) {
+            return;
+        }
 
         delay = delay ? context.currentTime + delay : 0;
-        offset = offset || 0;
-        if(offset) { pausedAt = 0; }
-        if(pausedAt) { offset = pausedAt; }
-        while(offset > api.duration) { offset = offset % api.duration; }
+        if (offset) {
+            pausedAt = 0;
+        }
+        if (pausedAt) {
+            offset = pausedAt;
+        }
+        while (offset > api.duration) {
+            offset = offset % api.duration;
+        }
 
         createSourceNode();
         sourceNode.onended = endedHandler;
@@ -45,55 +82,20 @@ function BufferSource(buffer, context, onEnded) {
         paused = false;
         pausedAt = 0;
         playing = true;
-    };
+    }
 
-    var pause = function() {
-        var elapsed = context.currentTime - startedAt;
-        stop();
-        pausedAt = elapsed;
-        playing = false;
-        paused = true;
-    };
-
-    var stop = function() {
-        if(sourceNode) {
-            sourceNode.onended = null;
-            try {
-                sourceNode.disconnect();
-                sourceNode.stop(0);
-            } catch(e) {}
-            sourceNode = null;
-        }
-
-        paused = false;
-        pausedAt = 0;
-        playing = false;
-        startedAt = 0;
-    };
-
-    /*
-     * Ended handler
-     */
-
-    var endedHandler = function() {
-        stop();
-        ended = true;
-        if(typeof endedCallback === 'function') {
-            endedCallback(api);
-        }
-    };
 
     /*
      * Destroy
      */
 
-    var destroy = function() {
+    function destroy() {
         stop();
         buffer = null;
         context = null;
         endedCallback = null;
         sourceNode = null;
-    };
+    }
 
     /*
      * Getters & Setters
@@ -114,12 +116,12 @@ function BufferSource(buffer, context, onEnded) {
         },
         currentTime: {
             get: function() {
-                if(pausedAt) {
+                if (pausedAt) {
                     return pausedAt;
                 }
-                if(startedAt) {
-                    var time = context.currentTime - startedAt;
-                    if(time > api.duration) {
+                if (startedAt) {
+                    let time = context.currentTime - startedAt;
+                    if (time > api.duration) {
                         time = time % api.duration;
                     }
                     return time;
@@ -143,7 +145,7 @@ function BufferSource(buffer, context, onEnded) {
             },
             set: function(value) {
                 loop = !!value;
-                if(sourceNode) {
+                if (sourceNode) {
                     sourceNode.loop = loop;
                 }
             }
@@ -159,7 +161,7 @@ function BufferSource(buffer, context, onEnded) {
             },
             set: function(value) {
                 playbackRate = value;
-                if(sourceNode) {
+                if (sourceNode) {
                     sourceNode.playbackRate.value = playbackRate;
                 }
             }
@@ -183,5 +185,3 @@ function BufferSource(buffer, context, onEnded) {
 
     return Object.freeze(api);
 }
-
-module.exports = BufferSource;

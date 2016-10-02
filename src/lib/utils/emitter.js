@@ -1,23 +1,18 @@
-'use strict';
+import events from 'events';
+const {EventEmitter} = events;
 
-var EventEmitter = require('events').EventEmitter;
+export default class Emitter extends EventEmitter {
+    constructor() {
+        super();
+    }
 
-function Emitter() {
-    EventEmitter.call(this);
-    this.setMaxListeners(20);
+    off (type, listener) {
+        if (listener) {
+            return this.removeListener(type, listener);
+        }
+        if (type) {
+            return this.removeAllListeners(type);
+        }
+        return this.removeAllListeners();
+    }
 }
-
-Emitter.prototype = Object.create(EventEmitter.prototype);
-Emitter.prototype.constructor = Emitter;
-
-Emitter.prototype.off = function(type, listener) {
-    if (listener) {
-        return this.removeListener(type, listener);
-    }
-    if (type) {
-        return this.removeAllListeners(type);
-    }
-    return this.removeAllListeners();
-};
-
-module.exports = Emitter;

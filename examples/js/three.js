@@ -103,7 +103,8 @@
                 ty = Math.sin(2 * Math.PI * t),
                 tz = 0;
 
-            return new THREE.Vector3(tx, ty, tz).multiplyScalar(this.scale);
+            return new THREE.Vector3(tx, ty, tz)
+                .multiplyScalar(this.scale);
         }
     );
 
@@ -353,11 +354,12 @@
         forward.set(0, 0, -1);
         forward.applyQuaternion(camera.quaternion);
         // set listener orientation to the forward vector of the hero
-        sono.effect.panning.setListenerOrientation(forward.clone().normalize());
+        sono.effect.panning.setListenerOrientation(forward.clone()
+            .normalize());
 
         var velocityY = 0;
         if (keyInput.space()) {
-             if (camera.position.y < 1800) {
+            if (camera.position.y < 1800) {
                 velocityY = 400 * delta;
                 forward.y = velocityY;
             }
@@ -426,12 +428,16 @@
 
     var gui = new dat.GUI();
     var folder = gui.addFolder('camera');
-    folder.add(camera.position, 'x', -1000, 1000).listen();
-    folder.add(camera.position, 'y', -1000, 1000).listen();
-    folder.add(camera.position, 'z', -1000, 1000).listen();
-    folder.add(camera, 'fov', 1, 100).onChange(function() {
-        camera.updateProjectionMatrix();
-    });
+    folder.add(camera.position, 'x', -1000, 1000)
+        .listen();
+    folder.add(camera.position, 'y', -1000, 1000)
+        .listen();
+    folder.add(camera.position, 'z', -1000, 1000)
+        .listen();
+    folder.add(camera, 'fov', 1, 100)
+        .onChange(function() {
+            camera.updateProjectionMatrix();
+        });
 
 
 

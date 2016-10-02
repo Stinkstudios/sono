@@ -1,12 +1,10 @@
-'use strict';
+export default function FakeContext() {
 
-function FakeContext() {
+    const startTime = Date.now();
 
-    var startTime = Date.now();
+    function fn() {}
 
-    var fn = function(){};
-
-    var param = function() {
+    function param() {
         return {
             value: 1,
             defaultValue: 1,
@@ -17,12 +15,12 @@ function FakeContext() {
             setValueCurveAtTime: fn,
             cancelScheduledValues: fn
         };
-    };
+    }
 
-    var fakeNode = function() {
+    function fakeNode() {
         return {
-            connect:fn,
-            disconnect:fn,
+            connect: fn,
+            disconnect: fn,
             // analyser
             frequencyBinCount: 0,
             smoothingTimeConstant: 0,
@@ -48,7 +46,7 @@ function FakeContext() {
             coneOuterAngle: 360,
             coneOuterGain: 0,
             // filter:
-            type:0,
+            type: 0,
             frequency: param(),
             Q: param(),
             detune: param(),
@@ -82,10 +80,10 @@ function FakeContext() {
             // osc
             start: fn
         };
-    };
+    }
 
     // ie9
-    if(!window.Uint8Array) {
+    if (!window.Uint8Array) {
         window.Uint8Array = window.Float32Array = Array;
     }
 
@@ -109,5 +107,3 @@ function FakeContext() {
         }
     };
 }
-
-module.exports = FakeContext;

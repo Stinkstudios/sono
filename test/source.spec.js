@@ -1,192 +1,254 @@
-'use strict';
-
-var Sono = require('../src/sono.js');
-var BufferSource = require('../src/lib/source/buffer-source.js');
-var MediaSource = require('../src/lib/source/media-source.js');
-var MicrophoneSource = require('../src/lib/source/microphone-source.js');
-var OscillatorSource = require('../src/lib/source/oscillator-source.js');
-var ScriptSource = require('../src/lib/source/script-source.js');
-
 describe('Source', function() {
 
+    const src = sono.Sound.__source;
+
     describe('Buffer', function() {
-        var buffer = Sono.context.createBuffer(1, 1, 22050);
-        var source = new BufferSource(buffer, Sono.context);
+        const buffer = sono.context.createBuffer(1, 1, 22050);
+        const source = new src.BufferSource(buffer, sono.context);
 
         it('should have controls', function() {
-            expect(source.play).to.be.a('function');
-            expect(source.pause).to.be.a('function');
-            expect(source.stop).to.be.a('function');
+            expect(source.play)
+                .to.be.a('function');
+            expect(source.pause)
+                .to.be.a('function');
+            expect(source.stop)
+                .to.be.a('function');
         });
 
         it('should have destroy', function() {
-            expect(source.destroy).to.be.a('function');
+            expect(source.destroy)
+                .to.be.a('function');
         });
 
         it('should have state', function() {
-            expect(source.loop).to.be.a('boolean');
-            expect(source.duration).to.be.a('number');
-            expect(source.currentTime).to.be.a('number');
-            expect(source.progress).to.be.a('number');
-            expect(source.playing).to.be.a('boolean');
-            expect(source.paused).to.be.a('boolean');
+            expect(source.loop)
+                .to.be.a('boolean');
+            expect(source.duration)
+                .to.be.a('number');
+            expect(source.currentTime)
+                .to.be.a('number');
+            expect(source.progress)
+                .to.be.a('number');
+            expect(source.playing)
+                .to.be.a('boolean');
+            expect(source.paused)
+                .to.be.a('boolean');
         });
 
         it('should have sourceNode', function() {
-            var desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
-            expect(desc.get).to.be.a('function');
-            expect(desc.set).to.not.exist;
+            const desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
+            expect(desc.get)
+                .to.be.a('function');
+            expect(desc.set)
+                .to.not.exist;
         });
 
         it('should be able to destroy', function() {
-            expect(source.sourceNode).to.exist;
+            expect(source.sourceNode)
+                .to.exist;
             source.destroy();
-            expect(source.sourceNode).to.not.exist;
+            expect(source.sourceNode)
+                .to.not.exist;
         });
     });
 
     describe('Media', function() {
-        var el = document.createElement('audio');
-        var source = new MediaSource(el, Sono.context);
+        const el = document.createElement('audio');
+        const source = new src.MediaSource(el, sono.context);
 
         it('should have controls', function() {
-            expect(source.play).to.be.a('function');
-            expect(source.pause).to.be.a('function');
-            expect(source.stop).to.be.a('function');
+            expect(source.play)
+                .to.be.a('function');
+            expect(source.pause)
+                .to.be.a('function');
+            expect(source.stop)
+                .to.be.a('function');
         });
 
         it('should have destroy', function() {
-            expect(source.destroy).to.be.a('function');
+            expect(source.destroy)
+                .to.be.a('function');
         });
 
         it('should have state', function() {
-            expect(source.loop).to.be.a('boolean');
-            expect(source.duration).to.be.a('number');
-            expect(source.currentTime).to.be.a('number');
-            expect(source.progress).to.be.a('number');
-            expect(source.playing).to.be.a('boolean');
-            expect(source.paused).to.be.a('boolean');
+            expect(source.loop)
+                .to.be.a('boolean');
+            expect(source.duration)
+                .to.be.a('number');
+            expect(source.currentTime)
+                .to.be.a('number');
+            expect(source.progress)
+                .to.be.a('number');
+            expect(source.playing)
+                .to.be.a('boolean');
+            expect(source.paused)
+                .to.be.a('boolean');
         });
 
         it('should have sourceNode', function() {
-            var desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
-            expect(desc.get).to.be.a('function');
-            expect(desc.set).to.not.exist;
-            expect(source.sourceNode instanceof window.MediaElementAudioSourceNode).to.be.true;
+            const desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
+            expect(desc.get)
+                .to.be.a('function');
+            expect(desc.set)
+                .to.not.exist;
+            expect(source.sourceNode instanceof window.MediaElementAudioSourceNode)
+                .to.be.true;
         });
 
         it('should be able to destroy', function() {
-            expect(source.sourceNode).to.exist;
+            expect(source.sourceNode)
+                .to.exist;
             source.destroy();
-            expect(source.sourceNode).to.not.exist;
+            expect(source.sourceNode)
+                .to.not.exist;
         });
     });
 
     describe('Microphone', function() {
-        var source = new MicrophoneSource(null, Sono.context);
+        const source = new src.MicrophoneSource(null, sono.context);
 
         it('should have controls', function() {
-            expect(source.play).to.be.a('function');
-            expect(source.pause).to.be.a('function');
-            expect(source.stop).to.be.a('function');
+            expect(source.play)
+                .to.be.a('function');
+            expect(source.pause)
+                .to.be.a('function');
+            expect(source.stop)
+                .to.be.a('function');
         });
 
         it('should have destroy', function() {
-            expect(source.destroy).to.be.a('function');
+            expect(source.destroy)
+                .to.be.a('function');
         });
 
         it('should have state', function() {
             //expect(source.loop).to.be.a('boolean');
-            expect(source.duration).to.be.a('number');
-            expect(source.currentTime).to.be.a('number');
-            expect(source.progress).to.be.a('number');
-            expect(source.playing).to.be.a('boolean');
-            expect(source.paused).to.be.a('boolean');
+            expect(source.duration)
+                .to.be.a('number');
+            expect(source.currentTime)
+                .to.be.a('number');
+            expect(source.progress)
+                .to.be.a('number');
+            expect(source.playing)
+                .to.be.a('boolean');
+            expect(source.paused)
+                .to.be.a('boolean');
         });
 
         it('should have sourceNode', function() {
-            var desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
-            expect(desc.get).to.be.a('function');
-            expect(desc.set).to.not.exist;
+            const desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
+            expect(desc.get)
+                .to.be.a('function');
+            expect(desc.set)
+                .to.not.exist;
         });
 
         it('should be able to destroy', function() {
-            expect(source.destroy).to.be.a('function');
+            expect(source.destroy)
+                .to.be.a('function');
         });
     });
 
     describe('Oscillator', function() {
-        var source = new OscillatorSource('sine', Sono.context);
+        const source = new src.OscillatorSource('sine', sono.context);
 
         it('should have controls', function() {
-            expect(source.play).to.be.a('function');
-            expect(source.pause).to.be.a('function');
-            expect(source.stop).to.be.a('function');
+            expect(source.play)
+                .to.be.a('function');
+            expect(source.pause)
+                .to.be.a('function');
+            expect(source.stop)
+                .to.be.a('function');
         });
 
         it('should have destroy', function() {
-            expect(source.destroy).to.be.a('function');
+            expect(source.destroy)
+                .to.be.a('function');
         });
 
         it('should have state', function() {
             //expect(source.loop).to.be.a('boolean');
-            expect(source.duration).to.be.a('number');
-            expect(source.currentTime).to.be.a('number');
-            expect(source.progress).to.be.a('number');
-            expect(source.playing).to.be.a('boolean');
-            expect(source.paused).to.be.a('boolean');
+            expect(source.duration)
+                .to.be.a('number');
+            expect(source.currentTime)
+                .to.be.a('number');
+            expect(source.progress)
+                .to.be.a('number');
+            expect(source.playing)
+                .to.be.a('boolean');
+            expect(source.paused)
+                .to.be.a('boolean');
         });
 
         it('should have sourceNode', function() {
-            var desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
-            expect(desc.get).to.be.a('function');
-            expect(desc.set).to.not.exist;
-            expect(source.sourceNode instanceof window.AudioNode).to.be.true;
+            const desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
+            expect(desc.get)
+                .to.be.a('function');
+            expect(desc.set)
+                .to.not.exist;
+            expect(source.sourceNode instanceof window.AudioNode)
+                .to.be.true;
         });
 
         it('should be able to destroy', function() {
-            expect(source.sourceNode).to.exist;
+            expect(source.sourceNode)
+                .to.exist;
             source.destroy();
-            expect(source.sourceNode).to.not.exist;
+            expect(source.sourceNode)
+                .to.not.exist;
         });
 
     });
 
     describe('Script Source', function() {
-        var source = new ScriptSource({
+        const source = new src.ScriptSource({
             callback: function() {}
-        }, Sono.context);
+        }, sono.context);
 
         it('should have controls', function() {
-            expect(source.play).to.be.a('function');
-            expect(source.pause).to.be.a('function');
-            expect(source.stop).to.be.a('function');
+            expect(source.play)
+                .to.be.a('function');
+            expect(source.pause)
+                .to.be.a('function');
+            expect(source.stop)
+                .to.be.a('function');
         });
 
         it('should have destroy', function() {
-            expect(source.destroy).to.be.a('function');
+            expect(source.destroy)
+                .to.be.a('function');
         });
 
         it('should have state', function() {
             //expect(source.loop).to.be.a('boolean');
-            expect(source.duration).to.be.a('number');
-            expect(source.currentTime).to.be.a('number');
-            expect(source.progress).to.be.a('number');
-            expect(source.playing).to.be.a('boolean');
-            expect(source.paused).to.be.a('boolean');
+            expect(source.duration)
+                .to.be.a('number');
+            expect(source.currentTime)
+                .to.be.a('number');
+            expect(source.progress)
+                .to.be.a('number');
+            expect(source.playing)
+                .to.be.a('boolean');
+            expect(source.paused)
+                .to.be.a('boolean');
         });
 
         it('should have sourceNode', function() {
-            var desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
-            expect(desc.get).to.be.a('function');
-            expect(desc.set).to.not.exist;
-            expect(source.sourceNode instanceof window.AudioNode).to.be.true;
+            const desc = Object.getOwnPropertyDescriptor(source, 'sourceNode');
+            expect(desc.get)
+                .to.be.a('function');
+            expect(desc.set)
+                .to.not.exist;
+            expect(source.sourceNode instanceof window.AudioNode)
+                .to.be.true;
         });
 
         it('should be able to destroy', function() {
-            expect(source.sourceNode).to.exist;
+            expect(source.sourceNode)
+                .to.exist;
             source.destroy();
-            expect(source.sourceNode).to.not.exist;
+            expect(source.sourceNode)
+                .to.not.exist;
         });
     });
 

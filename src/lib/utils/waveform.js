@@ -1,54 +1,59 @@
-'use strict';
-
-function waveform() {
-
-    var buffer,
+export default function waveform() {
+    let buffer,
         wave;
 
     return function(audioBuffer, length) {
-        if(!window.Float32Array || !window.AudioBuffer) { return []; }
+        if (!window.Float32Array || !window.AudioBuffer) {
+            return [];
+        }
 
-        var sameBuffer = buffer === audioBuffer;
-        var sameLength = wave && wave.length === length;
-        if(sameBuffer && sameLength) { return wave; }
+        const sameBuffer = buffer === audioBuffer;
+        const sameLength = wave && wave.length === length;
+        if (sameBuffer && sameLength) {
+            return wave;
+        }
 
         //console.time('waveData');
-        if(!wave || wave.length !== length) {
+        if (!wave || wave.length !== length) {
             wave = new Float32Array(length);
         }
 
-        if(!audioBuffer) { return wave; }
+        if (!audioBuffer) {
+            return wave;
+        }
 
         // cache for repeated calls
         buffer = audioBuffer;
 
-        var chunk = Math.floor(buffer.length / length),
+        const chunk = Math.floor(buffer.length / length),
             resolution = 5, // 10
-            incr = Math.max(Math.floor(chunk / resolution), 1),
-            greatest = 0;
+            incr = Math.max(Math.floor(chunk / resolution), 1);
+        let greatest = 0;
 
-        for(var i = 0; i < buffer.numberOfChannels; i++) {
+        for (let i = 0; i < buffer.numberOfChannels; i++) {
             // check each channel
-            var channel = buffer.getChannelData(i);
-            for(var j = 0; j < length; j++) {
+            const channel = buffer.getChannelData(i);
+            for (let j = 0; j < length; j++) {
                 // get highest value within the chunk
-                for(var k = j * chunk, l = k + chunk; k < l; k += incr) {
+                for (let k = j * chunk, l = k + chunk; k < l; k += incr) {
                     // select highest value from channels
-                    var a = channel[k];
-                    if(a < 0) { a = -a; }
-                    if(a > wave[j]) {
+                    let a = channel[k];
+                    if (a < 0) {
+                        a = -a;
+                    }
+                    if (a > wave[j]) {
                         wave[j] = a;
                     }
                     // update highest overall for scaling
-                    if(a > greatest) {
+                    if (a > greatest) {
                         greatest = a;
                     }
                 }
             }
         }
         // scale up
-        var scale = 1 / greatest;
-        for(i = 0; i < wave.length; i++) {
+        const scale = 1 / greatest;
+        for (let i = 0; i < wave.length; i++) {
             wave[i] *= scale;
         }
         //console.timeEnd('waveData');
@@ -56,5 +61,3 @@ function waveform() {
         return wave;
     };
 }
-
-module.exports = waveform;

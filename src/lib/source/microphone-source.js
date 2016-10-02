@@ -1,30 +1,28 @@
-'use strict';
-
-function MicrophoneSource(stream, context) {
-    var ended = false,
+export default function MicrophoneSource(stream, context) {
+    let ended = false,
         paused = false,
         pausedAt = 0,
         playing = false,
         sourceNode = null, // MicrophoneSourceNode
         startedAt = 0;
 
-    var createSourceNode = function() {
-        if(!sourceNode && context) {
+    function createSourceNode() {
+        if (!sourceNode && context) {
             sourceNode = context.createMediaStreamSource(stream);
             // HACK: stops moz garbage collection killing the stream
             // see https://support.mozilla.org/en-US/questions/984179
-            if(navigator.mozGetUserMedia) {
+            if (navigator.mozGetUserMedia) {
                 window.mozHack = sourceNode;
             }
         }
         return sourceNode;
-    };
+    }
 
     /*
      * Controls
      */
 
-    var play = function(delay) {
+    function play(delay) {
         delay = delay ? context.currentTime + delay : 0;
 
         createSourceNode();
@@ -35,21 +33,13 @@ function MicrophoneSource(stream, context) {
         playing = true;
         paused = false;
         pausedAt = 0;
-    };
+    }
 
-    var pause = function() {
-        var elapsed = context.currentTime - startedAt;
-        stop();
-        pausedAt = elapsed;
-        playing = false;
-        paused = true;
-    };
-
-    var stop = function() {
-        if(sourceNode) {
+    function stop() {
+        if (sourceNode) {
             try {
                 sourceNode.stop(0);
-            } catch(e) {}
+            } catch (e) {}
             sourceNode = null;
         }
         ended = true;
@@ -57,29 +47,37 @@ function MicrophoneSource(stream, context) {
         pausedAt = 0;
         playing = false;
         startedAt = 0;
-    };
+    }
+
+    function pause() {
+        const elapsed = context.currentTime - startedAt;
+        stop();
+        pausedAt = elapsed;
+        playing = false;
+        paused = true;
+    }
 
     /*
      * Destroy
      */
 
-    var destroy = function() {
+    function destroy() {
         stop();
         context = null;
         sourceNode = null;
         stream = null;
         window.mozHack = null;
-    };
+    }
 
     /*
      * Api
      */
 
-    var api = {
-        play: play,
-        pause: pause,
-        stop: stop,
-        destroy: destroy,
+    const api = {
+        play,
+        pause,
+        stop,
+        destroy,
 
         duration: 0,
         progress: 0
@@ -92,10 +90,10 @@ function MicrophoneSource(stream, context) {
     Object.defineProperties(api, {
         currentTime: {
             get: function() {
-                if(pausedAt) {
+                if (pausedAt) {
                     return pausedAt;
                 }
-                if(startedAt) {
+                if (startedAt) {
                     return context.currentTime - startedAt;
                 }
                 return 0;
@@ -125,5 +123,3 @@ function MicrophoneSource(stream, context) {
 
     return Object.freeze(api);
 }
-
-module.exports = MicrophoneSource;

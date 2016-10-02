@@ -1,39 +1,38 @@
-'use strict';
-
-function OscillatorSource(type, context) {
-    var ended = false,
+export default function OscillatorSource(type, context) {
+    let ended = false,
         paused = false,
         pausedAt = 0,
         playing = false,
         sourceNode = null, // OscillatorSourceNode
         startedAt = 0,
         frequency = 200,
-        api;
+        api = null;
 
-    var createSourceNode = function() {
-        if(!sourceNode && context) {
+    function createSourceNode() {
+        if (!sourceNode && context) {
             sourceNode = context.createOscillator();
             sourceNode.type = type;
             sourceNode.frequency.value = frequency;
         }
         return sourceNode;
-    };
+    }
 
     /*
      * Controls
      */
 
-    var play = function(delay) {
+    function play(delay) {
         delay = delay || 0;
-        if(delay) { delay = context.currentTime + delay; }
+        if (delay) {
+            delay = context.currentTime + delay;
+        }
 
         createSourceNode();
         sourceNode.start(delay);
 
-        if(pausedAt) {
+        if (pausedAt) {
             startedAt = context.currentTime - pausedAt;
-        }
-        else {
+        } else {
             startedAt = context.currentTime;
         }
 
@@ -41,21 +40,13 @@ function OscillatorSource(type, context) {
         playing = true;
         paused = false;
         pausedAt = 0;
-    };
+    }
 
-    var pause = function() {
-        var elapsed = context.currentTime - startedAt;
-        this.stop();
-        pausedAt = elapsed;
-        playing = false;
-        paused = true;
-    };
-
-    var stop = function() {
-        if(sourceNode) {
+    function stop() {
+        if (sourceNode) {
             try {
                 sourceNode.stop(0);
-            } catch(e) {}
+            } catch (e) {}
             sourceNode = null;
         }
         ended = true;
@@ -63,17 +54,25 @@ function OscillatorSource(type, context) {
         pausedAt = 0;
         playing = false;
         startedAt = 0;
-    };
+    }
+
+    function pause() {
+        const elapsed = context.currentTime - startedAt;
+        stop();
+        pausedAt = elapsed;
+        playing = false;
+        paused = true;
+    }
 
     /*
      * Destroy
      */
 
-    var destroy = function() {
-        this.stop();
+    function destroy() {
+        stop();
         context = null;
         sourceNode = null;
-    };
+    }
 
     /*
      * Api
@@ -93,10 +92,10 @@ function OscillatorSource(type, context) {
     Object.defineProperties(api, {
         currentTime: {
             get: function() {
-                if(pausedAt) {
+                if (pausedAt) {
                     return pausedAt;
                 }
-                if(startedAt) {
+                if (startedAt) {
                     return context.currentTime - startedAt;
                 }
                 return 0;
@@ -116,7 +115,7 @@ function OscillatorSource(type, context) {
             },
             set: function(value) {
                 frequency = value;
-                if(sourceNode) {
+                if (sourceNode) {
                     sourceNode.frequency.value = value;
                 }
             }
@@ -143,5 +142,3 @@ function OscillatorSource(type, context) {
 
     return Object.freeze(api);
 }
-
-module.exports = OscillatorSource;

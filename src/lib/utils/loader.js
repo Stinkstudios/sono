@@ -1,36 +1,119 @@
-'use strict';
+import Emitter from './emitter';
 
-var Emitter = require('./emitter.js');
-
-function Loader(url) {
-    var emitter = new Emitter(),
-        progress = 0,
+export default function Loader(url) {
+    const ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
+    const emitter = new Emitter();
+    let progress = 0,
         audioContext,
         isTouchLocked,
         request,
         timeout,
-        data,
-        ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
+        data;
 
-    var start = function() {
-        if(audioContext) {
-            loadArrayBuffer();
-        } else {
-            loadAudioElement();
+    // clean up
+
+    function removeListeners() {
+        emitter.off('error');
+        emitter.off('progress');
+        emitter.off('complete');
+        emitter.off('loaded');
+
+        if (data && typeof data.removeEventListener === 'function') {
+            data.removeEventListener('canplaythrough', readyHandler);
+            data.removeEventListener('error', errorHandler);
         }
-    };
 
-    var dispatchComplete = function(buffer) {
+        if (request) {
+            request.removeEventListener('progress', progressHandler);
+            request.removeEventListener('load', loadHandler);
+            request.removeEventListener('error', errorHandler);
+        }
+    }
+
+    function dispatchComplete(buffer) {
         emitter.emit('progress', 1);
         emitter.emit('loaded', buffer);
         emitter.emit('complete', buffer);
 
         removeListeners();
-    };
+    }
+
+    function progressHandler(event) {
+        if (event.lengthComputable) {
+            progress = event.loaded / event.total;
+            emitter.emit('progress', progress);
+        }
+    }
+
+    // error
+
+    function errorHandler(event) {
+        window.clearTimeout(timeout);
+
+        let message = event;
+
+        if (data && data.error) {
+            message = 'Media Error: ' + ERROR_STATE[data.error.code] + ' ' + url;
+        }
+
+        if (request) {
+            message = 'XHR Error: ' + request.status + ' ' + request.statusText + ' ' + url;
+        }
+
+        emitter.emit('error', message);
+
+        removeListeners();
+    }
+
+    function decodeArrayBuffer(arraybuffer) {
+        audioContext.decodeAudioData(arraybuffer, (buffer) => {
+            data = buffer;
+            request = null;
+            progress = 1;
+            dispatchComplete(buffer);
+        },
+        errorHandler
+        );
+    }
+
+    function loadHandler() {
+        decodeArrayBuffer(request.response);
+    }
+
+    function readyHandler() {
+        window.clearTimeout(timeout);
+        if (!data) {
+            return;
+        }
+        progress = 1;
+        dispatchComplete(data);
+    }
+
+    function cancel() {
+        removeListeners();
+
+        if (request && request.readyState !== 4) {
+            request.abort();
+        }
+        request = null;
+
+        window.clearTimeout(timeout);
+    }
+
+    function destroy() {
+        cancel();
+        request = null;
+        data = null;
+        audioContext = null;
+    }
 
     // audio buffer
 
-    var loadArrayBuffer = function() {
+    function loadArrayBuffer() {
+        if (url instanceof window.ArrayBuffer) {
+            decodeArrayBuffer(url);
+            return;
+        }
         request = new XMLHttpRequest();
         request.open('GET', url, true);
         request.responseType = 'arraybuffer';
@@ -38,36 +121,16 @@ function Loader(url) {
         request.addEventListener('load', loadHandler);
         request.addEventListener('error', errorHandler);
         request.send();
-    };
-
-    var progressHandler = function(event) {
-        if (event.lengthComputable) {
-            progress = event.loaded / event.total;
-            emitter.emit('progress', progress);
-        }
-    };
-
-    var loadHandler = function() {
-        audioContext.decodeAudioData(
-            request.response,
-            function(buffer) {
-                data = buffer;
-                request = null;
-                progress = 1;
-                dispatchComplete(buffer);
-            },
-            errorHandler
-        );
-    };
+    }
 
     // audio element
 
-    var loadAudioElement = function() {
-        if(!data || !data.tagName) {
+    function loadAudioElement() {
+        if (!data || !data.tagName) {
             data = document.createElement('audio');
         }
 
-        if(!isTouchLocked) {
+        if (!isTouchLocked) {
             // timeout because sometimes canplaythrough doesn't fire
             window.clearTimeout(timeout);
             timeout = window.setTimeout(readyHandler, 2000);
@@ -82,88 +145,31 @@ function Loader(url) {
         if (isTouchLocked) {
             dispatchComplete(data);
         }
-    };
+    }
 
-    var readyHandler = function() {
-        window.clearTimeout(timeout);
-        if(!data) { return; }
-        progress = 1;
-        dispatchComplete(data);
-    };
-
-    // error
-
-    var errorHandler = function(event) {
-        window.clearTimeout(timeout);
-
-        var message = event;
-
-        if(data && data.error) {
-            message = 'Media Error: ' + ERROR_STATE[data.error.code] + ' ' + url;
+    function start() {
+        if (audioContext) {
+            loadArrayBuffer();
+        } else {
+            loadAudioElement();
         }
-
-        if(request) {
-            message = 'XHR Error: ' + request.status + ' ' + request.statusText + ' ' + url;
-        }
-
-        emitter.emit('error', message);
-
-        removeListeners();
-    };
-
-    // clean up
-
-    var removeListeners = function() {
-        emitter.off('error');
-        emitter.off('progress');
-        emitter.off('complete');
-        emitter.off('loaded');
-
-        if(data && typeof data.removeEventListener === 'function') {
-            data.removeEventListener('canplaythrough', readyHandler);
-            data.removeEventListener('error', errorHandler);
-        }
-
-        if(request) {
-            request.removeEventListener('progress', progressHandler);
-            request.removeEventListener('load', loadHandler);
-            request.removeEventListener('error', errorHandler);
-        }
-    };
-
-    var cancel = function() {
-        removeListeners();
-
-        if(request && request.readyState !== 4) {
-          request.abort();
-        }
-        request = null;
-
-        window.clearTimeout(timeout);
-    };
-
-    var destroy = function() {
-        cancel();
-        request = null;
-        data = null;
-        audioContext = null;
-    };
+    }
 
     // reload
 
-    var load = function(newUrl) {
+    function load(newUrl) {
         url = newUrl;
         start();
-    };
+    }
 
-    var api = {
+    const api = {
         on: emitter.on.bind(emitter),
         once: emitter.once.bind(emitter),
         off: emitter.off.bind(emitter),
-        load: load,
-        start: start,
-        cancel: cancel,
-        destroy: destroy
+        load,
+        start,
+        cancel,
+        destroy
     };
 
     Object.defineProperties(api, {
@@ -193,69 +199,67 @@ function Loader(url) {
 }
 
 Loader.Group = function() {
-    var emitter = new Emitter(),
-        queue = [],
-        numLoaded = 0,
+    const emitter = new Emitter();
+    const queue = [];
+    let numLoaded = 0,
         numTotal = 0,
-        loader;
+        currentLoader;
 
-    var add = function(loader) {
-        queue.push(loader);
-        numTotal++;
-        return loader;
-    };
-
-    var start = function() {
-        numTotal = queue.length;
-        next();
-    };
-
-    var next = function() {
-        if(queue.length === 0) {
-            loader = null;
-            emitter.emit('complete');
-            return;
-        }
-
-        loader = queue.pop();
-        loader.on('progress', progressHandler);
-        loader.once('loaded', completeHandler);
-        loader.once('error', errorHandler);
-        loader.start();
-    };
-
-    var progressHandler = function(progress) {
-        var loaded = numLoaded + progress;
+    function progressHandler(progress) {
+        const loaded = numLoaded + progress;
         emitter.emit('progress', loaded / numTotal);
-    };
+    }
 
-    var completeHandler = function() {
+    function completeHandler() {
         numLoaded++;
         removeListeners();
         emitter.emit('progress', numLoaded / numTotal);
         next();
-    };
+    }
 
-    var errorHandler = function(e) {
+    function errorHandler(e) {
         console.error.call(console, e);
         removeListeners();
         emitter.emit('error', e);
         next();
-    };
+    }
 
-    var removeListeners = function() {
-        loader.off('progress', progressHandler);
-        loader.off('loaded', completeHandler);
-        loader.off('error', errorHandler);
-    };
+    function next() {
+        if (queue.length === 0) {
+            currentLoader = null;
+            emitter.emit('complete');
+            return;
+        }
+
+        currentLoader = queue.pop();
+        currentLoader.on('progress', progressHandler);
+        currentLoader.once('loaded', completeHandler);
+        currentLoader.once('error', errorHandler);
+        currentLoader.start();
+    }
+
+    function removeListeners() {
+        currentLoader.off('progress', progressHandler);
+        currentLoader.off('loaded', completeHandler);
+        currentLoader.off('error', errorHandler);
+    }
+
+    function add(loader) {
+        queue.push(loader);
+        numTotal++;
+        return loader;
+    }
+
+    function start() {
+        numTotal = queue.length;
+        next();
+    }
 
     return Object.freeze({
         on: emitter.on.bind(emitter),
         once: emitter.once.bind(emitter),
         off: emitter.off.bind(emitter),
-        add: add,
-        start: start
+        add,
+        start
     });
 };
-
-module.exports = Loader;
