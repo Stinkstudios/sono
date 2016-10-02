@@ -1,7 +1,7 @@
 {
   "name": "sono",
   "version": "0.1.8",
-  "description": "A library for making stuff with Web Audio",
+  "description": "A simple yet powerful JavaScript library for working with Web Audio",
   "keywords": [
     "WebAudio",
     "Web Audio",
@@ -10,7 +10,7 @@
     "audio",
     "sound"
   ],
-  "main": "src/sono.js",
+  "main": "dist/sono.js",
   "scripts": {
     "test": "karma start --single-run --browsers Firefox",
     "build": "NODE_ENV=production rollup -c && rollup -c",

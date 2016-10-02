@@ -1,6 +1,6 @@
 # sono
 
-[![NPM version](https://badge.fury.io/js/sono.svg)](http://badge.fury.io/js/sono) [![Build Status](https://secure.travis-ci.org/ianmcgregor/sono.png)](https://travis-ci.org/ianmcgregor/sono)
+[![NPM version](https://badge.fury.io/js/sono.svg)](http://badge.fury.io/js/sono) [![Build Status](https://travis-ci.org/Stinkdigital/sono.svg?branch=master)](https://travis-ci.org/Stinkdigital/sono)
 
 A library for making stuff with Web Audio
 
