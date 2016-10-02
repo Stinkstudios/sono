@@ -24,6 +24,7 @@ module.exports = function(config) {
         // list of files to exclude
         exclude: [
             // 'test/source.spec.js'
+            'test/playback.spec.js'
         ],
 
         // test results reporter to use

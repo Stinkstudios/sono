@@ -1,5 +1,5 @@
 describe('sono playback', function() {
-    this.timeout(5000);
+    this.timeout(10000);
 
     describe('create', function() {
         const config = {
@@ -33,72 +33,72 @@ describe('sono playback', function() {
         });
     });
 
-    // describe('play and end', function() {
-    //     var sound,
-    //         ended = false;
-    //
-    //     beforeEach(function(done) {
-    //         function onComplete(loadedSound) {
-    //             sound = loadedSound;
-    //             sound.on('ended', function() {
-    //                 ended = true;
-    //                 done();
-    //             });
-    //             sound.play();
-    //         }
-    //         sono.load({
-    //             url: [
-    //                 window.baseURL + 'hit.ogg',
-    //                 window.baseURL + 'hit.mp3'
-    //             ],
-    //             onComplete: onComplete,
-    //             onError: function(err) {
-    //                 console.log(err);
-    //             }
-    //         });
-    //     });
-    //
-    //     afterEach(function() {
-    //         sono.destroySound(sound.id);
-    //     });
-    //
-    //     it('should get ended callback', function() {
-    //         expect(sound)
-    //             .to.exist;
-    //         expect(ended)
-    //             .to.be.true;
-    //     });
-    // });
+    describe('play and end', function() {
+        var sound,
+            ended = false;
 
-    // describe('play when ready', function() {
-    //     var sound,
-    //         ended = false;
-    //
-    //     beforeEach(function(done) {
-    //         sound = sono.createSound({
-    //             url: [
-    //                 window.baseURL + 'select.ogg',
-    //                 window.baseURL + 'select.mp3'
-    //             ]
-    //         })
-    //         .on('ended', function() {
-    //             ended = true;
-    //             done();
-    //         })
-    //         .play(0.1, 0.1);
-    //     });
-    //
-    //     afterEach(function() {
-    //         sono.destroySound(sound);
-    //     });
-    //
-    //     it('should have played', function() {
-    //         expect(sound)
-    //             .to.exist;
-    //         expect(ended)
-    //             .to.be.true;
-    //     });
-    // });
+        beforeEach(function(done) {
+            function onComplete(loadedSound) {
+                sound = loadedSound;
+                sound.on('ended', function() {
+                    ended = true;
+                    done();
+                });
+                sound.play();
+            }
+            sono.load({
+                url: [
+                    window.baseURL + 'hit.ogg',
+                    window.baseURL + 'hit.mp3'
+                ],
+                onComplete: onComplete,
+                onError: function(err) {
+                    console.log(err);
+                }
+            });
+        });
+
+        afterEach(function() {
+            sono.destroySound(sound.id);
+        });
+
+        it('should get ended callback', function() {
+            expect(sound)
+                .to.exist;
+            expect(ended)
+                .to.be.true;
+        });
+    });
+
+    describe('play when ready', function() {
+        var sound,
+            ended = false;
+
+        beforeEach(function(done) {
+            sound = sono.createSound({
+                url: [
+                    window.baseURL + 'select.ogg',
+                    window.baseURL + 'select.mp3'
+                ]
+            })
+            .on('ended', function() {
+                ended = true;
+                done();
+            })
+            .play(0.1, 0.1);
+        });
+
+        afterEach(function() {
+            sono.destroySound(sound);
+        });
+
+        it('should have played', function() {
+            expect(sound)
+                .to.exist;
+            expect(ended)
+                .to.be.true;
+        });
+    });
 
     // Firefox 35 and less has a bug where audio param ramping does not change the readable value in the param itself
     // Fading still audibly affects the sound, but the value is untouched
