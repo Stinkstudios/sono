@@ -40,7 +40,7 @@ browser.handleTouchLock = function(context, onUnlock) {
         if (context && context.state === 'suspended') {
             context.resume()
                 .then(function() {
-                    const buffer = context.createBuffer(1, 1, 22050);
+                    const buffer = context.createBuffer(1, 1, 44100);
                     const source = context.createBufferSource();
                     source.buffer = buffer;
                     source.connect(context.destination);
