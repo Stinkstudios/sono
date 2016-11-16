@@ -52,7 +52,7 @@ var videoEl = document.querySelector('video');
 var videoElSound = sono.createSound(videoEl);
 ```
 
-[Further examples, covering all valid sound sources](docs/sono.md#createsound)
+[Further examples, covering all valid sound sources](docs/Sono.md#createsound)
 
 
 ### Adding effects
@@ -87,16 +87,16 @@ echo.delay = 0.5;
 echo.feedback = 0.9;
 ```
 
-[Further examples and full list of effects](docs/sono.md#effects)
+[Further examples and full list of effects](docs/Sono.md#effects)
 
 
 ### Further documentation
 
-[sound object api](docs/sono.md#sound)
+[sound object api](docs/Sono.md#sound)
 
-[loading sounds](docs/sono.md#load)
+[loading sounds](docs/Sono.md#load)
 
-[utils](docs/sono.md#utils)
+[utils](docs/Sono.md#utils)
 
 
 ## Dev setup
