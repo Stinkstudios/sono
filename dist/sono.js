@@ -44,7 +44,7 @@ browser.handleTouchLock = function (context, onUnlock) {
     function unlock() {
         if (context && context.state === 'suspended') {
             context.resume().then(function () {
-                var buffer = context.createBuffer(1, 1, 22050);
+                var buffer = context.createBuffer(1, 1, 44100);
                 var source = context.createBufferSource();
                 source.buffer = buffer;
                 source.connect(context.destination);
@@ -4295,7 +4295,7 @@ var utils = Object.freeze({
 });
 
 function Sono() {
-    var VERSION = '0.1.8';
+    var VERSION = '0.1.81';
     var context = utils.getContext();
     var destination = context ? context.destination : null;
     var group = new Group(context, destination);
