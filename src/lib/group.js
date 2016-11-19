@@ -181,6 +181,8 @@ export default function Group(context, destination) {
                     return;
                 }
 
+                value = Math.min(Math.max(value, 0), 1);
+
                 if (context) {
                     gain.gain.cancelScheduledValues(context.currentTime);
                     gain.gain.value = value;
@@ -188,7 +190,7 @@ export default function Group(context, destination) {
                 } else {
                     gain.gain.value = value;
                 }
-                sounds.forEach(function(sound) {
+                sounds.forEach((sound) => {
                     if (!sound.context) {
                         sound.groupVolume = value;
                     }

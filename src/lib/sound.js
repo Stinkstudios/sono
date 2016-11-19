@@ -336,6 +336,8 @@ export default function Sound(context, destination) {
                     return;
                 }
 
+                value = Math.min(Math.max(value, 0), 1);
+
                 const param = gain.gain;
 
                 if (context) {

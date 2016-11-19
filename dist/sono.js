@@ -1875,6 +1875,8 @@ function Group(context, destination) {
                     return;
                 }
 
+                value = Math.min(Math.max(value, 0), 1);
+
                 if (context) {
                     gain.gain.cancelScheduledValues(context.currentTime);
                     gain.gain.value = value;
@@ -2767,7 +2769,6 @@ function MediaSource(el, context, onEnded) {
         el.removeEventListener('ended', endedHandler);
         el.addEventListener('ended', endedHandler, false);
 
-        console.debug('el.readyState', el.readyState);
         if (el.readyState < 1) {
             el.removeEventListener('canplaythrough', readyHandler);
             el.addEventListener('canplaythrough', readyHandler, false);
@@ -3752,6 +3753,8 @@ function Sound(context, destination) {
                 if (isNaN(value)) {
                     return;
                 }
+
+                value = Math.min(Math.max(value, 0), 1);
 
                 var param = gain.gain;
 
