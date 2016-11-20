@@ -49,6 +49,7 @@ dploy.yaml
 !examples/audio/*.mp3
 !examples/audio/*.ogg
 examples/audio/other
+examples/temp.html
 node_modules/
 bower_components/
 .sass-cache/

@@ -4143,9 +4143,6 @@ function waveformer(config) {
     return update;
 }
 
-/*
- * audio ctx
- */
 var ctx = void 0;
 var offlineCtx = void 0;
 
@@ -4298,7 +4295,7 @@ var utils = Object.freeze({
 });
 
 function Sono() {
-    var VERSION = '0.1.81';
+    var VERSION = '0.1.82';
     var context = utils.getContext();
     var destination = context ? context.destination : null;
     var group = new Group(context, destination);
