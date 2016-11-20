@@ -2675,6 +2675,204 @@ function BufferSource(buffer, context, onEnded) {
     return Object.freeze(api);
 }
 
+function AudioSource(Type, data, context, onEnded) {
+    var sourceNode = context ? context.createGain() : null;
+    var api = {};
+    var pool = [];
+    var sources = [];
+    var numCreated = 0;
+
+    function createSourceNode() {
+        return sourceNode;
+    }
+
+    function source() {
+        return sources[0];
+    }
+
+    function disposeSource(src) {
+        src.stop();
+        pool.push(src);
+    }
+
+    function onSourceEnded(src) {
+        if (sources.length > 1) {
+            var index = sources.indexOf(src);
+            sources.splice(index, 1);
+        }
+        disposeSource(src);
+        onEnded();
+    }
+
+    function getSource() {
+        if (pool.length > 0) {
+            return pool.pop();
+        } else {
+            numCreated++;
+            if (data.tagName) {
+                return new Type(data.cloneNode(), context, onSourceEnded);
+            }
+            return new Type(data, context, onSourceEnded);
+        }
+    }
+
+    function play() {
+        var src = getSource();
+        if (sourceNode) {
+            src.sourceNode.connect(sourceNode);
+        }
+        if (src !== sources[0]) {
+            sources.push(src);
+        }
+        src.play();
+        console.debug('numCreated:', numCreated);
+        console.debug('sources.length:', sources.length);
+        console.debug('pool.length:', pool.length);
+    }
+
+    function stop() {
+        while (sources.length > 1) {
+            disposeSource(sources.pop());
+        }
+    }
+
+    function pause() {
+        // pause all or keep last of kill reset?
+        sources.forEach(function (src) {
+            return src.pause();
+        });
+    }
+
+    function load(url) {
+        stop();
+        pool.length = 0;
+        if (sources.length) {
+            sources[0].load(url);
+        }
+    }
+
+    function fade(volume, duration) {
+        sources.forEach(function (src) {
+            return src.fade(volume, duration);
+        });
+    }
+
+    function destroy() {
+        sources.forEach(function (src) {
+            return src.destroy();
+        });
+        pool.length = 0;
+        sources.length = 0;
+    }
+
+    /*
+     * Getters & Setters
+     */
+
+    Object.defineProperties(api, {
+        play: {
+            value: play
+        },
+        pause: {
+            value: pause
+        },
+        stop: {
+            value: stop
+        },
+        load: {
+            value: load
+        },
+        fade: {
+            value: fade
+        },
+        destroy: {
+            value: destroy
+        },
+        currentTime: {
+            get: function get() {
+                return source() && source().currentTime || 0;
+            }
+        },
+        duration: {
+            get: function get() {
+                return source() && source().duration || 0;
+            }
+        },
+        ended: {
+            get: function get() {
+                return sources.every(function (src) {
+                    return src.ended;
+                });
+            }
+        },
+        loop: {
+            get: function get() {
+                return source() && source().loop;
+            },
+            set: function set(value) {
+                sources.forEach(function (src) {
+                    return src.loop = !!value;
+                });
+            }
+        },
+        paused: {
+            get: function get() {
+                return source() && source().paused;
+            }
+        },
+        playbackRate: {
+            get: function get() {
+                return source() && source().playbackRate;
+            },
+            set: function set(value) {
+                sources.forEach(function (src) {
+                    return src.playbackRate = value;
+                });
+            }
+        },
+        playing: {
+            get: function get() {
+                return source() && source().playing;
+            }
+        },
+        progress: {
+            get: function get() {
+                return source() && source().progress;
+            }
+        },
+        sourceNode: {
+            get: function get() {
+                return createSourceNode();
+            }
+        },
+        volume: {
+            get: function get() {
+                return source() && source().volume;
+            },
+            set: function set(value) {
+                sources.forEach(function (src) {
+                    return src.volume = value;
+                });
+            }
+        },
+        groupVolume: {
+            get: function get() {
+                return source() && source().groupVolume;
+            },
+            set: function set(value) {
+                if (source() && !source().hasOwnProperty('groupVolume')) {
+                    return;
+                }
+                sources.forEach(function (src) {
+                    return src.groupVolume = value;
+                });
+            }
+        }
+    });
+
+    return Object.freeze(api);
+}
+
 function MediaSource(el, context, onEnded) {
     var api = {};
     var ended = false,
@@ -3450,12 +3648,10 @@ function Sound(context, destination) {
     function createSource(value) {
         data = value;
 
-        if (file.isAudioBuffer(data)) {
-            source = new BufferSource(data, context, function () {
-                return sound.emit('ended', sound);
-            });
-        } else if (file.isMediaElement(data)) {
-            source = new MediaSource(data, context, function () {
+        var isAudioBuffer = file.isAudioBuffer(data);
+        if (isAudioBuffer || file.isMediaElement(data)) {
+            var Fn = isAudioBuffer ? BufferSource : MediaSource;
+            source = new AudioSource(Fn, data, context, function () {
                 return sound.emit('ended', sound);
             });
         } else if (file.isMediaStream(data)) {
@@ -4143,9 +4339,6 @@ function waveformer(config) {
     return update;
 }
 
-/*
- * audio ctx
- */
 var ctx = void 0;
 var offlineCtx = void 0;
 

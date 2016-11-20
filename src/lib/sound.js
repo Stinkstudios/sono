@@ -3,6 +3,7 @@ import Effect from './effect';
 import Emitter from './utils/emitter';
 import file from './utils/file';
 import Loader from './utils/loader';
+import AudioSource from './source/audio-source';
 import MediaSource from './source/media-source';
 import MicrophoneSource from './source/microphone-source';
 import OscillatorSource from './source/oscillator-source';
@@ -36,10 +37,10 @@ export default function Sound(context, destination) {
     function createSource(value) {
         data = value;
 
-        if (file.isAudioBuffer(data)) {
-            source = new BufferSource(data, context, () => sound.emit('ended', sound));
-        } else if (file.isMediaElement(data)) {
-            source = new MediaSource(data, context, () => sound.emit('ended', sound));
+        const isAudioBuffer = file.isAudioBuffer(data);
+        if (isAudioBuffer || file.isMediaElement(data)) {
+            const Fn = isAudioBuffer ? BufferSource : MediaSource;
+            source = new AudioSource(Fn, data, context, () => sound.emit('ended', sound));
         } else if (file.isMediaStream(data)) {
             source = new MicrophoneSource(data, context);
         } else if (file.isOscillatorType((data && data.type) || data)) {
