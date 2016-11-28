@@ -8,25 +8,44 @@ let ctx;
 let offlineCtx;
 
 function getContext() {
-    if (ctx) {
-        return ctx;
-    }
+	if (ctx) {
+		return ctx;
+	}
 
-    const Ctx = window.AudioContext || window.webkitAudioContext;
+	const desiredSampleRate = 44100;
 
-    ctx = (Ctx ? new Ctx() : null);
+	const Ctx = window.AudioContext || window.webkitAudioContext;
 
-    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+	ctx = (Ctx ? new Ctx() : null);
 
-    const isSuspended = ctx && ctx.state === 'suspended';
+	// Check if hack is necessary. Only occurs in iOS6+ devices
+	// and only when you first boot the iPhone, or play a audio/video
+	// with a different sample rate
+	// https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
+	if (/(iPhone|iPad)/i.test(navigator.userAgent) &&
+		ctx.sampleRate !== desiredSampleRate) {
+		const buffer = ctx.createBuffer(1, 1, desiredSampleRate);
+		const dummy = ctx.createBufferSource();
+		dummy.buffer = buffer;
+		dummy.connect(ctx.destination);
+		dummy.start(0);
+		dummy.disconnect();
 
-    if (isSuspended && typeof ctx.resume === 'function') {
-        window.setTimeout(function() {
-            ctx.resume();
-        }, 1000);
-    }
+		ctx.close() // dispose old context
+		ctx = (Ctx ? new Ctx() : null);
+	}
 
-    return ctx;
+	// Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+
+	const isSuspended = ctx && ctx.state === 'suspended';
+
+	if (isSuspended && typeof ctx.resume === 'function') {
+		window.setTimeout(function() {
+			ctx.resume();
+		}, 1000);
+	}
+
+	return ctx;
 }
 
 /*
@@ -35,18 +54,18 @@ the audio to the device hardware;
 instead, it generates it, as fast as it can, and outputs the result to an AudioBuffer.
 */
 function getOfflineContext(numOfChannels, length, sampleRate) {
-    if (offlineCtx) {
-        return offlineCtx;
-    }
-    numOfChannels = numOfChannels || 2;
-    sampleRate = sampleRate || 44100;
-    length = sampleRate || numOfChannels;
+	if (offlineCtx) {
+		return offlineCtx;
+	}
+	numOfChannels = numOfChannels || 2;
+	sampleRate = sampleRate || 44100;
+	length = sampleRate || numOfChannels;
 
-    const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+	const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
-    offlineCtx = (OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null);
+	offlineCtx = (OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null);
 
-    return offlineCtx;
+	return offlineCtx;
 }
 
 
@@ -55,17 +74,17 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  */
 
 function cloneBuffer(buffer) {
-    if (!ctx) {
-        return buffer;
-    }
+	if (!ctx) {
+		return buffer;
+	}
 
-    const numChannels = buffer.numberOfChannels,
-        cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
-    for (let i = 0; i < numChannels; i++) {
-        cloned.getChannelData(i)
-            .set(buffer.getChannelData(i));
-    }
-    return cloned;
+	const numChannels = buffer.numberOfChannels,
+		cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+	for (let i = 0; i < numChannels; i++) {
+		cloned.getChannelData(i)
+			.set(buffer.getChannelData(i));
+	}
+	return cloned;
 }
 
 /*
@@ -73,11 +92,11 @@ function cloneBuffer(buffer) {
  */
 
 function reverseBuffer(buffer) {
-    const numChannels = buffer.numberOfChannels;
-    for (let i = 0; i < numChannels; i++) {
-        Array.prototype.reverse.call(buffer.getChannelData(i));
-    }
-    return buffer;
+	const numChannels = buffer.numberOfChannels;
+	for (let i = 0; i < numChannels; i++) {
+		Array.prototype.reverse.call(buffer.getChannelData(i));
+	}
+	return buffer;
 }
 
 /*
@@ -85,17 +104,17 @@ function reverseBuffer(buffer) {
  */
 
 function ramp(param, fromValue, toValue, duration, linear) {
-    if (!ctx) {
-        return;
-    }
+	if (!ctx) {
+		return;
+	}
 
-    param.setValueAtTime(fromValue, ctx.currentTime);
+	param.setValueAtTime(fromValue, ctx.currentTime);
 
-    if (linear) {
-        param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
-    } else {
-        param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
-    }
+	if (linear) {
+		param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
+	} else {
+		param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
+	}
 }
 
 /*
@@ -103,20 +122,20 @@ function ramp(param, fromValue, toValue, duration, linear) {
  */
 
 function getFrequency(value) {
-    if (!ctx) {
-        return 0;
-    }
-    // get frequency by passing number from 0 to 1
-    // Clamp the frequency between the minimum value (40 Hz) and half of the
-    // sampling rate.
-    const minValue = 40;
-    const maxValue = ctx.sampleRate / 2;
-    // Logarithm (base 2) to compute how many octaves fall in the range.
-    const numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-    // Compute a multiplier from 0 to 1 based on an exponential scale.
-    const multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-    // Get back to the frequency value between min and max.
-    return maxValue * multiplier;
+	if (!ctx) {
+		return 0;
+	}
+	// get frequency by passing number from 0 to 1
+	// Clamp the frequency between the minimum value (40 Hz) and half of the
+	// sampling rate.
+	const minValue = 40;
+	const maxValue = ctx.sampleRate / 2;
+	// Logarithm (base 2) to compute how many octaves fall in the range.
+	const numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+	// Compute a multiplier from 0 to 1 based on an exponential scale.
+	const multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+	// Get back to the frequency value between min and max.
+	return maxValue * multiplier;
 }
 
 /*
@@ -124,7 +143,7 @@ function getFrequency(value) {
  */
 
 function microphone(connected, denied, error) {
-    return new Microphone(connected, denied, error);
+	return new Microphone(connected, denied, error);
 }
 
 /*
@@ -132,25 +151,25 @@ function microphone(connected, denied, error) {
  */
 
 function timeCode(seconds, delim = ':') {
-    // const h = Math.floor(seconds / 3600);
-    // const m = Math.floor((seconds % 3600) / 60);
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor((seconds % 3600) % 60);
-    // const hr = (h < 10 ? '0' + h + delim : h + delim);
-    const mn = (m < 10 ? '0' + m : m) + delim;
-    const sc = (s < 10 ? '0' + s : s);
-    // return hr + mn + sc;
-    return mn + sc;
+	// const h = Math.floor(seconds / 3600);
+	// const m = Math.floor((seconds % 3600) / 60);
+	const m = Math.floor(seconds / 60);
+	const s = Math.floor((seconds % 3600) % 60);
+	// const hr = (h < 10 ? '0' + h + delim : h + delim);
+	const mn = (m < 10 ? '0' + m : m) + delim;
+	const sc = (s < 10 ? '0' + s : s);
+	// return hr + mn + sc;
+	return mn + sc;
 }
 
 export default Object.freeze({
-    getContext,
-    getOfflineContext,
-    cloneBuffer,
-    reverseBuffer,
-    ramp,
-    getFrequency,
-    microphone,
-    timeCode,
-    waveformer
+	getContext,
+	getOfflineContext,
+	cloneBuffer,
+	reverseBuffer,
+	ramp,
+	getFrequency,
+	microphone,
+	timeCode,
+	waveformer
 });

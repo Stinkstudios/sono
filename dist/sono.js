@@ -1,7 +1,7 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global.sono = factory());
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.sono = factory());
 }(this, (function () { 'use strict';
 
 var browser = {};
@@ -71,8 +71,14 @@ browser.handleTouchLock = function (context, onUnlock) {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
 };
+
+
+
+
+
+
 
 
 
@@ -708,7 +714,7 @@ function FakeContext() {
 // The greater the value is, the greater is the peak
 
 function Filter(context) {
-    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     // Frequency between 40Hz and half of the sampling rate
     var minFrequency = 40;
@@ -1073,7 +1079,7 @@ Panner.defaults = {
 };
 
 function Phaser(context) {
-    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     var stages = number(config.stages, 8);
     var filters = [];
@@ -1248,7 +1254,7 @@ function Recorder(context, passThrough) {
 }
 
 function Reverb(context) {
-    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     var rate = context.sampleRate;
 
@@ -1602,7 +1608,7 @@ function Effect(context) {
     }
 
     function script() {
-        var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         // bufferSize 256 - 16384 (pow 2)
         var bufferSize = config.bufferSize || 1024;
@@ -2543,7 +2549,7 @@ function BufferSource(buffer, context, onEnded) {
     }
 
     function play(delay) {
-        var offset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+        var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
         if (playing) {
             return;
@@ -4143,29 +4149,50 @@ function waveformer(config) {
     return update;
 }
 
+/*
+ * audio ctx
+ */
 var ctx = void 0;
 var offlineCtx = void 0;
 
 function getContext() {
-    if (ctx) {
-        return ctx;
-    }
+	if (ctx) {
+		return ctx;
+	}
 
-    var Ctx = window.AudioContext || window.webkitAudioContext;
+	var desiredSampleRate = 44100;
 
-    ctx = Ctx ? new Ctx() : null;
+	var Ctx = window.AudioContext || window.webkitAudioContext;
 
-    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+	ctx = Ctx ? new Ctx() : null;
 
-    var isSuspended = ctx && ctx.state === 'suspended';
+	// Check if hack is necessary. Only occurs in iOS6+ devices
+	// and only when you first boot the iPhone, or play a audio/video
+	// with a different sample rate
+	// https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
+	if (/(iPhone|iPad)/i.test(navigator.userAgent) && ctx.sampleRate !== desiredSampleRate) {
+		var buffer = ctx.createBuffer(1, 1, desiredSampleRate);
+		var dummy = ctx.createBufferSource();
+		dummy.buffer = buffer;
+		dummy.connect(ctx.destination);
+		dummy.start(0);
+		dummy.disconnect();
 
-    if (isSuspended && typeof ctx.resume === 'function') {
-        window.setTimeout(function () {
-            ctx.resume();
-        }, 1000);
-    }
+		ctx.close(); // dispose old context
+		ctx = Ctx ? new Ctx() : null;
+	}
 
-    return ctx;
+	// Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+
+	var isSuspended = ctx && ctx.state === 'suspended';
+
+	if (isSuspended && typeof ctx.resume === 'function') {
+		window.setTimeout(function () {
+			ctx.resume();
+		}, 1000);
+	}
+
+	return ctx;
 }
 
 /*
@@ -4174,18 +4201,18 @@ the audio to the device hardware;
 instead, it generates it, as fast as it can, and outputs the result to an AudioBuffer.
 */
 function getOfflineContext(numOfChannels, length, sampleRate) {
-    if (offlineCtx) {
-        return offlineCtx;
-    }
-    numOfChannels = numOfChannels || 2;
-    sampleRate = sampleRate || 44100;
-    length = sampleRate || numOfChannels;
+	if (offlineCtx) {
+		return offlineCtx;
+	}
+	numOfChannels = numOfChannels || 2;
+	sampleRate = sampleRate || 44100;
+	length = sampleRate || numOfChannels;
 
-    var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+	var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
-    offlineCtx = OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null;
+	offlineCtx = OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null;
 
-    return offlineCtx;
+	return offlineCtx;
 }
 
 /*
@@ -4193,16 +4220,16 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  */
 
 function cloneBuffer(buffer) {
-    if (!ctx) {
-        return buffer;
-    }
+	if (!ctx) {
+		return buffer;
+	}
 
-    var numChannels = buffer.numberOfChannels,
-        cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
-    for (var i = 0; i < numChannels; i++) {
-        cloned.getChannelData(i).set(buffer.getChannelData(i));
-    }
-    return cloned;
+	var numChannels = buffer.numberOfChannels,
+	    cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+	for (var i = 0; i < numChannels; i++) {
+		cloned.getChannelData(i).set(buffer.getChannelData(i));
+	}
+	return cloned;
 }
 
 /*
@@ -4210,11 +4237,11 @@ function cloneBuffer(buffer) {
  */
 
 function reverseBuffer(buffer) {
-    var numChannels = buffer.numberOfChannels;
-    for (var i = 0; i < numChannels; i++) {
-        Array.prototype.reverse.call(buffer.getChannelData(i));
-    }
-    return buffer;
+	var numChannels = buffer.numberOfChannels;
+	for (var i = 0; i < numChannels; i++) {
+		Array.prototype.reverse.call(buffer.getChannelData(i));
+	}
+	return buffer;
 }
 
 /*
@@ -4222,17 +4249,17 @@ function reverseBuffer(buffer) {
  */
 
 function ramp(param, fromValue, toValue, duration, linear) {
-    if (!ctx) {
-        return;
-    }
+	if (!ctx) {
+		return;
+	}
 
-    param.setValueAtTime(fromValue, ctx.currentTime);
+	param.setValueAtTime(fromValue, ctx.currentTime);
 
-    if (linear) {
-        param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
-    } else {
-        param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
-    }
+	if (linear) {
+		param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
+	} else {
+		param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
+	}
 }
 
 /*
@@ -4240,20 +4267,20 @@ function ramp(param, fromValue, toValue, duration, linear) {
  */
 
 function getFrequency(value) {
-    if (!ctx) {
-        return 0;
-    }
-    // get frequency by passing number from 0 to 1
-    // Clamp the frequency between the minimum value (40 Hz) and half of the
-    // sampling rate.
-    var minValue = 40;
-    var maxValue = ctx.sampleRate / 2;
-    // Logarithm (base 2) to compute how many octaves fall in the range.
-    var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-    // Compute a multiplier from 0 to 1 based on an exponential scale.
-    var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-    // Get back to the frequency value between min and max.
-    return maxValue * multiplier;
+	if (!ctx) {
+		return 0;
+	}
+	// get frequency by passing number from 0 to 1
+	// Clamp the frequency between the minimum value (40 Hz) and half of the
+	// sampling rate.
+	var minValue = 40;
+	var maxValue = ctx.sampleRate / 2;
+	// Logarithm (base 2) to compute how many octaves fall in the range.
+	var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+	// Compute a multiplier from 0 to 1 based on an exponential scale.
+	var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+	// Get back to the frequency value between min and max.
+	return maxValue * multiplier;
 }
 
 /*
@@ -4261,7 +4288,7 @@ function getFrequency(value) {
  */
 
 function microphone(connected, denied, error) {
-    return new Microphone(connected, denied, error);
+	return new Microphone(connected, denied, error);
 }
 
 /*
@@ -4269,29 +4296,29 @@ function microphone(connected, denied, error) {
  */
 
 function timeCode(seconds) {
-    var delim = arguments.length <= 1 || arguments[1] === undefined ? ':' : arguments[1];
+	var delim = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ':';
 
-    // const h = Math.floor(seconds / 3600);
-    // const m = Math.floor((seconds % 3600) / 60);
-    var m = Math.floor(seconds / 60);
-    var s = Math.floor(seconds % 3600 % 60);
-    // const hr = (h < 10 ? '0' + h + delim : h + delim);
-    var mn = (m < 10 ? '0' + m : m) + delim;
-    var sc = s < 10 ? '0' + s : s;
-    // return hr + mn + sc;
-    return mn + sc;
+	// const h = Math.floor(seconds / 3600);
+	// const m = Math.floor((seconds % 3600) / 60);
+	var m = Math.floor(seconds / 60);
+	var s = Math.floor(seconds % 3600 % 60);
+	// const hr = (h < 10 ? '0' + h + delim : h + delim);
+	var mn = (m < 10 ? '0' + m : m) + delim;
+	var sc = s < 10 ? '0' + s : s;
+	// return hr + mn + sc;
+	return mn + sc;
 }
 
 var utils = Object.freeze({
-    getContext: getContext,
-    getOfflineContext: getOfflineContext,
-    cloneBuffer: cloneBuffer,
-    reverseBuffer: reverseBuffer,
-    ramp: ramp,
-    getFrequency: getFrequency,
-    microphone: microphone,
-    timeCode: timeCode,
-    waveformer: waveformer
+	getContext: getContext,
+	getOfflineContext: getOfflineContext,
+	cloneBuffer: cloneBuffer,
+	reverseBuffer: reverseBuffer,
+	ramp: ramp,
+	getFrequency: getFrequency,
+	microphone: microphone,
+	timeCode: timeCode,
+	waveformer: waveformer
 });
 
 function Sono() {
