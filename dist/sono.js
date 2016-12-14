@@ -1,7 +1,7 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global.sono = factory());
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.sono = factory());
 }(this, (function () { 'use strict';
 
 var browser = {};
@@ -1815,11 +1815,31 @@ function Group(context, destination) {
             // param.exponentialRampToValueAtTime(Math.max(volume, 0.0001), time + duration);
         } else {
             sounds.forEach(function (sound) {
-                sound.fade(volume, duration);
+                return sound.fade(volume, duration);
             });
         }
 
         return group;
+    }
+
+    /*
+     * Load
+     */
+
+    function load() {
+        sounds.forEach(function (sound) {
+            return sound.load(null, true);
+        });
+    }
+
+    /*
+     * Unload
+     */
+
+    function unload() {
+        sounds.forEach(function (sound) {
+            return sound.unload();
+        });
     }
 
     /*
@@ -1849,6 +1869,8 @@ function Group(context, destination) {
         mute: mute,
         unMute: unMute,
         fade: fade,
+        load: load,
+        unload: unload,
         destroy: destroy
     };
 
@@ -2224,7 +2246,7 @@ var Emitter = function (_EventEmitter) {
     return Emitter;
 }(EventEmitter);
 
-function Loader(url) {
+function Loader(url, deferLoad) {
     var ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
     var emitter = new Emitter();
     var progress = 0,
@@ -2370,6 +2392,11 @@ function Loader(url) {
     }
 
     function start() {
+        var force = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+        if (deferLoad && !force) {
+            return;
+        }
         if (audioContext) {
             loadArrayBuffer();
         } else {
@@ -2440,7 +2467,7 @@ Loader.Group = function () {
     }
 
     function errorHandler(e) {
-        console.error.call(console, e);
+        console.error(e);
         removeListeners();
         emitter.emit('error', e);
         next();
@@ -3621,19 +3648,21 @@ function waveform() {
     };
 }
 
-function Sound(context, destination) {
-    var id = void 0,
-        data = void 0,
-        effect = new Effect(context),
-        gain = effect.gain(),
-        wave = waveform(),
-        isTouchLocked = false,
-        loader = void 0,
-        loop = false,
-        playbackRate = 1,
-        playWhenReady = void 0,
-        source = void 0;
+function Sound(config) {
+    var context = config.context;
+    var destination = config.destination;
+    var effect = new Effect(context);
+    var gain = effect.gain();
+    var wave = waveform();
 
+    var id = null;
+    var data = null;
+    var isTouchLocked = false;
+    var loader = null;
+    var loop = false;
+    var playbackRate = 1;
+    var playWhenReady = null;
+    var source = null;
     var sound = null;
 
     if (context) {
@@ -3677,19 +3706,36 @@ function Sound(context, destination) {
      * Load
      */
 
-    function load(config) {
-        var src = file.getSupportedFile(config.src || config.url || config.data || config);
+    function onLoad(fileData) {
+        createSource(fileData);
+        sound.emit('loaded', sound);
+    }
+
+    function onLoadError(err) {
+        sound.emit('error', sound, err);
+    }
+
+    function load() {
+        var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+        var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+        var skipLoad = !force && !source && !!config.deferLoad;
+
+        if (newConfig) {
+            var src = file.getSupportedFile(config.src || config.url || config.data || config) || config.src;
+            config = Object.assign(config, newConfig, { src: src });
+        }
 
         if (source && data && data.tagName) {
-            source.load(src);
+            source.load(config.src);
         } else {
-            loader = loader || new Loader(src);
+            loader = loader || new Loader(config.src, skipLoad);
             loader.audioContext = !!config.asMediaElement ? null : context;
             loader.isTouchLocked = isTouchLocked;
-            loader.once('loaded', function (fileData) {
-                createSource(fileData);
-                sound.emit('loaded', sound);
-            });
+            loader.off('loaded', onLoad);
+            loader.once('loaded', onLoad);
+            loader.off('error', onLoadError);
+            loader.on('error', onLoadError);
         }
         return sound;
     }
@@ -3705,6 +3751,12 @@ function Sound(context, destination) {
                     play(delay, offset);
                 }
             };
+            if (!!config.deferLoad) {
+                if (!loader) {
+                    load(null, true);
+                }
+                loader.start(true);
+            }
             return sound;
         }
         playWhenReady = null;
@@ -3763,7 +3815,24 @@ function Sound(context, destination) {
             param.value = volume;
         }
 
+        sound.emit('fade', sound, volume);
+
         return sound;
+    }
+
+    function unload() {
+        source && source.destroy();
+        loader && loader.destroy();
+        data = null;
+        playWhenReady = null;
+        source = null;
+        loader = null;
+        config.deferLoad = true;
+        sound.emit('unload', sound);
+    }
+
+    function reload() {
+        load(null, true);
     }
 
     /*
@@ -3774,17 +3843,22 @@ function Sound(context, destination) {
         source && source.destroy();
         effect && effect.destroy();
         gain && gain.disconnect();
+        loader && loader.off('loaded');
+        loader && loader.off('error');
         loader && loader.destroy();
         sound.off('loaded');
         sound.off('ended');
+        sound.off('error');
         gain = null;
         context = null;
+        destination = null;
         data = null;
         playWhenReady = null;
         source = null;
         effect = null;
         loader = null;
         wave = null;
+        config = null;
         sound.emit('destroy', sound);
         sound.off('destroy');
     }
@@ -3813,6 +3887,12 @@ function Sound(context, destination) {
         },
         fade: {
             value: fade
+        },
+        unload: {
+            value: unload
+        },
+        reload: {
+            value: reload
         },
         destroy: {
             value: destroy
@@ -3902,6 +3982,11 @@ function Sound(context, destination) {
                 if (source && source.hasOwnProperty('loop') && source.loop !== loop) {
                     source.loop = loop;
                 }
+            }
+        },
+        config: {
+            get: function get() {
+                return config;
             }
         },
         paused: {
@@ -3994,7 +4079,7 @@ function Sound(context, destination) {
         }
     });
 
-    return Object.freeze(sound);
+    return sound;
 }
 
 // expose for unit tests
@@ -4339,29 +4424,50 @@ function waveformer(config) {
     return update;
 }
 
+/*
+ * audio ctx
+ */
 var ctx = void 0;
 var offlineCtx = void 0;
 
 function getContext() {
-    if (ctx) {
-        return ctx;
-    }
+	if (ctx) {
+		return ctx;
+	}
 
-    var Ctx = window.AudioContext || window.webkitAudioContext;
+	var desiredSampleRate = 44100;
 
-    ctx = Ctx ? new Ctx() : null;
+	var Ctx = window.AudioContext || window.webkitAudioContext;
 
-    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+	ctx = Ctx ? new Ctx() : null;
 
-    var isSuspended = ctx && ctx.state === 'suspended';
+	// Check if hack is necessary. Only occurs in iOS6+ devices
+	// and only when you first boot the iPhone, or play a audio/video
+	// with a different sample rate
+	// https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
+	if (/(iPhone|iPad)/i.test(navigator.userAgent) && ctx.sampleRate !== desiredSampleRate) {
+		var buffer = ctx.createBuffer(1, 1, desiredSampleRate);
+		var dummy = ctx.createBufferSource();
+		dummy.buffer = buffer;
+		dummy.connect(ctx.destination);
+		dummy.start(0);
+		dummy.disconnect();
 
-    if (isSuspended && typeof ctx.resume === 'function') {
-        window.setTimeout(function () {
-            ctx.resume();
-        }, 1000);
-    }
+		ctx.close(); // dispose old context
+		ctx = Ctx ? new Ctx() : null;
+	}
 
-    return ctx;
+	// Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+
+	var isSuspended = ctx && ctx.state === 'suspended';
+
+	if (isSuspended && typeof ctx.resume === 'function') {
+		window.setTimeout(function () {
+			ctx.resume();
+		}, 1000);
+	}
+
+	return ctx;
 }
 
 /*
@@ -4370,18 +4476,18 @@ the audio to the device hardware;
 instead, it generates it, as fast as it can, and outputs the result to an AudioBuffer.
 */
 function getOfflineContext(numOfChannels, length, sampleRate) {
-    if (offlineCtx) {
-        return offlineCtx;
-    }
-    numOfChannels = numOfChannels || 2;
-    sampleRate = sampleRate || 44100;
-    length = sampleRate || numOfChannels;
+	if (offlineCtx) {
+		return offlineCtx;
+	}
+	numOfChannels = numOfChannels || 2;
+	sampleRate = sampleRate || 44100;
+	length = sampleRate || numOfChannels;
 
-    var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+	var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
-    offlineCtx = OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null;
+	offlineCtx = OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null;
 
-    return offlineCtx;
+	return offlineCtx;
 }
 
 /*
@@ -4389,16 +4495,16 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  */
 
 function cloneBuffer(buffer) {
-    if (!ctx) {
-        return buffer;
-    }
+	if (!ctx) {
+		return buffer;
+	}
 
-    var numChannels = buffer.numberOfChannels,
-        cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
-    for (var i = 0; i < numChannels; i++) {
-        cloned.getChannelData(i).set(buffer.getChannelData(i));
-    }
-    return cloned;
+	var numChannels = buffer.numberOfChannels,
+	    cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+	for (var i = 0; i < numChannels; i++) {
+		cloned.getChannelData(i).set(buffer.getChannelData(i));
+	}
+	return cloned;
 }
 
 /*
@@ -4406,11 +4512,11 @@ function cloneBuffer(buffer) {
  */
 
 function reverseBuffer(buffer) {
-    var numChannels = buffer.numberOfChannels;
-    for (var i = 0; i < numChannels; i++) {
-        Array.prototype.reverse.call(buffer.getChannelData(i));
-    }
-    return buffer;
+	var numChannels = buffer.numberOfChannels;
+	for (var i = 0; i < numChannels; i++) {
+		Array.prototype.reverse.call(buffer.getChannelData(i));
+	}
+	return buffer;
 }
 
 /*
@@ -4418,17 +4524,17 @@ function reverseBuffer(buffer) {
  */
 
 function ramp(param, fromValue, toValue, duration, linear) {
-    if (!ctx) {
-        return;
-    }
+	if (!ctx) {
+		return;
+	}
 
-    param.setValueAtTime(fromValue, ctx.currentTime);
+	param.setValueAtTime(fromValue, ctx.currentTime);
 
-    if (linear) {
-        param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
-    } else {
-        param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
-    }
+	if (linear) {
+		param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
+	} else {
+		param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
+	}
 }
 
 /*
@@ -4436,20 +4542,20 @@ function ramp(param, fromValue, toValue, duration, linear) {
  */
 
 function getFrequency(value) {
-    if (!ctx) {
-        return 0;
-    }
-    // get frequency by passing number from 0 to 1
-    // Clamp the frequency between the minimum value (40 Hz) and half of the
-    // sampling rate.
-    var minValue = 40;
-    var maxValue = ctx.sampleRate / 2;
-    // Logarithm (base 2) to compute how many octaves fall in the range.
-    var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-    // Compute a multiplier from 0 to 1 based on an exponential scale.
-    var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-    // Get back to the frequency value between min and max.
-    return maxValue * multiplier;
+	if (!ctx) {
+		return 0;
+	}
+	// get frequency by passing number from 0 to 1
+	// Clamp the frequency between the minimum value (40 Hz) and half of the
+	// sampling rate.
+	var minValue = 40;
+	var maxValue = ctx.sampleRate / 2;
+	// Logarithm (base 2) to compute how many octaves fall in the range.
+	var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+	// Compute a multiplier from 0 to 1 based on an exponential scale.
+	var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+	// Get back to the frequency value between min and max.
+	return maxValue * multiplier;
 }
 
 /*
@@ -4457,7 +4563,7 @@ function getFrequency(value) {
  */
 
 function microphone(connected, denied, error) {
-    return new Microphone(connected, denied, error);
+	return new Microphone(connected, denied, error);
 }
 
 /*
@@ -4465,33 +4571,33 @@ function microphone(connected, denied, error) {
  */
 
 function timeCode(seconds) {
-    var delim = arguments.length <= 1 || arguments[1] === undefined ? ':' : arguments[1];
+	var delim = arguments.length <= 1 || arguments[1] === undefined ? ':' : arguments[1];
 
-    // const h = Math.floor(seconds / 3600);
-    // const m = Math.floor((seconds % 3600) / 60);
-    var m = Math.floor(seconds / 60);
-    var s = Math.floor(seconds % 3600 % 60);
-    // const hr = (h < 10 ? '0' + h + delim : h + delim);
-    var mn = (m < 10 ? '0' + m : m) + delim;
-    var sc = s < 10 ? '0' + s : s;
-    // return hr + mn + sc;
-    return mn + sc;
+	// const h = Math.floor(seconds / 3600);
+	// const m = Math.floor((seconds % 3600) / 60);
+	var m = Math.floor(seconds / 60);
+	var s = Math.floor(seconds % 3600 % 60);
+	// const hr = (h < 10 ? '0' + h + delim : h + delim);
+	var mn = (m < 10 ? '0' + m : m) + delim;
+	var sc = s < 10 ? '0' + s : s;
+	// return hr + mn + sc;
+	return mn + sc;
 }
 
 var utils = Object.freeze({
-    getContext: getContext,
-    getOfflineContext: getOfflineContext,
-    cloneBuffer: cloneBuffer,
-    reverseBuffer: reverseBuffer,
-    ramp: ramp,
-    getFrequency: getFrequency,
-    microphone: microphone,
-    timeCode: timeCode,
-    waveformer: waveformer
+	getContext: getContext,
+	getOfflineContext: getOfflineContext,
+	cloneBuffer: cloneBuffer,
+	reverseBuffer: reverseBuffer,
+	ramp: ramp,
+	getFrequency: getFrequency,
+	microphone: microphone,
+	timeCode: timeCode,
+	waveformer: waveformer
 });
 
 function Sono() {
-    var VERSION = '0.1.81';
+    var VERSION = '0.1.84';
     var context = utils.getContext();
     var destination = context ? context.destination : null;
     var group = new Group(context, destination);
@@ -4527,7 +4633,13 @@ function Sono() {
 
     function add(config) {
         var soundContext = config && config.webAudio === false ? null : context;
-        var sound = new Sound(soundContext, group.gain);
+        // const sound = new Sound(soundContext, group.gain);
+        var src = file.getSupportedFile(config.src || config.url || config.data || config);
+        var sound = new Sound(Object.assign({}, config || {}, {
+            src: src,
+            context: soundContext,
+            destination: group.gain
+        }));
         sound.isTouchLocked = isTouchLocked;
         if (config) {
             sound.id = config.id || config.name || '';
@@ -4539,7 +4651,7 @@ function Sono() {
     }
 
     function queue(config, loaderGroup) {
-        var sound = add(config).load(config);
+        var sound = add(config).load();
 
         if (loaderGroup) {
             loaderGroup.add(sound.loader);
@@ -4586,7 +4698,7 @@ function Sono() {
             if (config.onError) {
                 config.onError(err);
             } else {
-                console.error.call(console, '[ERROR] sono.load: ' + err);
+                console.error('[ERROR] sono.load: ' + err);
             }
         });
         loader.start();
@@ -4746,6 +4858,7 @@ function Sono() {
 
     api = {
         createSound: createSound,
+        create: createSound,
         destroySound: destroySound,
         destroyAll: destroyAll,
         getSound: getSound,

@@ -64,7 +64,7 @@ export default function Group(context, destination) {
     }
 
     function pause() {
-        sounds.forEach(function(sound) {
+        sounds.forEach((sound) => {
             if (sound.playing) {
                 sound.pause();
             }
@@ -73,7 +73,7 @@ export default function Group(context, destination) {
     }
 
     function resume() {
-        sounds.forEach(function(sound) {
+        sounds.forEach((sound) => {
             if (sound.paused) {
                 sound.play();
             }
@@ -119,12 +119,26 @@ export default function Group(context, destination) {
             // param.setTargetAtTime(volume, time, duration);
             // param.exponentialRampToValueAtTime(Math.max(volume, 0.0001), time + duration);
         } else {
-            sounds.forEach(function(sound) {
-                sound.fade(volume, duration);
-            });
+            sounds.forEach((sound) => sound.fade(volume, duration));
         }
 
         return group;
+    }
+
+    /*
+     * Load
+     */
+
+    function load() {
+        sounds.forEach((sound) => sound.load(null, true));
+    }
+
+    /*
+     * Unload
+     */
+
+    function unload() {
+        sounds.forEach((sound) => sound.unload());
     }
 
     /*
@@ -155,6 +169,8 @@ export default function Group(context, destination) {
         mute,
         unMute,
         fade,
+        load,
+        unload,
         destroy
     };
 

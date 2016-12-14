@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>sono - examples - load &amp; destroy</title>
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="css/paraiso.light.css" rel="stylesheet">
+    <style type="text/css">
+        .Button {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <section>
+        <header>
+            <h2>load &amp; destroy</h2>
+        </header>
+
+
+        <div class="Controls" style="display: block; text-align: center">
+
+            <div data-js="info"></div>
+            <button class="Button" data-js="button-load">Load</button>
+            <button class="Button" data-js="button-defer">Defer load</button>
+            <button class="Button" data-js="button-destroy">Destroy</button>
+            <button class="Button" data-js="button-unload">Unload</button>
+            <button class="Button" data-js="button-reload">Reload</button>
+            <button class="Button" data-js="button-play">Play</button>
+
+        </div>
+
+    <pre><code class="js">
+// destroy
+sono.destroySound(id);
+sono.destroySound(sound);
+sound.destroy();
+
+// unload
+sound.unload();
+
+// reload
+sound.reload();
+
+// defer load
+const sound = sono.createSound({
+    id: 'foo',
+    url: 'foo.mp3',
+    deferLoad: true
+});
+sound.play(); // loads on demand
+    </code></pre>
+
+
+    </section>
+
+    <script>
+        if (window.location.search.slice(1) === 'nowebaudio') {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
+    </script>
+    <script src="js/highlight.pack.js"></script>
+    <script>
+        hljs.initHighlightingOnLoad();
+    </script>
+    <script src="../dist/sono.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        var sono = window.sono;
+        sono.log();
+
+        var info = document.querySelector('[data-js="info"]');
+        var btnLoad = document.querySelector('[data-js="button-load"]');
+        var btnDefer = document.querySelector('[data-js="button-defer"]');
+        var btnDestroy = document.querySelector('[data-js="button-destroy"]');
+        var btnUnload = document.querySelector('[data-js="button-unload"]');
+        var btnReload = document.querySelector('[data-js="button-reload"]');
+        var btnPlay = document.querySelector('[data-js="button-play"]');
+        var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+        var baseURL2 = 'https://dl.dropboxusercontent.com/u/15470024/temp/';
+
+        var sounds1 = [
+            'NoseHQ_Music',
+            'Gameplay_Celebratory',
+            'Gameplay_Chase',
+            'Gameplay_Excitement',
+            'Gameplay_General',
+            'Gameplay_Mysterious',
+            'Mini_Game_Results',
+            'Mini_Game_Splash',
+            'Mystery_Sting',
+            'Cliffhanger_Sting',
+            'Romantic_Sting',
+            'boogie_theme_01',
+            'boogie_theme_02',
+            'birds',
+            'boogie_on_over',
+            'crash1',
+            'crash2',
+            'crash3',
+            'crash4',
+            'crash5',
+            'crowd_cheering_02',
+            'drnose_mosquito_squeak_01',
+            'drnose_mosquito_squeak_02',
+            'drnose_mosquito',
+            'drnose_swatter',
+            'franki_button_01',
+            'franki_button_02',
+            'franki_button_03',
+            'franki_button_04',
+            'franki_button_05',
+            'franki_button_06',
+            'franki_button_07',
+            'franki_button_08',
+            'franki_button_09',
+            'franki_button_right',
+            'franki_button_wrong',
+            'franki_code_buttons_dry',
+            'franki_code_buttons',
+            'franki_code_right',
+            'franki_drumroll',
+            'franki_jokefail_crash_01',
+            'franki_klong',
+            'franki_rocks',
+            'impact_01',
+            'impact_02',
+            'morse_code',
+            'Nose_it_all_Ooops',
+            'norse_shave_01',
+            'norse_squeak_01',
+            'norse_squeak_02',
+            'norse_squeak_03',
+            'noseitall_question_right',
+            'noseitall_question_wrong',
+            'plane',
+            'rustling_leaves_01',
+            'rustling_leaves_02',
+            'rustling_leaves_03',
+            'sneezecake_panhit',
+            'sneezecake_sneeze_01',
+            'sneezecake_sneeze_02',
+            'sneezecake_splat',
+            'sneezecake_vo_01_02',
+            'sneezecake_vo_01',
+            'sneezecake_vo_02',
+            'sneezecake_vo_03',
+            'sneezecake_vo_04',
+            'sneezecake_whoosh',
+            'sniffer_hat_knock_off',
+            'sniffer_hat_place',
+            'sniffer_pump',
+            'snocereror_magic_reveal',
+            'snoot_reveal',
+            'snoot_whooshes',
+            'snorceror_fart_01',
+            'snorceror_fart_02',
+            'snorceror_fart_03',
+            'snorceror_tinkle',
+            'snuffles_extinguisher_01',
+            'snuffles_extinguisher_02',
+            'snuffles_extinguisher_03',
+            'snuffles_speedboost',
+            'star_story',
+            'star_total_bell',
+            'tvstatic',
+            'ui_button_hit',
+            'ui_button_in',
+            'ui_button_off',
+            'ui_button_over',
+            'ui_hand_sound',
+            'ui_slider',
+            'ui_whoosh_01',
+            'ui_whoosh_02',
+            'ui_whoosh_03',
+            'Narrator_Welcome',
+            'Narrator_Pick_Your_Nose',
+            'noses_flying',
+            'frankis_joke_boo',
+            'rasberry',
+            'snuffles_fire',
+            'sniffer_deflate',
+            'sad_trombone',
+            'Sneezecake_Achhoooo',
+            'Mini_Game1',
+            'game_01_boing_01',
+            'game_01_boing_02',
+            'game_01_boing_03',
+            'franki_laugh_01',
+            'franki_laugh_02',
+            'franki_woohoo',
+            'franki_yeehaa',
+            'Mini_Game2',
+            'game_02_squawk',
+            'game_02_thunder',
+            'game_02_wings',
+            'Mini_Game3',
+            'game_03_rock_01',
+            'game_03_rock_02',
+            'game_03_rock_03',
+            'game_03_boing_01',
+            'game_03_boing_02',
+            'game_03_boing_03'
+        ].map(function(id) {
+            return {
+                id: id,
+                url: baseURL2 + id + (sono.canPlay.ogg ? '.ogg' : '.mp3')
+            };
+        });
+
+        var sounds2 = [
+            'dnb-loop',
+            'dnb-loop-2',
+            'dnb-loop-3',
+            'ad2027-loop',
+            'bullet',
+            'collect',
+            'hit',
+            'select',
+            'music'
+        ].map(function(id) {
+            return {
+                id: id,
+                url: baseURL + id + (sono.canPlay.ogg ? '.ogg' : '.mp3')
+            }
+        });
+
+        var config = {
+            url: sounds1.concat(sounds2),
+            onComplete: function() {
+                btnDestroy.disabled = false;
+                info.insertAdjacentHTML('beforeend', '<p>Sounds loaded: ' + sono.sounds.length + '</p>');
+            },
+            asMediaElement: false
+        };
+        function load() {
+            sono.load(config);
+        }
+        function defer() {
+            var conf = {
+                url: config.url.map((s) => Object.assign({}, s, {
+                    deferLoad: true
+                }))
+            };
+            console.debug(conf);
+            sono.load(conf);
+        }
+        function destroy() {
+            info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');
+            sono.sounds.forEach(function(sound) {
+                sono.destroySound(sound);
+            });
+            info.insertAdjacentHTML('beforeend', '<p>Destroyed!</p>');
+            info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');
+            sono.sounds.forEach(function(sound) {
+                info.insertAdjacentHTML('beforeend', '<p>Could not destroy: ' + sound.id + '</p>');
+            });
+        }
+        function unload() {
+            sono.sounds.forEach(function(sound) {
+                sound.unload();
+            });
+            info.insertAdjacentHTML('beforeend', '<p>sounds unloaded</p>');
+        }
+        function reload() {
+            sono.sounds.forEach(function(sound) {
+                sound.load(null, true);
+            });
+            info.insertAdjacentHTML('beforeend', '<p>sounds reloaded</p>');
+        }
+        var index = 0;
+        function play() {
+            if (index > config.url.length - 1) {
+                index = 0;
+                console.log('playback complete');
+                return;
+            }
+            var id = config.url[index].id;
+            var sound = sono.getSound(id);
+            sound.once('ended', play);
+            sound.play();
+            console.log('playing:', id);
+            info.insertAdjacentHTML('beforeend', '<p>playing ' + id + '</p>');
+            index++;
+        }
+        btnDestroy.disabled = true;
+        btnLoad.addEventListener('click', load);
+        btnDefer.addEventListener('click', defer);
+        btnDestroy.addEventListener('click', destroy);
+        btnUnload.addEventListener('click', unload);
+        btnReload.addEventListener('click', reload);
+        btnPlay.addEventListener('click', play);
+    </script>
+</body>
+
+</html>
