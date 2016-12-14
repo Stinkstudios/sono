@@ -7,7 +7,7 @@ import SoundGroup from './lib/utils/sound-group';
 import utils from './lib/utils/utils';
 
 function Sono() {
-    const VERSION = '0.1.82';
+    const VERSION = '0.1.84';
     const context = utils.getContext();
     const destination = (context ? context.destination : null);
     const group = new Group(context, destination);
@@ -41,7 +41,13 @@ function Sono() {
 
     function add(config) {
         const soundContext = config && config.webAudio === false ? null : context;
-        const sound = new Sound(soundContext, group.gain);
+        // const sound = new Sound(soundContext, group.gain);
+        const src = file.getSupportedFile(config.src || config.url || config.data || config);
+        const sound = new Sound(Object.assign({}, config || {}, {
+            src,
+            context: soundContext,
+            destination: group.gain
+        }));
         sound.isTouchLocked = isTouchLocked;
         if (config) {
             sound.id = config.id || config.name || '';
@@ -53,8 +59,7 @@ function Sono() {
     }
 
     function queue(config, loaderGroup) {
-        const sound = add(config)
-            .load(config);
+        const sound = add(config).load();
 
         if (loaderGroup) {
             loaderGroup.add(sound.loader);
@@ -96,7 +101,7 @@ function Sono() {
             if (config.onError) {
                 config.onError(err);
             } else {
-                console.error.call(console, '[ERROR] sono.load: ' + err);
+                console.error('[ERROR] sono.load: ' + err);
             }
         });
         loader.start();
@@ -256,6 +261,7 @@ function Sono() {
 
     api = {
         createSound,
+        create: createSound,
         destroySound,
         destroyAll,
         getSound,
