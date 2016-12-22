@@ -1,4 +1,4 @@
-export default function AudioSource(Type, data, context, onEnded) {
+export default function AudioSource(Type, data, context, onEnded, multiPlay) {
     const sourceNode = context ? context.createGain() : null;
     const api = {};
     const pool = [];
@@ -15,7 +15,9 @@ export default function AudioSource(Type, data, context, onEnded) {
 
     function disposeSource(src) {
         src.stop();
-        pool.push(src);
+        if (multiPlay) {
+            pool.push(src);
+        }
     }
 
     function onSourceEnded(src) {
@@ -28,6 +30,9 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function getSource() {
+        if (!multiPlay && sources.length) {
+            return source();
+        }
         if ( pool.length > 0 ) {
             return pool.pop();
         } else {
@@ -48,9 +53,7 @@ export default function AudioSource(Type, data, context, onEnded) {
             sources.push(src);
         }
         src.play();
-        console.debug('numCreated:', numCreated);
-        console.debug('sources.length:', sources.length);
-        console.debug('pool.length:', pool.length);
+        sources.forEach((s) => console.log(pool.indexOf(s)));
     }
 
     function stop() {
@@ -60,7 +63,6 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function pause() {
-        // pause all or keep last of kill reset?
         sources.forEach((src) => src.pause());
     }
 
@@ -77,9 +79,13 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function destroy() {
-        sources.forEach((src) => src.destroy());
-        pool.length = 0;
-        sources.length = 0;
+        while (sources.length) {
+            sources.pop().destroy();
+        }
+        while (pool.length) {
+            pool.pop().destroy();
+        }
+        sourceNode.disconnect();
     }
 
     /*
@@ -144,6 +150,15 @@ export default function AudioSource(Type, data, context, onEnded) {
         playing: {
             get: function() {
                 return source() && source().playing;
+            }
+        },
+        info: {
+            get: function() {
+                return {
+                    pooled: pool.length,
+                    active: sources.length,
+                    created: numCreated
+                };
             }
         },
         progress: {

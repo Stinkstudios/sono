@@ -36,13 +36,17 @@ export default function Sound(config) {
      * Create source
      */
 
+    function onEnded() {
+        sound.emit('ended', sound);
+    }
+
     function createSource(value) {
         data = value;
 
         const isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             const Fn = isAudioBuffer ? BufferSource : MediaSource;
-            source = new AudioSource(Fn, data, context, () => sound.emit('ended', sound));
+            source = new AudioSource(Fn, data, context, onEnded, !!config.multiPlay);
         } else if (file.isMediaStream(data)) {
             source = new MicrophoneSource(data, context);
         } else if (file.isOscillatorType((data && data.type) || data)) {
@@ -370,6 +374,11 @@ export default function Sound(config) {
         progress: {
             get: function() {
                 return source ? source.progress : 0;
+            }
+        },
+        sourceInfo: {
+            get: function() {
+                return source && source.info ? source.info : {};
             }
         },
         sourceNode: {
