@@ -4401,7 +4401,7 @@ var utils = Object.freeze({
 });
 
 function Sono() {
-    var VERSION = '0.1.84';
+    var VERSION = '0.1.85';
     var context = utils.getContext();
     var destination = context ? context.destination : null;
     var group = new Group(context, destination);
