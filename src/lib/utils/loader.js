@@ -1,6 +1,6 @@
 import Emitter from './emitter';
 
-export default function Loader(url) {
+export default function Loader(url, deferLoad) {
     const ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
     const emitter = new Emitter();
     let progress = 0,
@@ -147,7 +147,10 @@ export default function Loader(url) {
         }
     }
 
-    function start() {
+    function start(force = false) {
+        if (deferLoad && !force) {
+            return;
+        }
         if (audioContext) {
             loadArrayBuffer();
         } else {
@@ -218,7 +221,7 @@ Loader.Group = function() {
     }
 
     function errorHandler(e) {
-        console.error.call(console, e);
+        console.error(e);
         removeListeners();
         emitter.emit('error', e);
         next();

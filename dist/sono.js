@@ -71,14 +71,8 @@ browser.handleTouchLock = function (context, onUnlock) {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
 };
-
-
-
-
-
-
 
 
 
@@ -714,7 +708,7 @@ function FakeContext() {
 // The greater the value is, the greater is the peak
 
 function Filter(context) {
-    var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
     // Frequency between 40Hz and half of the sampling rate
     var minFrequency = 40;
@@ -1079,7 +1073,7 @@ Panner.defaults = {
 };
 
 function Phaser(context) {
-    var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
     var stages = number(config.stages, 8);
     var filters = [];
@@ -1254,7 +1248,7 @@ function Recorder(context, passThrough) {
 }
 
 function Reverb(context) {
-    var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
     var rate = context.sampleRate;
 
@@ -1608,7 +1602,7 @@ function Effect(context) {
     }
 
     function script() {
-        var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
         // bufferSize 256 - 16384 (pow 2)
         var bufferSize = config.bufferSize || 1024;
@@ -1821,11 +1815,31 @@ function Group(context, destination) {
             // param.exponentialRampToValueAtTime(Math.max(volume, 0.0001), time + duration);
         } else {
             sounds.forEach(function (sound) {
-                sound.fade(volume, duration);
+                return sound.fade(volume, duration);
             });
         }
 
         return group;
+    }
+
+    /*
+     * Load
+     */
+
+    function load() {
+        sounds.forEach(function (sound) {
+            return sound.load(null, true);
+        });
+    }
+
+    /*
+     * Unload
+     */
+
+    function unload() {
+        sounds.forEach(function (sound) {
+            return sound.unload();
+        });
     }
 
     /*
@@ -1855,6 +1869,8 @@ function Group(context, destination) {
         mute: mute,
         unMute: unMute,
         fade: fade,
+        load: load,
+        unload: unload,
         destroy: destroy
     };
 
@@ -2230,7 +2246,7 @@ var Emitter = function (_EventEmitter) {
     return Emitter;
 }(EventEmitter);
 
-function Loader(url) {
+function Loader(url, deferLoad) {
     var ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
     var emitter = new Emitter();
     var progress = 0,
@@ -2376,6 +2392,11 @@ function Loader(url) {
     }
 
     function start() {
+        var force = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+        if (deferLoad && !force) {
+            return;
+        }
         if (audioContext) {
             loadArrayBuffer();
         } else {
@@ -2446,7 +2467,7 @@ Loader.Group = function () {
     }
 
     function errorHandler(e) {
-        console.error.call(console, e);
+        console.error(e);
         removeListeners();
         emitter.emit('error', e);
         next();
@@ -2549,7 +2570,7 @@ function BufferSource(buffer, context, onEnded) {
     }
 
     function play(delay) {
-        var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+        var offset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
 
         if (playing) {
             return;
@@ -3429,19 +3450,21 @@ function waveform() {
     };
 }
 
-function Sound(context, destination) {
-    var id = void 0,
-        data = void 0,
-        effect = new Effect(context),
-        gain = effect.gain(),
-        wave = waveform(),
-        isTouchLocked = false,
-        loader = void 0,
-        loop = false,
-        playbackRate = 1,
-        playWhenReady = void 0,
-        source = void 0;
+function Sound(config) {
+    var context = config.context;
+    var destination = config.destination;
+    var effect = new Effect(context);
+    var gain = effect.gain();
+    var wave = waveform();
 
+    var id = null;
+    var data = null;
+    var isTouchLocked = false;
+    var loader = null;
+    var loop = false;
+    var playbackRate = 1;
+    var playWhenReady = null;
+    var source = null;
     var sound = null;
 
     if (context) {
@@ -3487,19 +3510,36 @@ function Sound(context, destination) {
      * Load
      */
 
-    function load(config) {
-        var src = file.getSupportedFile(config.src || config.url || config.data || config);
+    function onLoad(fileData) {
+        createSource(fileData);
+        sound.emit('loaded', sound);
+    }
+
+    function onLoadError(err) {
+        sound.emit('error', sound, err);
+    }
+
+    function load() {
+        var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+        var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+        var skipLoad = !force && !source && !!config.deferLoad;
+
+        if (newConfig) {
+            var src = file.getSupportedFile(config.src || config.url || config.data || config) || config.src;
+            config = Object.assign(config, newConfig, { src: src });
+        }
 
         if (source && data && data.tagName) {
-            source.load(src);
+            source.load(config.src);
         } else {
-            loader = loader || new Loader(src);
+            loader = loader || new Loader(config.src, skipLoad);
             loader.audioContext = !!config.asMediaElement ? null : context;
             loader.isTouchLocked = isTouchLocked;
-            loader.once('loaded', function (fileData) {
-                createSource(fileData);
-                sound.emit('loaded', sound);
-            });
+            loader.off('loaded', onLoad);
+            loader.once('loaded', onLoad);
+            loader.off('error', onLoadError);
+            loader.on('error', onLoadError);
         }
         return sound;
     }
@@ -3515,6 +3555,12 @@ function Sound(context, destination) {
                     play(delay, offset);
                 }
             };
+            if (!!config.deferLoad) {
+                if (!loader) {
+                    load(null, true);
+                }
+                loader.start(true);
+            }
             return sound;
         }
         playWhenReady = null;
@@ -3573,7 +3619,24 @@ function Sound(context, destination) {
             param.value = volume;
         }
 
+        sound.emit('fade', sound, volume);
+
         return sound;
+    }
+
+    function unload() {
+        source && source.destroy();
+        loader && loader.destroy();
+        data = null;
+        playWhenReady = null;
+        source = null;
+        loader = null;
+        config.deferLoad = true;
+        sound.emit('unload', sound);
+    }
+
+    function reload() {
+        load(null, true);
     }
 
     /*
@@ -3584,17 +3647,22 @@ function Sound(context, destination) {
         source && source.destroy();
         effect && effect.destroy();
         gain && gain.disconnect();
+        loader && loader.off('loaded');
+        loader && loader.off('error');
         loader && loader.destroy();
         sound.off('loaded');
         sound.off('ended');
+        sound.off('error');
         gain = null;
         context = null;
+        destination = null;
         data = null;
         playWhenReady = null;
         source = null;
         effect = null;
         loader = null;
         wave = null;
+        config = null;
         sound.emit('destroy', sound);
         sound.off('destroy');
     }
@@ -3623,6 +3691,12 @@ function Sound(context, destination) {
         },
         fade: {
             value: fade
+        },
+        unload: {
+            value: unload
+        },
+        reload: {
+            value: reload
         },
         destroy: {
             value: destroy
@@ -3712,6 +3786,11 @@ function Sound(context, destination) {
                 if (source && source.hasOwnProperty('loop') && source.loop !== loop) {
                     source.loop = loop;
                 }
+            }
+        },
+        config: {
+            get: function get() {
+                return config;
             }
         },
         paused: {
@@ -3804,7 +3883,7 @@ function Sound(context, destination) {
         }
     });
 
-    return Object.freeze(sound);
+    return sound;
 }
 
 // expose for unit tests
@@ -4296,7 +4375,7 @@ function microphone(connected, denied, error) {
  */
 
 function timeCode(seconds) {
-	var delim = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ':';
+	var delim = arguments.length <= 1 || arguments[1] === undefined ? ':' : arguments[1];
 
 	// const h = Math.floor(seconds / 3600);
 	// const m = Math.floor((seconds % 3600) / 60);
@@ -4322,7 +4401,7 @@ var utils = Object.freeze({
 });
 
 function Sono() {
-    var VERSION = '0.1.82';
+    var VERSION = '0.1.84';
     var context = utils.getContext();
     var destination = context ? context.destination : null;
     var group = new Group(context, destination);
@@ -4358,7 +4437,13 @@ function Sono() {
 
     function add(config) {
         var soundContext = config && config.webAudio === false ? null : context;
-        var sound = new Sound(soundContext, group.gain);
+        // const sound = new Sound(soundContext, group.gain);
+        var src = file.getSupportedFile(config.src || config.url || config.data || config);
+        var sound = new Sound(Object.assign({}, config || {}, {
+            src: src,
+            context: soundContext,
+            destination: group.gain
+        }));
         sound.isTouchLocked = isTouchLocked;
         if (config) {
             sound.id = config.id || config.name || '';
@@ -4370,7 +4455,7 @@ function Sono() {
     }
 
     function queue(config, loaderGroup) {
-        var sound = add(config).load(config);
+        var sound = add(config).load();
 
         if (loaderGroup) {
             loaderGroup.add(sound.loader);
@@ -4417,7 +4502,7 @@ function Sono() {
             if (config.onError) {
                 config.onError(err);
             } else {
-                console.error.call(console, '[ERROR] sono.load: ' + err);
+                console.error('[ERROR] sono.load: ' + err);
             }
         });
         loader.start();
@@ -4577,6 +4662,7 @@ function Sono() {
 
     api = {
         createSound: createSound,
+        create: createSound,
         destroySound: destroySound,
         destroyAll: destroyAll,
         getSound: getSound,

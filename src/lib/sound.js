@@ -9,19 +9,21 @@ import OscillatorSource from './source/oscillator-source';
 import ScriptSource from './source/script-source';
 import waveform from './utils/waveform.js';
 
-export default function Sound(context, destination) {
-    let id,
-        data,
-        effect = new Effect(context),
-        gain = effect.gain(),
-        wave = waveform(),
-        isTouchLocked = false,
-        loader,
-        loop = false,
-        playbackRate = 1,
-        playWhenReady,
-        source;
+export default function Sound(config) {
+    let context = config.context;
+    let destination = config.destination;
+    let effect = new Effect(context);
+    let gain = effect.gain();
+    let wave = waveform();
 
+    let id = null;
+    let data = null;
+    let isTouchLocked = false;
+    let loader = null;
+    let loop = false;
+    let playbackRate = 1;
+    let playWhenReady = null;
+    let source = null;
     let sound = null;
 
     if (context) {
@@ -63,19 +65,33 @@ export default function Sound(context, destination) {
      * Load
      */
 
-    function load(config) {
-        const src = file.getSupportedFile(config.src || config.url || config.data || config);
+    function onLoad(fileData) {
+        createSource(fileData);
+        sound.emit('loaded', sound);
+    }
+
+    function onLoadError(err) {
+        sound.emit('error', sound, err);
+    }
+
+    function load(newConfig = null, force = false) {
+        const skipLoad = !force && !source && !!config.deferLoad;
+
+        if (newConfig) {
+            const src = file.getSupportedFile(config.src || config.url || config.data || config) || config.src;
+            config = Object.assign(config, newConfig, {src});
+        }
 
         if (source && data && data.tagName) {
-            source.load(src);
+            source.load(config.src);
         } else {
-            loader = loader || new Loader(src);
+            loader = loader || new Loader(config.src, skipLoad);
             loader.audioContext = !!config.asMediaElement ? null : context;
             loader.isTouchLocked = isTouchLocked;
-            loader.once('loaded', function(fileData) {
-                createSource(fileData);
-                sound.emit('loaded', sound);
-            });
+            loader.off('loaded', onLoad);
+            loader.once('loaded', onLoad);
+            loader.off('error', onLoadError);
+            loader.on('error', onLoadError);
         }
         return sound;
     }
@@ -91,6 +107,12 @@ export default function Sound(context, destination) {
                     play(delay, offset);
                 }
             };
+            if (!!config.deferLoad) {
+                if (!loader) {
+                    load(null, true);
+                }
+                loader.start(true);
+            }
             return sound;
         }
         playWhenReady = null;
@@ -149,7 +171,24 @@ export default function Sound(context, destination) {
             param.value = volume;
         }
 
+        sound.emit('fade', sound, volume);
+
         return sound;
+    }
+
+    function unload() {
+        source && source.destroy();
+        loader && loader.destroy();
+        data = null;
+        playWhenReady = null;
+        source = null;
+        loader = null;
+        config.deferLoad = true;
+        sound.emit('unload', sound);
+    }
+
+    function reload() {
+        load(null, true);
     }
 
     /*
@@ -160,17 +199,22 @@ export default function Sound(context, destination) {
         source && source.destroy();
         effect && effect.destroy();
         gain && gain.disconnect();
+        loader && loader.off('loaded');
+        loader && loader.off('error');
         loader && loader.destroy();
         sound.off('loaded');
         sound.off('ended');
+        sound.off('error');
         gain = null;
         context = null;
+        destination = null;
         data = null;
         playWhenReady = null;
         source = null;
         effect = null;
         loader = null;
         wave = null;
+        config = null;
         sound.emit('destroy', sound);
         sound.off('destroy');
     }
@@ -199,6 +243,12 @@ export default function Sound(context, destination) {
         },
         fade: {
             value: fade
+        },
+        unload: {
+            value: unload
+        },
+        reload: {
+            value: reload
         },
         destroy: {
             value: destroy
@@ -290,6 +340,11 @@ export default function Sound(context, destination) {
                 }
             }
         },
+        config: {
+            get: function() {
+                return config;
+            }
+        },
         paused: {
             get: function() {
                 return !!source && source.paused;
@@ -378,7 +433,7 @@ export default function Sound(context, destination) {
         }
     });
 
-    return Object.freeze(sound);
+    return sound;
 }
 
 // expose for unit tests
