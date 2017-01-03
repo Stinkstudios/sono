@@ -161,3 +161,8 @@
   text-align: right;
   top: 0;
 }
+.Button {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 5px 10px;
+}
