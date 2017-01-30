@@ -2702,12 +2702,13 @@ function BufferSource(buffer, context, onEnded) {
     return Object.freeze(api);
 }
 
-function AudioSource(Type, data, context, onEnded, multiPlay) {
+function AudioSource(Type, data, context, onEnded) {
     var sourceNode = context ? context.createGain() : null;
     var api = {};
     var pool = [];
     var sources = [];
     var numCreated = 0;
+    var multiPlay = false;
 
     function createSourceNode() {
         return sourceNode;
@@ -2757,10 +2758,6 @@ function AudioSource(Type, data, context, onEnded, multiPlay) {
             sources.push(src);
         }
         src.play();
-        console.debug('src === sources[0]:', src === sources[0]);
-        console.debug('numCreated:', numCreated);
-        console.debug('sources.length:', sources.length);
-        console.debug('pool.length:', pool.length);
         sources.forEach(function (s) {
             return console.log(pool.indexOf(s));
         });
@@ -2793,8 +2790,6 @@ function AudioSource(Type, data, context, onEnded, multiPlay) {
     }
 
     function destroy() {
-        console.debug('SOURCE DESTROY');
-        // sources.forEach((src) => src.destroy());
         while (sources.length) {
             sources.pop().destroy();
         }
@@ -2802,8 +2797,6 @@ function AudioSource(Type, data, context, onEnded, multiPlay) {
             pool.pop().destroy();
         }
         sourceNode.disconnect();
-        // pool.length = 0;
-        // sources.length = 0;
     }
 
     /*
@@ -2844,6 +2837,14 @@ function AudioSource(Type, data, context, onEnded, multiPlay) {
                 return sources.every(function (src) {
                     return src.ended;
                 });
+            }
+        },
+        multiPlay: {
+            get: function get() {
+                return multiPlay;
+            },
+            set: function set(value) {
+                multiPlay = value;
             }
         },
         loop: {
@@ -3707,7 +3708,8 @@ function Sound(config) {
         var isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             var Fn = isAudioBuffer ? BufferSource : MediaSource;
-            source = new AudioSource(Fn, data, context, onEnded, !!config.multiPlay);
+            source = new AudioSource(Fn, data, context, onEnded);
+            source.multiPlay = !!config.multiPlay;
         } else if (file.isMediaStream(data)) {
             source = new MicrophoneSource(data, context);
         } else if (file.isOscillatorType(data && data.type || data)) {
@@ -4007,6 +4009,15 @@ function Sound(config) {
                 if (source && source.hasOwnProperty('loop') && source.loop !== loop) {
                     source.loop = loop;
                 }
+            }
+        },
+        multiPlay: {
+            get: function get() {
+                return config.multiPlay;
+            },
+            set: function set(value) {
+                config.multiPlay = value;
+                source.multiPlay = value;
             }
         },
         config: {
@@ -4454,6 +4465,9 @@ function waveformer(config) {
     return update;
 }
 
+/*
+ * audio ctx
+ */
 var ctx = void 0;
 var offlineCtx = void 0;
 
@@ -4624,7 +4638,7 @@ var utils = Object.freeze({
 });
 
 function Sono() {
-    var VERSION = '0.1.84';
+    var VERSION = '0.1.85';
     var context = utils.getContext();
     var destination = context ? context.destination : null;
     var group = new Group(context, destination);

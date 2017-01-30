@@ -1,9 +1,10 @@
-export default function AudioSource(Type, data, context, onEnded, multiPlay) {
+export default function AudioSource(Type, data, context, onEnded) {
     const sourceNode = context ? context.createGain() : null;
     const api = {};
     const pool = [];
     const sources = [];
     let numCreated = 0;
+    let multiPlay = false;
 
     function createSourceNode() {
         return sourceNode;
@@ -124,6 +125,14 @@ export default function AudioSource(Type, data, context, onEnded, multiPlay) {
         ended: {
             get: function() {
                 return sources.every((src) => src.ended);
+            }
+        },
+        multiPlay: {
+            get: function() {
+                return multiPlay;
+            },
+            set: function(value) {
+                multiPlay = value;
             }
         },
         loop: {

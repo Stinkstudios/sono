@@ -2,9 +2,9 @@
 
 [![NPM version](https://badge.fury.io/js/sono.svg)](http://badge.fury.io/js/sono) [![Build Status](https://travis-ci.org/Stinkdigital/sono.svg?branch=master)](https://travis-ci.org/Stinkdigital/sono)
 
-A library for making stuff with Web Audio
+A simple yet powerful JavaScript library for working with Web Audio
 
-<http://stinkdigital.github.io/sono/>
+<http://stinkstudios.github.io/sono/>
 
 ## Features
 
