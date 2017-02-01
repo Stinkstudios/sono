@@ -3,6 +3,7 @@ import Effect from './effect';
 import Emitter from './utils/emitter';
 import file from './utils/file';
 import Loader from './utils/loader';
+import AudioSource from './source/audio-source';
 import MediaSource from './source/media-source';
 import MicrophoneSource from './source/microphone-source';
 import OscillatorSource from './source/oscillator-source';
@@ -35,13 +36,18 @@ export default function Sound(config) {
      * Create source
      */
 
+    function onEnded() {
+        sound.emit('ended', sound);
+    }
+
     function createSource(value) {
         data = value;
 
-        if (file.isAudioBuffer(data)) {
-            source = new BufferSource(data, context, () => sound.emit('ended', sound));
-        } else if (file.isMediaElement(data)) {
-            source = new MediaSource(data, context, () => sound.emit('ended', sound));
+        const isAudioBuffer = file.isAudioBuffer(data);
+        if (isAudioBuffer || file.isMediaElement(data)) {
+            const Fn = isAudioBuffer ? BufferSource : MediaSource;
+            source = new AudioSource(Fn, data, context, onEnded);
+            source.multiPlay = !!config.multiPlay;
         } else if (file.isMediaStream(data)) {
             source = new MicrophoneSource(data, context);
         } else if (file.isOscillatorType((data && data.type) || data)) {
@@ -340,6 +346,15 @@ export default function Sound(config) {
                 }
             }
         },
+        multiPlay: {
+            get: function() {
+                return config.multiPlay;
+            },
+            set: function(value) {
+                config.multiPlay = value;
+                source.multiPlay = value;
+            }
+        },
         config: {
             get: function() {
                 return config;
@@ -369,6 +384,11 @@ export default function Sound(config) {
         progress: {
             get: function() {
                 return source ? source.progress : 0;
+            }
+        },
+        sourceInfo: {
+            get: function() {
+                return source && source.info ? source.info : {};
             }
         },
         sourceNode: {
