@@ -2714,10 +2714,6 @@ function AudioSource(Type, data, context, onEnded) {
         return sourceNode;
     }
 
-    function source() {
-        return sources[0];
-    }
-
     function disposeSource(src) {
         src.stop();
         if (multiPlay) {
@@ -2736,7 +2732,7 @@ function AudioSource(Type, data, context, onEnded) {
 
     function getSource() {
         if (!multiPlay && sources.length) {
-            return source();
+            return sources[0];
         }
         if (pool.length > 0) {
             return pool.pop();
@@ -2758,9 +2754,6 @@ function AudioSource(Type, data, context, onEnded) {
             sources.push(src);
         }
         src.play();
-        sources.forEach(function (s) {
-            return console.log(pool.indexOf(s));
-        });
     }
 
     function stop() {
@@ -2824,12 +2817,12 @@ function AudioSource(Type, data, context, onEnded) {
         },
         currentTime: {
             get: function get() {
-                return source() && source().currentTime || 0;
+                return sources[0] && sources[0].currentTime || 0;
             }
         },
         duration: {
             get: function get() {
-                return source() && source().duration || 0;
+                return sources[0] && sources[0].duration || 0;
             }
         },
         ended: {
@@ -2849,7 +2842,7 @@ function AudioSource(Type, data, context, onEnded) {
         },
         loop: {
             get: function get() {
-                return source() && source().loop;
+                return sources[0] && sources[0].loop;
             },
             set: function set(value) {
                 sources.forEach(function (src) {
@@ -2859,12 +2852,12 @@ function AudioSource(Type, data, context, onEnded) {
         },
         paused: {
             get: function get() {
-                return source() && source().paused;
+                return sources[0] && sources[0].paused;
             }
         },
         playbackRate: {
             get: function get() {
-                return source() && source().playbackRate;
+                return sources[0] && sources[0].playbackRate;
             },
             set: function set(value) {
                 sources.forEach(function (src) {
@@ -2874,7 +2867,7 @@ function AudioSource(Type, data, context, onEnded) {
         },
         playing: {
             get: function get() {
-                return source() && source().playing;
+                return sources[0] && sources[0].playing;
             }
         },
         info: {
@@ -2888,7 +2881,7 @@ function AudioSource(Type, data, context, onEnded) {
         },
         progress: {
             get: function get() {
-                return source() && source().progress;
+                return sources[0] && sources[0].progress;
             }
         },
         sourceNode: {
@@ -2898,7 +2891,7 @@ function AudioSource(Type, data, context, onEnded) {
         },
         volume: {
             get: function get() {
-                return source() && source().volume;
+                return sources[0] && sources[0].volume;
             },
             set: function set(value) {
                 sources.forEach(function (src) {
@@ -2908,10 +2901,10 @@ function AudioSource(Type, data, context, onEnded) {
         },
         groupVolume: {
             get: function get() {
-                return source() && source().groupVolume;
+                return sources[0] && sources[0].groupVolume;
             },
             set: function set(value) {
-                if (source() && !source().hasOwnProperty('groupVolume')) {
+                if (sources[0] && !sources[0].hasOwnProperty('groupVolume')) {
                     return;
                 }
                 sources.forEach(function (src) {
