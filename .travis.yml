@@ -4,7 +4,7 @@ node_js:
 addons:
   firefox: "latest"
 before_install:
-  - 'npm i -g karma-cli && npm i -g eslint'
+  - 'npm i -g karma-cli && npm i -g eslint && npm i -g babel-eslint'
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
