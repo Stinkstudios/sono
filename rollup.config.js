@@ -25,8 +25,7 @@ export default {
             babelrc: false,
             exclude: 'node_modules/**',
             presets: [
-                ['es2015', {loose: true, modules: false}],
-                'stage-0'
+                ['es2015', {loose: true, modules: false}]
             ],
             plugins: [
                 'external-helpers'
