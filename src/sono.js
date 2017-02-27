@@ -7,7 +7,7 @@ import SoundGroup from './lib/utils/sound-group';
 import utils from './lib/utils/utils';
 
 function Sono() {
-    const VERSION = '0.1.85';
+    const VERSION = '0.1.9';
     const context = utils.getContext();
     const destination = (context ? context.destination : null);
     const group = new Group(context, destination);
