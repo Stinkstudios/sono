@@ -12,7 +12,7 @@
   ],
   "main": "dist/sono.js",
   "scripts": {
-    "test": "karma start --single-run --browsers Firefox",
+    "test": "eslint 'src/**/*.js' && karma start --single-run --browsers Firefox",
     "build": "NODE_ENV=production rollup -c && rollup -c",
     "start": "rollup -c -w | karma start",
     "lint": "eslint 'src/**/*.js'; exit 0"

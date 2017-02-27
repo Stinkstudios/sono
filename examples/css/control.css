@@ -104,6 +104,16 @@
   width: var(--control-markWidth);
 }
 
+.Control-mark--play {
+  width: 0;
+  height: 0;
+  border-top: 30px solid transparent;
+  border-bottom: 30px solid transparent;
+  border-left: 40px solid var(--control-markColor);
+  margin-left: 10px;
+  margin-top: 20px;
+}
+
 .Control-canvas {
   border: 1px solid #ddd;
   border-radius: 8px;

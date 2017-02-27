@@ -218,6 +218,47 @@ window.ui = (function() {
             destroy: destroy
         };
     }
+	
+	/*
+     * Trigger control
+     */
+
+    function createTrigger(options, fn) {
+        var el = options.el,
+            nameEl = el.querySelector('[data-js="name"]'),
+            iconEl = el.querySelector('[data-js="icon"]'),
+            outputEl = el.querySelector('[data-js="output"]'),
+            name = options.name || '',
+            callback = fn;
+
+        var onDown = function(event) {
+            if (event.type === 'touchstart') {
+                el.removeEventListener('mousedown', onDown);
+            }
+
+            if (callback) {
+                callback();
+            }
+        };
+
+        var setName = function(value) {
+            nameEl.innerHTML = value;
+        };
+
+        var destroy = function() {
+            el.removeEventListener('mousedown', onDown);
+            el.removeEventListener('touchstart', onDown);
+        };
+
+        el.addEventListener('mousedown', onDown);
+        el.addEventListener('touchstart', onDown);
+        setName(name);
+
+        return {
+            setName: setName,
+            destroy: destroy
+        };
+    }
 
     /*
      * Radial control
@@ -375,7 +416,8 @@ window.ui = (function() {
     return {
         createPlayer: createPlayer,
         createControl: createControl,
-        createToggle: createToggle
+        createToggle: createToggle,
+        createTrigger: createTrigger
     };
 
 }());

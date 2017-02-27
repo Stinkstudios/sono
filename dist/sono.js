@@ -2702,6 +2702,221 @@ function BufferSource(buffer, context, onEnded) {
     return Object.freeze(api);
 }
 
+function AudioSource(Type, data, context, onEnded) {
+    var sourceNode = context ? context.createGain() : null;
+    var api = {};
+    var pool = [];
+    var sources = [];
+    var numCreated = 0;
+    var multiPlay = false;
+
+    function createSourceNode() {
+        return sourceNode;
+    }
+
+    function disposeSource(src) {
+        src.stop();
+        if (multiPlay) {
+            pool.push(src);
+        }
+    }
+
+    function onSourceEnded(src) {
+        if (sources.length > 1) {
+            var index = sources.indexOf(src);
+            sources.splice(index, 1);
+        }
+        disposeSource(src);
+        onEnded();
+    }
+
+    function getSource() {
+        if (!multiPlay && sources.length) {
+            return sources[0];
+        }
+        if (pool.length > 0) {
+            return pool.pop();
+        } else {
+            numCreated++;
+            if (data.tagName) {
+                return new Type(data.cloneNode(), context, onSourceEnded);
+            }
+            return new Type(data, context, onSourceEnded);
+        }
+    }
+
+    function play() {
+        var src = getSource();
+        if (sourceNode) {
+            src.sourceNode.connect(sourceNode);
+        }
+        if (src !== sources[0]) {
+            sources.push(src);
+        }
+        src.play();
+    }
+
+    function stop() {
+        while (sources.length > 1) {
+            disposeSource(sources.pop());
+        }
+    }
+
+    function pause() {
+        sources.forEach(function (src) {
+            return src.pause();
+        });
+    }
+
+    function load(url) {
+        stop();
+        pool.length = 0;
+        if (sources.length) {
+            sources[0].load(url);
+        }
+    }
+
+    function fade(volume, duration) {
+        sources.forEach(function (src) {
+            return src.fade(volume, duration);
+        });
+    }
+
+    function destroy() {
+        while (sources.length) {
+            sources.pop().destroy();
+        }
+        while (pool.length) {
+            pool.pop().destroy();
+        }
+        sourceNode.disconnect();
+    }
+
+    /*
+     * Getters & Setters
+     */
+
+    Object.defineProperties(api, {
+        play: {
+            value: play
+        },
+        pause: {
+            value: pause
+        },
+        stop: {
+            value: stop
+        },
+        load: {
+            value: load
+        },
+        fade: {
+            value: fade
+        },
+        destroy: {
+            value: destroy
+        },
+        currentTime: {
+            get: function get() {
+                return sources[0] && sources[0].currentTime || 0;
+            }
+        },
+        duration: {
+            get: function get() {
+                return sources[0] && sources[0].duration || 0;
+            }
+        },
+        ended: {
+            get: function get() {
+                return sources.every(function (src) {
+                    return src.ended;
+                });
+            }
+        },
+        multiPlay: {
+            get: function get() {
+                return multiPlay;
+            },
+            set: function set(value) {
+                multiPlay = value;
+            }
+        },
+        loop: {
+            get: function get() {
+                return sources[0] && sources[0].loop;
+            },
+            set: function set(value) {
+                sources.forEach(function (src) {
+                    return src.loop = !!value;
+                });
+            }
+        },
+        paused: {
+            get: function get() {
+                return sources[0] && sources[0].paused;
+            }
+        },
+        playbackRate: {
+            get: function get() {
+                return sources[0] && sources[0].playbackRate;
+            },
+            set: function set(value) {
+                sources.forEach(function (src) {
+                    return src.playbackRate = value;
+                });
+            }
+        },
+        playing: {
+            get: function get() {
+                return sources[0] && sources[0].playing;
+            }
+        },
+        info: {
+            get: function get() {
+                return {
+                    pooled: pool.length,
+                    active: sources.length,
+                    created: numCreated
+                };
+            }
+        },
+        progress: {
+            get: function get() {
+                return sources[0] && sources[0].progress;
+            }
+        },
+        sourceNode: {
+            get: function get() {
+                return createSourceNode();
+            }
+        },
+        volume: {
+            get: function get() {
+                return sources[0] && sources[0].volume;
+            },
+            set: function set(value) {
+                sources.forEach(function (src) {
+                    return src.volume = value;
+                });
+            }
+        },
+        groupVolume: {
+            get: function get() {
+                return sources[0] && sources[0].groupVolume;
+            },
+            set: function set(value) {
+                if (sources[0] && !sources[0].hasOwnProperty('groupVolume')) {
+                    return;
+                }
+                sources.forEach(function (src) {
+                    return src.groupVolume = value;
+                });
+            }
+        }
+    });
+
+    return Object.freeze(api);
+}
+
 function MediaSource(el, context, onEnded) {
     var api = {};
     var ended = false,
@@ -3476,17 +3691,18 @@ function Sound(config) {
      * Create source
      */
 
+    function onEnded() {
+        sound.emit('ended', sound);
+    }
+
     function createSource(value) {
         data = value;
 
-        if (file.isAudioBuffer(data)) {
-            source = new BufferSource(data, context, function () {
-                return sound.emit('ended', sound);
-            });
-        } else if (file.isMediaElement(data)) {
-            source = new MediaSource(data, context, function () {
-                return sound.emit('ended', sound);
-            });
+        var isAudioBuffer = file.isAudioBuffer(data);
+        if (isAudioBuffer || file.isMediaElement(data)) {
+            var Fn = isAudioBuffer ? BufferSource : MediaSource;
+            source = new AudioSource(Fn, data, context, onEnded);
+            source.multiPlay = !!config.multiPlay;
         } else if (file.isMediaStream(data)) {
             source = new MicrophoneSource(data, context);
         } else if (file.isOscillatorType(data && data.type || data)) {
@@ -3788,6 +4004,15 @@ function Sound(config) {
                 }
             }
         },
+        multiPlay: {
+            get: function get() {
+                return config.multiPlay;
+            },
+            set: function set(value) {
+                config.multiPlay = value;
+                source.multiPlay = value;
+            }
+        },
         config: {
             get: function get() {
                 return config;
@@ -3817,6 +4042,11 @@ function Sound(config) {
         progress: {
             get: function get() {
                 return source ? source.progress : 0;
+            }
+        },
+        sourceInfo: {
+            get: function get() {
+                return source && source.info ? source.info : {};
             }
         },
         sourceNode: {
