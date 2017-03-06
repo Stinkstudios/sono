@@ -12,8 +12,8 @@
         '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
         '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
 
-    // var baseURL = 'examples/audio/';
-    var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+    var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
+    var baseURL = local ? 'examples/audio/' : 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
     // var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
 
     var sound,
@@ -39,7 +39,7 @@
 
     panner = sono.effect.panner();
 
-    distortion = sono.effect.distortion(0);
+    distortion = sono.effect.distortion({amount: 0});
 
     echo = sono.effect.echo({
         delayTime: 0,
@@ -51,9 +51,9 @@
     });
     sono.effect.remove(flanger);
 
-    highpass = sono.effect.highpass(20);
+    highpass = sono.effect.highpass({frequency: 20});
 
-    lowshelf = sono.effect.lowshelf(80, 0);
+    lowshelf = sono.effect.lowshelf({frequency: 80, gain: 0});
 
     reverb = sono.effect.reverb({
         time: 0,
@@ -420,7 +420,7 @@
         value: 20,
         places: 0
     }, function(value) {
-        highpass.frequency.value = value;
+        highpass.frequency = value;
     });
 
     ui.createControl({
@@ -428,9 +428,9 @@
         name: 'Peak',
         min: 0.0001,
         max: 40,
-        value: highpass.Q.value
+        value: highpass.Q
     }, function(value) {
-        highpass.Q.value = value;
+        highpass.Q = value;
     });
 
     ui.createControl({
@@ -439,9 +439,9 @@
         min: -1000,
         max: 1000,
         places: 2,
-        value: highpass.detune.value
+        value: highpass.detune
     }, function(value) {
-        highpass.detune.value = value;
+        highpass.detune = value;
     });
 
     /*
@@ -456,7 +456,7 @@
         value: 80,
         places: 0
     }, function(value) {
-        lowshelf.frequency.value = value;
+        lowshelf.frequency = value;
     });
 
     ui.createControl({
@@ -464,9 +464,9 @@
         name: 'Peak',
         min: -40,
         max: 40,
-        value: lowshelf.gain.value
+        value: lowshelf.gain
     }, function(value) {
-        lowshelf.gain.value = value;
+        lowshelf.gain = value;
     });
 
     ui.createControl({
@@ -474,9 +474,9 @@
         name: 'Detune',
         min: -1000,
         max: 1000,
-        value: lowshelf.detune.value
+        value: lowshelf.detune
     }, function(value) {
-        lowshelf.detune.value = value;
+        lowshelf.detune = value;
     });
 
     /*

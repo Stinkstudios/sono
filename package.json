@@ -10,13 +10,13 @@
     "audio",
     "sound"
   ],
-  "main": "dist/sono.js",
+  "main": "core/sono.js",
   "scripts": {
     "test": "eslint 'src/**/*.js' && karma start --single-run --browsers Firefox",
     "build": "NODE_ENV=production rollup -c && rollup -c",
     "start": "rollup -c -w | karma start",
     "lint": "eslint 'src/**/*.js'; exit 0",
-    "browser": "browser-sync start -s --files 'examples/**/*.js, examples/**/*.css' --no-notify",
+    "examples": "browser-sync start -s --files 'examples/**/*.js, examples/**/*.css' --no-notify",
     "css": "postcss examples/css/index.css --use postcss-import postcss-custom-media postcss-custom-properties postcss-calc autoprefixer -o examples/css/styles.css"
   },
   "repository": {
@@ -55,5 +55,8 @@
     "rollup-plugin-strip": "^1.1.1",
     "rollup-plugin-uglify": "^1.0.1",
     "rollup-watch": "^2.5.0"
+  },
+  "browserify": {
+    "transform": [["babelify", { "presets": ["es2015", {"loose": true}] }]]
   }
 }

@@ -17,7 +17,7 @@
 
     <div class="Controls">
 
-      <video controls preload="auto" width="854" height="480" crossorigin="anonymous">
+      <video preload="auto" width="854" height="480" crossorigin="anonymous">
           <source src="http://prototypes.stinkdigital.com/webaudio/sono/examples/video/SD2015.mp4" type="video/mp4">
           <source src="http://prototypes.stinkdigital.com/webaudio/sono/examples/video/SD2015.webm" type="video/webm">
       </video>
@@ -77,7 +77,7 @@
     <pre><code class="js">
       var video = document.querySelector('video');
       var sound = sono.createSound(video);
-      video.play();
+      sound.play();
     </code></pre>
 
 
@@ -102,8 +102,7 @@
 
           sono.log();
 
-          var video,
-              sound,
+          var sound,
               lowpass,
               highpass,
               echo,
@@ -111,19 +110,20 @@
               analyser,
               waveform;
 
-          function init() {
+          function init(video) {
               sound = sono.createSound(video);
-              lowpass = sound.effect.lowpass(1200, 8);
-              highpass = sound.effect.highpass(1000, 5);
+              sound.play();
+              lowpass = sound.effect.lowpass({frequency: 1200, q: 8});
+              highpass = sound.effect.highpass({frequency: 1000, q: 5});
               echo = sound.effect.echo({
-                delayTime: 1.05,
-                feedback: 0.3
+                delayTime: 1,
+                feedback: 0.5
               });
               reverb = sound.effect.reverb({
                 time: 2,
                 decay: 2
               });
-              analyser = sound.effect.analyser(2048);
+              analyser = sound.effect.analyser({fftSize: 2048});
               waveform = document.querySelector('[data-js="waveform"]');
 
               sound.effect.remove(lowpass);
@@ -196,6 +196,7 @@
                   for (var i = 0, l = freqByteData.length; i < l; i++) {
                       magnitude = freqByteData[i];
                       percent = magnitude / 256;
+                    //   console.log(magnitude, percent);
                       hue = i/l * 360;
                       context.fillStyle = '#303030';
                       context.fillRect(barWidth * i, height, barWidth, 0 - height * percent);
@@ -210,9 +211,7 @@
               draw();
           }
 
-          video = document.querySelector('video');
-          video.addEventListener('canplaythrough', init, false);
-          video.play();
+          init(document.querySelector('video'));
 
       }());
   </script>

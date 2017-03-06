@@ -1,17 +1,17 @@
 describe('Sound', function() {
     const sound = new sono.Sound(sono.context);
 
-    it('should have expected members (id, setdata)', function() {
-        const id = Object.getOwnPropertyDescriptor(sound, 'id');
-        expect(id.get)
-            .to.be.a('function');
-        expect(id.set)
-            .to.be.a('function');
-        const data = Object.getOwnPropertyDescriptor(sound, 'data');
-        expect(data.get)
-            .to.be.a('function');
-        expect(data.set)
-            .to.be.a('function');
+    it('should have expected members (id)', function() {
+        expect(sound).to.have.property('id');
+        sound.id = 'foo';
+        expect(sound.id).to.eql('foo');
+    });
+
+    it('should have expected members (data)', function() {
+        expect(sound).to.have.property('data');
+        // sound.data = new Audio();
+        // expect(sound.data).to.exist;
+        // sound.data = null;
     });
 
     it('should have expected members (controls)', function() {
@@ -45,15 +45,19 @@ describe('Sound', function() {
     });
 
     it('should have expected members (effects)', function() {
-        expect(sound.effect)
+        expect(sound.effects)
             .to.be.an('object');
-        expect(sound.effect.setSource)
+        expect(sound.effects.setSource)
             .to.be.a('function');
-        expect(sound.effect.setDestination)
+        expect(sound.effects.setDestination)
             .to.be.a('function');
-        expect(sound.effect.add)
+        expect(sound.effects.add)
             .to.be.a('function');
-        expect(sound.effect.remove)
+        expect(sound.effects.remove)
+            .to.be.a('function');
+        expect(sound.effects.toggle)
+            .to.be.a('function');
+        expect(sound.effects.removeAll)
             .to.be.a('function');
     });
 
@@ -62,7 +66,7 @@ describe('Sound', function() {
             .pause()
             .load({})
             .stop()
-            .fade()
+            .fade(1)
             .play();
         expect(a)
             .to.be.an('object');

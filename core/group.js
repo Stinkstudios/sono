@@ -1,15 +1,15 @@
-import Effect from './effect';
+import Effects from './effects';
 
 export default function Group(context, destination) {
     const sounds = [];
-    const effect = new Effect(context);
-    const gain = effect.gain();
+    const effects = new Effects(context);
+    const gain = context.createGain();
     let preMuteVolume = 1;
     let group = null;
 
     if (context) {
-        effect.setSource(gain);
-        effect.setDestination(destination || context.destination);
+        effects.setSource(gain);
+        effects.setDestination(destination || context.destination);
     }
 
     /*
@@ -171,51 +171,51 @@ export default function Group(context, destination) {
         fade,
         load,
         unload,
-        destroy
-    };
-
-    /*
-     * Getters & Setters
-     */
-
-    Object.defineProperties(group, {
-        effect: {
-            value: effect
+        destroy,
+        gain,
+        get effects() {
+            return effects;
+            // return effects._nodes;
         },
-        gain: {
-            value: gain
+        set effects(value) {
+            effects.removeAll().add(value);
         },
-        sounds: {
-            value: sounds
+        get fx() {
+            return effects;
+            // return effects._nodes;
         },
-        volume: {
-            get: function() {
-                return gain.gain.value;
-            },
-            set: function(value) {
-                if (isNaN(value)) {
-                    return;
-                }
-
-                value = Math.min(Math.max(value, 0), 1);
-
-                if (context) {
-                    gain.gain.cancelScheduledValues(context.currentTime);
-                    gain.gain.value = value;
-                    gain.gain.setValueAtTime(value, context.currentTime);
-                } else {
-                    gain.gain.value = value;
-                }
-                sounds.forEach((sound) => {
-                    if (!sound.context) {
-                        sound.groupVolume = value;
-                    }
-                });
+        set fx(value) {
+            effects.removeAll().add(value);
+        },
+        get sounds() {
+            return sounds;
+        },
+        get volume() {
+            return gain.gain.value;
+        },
+        set volume(value) {
+            if (isNaN(value)) {
+                return;
             }
+
+            value = Math.min(Math.max(value, 0), 1);
+
+            if (context) {
+                gain.gain.cancelScheduledValues(context.currentTime);
+                gain.gain.value = value;
+                gain.gain.setValueAtTime(value, context.currentTime);
+            } else {
+                gain.gain.value = value;
+            }
+            sounds.forEach((sound) => {
+                if (!sound.context) {
+                    sound.groupVolume = value;
+                }
+            });
         }
-    });
+    };
 
     return group;
 }
 
-Group.Effect = Effect;
+Group.Effects = Effects;

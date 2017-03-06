@@ -7,7 +7,7 @@ import uglify from 'rollup-plugin-uglify';
 const prod = process.env.NODE_ENV === 'production';
 
 export default {
-    entry: 'src/sono.js',
+    entry: 'index.js',
     format: 'umd',
     moduleName: 'sono',
     dest: (prod ? 'dist/sono.min.js' : 'dist/sono.js'),

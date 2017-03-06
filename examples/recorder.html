@@ -50,8 +50,8 @@
           // the sound coming through the micophone
           sound = sono.createSound(stream);
           // start recorder
-          recorder = sound.effect.recorder(passThrough);
-          recorder.start();
+          recorder = sono.utils.recorder(passThrough);
+          recorder.start(sound);
 
           setTimeout(function() {
             // recorder returns recorded sound when stopped
@@ -74,7 +74,6 @@
     <script src="js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
     <script src="../dist/sono.js"></script>
-    <script src="js/player.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/recorder.js"></script>
 </body>

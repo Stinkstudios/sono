@@ -1,16 +1,16 @@
-import browser from './lib/utils/browser';
-import file from './lib/utils/file';
-import Group from './lib/group';
-import Loader from './lib/utils/loader';
-import Sound from './lib/sound';
-import SoundGroup from './lib/utils/sound-group';
-import utils from './lib/utils/utils';
+import context from './context';
+import browser from './utils/browser';
+import file from './utils/file';
+import Group from './group';
+import Loader from './utils/loader';
+import Effects from './effects';
+import Sound from './sound';
+import SoundGroup from './utils/sound-group';
+import utils from './utils/utils';
 
 function Sono() {
     const VERSION = '0.1.9';
-    const context = utils.getContext();
-    const destination = (context ? context.destination : null);
-    const group = new Group(context, destination);
+    const group = new Group(context, context.destination);
 
     let api = null;
     let isTouchLocked = false;
@@ -259,67 +259,92 @@ function Sono() {
         }
     }
 
-    api = {
-        createSound,
-        create: createSound,
-        destroySound,
-        destroyAll,
-        getSound,
-        createGroup,
-        file,
-        load,
-        mute,
-        unMute,
-        fade,
-        pauseAll,
-        resumeAll,
-        stopAll,
-        play,
-        pause,
-        stop,
-        log,
+    function register(name, fn, attachTo = []) {
 
+        if (attachTo.length) {
+            attachTo.forEach((ob) => {
+                ob[name] = fn;
+            });
+        } else {
+            // Effects.prototype[name] = Sound.prototype[name] = function(config) {
+            //     return this.add(fn(config));
+            // };
+
+            Effects.prototype[name] = function(opts) {
+                return this.add(fn(opts));
+            };
+
+        }
+
+        // Object.assign(api, {
+        //     [name]: fn
+        // });
+        api[name] = fn;
+
+        return fn;
+    }
+
+    api = {
         canPlay: file.canPlay,
         context,
-        getOfflineContext: utils.getOfflineContext,
-        effect: group.effect,
+        create: createSound,
+        createGroup,
+        createSound,
+        destroyAll,
+        destroySound,
+        Effects,
+        effects: group.effects,
         extensions: file.extensions,
-        hasWebAudio: !!context,
-        isSupported: file.extensions.length > 0,
+        fade,
+        file,
         gain: group.gain,
+        getOfflineContext: utils.getOfflineContext,
+        getSound,
+        Group,
+        hasWebAudio: !context.isFake,
+        isSupported: file.extensions.length > 0,
+        load,
+        log,
+        mute,
+        pause,
+        pauseAll,
+        play,
+        register,
+        resumeAll,
+        Sound,
+        stop,
+        stopAll,
+        unMute,
         utils,
         VERSION,
-
-        Sound,
-        Group
-    };
-
-    /*
-     * Getters & Setters
-     */
-
-    Object.defineProperties(api, {
-        isTouchLocked: {
-            get: function() {
-                return isTouchLocked;
-            }
+        get effects() {
+            // return group.effects._nodes;
+            return group.effects;
         },
-        sounds: {
-            get: function() {
-                return group.sounds.slice(0);
-            }
+        set effects(value) {
+            group.effects.removeAll().add(value);
         },
-        volume: {
-            get: function() {
-                return group.volume;
-            },
-            set: function(value) {
-                group.volume = value;
-            }
+        get fx() {
+            // return group.effects._nodes;
+            return group.effects;
+        },
+        set fx(value) {
+            group.effects.removeAll().add(value);
+        },
+        get isTouchLocked() {
+            return isTouchLocked;
+        },
+        get sounds() {
+            return group.sounds.slice(0);
+        },
+        get volume() {
+            return group.volume;
+        },
+        set volume(value) {
+            group.volume = value;
         }
-    });
-
-    return Object.freeze(api);
+    };
+    return api;
 }
 
 export default new Sono();

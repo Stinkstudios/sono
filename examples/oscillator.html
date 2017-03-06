@@ -104,12 +104,12 @@
 
           var sineWave = sono.createSound('sine'),
               distort = sineWave.effect.distortion(),
-              filter = sineWave.effect.lowpass(100, 10),
+              filter = sineWave.effect.lowpass({frequency: 100, q: 10}),
               analyser = sineWave.effect.analyser(2048);
 
           sineWave.frequency = 80;
           sineWave.volume = 0.1;
-          filter.Q.value = 20;
+          filter.Q = 20;
 
           var control = ui.createToggle({
             el: document.querySelector('[data-js="toggle"]'),
@@ -142,7 +142,7 @@
             value: 80,
             places: 0
           }, function(value) {
-            filter.frequency.value = value;
+            filter.frequency = value;
           });
 
           ui.createControl({
@@ -165,14 +165,15 @@
               return 'hsl(' + hue + ', 100%, 40%)';
             },
             transform: function(value) {
-              return value / 256;
+            //   return value / 256;
+              return value;
             }
           });
 
           function pitchCallback(obj) {
-
+            //   console.log('note:', obj.note);
           }
-          
+
           var count = 0;
 
           function draw() {

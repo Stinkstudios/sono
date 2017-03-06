@@ -88,6 +88,7 @@ export default function FakeContext() {
     }
 
     return {
+        isFake: true,
         createAnalyser: fakeNode,
         createBuffer: fakeNode,
         createBiquadFilter: fakeNode,
@@ -101,7 +102,9 @@ export default function FakeContext() {
         createPanner: fakeNode,
         createScriptProcessor: fakeNode,
         createWaveShaper: fakeNode,
+        destination: fakeNode,
         listener: fakeNode(),
+        state: '',
         get currentTime() {
             return (Date.now() - startTime) / 1000;
         }

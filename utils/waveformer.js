@@ -1,7 +1,9 @@
+import sono from '../core/sono';
+
 const halfPI = Math.PI / 2;
 const twoPI = Math.PI * 2;
 
-export default function waveformer(config) {
+function waveformer(config) {
 
     const style = config.style || 'fill', // 'fill' or 'line'
         shape = config.shape || 'linear', // 'circular' or 'linear'
@@ -166,3 +168,5 @@ export default function waveformer(config) {
 
     return update;
 }
+
+export default sono.register('waveformer', waveformer, [sono.utils]);

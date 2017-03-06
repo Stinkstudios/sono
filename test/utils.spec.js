@@ -31,4 +31,13 @@ describe('utils', function() {
                 .to.eql('03:37');
         });
     });
+
+    describe('recorder', function() {
+        it('should have expected api', function() {
+            expect(utils.recorder)
+                .to.be.a('function');
+            expect(utils.recorder())
+                .to.exist;
+        });
+    });
 });

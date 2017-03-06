@@ -1,4 +1,6 @@
-export default function waveform() {
+import sono from '../core/sono';
+
+function waveform() {
     let buffer,
         wave;
 
@@ -61,3 +63,5 @@ export default function waveform() {
         return wave;
     };
 }
+
+export default sono.register('waveform', waveform, [sono.utils]);

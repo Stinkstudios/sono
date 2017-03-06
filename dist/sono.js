@@ -4,6 +4,157 @@
   (global.sono = factory());
 }(this, (function () { 'use strict';
 
+function FakeContext() {
+
+    var startTime = Date.now();
+
+    function fn() {}
+
+    function param() {
+        return {
+            value: 1,
+            defaultValue: 1,
+            linearRampToValueAtTime: fn,
+            setValueAtTime: fn,
+            exponentialRampToValueAtTime: fn,
+            setTargetAtTime: fn,
+            setValueCurveAtTime: fn,
+            cancelScheduledValues: fn
+        };
+    }
+
+    function fakeNode() {
+        return {
+            connect: fn,
+            disconnect: fn,
+            // analyser
+            frequencyBinCount: 0,
+            smoothingTimeConstant: 0,
+            fftSize: 0,
+            minDecibels: 0,
+            maxDecibels: 0,
+            getByteTimeDomainData: fn,
+            getByteFrequencyData: fn,
+            getFloatTimeDomainData: fn,
+            getFloatFrequencyData: fn,
+            // gain
+            gain: param(),
+            // panner
+            panningModel: 0,
+            setPosition: fn,
+            setOrientation: fn,
+            setVelocity: fn,
+            distanceModel: 0,
+            refDistance: 0,
+            maxDistance: 0,
+            rolloffFactor: 0,
+            coneInnerAngle: 360,
+            coneOuterAngle: 360,
+            coneOuterGain: 0,
+            // filter:
+            type: 0,
+            frequency: param(),
+            Q: param(),
+            detune: param(),
+            // delay
+            delayTime: param(),
+            // convolver
+            buffer: 0,
+            // compressor
+            threshold: param(),
+            knee: param(),
+            ratio: param(),
+            attack: param(),
+            release: param(),
+            reduction: param(),
+            // distortion
+            oversample: 0,
+            curve: 0,
+            // buffer
+            sampleRate: 1,
+            length: 0,
+            duration: 0,
+            numberOfChannels: 0,
+            getChannelData: function getChannelData() {
+                return [];
+            },
+            copyFromChannel: fn,
+            copyToChannel: fn,
+            // listener
+            dopplerFactor: 0,
+            speedOfSound: 0,
+            // osc
+            start: fn
+        };
+    }
+
+    // ie9
+    if (!window.Uint8Array) {
+        window.Uint8Array = window.Float32Array = Array;
+    }
+
+    return {
+        isFake: true,
+        createAnalyser: fakeNode,
+        createBuffer: fakeNode,
+        createBiquadFilter: fakeNode,
+        createChannelMerger: fakeNode,
+        createChannelSplitter: fakeNode,
+        createDynamicsCompressor: fakeNode,
+        createConvolver: fakeNode,
+        createDelay: fakeNode,
+        createGain: fakeNode,
+        createOscillator: fakeNode,
+        createPanner: fakeNode,
+        createScriptProcessor: fakeNode,
+        createWaveShaper: fakeNode,
+        destination: fakeNode,
+        listener: fakeNode(),
+        state: '',
+        get currentTime() {
+            return (Date.now() - startTime) / 1000;
+        }
+    };
+}
+
+function getContext() {
+    var desiredSampleRate = 44100;
+
+    var Ctx = window.AudioContext || window.webkitAudioContext || FakeContext;
+
+    var ctx = new Ctx();
+
+    // Check if hack is necessary. Only occurs in iOS6+ devices
+    // and only when you first boot the iPhone, or play a audio/video
+    // with a different sample rate
+    // https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
+    if (/(iPhone|iPad)/i.test(navigator.userAgent) && ctx.sampleRate !== desiredSampleRate) {
+        var buffer = ctx.createBuffer(1, 1, desiredSampleRate);
+        var dummy = ctx.createBufferSource();
+        dummy.buffer = buffer;
+        dummy.connect(ctx.destination);
+        dummy.start(0);
+        dummy.disconnect();
+
+        ctx.close(); // dispose old context
+        ctx = new Ctx();
+    }
+
+    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+
+    var isSuspended = ctx.state === 'suspended';
+
+    if (isSuspended && typeof ctx.resume === 'function') {
+        window.setTimeout(function () {
+            ctx.resume();
+        }, 1000);
+    }
+
+    return ctx;
+}
+
+var context = getContext();
+
 var browser = {};
 
 browser.handlePageVisibility = function (onHidden, onShown) {
@@ -84,9 +235,34 @@ var classCallCheck = function (instance, Constructor) {
   }
 };
 
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
 
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
 
+var defineEnumerableProperties = function (obj, descs) {
+  for (var key in descs) {
+    var desc = descs[key];
+    desc.configurable = desc.enumerable = true;
+    if ("value" in desc) desc.writable = true;
+    Object.defineProperty(obj, key, desc);
+  }
 
+  return obj;
+};
 
 
 
@@ -139,7 +315,9 @@ var inherits = function (subClass, superClass) {
 
 
 
-
+var objectDestructuringEmpty = function (obj) {
+  if (obj == null) throw new TypeError("Cannot destructure undefined");
+};
 
 
 
@@ -319,1384 +497,166 @@ var file = {
     isURL: isURL
 };
 
-function Analyser(context, config) {
-    config = config || {};
+var Effects = function () {
+    function Effects(context) {
+        classCallCheck(this, Effects);
 
-    var node = context.createAnalyser();
+        this.context = context;
+        this._destination = null;
+        this._source = null;
+        // this.panning = new Panner(this.context);
 
-    var fftSize = config.fftSize || 512,
-        freqFloat = !!config.float,
-        waveFloat = !!config.float,
-        waveform = void 0,
-        frequencies = void 0;
-
-    node.fftSize = fftSize; // frequencyBinCount will be half this value
-    node.smoothingTimeConstant = config.smoothing || config.smoothingTimeConstant || node.smoothingTimeConstant;
-    node.minDecibels = config.minDecibels || node.minDecibels;
-    node.maxDecibels = config.maxDecibels || node.maxDecibels;
-
-    //the worker returns a normalized value
-    //first a sum of all magnitudes devided by the byteLength, then devide  by half the fft (1channel)
-    var amplitudeBlob = new Blob(['onmessage=function(e){var data=e.data;var f=new Float32Array(data.b);for(var i=0;i<f.length;i++){data.sum+=f[i]}data.sum/=f.length;postMessage(Math.max(1.0-(data.sum/data.numSamples*-1.0),0))};']);
-    var pitchBlob = new Blob(['onmessage=function(e){var data=e.data;var sampleRate=data.sampleRate;var buf=new Float32Array(data.b);var SIZE=buf.length;var MAX_SAMPLES=Math.floor(SIZE/2);var best_offset=-1;var best_correlation=0;var rms=0;var foundGoodCorrelation=false;var correlations=new Array(MAX_SAMPLES);for(var i=0;i<SIZE;i++){var val=buf[i];rms+=val*val}rms=Math.sqrt(rms/SIZE);if (rms<0.01){postMessage(-1)}else{var lastCorrelation=1;for(var offset=0;offset<MAX_SAMPLES;offset++){var correlation=0;for(var i=0;i<MAX_SAMPLES;i++){correlation+=Math.abs((buf[i])-(buf[i+offset]))}correlation=1-(correlation/MAX_SAMPLES);correlations[offset]=correlation;if ((correlation>0.9)&&(correlation>lastCorrelation)){foundGoodCorrelation=true;if (correlation>best_correlation){best_correlation=correlation;best_offset=offset}}else if (foundGoodCorrelation){var shift=(correlations[best_offset+1]-correlations[best_offset-1])/correlations[best_offset];postMessage(sampleRate/(best_offset+(8*shift)))}lastCorrelation=correlation}if (best_correlation>0.01){postMessage(sampleRate/best_offset)}else{postMessage(-1)}}};']);
-    var amplitudeBlobURL = URL.createObjectURL(amplitudeBlob);
-    var amplitudeWorker = new Worker(amplitudeBlobURL);
-    var pitchBlobURL = URL.createObjectURL(pitchBlob);
-    var pitchWorker = new Worker(pitchBlobURL);
-
-    var amplitudeCallback = null;
-    var noteStrings = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    var pitchCallback = null;
-    var pitchCallbackObject = {
-        hertz: null, //number
-        note: null, //string
-        noteIndex: null, //int
-        detuneCents: null, //number
-        detune: null //string
-    };
-
-    function noteFromPitch(frequency) {
-        var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-        return Math.round(noteNum) + 69;
+        this._nodes = [];
+        // this._nodes.has = node => this.has(node);
+        // this._nodes.add = node => this.add(node);
+        // this._nodes.remove = node => this.remove(node);
+        // this._nodes.toggle = (node, force) => this.toggle(node, force);
+        // this._nodes.removeAll = () => this.removeAll();
     }
 
-    function frequencyFromNoteNumber(note) {
-        return 440 * Math.pow(2, (note - 69) / 12);
-    }
-
-    function centsOffFromPitch(frequency, note) {
-        return Math.floor(1200 * Math.log(frequency / frequencyFromNoteNumber(note)) / Math.log(2));
-    }
-
-    amplitudeWorker.onmessage = function (e) {
-        if (amplitudeCallback) {
-            amplitudeCallback(e.data);
-        }
-    };
-
-    pitchWorker.onmessage = function (e) {
-        if (pitchCallback) {
-            var Hz = e.data;
-            if (Hz !== -1) {
-                var note = noteFromPitch(Hz);
-                var detune = centsOffFromPitch(Hz, note);
-                pitchCallbackObject.hertz = Hz;
-                pitchCallbackObject.noteIndex = note % 12;
-                pitchCallbackObject.note = noteStrings[note % 12];
-                pitchCallbackObject.detuneCents = detune;
-                if (detune === 0) {
-                    pitchCallbackObject.detune = '';
-                } else if (detune < 0) {
-                    pitchCallbackObject.detune = 'flat';
-                } else {
-                    pitchCallbackObject.detune = 'sharp';
-                }
-            }
-            pitchCallback(pitchCallbackObject);
-        }
-    };
-
-    function needsUpdate(arr, float) {
-        if (!arr) {
-            return true;
-        }
-        if (node.fftSize !== fftSize) {
-            return true;
-        }
-        if (float && arr instanceof Uint8Array) {
-            return true;
-        }
-        return !float && arr instanceof Float32Array;
-    }
-
-    function createArray(float, length) {
-        return float ? new Float32Array(length) : new Uint8Array(length);
-    }
-
-    node.getWaveform = function (float) {
-        if (!arguments.length) {
-            float = waveFloat;
-        }
-
-        if (needsUpdate(waveform, float)) {
-            fftSize = node.fftSize;
-            waveFloat = float;
-            waveform = createArray(float, fftSize);
-        }
-        if (float && this.getFloatTimeDomainData) {
-            this.getFloatTimeDomainData(waveform);
-        } else {
-            this.getByteTimeDomainData(waveform);
-        }
-
-        return waveform;
-    };
-
-    node.getPitch = function (callback) {
-        pitchCallback = pitchCallback || callback;
-        var f = new Float32Array(node.fftSize);
-        f.set(node.getWaveform(true));
-        pitchWorker.postMessage({
-            sampleRate: context.sampleRate,
-            b: f.buffer
-        }, [f.buffer]);
-    };
-
-    node.getFrequencies = function (float) {
-        if (!arguments.length) {
-            float = freqFloat;
-        }
-
-        if (needsUpdate(frequencies, float)) {
-            fftSize = node.fftSize;
-            freqFloat = float;
-            frequencies = createArray(float, node.frequencyBinCount);
-        }
-
-        if (float) {
-            this.getFloatFrequencyData(frequencies);
-        } else {
-            this.getByteFrequencyData(frequencies);
-        }
-
-        return frequencies;
-    };
-
-    node.getAmplitude = function (callback) {
-        amplitudeCallback = amplitudeCallback || callback;
-        var f = new Float32Array(node.fftSize);
-        f.set(node.getFrequencies(true));
-        amplitudeWorker.postMessage({
-            sum: 0,
-            length: f.byteLength,
-            numSamples: node.fftSize / 2,
-            b: f.buffer
-        }, [f.buffer]);
-    };
-
-    node.update = function () {
-        node.getWaveform();
-        node.getFrequencies();
-    };
-
-    Object.defineProperties(node, {
-        smoothing: {
-            get: function get() {
-                return node.smoothingTimeConstant;
-            },
-            set: function set(value) {
-                node.smoothingTimeConstant = value;
-            }
-        }
-    });
-
-    return node;
-}
-
-function number(value, defaultValue) {
-    if (arguments.length < 2) {
-        defaultValue = 0;
-    }
-    if (typeof value !== 'number' || isNaN(value)) {
-        return defaultValue;
-    }
-    return value;
-}
-
-var n = 22050;
-
-function Distortion(context, amount) {
-
-    amount = number(amount, 1);
-
-    var node = context.createWaveShaper();
-    var curve = new Float32Array(n);
-
-    // create waveShaper distortion curve from 0 to 1
-    node.update = function (value) {
-        amount = value;
-        if (amount <= 0) {
-            amount = 0;
-            this.curve = null;
-            return;
-        }
-        var k = value * 100;
-        var deg = Math.PI / 180;
-        var x = void 0;
-
-        for (var i = 0; i < n; i++) {
-            x = i * 2 / n - 1;
-            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
-        }
-
-        this.curve = curve;
-    };
-
-    Object.defineProperties(node, {
-        amount: {
-            get: function get() {
-                return amount;
-            },
-            set: function set(value) {
-                this.update(value);
-            }
-        }
-    });
-
-    if (typeof amount !== 'undefined') {
-        node.update(amount);
-    }
-
-    return node;
-}
-
-function Echo(context, config) {
-    config = config || {};
-
-    var input = context.createGain();
-    var delay = context.createDelay();
-    var gain = context.createGain();
-    var output = context.createGain();
-
-    delay.delayTime.value = number(config.delayTime, 0.5);
-    gain.gain.value = number(config.feedback, 0.5);
-
-    input.connect(delay);
-    input.connect(output);
-    delay.connect(gain);
-    gain.connect(delay);
-    gain.connect(output);
-
-    var node = input;
-    node.name = 'Echo';
-    node._output = output;
-
-    Object.defineProperties(node, {
-        delay: {
-            get: function get() {
-                return delay.delayTime.value;
-            },
-            set: function set(value) {
-                delay.delayTime.value = value;
-            }
-        },
-        feedback: {
-            get: function get() {
-                return gain.gain.value;
-            },
-            set: function set(value) {
-                gain.gain.value = value;
-            }
-        }
-    });
-
-    return node;
-}
-
-function FakeContext() {
-
-    var startTime = Date.now();
-
-    function fn() {}
-
-    function param() {
-        return {
-            value: 1,
-            defaultValue: 1,
-            linearRampToValueAtTime: fn,
-            setValueAtTime: fn,
-            exponentialRampToValueAtTime: fn,
-            setTargetAtTime: fn,
-            setValueCurveAtTime: fn,
-            cancelScheduledValues: fn
-        };
-    }
-
-    function fakeNode() {
-        return {
-            connect: fn,
-            disconnect: fn,
-            // analyser
-            frequencyBinCount: 0,
-            smoothingTimeConstant: 0,
-            fftSize: 0,
-            minDecibels: 0,
-            maxDecibels: 0,
-            getByteTimeDomainData: fn,
-            getByteFrequencyData: fn,
-            getFloatTimeDomainData: fn,
-            getFloatFrequencyData: fn,
-            // gain
-            gain: param(),
-            // panner
-            panningModel: 0,
-            setPosition: fn,
-            setOrientation: fn,
-            setVelocity: fn,
-            distanceModel: 0,
-            refDistance: 0,
-            maxDistance: 0,
-            rolloffFactor: 0,
-            coneInnerAngle: 360,
-            coneOuterAngle: 360,
-            coneOuterGain: 0,
-            // filter:
-            type: 0,
-            frequency: param(),
-            Q: param(),
-            detune: param(),
-            // delay
-            delayTime: param(),
-            // convolver
-            buffer: 0,
-            // compressor
-            threshold: param(),
-            knee: param(),
-            ratio: param(),
-            attack: param(),
-            release: param(),
-            reduction: param(),
-            // distortion
-            oversample: 0,
-            curve: 0,
-            // buffer
-            sampleRate: 1,
-            length: 0,
-            duration: 0,
-            numberOfChannels: 0,
-            getChannelData: function getChannelData() {
-                return [];
-            },
-            copyFromChannel: fn,
-            copyToChannel: fn,
-            // listener
-            dopplerFactor: 0,
-            speedOfSound: 0,
-            // osc
-            start: fn
-        };
-    }
-
-    // ie9
-    if (!window.Uint8Array) {
-        window.Uint8Array = window.Float32Array = Array;
-    }
-
-    return {
-        createAnalyser: fakeNode,
-        createBuffer: fakeNode,
-        createBiquadFilter: fakeNode,
-        createChannelMerger: fakeNode,
-        createChannelSplitter: fakeNode,
-        createDynamicsCompressor: fakeNode,
-        createConvolver: fakeNode,
-        createDelay: fakeNode,
-        createGain: fakeNode,
-        createOscillator: fakeNode,
-        createPanner: fakeNode,
-        createScriptProcessor: fakeNode,
-        createWaveShaper: fakeNode,
-        listener: fakeNode(),
-        get currentTime() {
-            return (Date.now() - startTime) / 1000;
-        }
-    };
-}
-
-// https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
-// For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
-// The greater the value is, the greater is the peak
-
-function Filter(context) {
-    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-    // Frequency between 40Hz and half of the sampling rate
-    var minFrequency = 40;
-    var maxFrequency = context.sampleRate / 2;
-
-    var node = context.createBiquadFilter();
-    node.type = config.type;
-
-    function getFrequency(value) {
-        // Logarithm (base 2) to compute how many octaves fall in the range.
-        var numberOfOctaves = Math.log(maxFrequency / minFrequency) / Math.LN2;
-        // Compute a multiplier from 0 to 1 based on an exponential scale.
-        var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-        // Get back to the frequency value between min and max.
-        return maxFrequency * multiplier;
-    }
-
-    node.set = function (frequency, q, gain) {
-        if (typeof frequency !== 'undefined' && typeof frequency === 'number') {
-            node.frequency.value = frequency;
-        }
-        if (typeof q !== 'undefined' && typeof q === 'number') {
-            node.Q.value = q;
-        }
-        if (typeof gain !== 'undefined' && typeof gain === 'number') {
-            node.gain.value = gain;
-        }
+    Effects.prototype.setSource = function setSource(node) {
+        this._source = node;
+        this._updateConnections();
         return node;
     };
 
-    // set filter frequency based on value from 0 to 1
-    node.setByPercent = function (percent, q, gain) {
-        return node.set(getFrequency(percent), q, gain);
+    Effects.prototype.setDestination = function setDestination(node) {
+        this._connectToDestination(node);
+        return node;
     };
 
-    return node.set(config.frequency, config.q, config.gain);
-}
-
-function MonoFlanger(context, config) {
-    var input = context.createGain();
-    var delay = context.createDelay();
-    var feedback = context.createGain();
-    var lfo = context.createOscillator();
-    var gain = context.createGain();
-    var output = context.createGain();
-
-    delay.delayTime.value = number(config.delay, 0.005); // 5-25ms delay (0.005 > 0.025)
-    feedback.gain.value = number(config.feedback, 0.5); // 0 > 1
-
-    lfo.type = 'sine';
-    lfo.frequency.value = number(config.frequency, 0.002); // 0.05 > 5
-    gain.gain.value = number(config.gain, 0.25); // 0.0005 > 0.005
-
-    input.connect(output);
-    input.connect(delay);
-    delay.connect(output);
-    delay.connect(feedback);
-    feedback.connect(input);
-
-    lfo.connect(gain);
-    gain.connect(delay.delayTime);
-    lfo.start(0);
-
-    var node = input;
-    node.name = 'Flanger';
-    node._output = output;
-
-    Object.defineProperties(node, {
-        delay: {
-            get: function get() {
-                return delay.delayTime.value;
-            },
-            set: function set(value) {
-                delay.delayTime.value = value;
-            }
-        },
-        lfoFrequency: {
-            get: function get() {
-                return lfo.frequency.value;
-            },
-            set: function set(value) {
-                lfo.frequency.value = value;
-            }
-        },
-        lfoGain: {
-            get: function get() {
-                return gain.gain.value;
-            },
-            set: function set(value) {
-                gain.gain.value = value;
-            }
-        },
-        feedback: {
-            get: function get() {
-                return feedback.gain.value;
-            },
-            set: function set(value) {
-                feedback.gain.value = value;
-            }
+    Effects.prototype.has = function has(node) {
+        if (!node) {
+            return false;
         }
-    });
-
-    return node;
-}
-
-function StereoFlanger(context, config) {
-    var input = context.createGain();
-    var splitter = context.createChannelSplitter(2);
-    var merger = context.createChannelMerger(2);
-    var feedbackL = context.createGain();
-    var feedbackR = context.createGain();
-    var lfo = context.createOscillator();
-    var lfoGainL = context.createGain();
-    var lfoGainR = context.createGain();
-    var delayL = context.createDelay();
-    var delayR = context.createDelay();
-    var output = context.createGain();
-
-    feedbackL.gain.value = feedbackR.gain.value = number(config.feedback, 0.5);
-    delayL.delayTime.value = delayR.delayTime.value = number(config.delay, 0.003);
-
-    lfo.type = 'sine';
-    lfo.frequency.value = number(config.frequency, 0.5);
-    lfoGainL.gain.value = number(config.gain, 0.005);
-    lfoGainR.gain.value = 0 - lfoGainL.gain.value;
-
-    input.connect(splitter);
-
-    splitter.connect(delayL, 0);
-    splitter.connect(delayR, 1);
-
-    delayL.connect(feedbackL);
-    delayR.connect(feedbackR);
-
-    feedbackL.connect(delayR);
-    feedbackR.connect(delayL);
-
-    delayL.connect(merger, 0, 0);
-    delayR.connect(merger, 0, 1);
-
-    merger.connect(output);
-    input.connect(output);
-
-    lfo.connect(lfoGainL);
-    lfo.connect(lfoGainR);
-    lfoGainL.connect(delayL.delayTime);
-    lfoGainR.connect(delayR.delayTime);
-    lfo.start(0);
-
-    var node = input;
-    node.name = 'StereoFlanger';
-    node._output = output;
-
-    Object.defineProperties(node, {
-        delay: {
-            get: function get() {
-                return delayL.delayTime.value;
-            },
-            set: function set(value) {
-                delayL.delayTime.value = delayR.delayTime.value = value;
-            }
-        },
-        lfoFrequency: {
-            get: function get() {
-                return lfo.frequency.value;
-            },
-            set: function set(value) {
-                lfo.frequency.value = value;
-            }
-        },
-        lfoGain: {
-            get: function get() {
-                return lfoGainL.gain.value;
-            },
-            set: function set(value) {
-                lfoGainL.gain.value = lfoGainR.gain.value = value;
-            }
-        },
-        feedback: {
-            get: function get() {
-                return feedbackL.gain.value;
-            },
-            set: function set(value) {
-                feedbackL.gain.value = feedbackR.gain.value = value;
-            }
-        }
-    });
-
-    return node;
-}
-
-function Flanger(context, config) {
-    config = config || {};
-    return config.stereo ? new StereoFlanger(context, config) : new MonoFlanger(context, config);
-}
-
-function Panner(context) {
-    var node = context.createPanner();
-
-    // Default for stereo is 'HRTF' can also be 'equalpower'
-    node.panningModel = Panner.defaults.panningModel;
-
-    // Distance model and attributes
-    // Can be 'linear' 'inverse' 'exponential'
-    node.distanceModel = Panner.defaults.distanceModel;
-    node.refDistance = Panner.defaults.refDistance;
-    node.maxDistance = Panner.defaults.maxDistance;
-    node.rolloffFactor = Panner.defaults.rolloffFactor;
-    node.coneInnerAngle = Panner.defaults.coneInnerAngle;
-    node.coneOuterAngle = Panner.defaults.coneOuterAngle;
-    node.coneOuterGain = Panner.defaults.coneOuterGain;
-    // set to defaults (needed in Firefox)
-    node.setPosition(0, 0, 1);
-    node.setOrientation(0, 0, 0);
-
-    // simple vec3 object pool
-    var vecPool = {
-        pool: [],
-        get: function get(x, y, z) {
-            var v = this.pool.length ? this.pool.pop() : {
-                x: 0,
-                y: 0,
-                z: 0
-            };
-            // check if a vector has been passed in
-            if (typeof x !== 'undefined' && isNaN(x) && 'x' in x && 'y' in x && 'z' in x) {
-                v.x = number(x.x);
-                v.y = number(x.y);
-                v.z = number(x.z);
-            } else {
-                v.x = number(x);
-                v.y = number(y);
-                v.z = number(z);
-            }
-            return v;
-        },
-        dispose: function dispose(instance) {
-            this.pool.push(instance);
-        }
+        return this._nodes.indexOf(node) > -1;
     };
 
-    var globalUp = vecPool.get(0, 1, 0),
-        angle45 = Math.PI / 4,
-        angle90 = Math.PI / 2;
-
-    // cross product of 2 vectors
-    function cross(a, b) {
-        var ax = a.x,
-            ay = a.y,
-            az = a.z;
-        var bx = b.x,
-            by = b.y,
-            bz = b.z;
-        a.x = ay * bz - az * by;
-        a.y = az * bx - ax * bz;
-        a.z = ax * by - ay * bx;
-    }
-
-    // normalise to unit vector
-    function normalize(vec3) {
-        if (vec3.x === 0 && vec3.y === 0 && vec3.z === 0) {
-            return vec3;
+    Effects.prototype.add = function add(node) {
+        if (!node) {
+            return null;
         }
-        var length = Math.sqrt(vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z);
-        var invScalar = 1 / length;
-        vec3.x *= invScalar;
-        vec3.y *= invScalar;
-        vec3.z *= invScalar;
-        return vec3;
-    }
-
-    // set the orientation of the source (where the audio is coming from)
-    function setOrientation(pannerNode, fw) {
-        // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-        var up = vecPool.get(fw.x, fw.y, fw.z);
-        cross(up, globalUp);
-        cross(up, fw);
-        normalize(up);
-        normalize(fw);
-        // set the audio context's listener position to match the camera position
-        pannerNode.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-        // return the vecs to the pool
-        vecPool.dispose(fw);
-        vecPool.dispose(up);
-    }
-
-    function setPosition(nodeOrListener, vec) {
-        nodeOrListener.setPosition(vec.x, vec.y, vec.z);
-        vecPool.dispose(vec);
-    }
-
-    node.set = function (x, y, z) {
-        var v = vecPool.get(x, y, z);
-
-        if (arguments.length === 1 && v.x) {
-            // pan left to right with value from -1 to 1
-            x = v.x;
-
-            if (x > 1) {
-                x = 1;
-            }
-            if (x < -1) {
-                x = -1;
-            }
-
-            // creates a nice curve with z
-            x = x * angle45;
-            z = x + angle90;
-
-            if (z > angle90) {
-                z = Math.PI - z;
-            }
-
-            v.x = Math.sin(x);
-            v.z = Math.sin(z);
+        if (this.has(node)) {
+            return node;
         }
-        setPosition(node, v);
+        if (Array.isArray(node)) {
+            var n = void 0;
+            for (var i = 0; i < node.length; i++) {
+                n = this.add(node[i]);
+            }
+            return n;
+        }
+        this._nodes.push(node);
+        this._updateConnections();
+        return node;
     };
 
-    // set the position the audio is coming from)
-    node.setSourcePosition = function (x, y, z) {
-        setPosition(node, vecPool.get(x, y, z));
-    };
-
-    // set the direction the audio is coming from)
-    node.setSourceOrientation = function (x, y, z) {
-        setOrientation(node, vecPool.get(x, y, z));
-    };
-
-    // set the position of who or what is hearing the audio (could be camera or some character)
-    node.setListenerPosition = function (x, y, z) {
-        setPosition(context.listener, vecPool.get(x, y, z));
-    };
-
-    // set the position of who or what is hearing the audio (could be camera or some character)
-    node.setListenerOrientation = function (x, y, z) {
-        setOrientation(context.listener, vecPool.get(x, y, z));
-    };
-
-    node.getDefaults = function () {
-        return Panner.defaults;
-    };
-
-    node.setDefaults = function (defaults) {
-        Object.keys(defaults).forEach(function (key) {
-            Panner.defaults[key] = defaults[key];
-        });
-    };
-
-    return node;
-}
-
-Panner.defaults = {
-    panningModel: 'HRTF',
-    distanceModel: 'linear',
-    refDistance: 1,
-    maxDistance: 1000,
-    rolloffFactor: 1,
-    coneInnerAngle: 360,
-    coneOuterAngle: 0,
-    coneOuterGain: 0
-};
-
-function Phaser(context) {
-    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-    var stages = number(config.stages, 8);
-    var filters = [];
-    var filter = void 0;
-
-    var input = context.createGain();
-    var feedback = context.createGain();
-    var lfo = context.createOscillator();
-    var lfoGain = context.createGain();
-    var output = context.createGain();
-
-    feedback.gain.value = number(config.feedback, 0.5);
-
-    lfo.type = 'sine';
-    lfo.frequency.value = number(config.frequency, 0.5);
-    lfoGain.gain.value = number(config.gain, 300);
-
-    for (var i = 0; i < stages; i++) {
-        filter = context.createBiquadFilter();
-        filter.type = 'allpass';
-        filter.frequency.value = 1000 * i;
-        //filter.Q.value = 10;
-        if (i > 0) {
-            filters[i - 1].connect(filter);
+    Effects.prototype.remove = function remove(node) {
+        if (!node) {
+            return null;
         }
-        lfoGain.connect(filter.frequency);
-
-        filters.push(filter);
-    }
-
-    var first = filters[0];
-    var last = filters[filters.length - 1];
-
-    input.connect(first);
-    input.connect(output);
-    last.connect(output);
-    last.connect(feedback);
-    feedback.connect(first);
-    lfo.connect(lfoGain);
-    lfo.start(0);
-
-    var node = input;
-    node.name = 'Phaser';
-    node._output = output;
-
-    Object.defineProperties(node, {
-        lfoFrequency: {
-            get: function get() {
-                return lfo.frequency.value;
-            },
-            set: function set(value) {
-                lfo.frequency.value = value;
-            }
-        },
-        lfoGain: {
-            get: function get() {
-                return lfoGain.gain.value;
-            },
-            set: function set(value) {
-                lfoGain.gain.value = value;
-            }
-        },
-        feedback: {
-            get: function get() {
-                return feedback.gain.value;
-            },
-            set: function set(value) {
-                feedback.gain.value = value;
+        if (!this.has(node)) {
+            return node;
+        }
+        var l = this._nodes.length;
+        for (var i = 0; i < l; i++) {
+            if (node === this._nodes[i]) {
+                this._nodes.splice(i, 1);
+                break;
             }
         }
-    });
-
-    return node;
-}
-
-function Recorder(context, passThrough) {
-    var bufferLength = 4096,
-        buffersL = [],
-        buffersR = [];
-    var startedAt = 0,
-        stoppedAt = 0;
-
-    var input = context.createGain();
-    var output = context.createGain();
-    var script = void 0;
-
-    var node = input;
-    node.name = 'Recorder';
-    node._output = output;
-
-    node.isRecording = false;
-
-    function mergeBuffers(buffers, length) {
-        var buffer = new Float32Array(length);
-        var offset = 0;
-        for (var i = 0; i < buffers.length; i++) {
-            buffer.set(buffers[i], offset);
-            offset += buffers[i].length;
-        }
-        return buffer;
-    }
-
-    function getBuffer() {
-        if (!buffersL.length) {
-            return context.createBuffer(2, bufferLength, context.sampleRate);
-        }
-        var recordingLength = buffersL.length * bufferLength;
-        var buffer = context.createBuffer(2, recordingLength, context.sampleRate);
-        buffer.getChannelData(0).set(mergeBuffers(buffersL, recordingLength));
-        buffer.getChannelData(1).set(mergeBuffers(buffersR, recordingLength));
-        return buffer;
-    }
-
-    function destroyScriptProcessor() {
-        if (script) {
-            script.onaudioprocess = null;
-            input.disconnect();
-            script.disconnect();
-        }
-    }
-
-    function createScriptProcessor() {
-        destroyScriptProcessor();
-
-        script = context.createScriptProcessor(bufferLength, 2, 2);
-        input.connect(script);
-        script.connect(context.destination);
-        script.connect(output);
-
-        script.onaudioprocess = function (event) {
-            var inputL = event.inputBuffer.getChannelData(0);
-            var inputR = event.inputBuffer.getChannelData(1);
-
-            if (passThrough) {
-                var outputL = event.outputBuffer.getChannelData(0);
-                var outputR = event.outputBuffer.getChannelData(1);
-                outputL.set(inputL);
-                outputR.set(inputR);
-            }
-
-            if (node.isRecording) {
-                buffersL.push(new Float32Array(inputL));
-                buffersR.push(new Float32Array(inputR));
-            }
-        };
-    }
-
-    node.start = function () {
-        createScriptProcessor();
-        buffersL.length = 0;
-        buffersR.length = 0;
-        startedAt = context.currentTime;
-        stoppedAt = 0;
-        this.isRecording = true;
+        node.disconnect();
+        this._updateConnections();
+        return node;
     };
 
-    node.stop = function () {
-        stoppedAt = context.currentTime;
-        this.isRecording = false;
-        destroyScriptProcessor();
-        return getBuffer();
+    Effects.prototype.toggle = function toggle(node, force) {
+        force = !!force;
+        var hasNode = this.has(node);
+        if (arguments.length > 1 && hasNode === force) {
+            return this;
+        }
+        if (hasNode) {
+            this.remove(node);
+        } else {
+            this.add(node);
+        }
+        return this;
     };
 
-    node.getDuration = function () {
-        if (!this.isRecording) {
-            return stoppedAt - startedAt;
+    Effects.prototype.removeAll = function removeAll() {
+        while (this._nodes.length) {
+            var node = this._nodes.pop();
+            node.disconnect();
         }
-        return context.currentTime - startedAt;
+        this._updateConnections();
+        return this;
     };
 
-    return node;
-}
-
-function Reverb(context) {
-    var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-    var rate = context.sampleRate;
-
-    var time = number(config.time, 1);
-    var decay = number(config.decay, 5);
-    var reverse = !!config.reverse;
-    var length = void 0;
-    var impulseResponse = void 0;
-
-    var input = context.createGain();
-    var reverb = context.createConvolver();
-    var output = context.createGain();
-
-    input.connect(reverb);
-    input.connect(output);
-    reverb.connect(output);
-
-    var node = input;
-    node.name = 'Reverb';
-    node._output = output;
-
-    node.update = function (opt) {
-        if (typeof opt.time !== 'undefined') {
-            time = opt.time;
-            length = Math.floor(rate * time);
-            impulseResponse = length ? context.createBuffer(2, length, rate) : null;
+    Effects.prototype.destroy = function destroy() {
+        this.removeAll();
+        this.context = null;
+        this._destination = null;
+        if (this._source) {
+            this._source.disconnect();
         }
-        if (typeof opt.decay !== 'undefined') {
-            decay = opt.decay;
-        }
-        if (typeof opt.reverse !== 'undefined') {
-            reverse = opt.reverse;
-        }
-
-        if (!impulseResponse) {
-            reverb.buffer = null;
-            return;
-        }
-
-        var left = impulseResponse.getChannelData(0);
-        var right = impulseResponse.getChannelData(1);
-        var n = void 0,
-            e = void 0;
-
-        for (var i = 0; i < length; i++) {
-            n = reverse ? length - i : i;
-            e = Math.pow(1 - n / length, decay);
-            left[i] = (Math.random() * 2 - 1) * e;
-            right[i] = (Math.random() * 2 - 1) * e;
-        }
-
-        reverb.buffer = impulseResponse;
+        this._source = null;
     };
 
-    node.update({
-        time: time,
-        decay: decay,
-        reverse: reverse
-    });
+    Effects.prototype.list = function list() {
+        return this._nodes;
+    };
 
-    Object.defineProperties(node, {
-        time: {
-            get: function get() {
-                return time;
-            },
-            set: function set(value) {
-                if (value === time) {
-                    return;
-                }
-                this.update({
-                    time: value
-                });
-            }
-        },
-        decay: {
-            get: function get() {
-                return decay;
-            },
-            set: function set(value) {
-                if (value === decay) {
-                    return;
-                }
-                this.update({
-                    decay: value
-                });
-            }
-        },
-        reverse: {
-            get: function get() {
-                return reverse;
-            },
-            set: function set(value) {
-                if (value === reverse) {
-                    return;
-                }
-                this.update({
-                    reverse: !!value
-                });
-            }
-        }
-    });
+    Effects.prototype._connect = function _connect(a, b) {
+        a.disconnect();
+        // console.log('> connect output', (a.name || a.constructor.name), 'to input', (b.name || b.constructor.name));
+        a.connect(b._in || b);
+    };
 
-    return node;
-}
-
-function Effect(context) {
-    context = context || new FakeContext();
-    var panning = new Panner(context);
-
-    var api = null,
-        destination = void 0,
-        nodeList = [],
-        sourceNode = void 0;
-
-    function connect(a, b) {
-        //console.log('> connect', (a.name || a.constructor.name), 'to', (b.name || b.constructor.name));
-
-        var output = a._output || a;
-        //console.log('> disconnect output: ', (a.name || a.constructor.name));
-        output.disconnect();
-        //console.log('> connect output: ',(a.name || a.constructor.name), 'to input:', (b.name || b.constructor.name));
-        output.connect(b);
-    }
-
-    function connectToDestination(node) {
-        var l = nodeList.length;
-        var lastNode = l ? nodeList[l - 1] : sourceNode;
+    Effects.prototype._connectToDestination = function _connectToDestination(node) {
+        var lastNode = this._nodes[this._nodes.length - 1] || this._source;
 
         if (lastNode) {
-            connect(lastNode, node);
+            this._connect(lastNode, node);
         }
 
-        destination = node;
-    }
+        this._destination = node;
+    };
 
-    function updateConnections() {
-        if (!sourceNode) {
+    Effects.prototype._updateConnections = function _updateConnections() {
+        if (!this._source) {
             return;
         }
 
-        //console.log('updateConnections:', nodeList.length);
+        // console.log('updateConnections');
 
         var node = void 0,
             prev = void 0;
 
-        for (var i = 0; i < nodeList.length; i++) {
-            node = nodeList[i];
-            //console.log(i, node);
-            prev = i === 0 ? sourceNode : nodeList[i - 1];
-            connect(prev, node);
+        for (var i = 0; i < this._nodes.length; i++) {
+            node = this._nodes[i];
+            prev = i === 0 ? this._source : this._nodes[i - 1];
+            this._connect(prev, node);
         }
 
-        if (destination) {
-            connectToDestination(destination);
+        if (this._destination) {
+            this._connectToDestination(this._destination);
         }
-    }
-
-    function has(node) {
-        if (!node) {
-            return false;
-        }
-        return nodeList.indexOf(node) > -1;
-    }
-
-    function add(node) {
-        if (!node) {
-            return null;
-        }
-        if (has(node)) {
-            return node;
-        }
-        nodeList.push(node);
-        updateConnections();
-        return node;
-    }
-
-    function remove(node) {
-        if (!node) {
-            return null;
-        }
-        if (!has(node)) {
-            return node;
-        }
-        var l = nodeList.length;
-        for (var i = 0; i < l; i++) {
-            if (node === nodeList[i]) {
-                nodeList.splice(i, 1);
-                break;
-            }
-        }
-        var output = node._output || node;
-        output.disconnect();
-        updateConnections();
-        return node;
-    }
-
-    function toggle(node, force) {
-        force = !!force;
-        var hasNode = has(node);
-        if (arguments.length > 1 && hasNode === force) {
-            return api;
-        }
-        if (hasNode) {
-            remove(node);
-        } else {
-            add(node);
-        }
-        return api;
-    }
-
-    function removeAll() {
-        while (nodeList.length) {
-            nodeList.pop().disconnect();
-        }
-        updateConnections();
-        return api;
-    }
-
-    function destroy() {
-        removeAll();
-        context = null;
-        destination = null;
-        nodeList = [];
-        if (sourceNode) {
-            sourceNode.disconnect();
-        }
-        sourceNode = null;
-    }
-
-    /*
-     * Effects
-     */
-
-    function analyser(config) {
-        return add(new Analyser(context, config));
-    }
-
-    // lowers the volume of the loudest parts of the signal and raises the volume of the softest parts
-    function compressor(options) {
-        var node = context.createDynamicsCompressor();
-
-        node.update = function (config) {
-            // min decibels to start compressing at from -100 to 0
-            node.threshold.value = typeof config.threshold !== 'undefined' ? config.threshold : -24;
-            // decibel value to start curve to compressed value from 0 to 40
-            node.knee.value = typeof config.knee !== 'undefined' ? config.knee : 30;
-            // amount of change per decibel from 1 to 20
-            node.ratio.value = typeof config.ratio !== 'undefined' ? config.ratio : 12;
-            // gain reduction currently applied by compressor from -20 to 0
-            // node.reduction.value = typeof config.reduction !== 'undefined' ? config.reduction : -10;)
-            // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
-            node.attack.value = typeof config.attack !== 'undefined' ? config.attack : 0.0003;
-            // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
-            node.release.value = typeof config.release !== 'undefined' ? config.release : 0.25;
-        };
-
-        node.update(options || {});
-
-        return add(node);
-    }
-
-    function convolver(impulseResponse) {
-        // impulseResponse is an audio file buffer
-        var node = context.createConvolver();
-        node.buffer = impulseResponse;
-        return add(node);
-    }
-
-    function delay(time) {
-        var node = context.createDelay();
-        if (typeof time !== 'undefined') {
-            node.delayTime.value = time;
-        }
-        return add(node);
-    }
-
-    function echo(config) {
-        return add(new Echo(context, config));
-    }
-
-    function distortion(amount) {
-        // Float32Array defining curve (values are interpolated)
-        //node.curve
-        // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
-        //node.oversample = '2x';
-        return add(new Distortion(context, amount));
-    }
-
-    function filter(type, frequency, q, gain) {
-        return add(new Filter(context, { type: type, frequency: frequency, q: q, gain: gain }));
-    }
-
-    function lowpass(frequency, peak) {
-        return filter('lowpass', { frequency: frequency, q: peak });
-    }
-
-    function highpass(frequency, peak) {
-        return filter('highpass', { frequency: frequency, q: peak });
-    }
-
-    function bandpass(frequency, width) {
-        return filter('bandpass', { frequency: frequency, q: width });
-    }
-
-    function lowshelf(frequency, gain) {
-        return filter('lowshelf', { frequency: frequency, q: 0, gain: gain });
-    }
-
-    function highshelf(frequency, gain) {
-        return filter('highshelf', { frequency: frequency, q: 0, gain: gain });
-    }
-
-    function peaking(frequency, width, gain) {
-        return filter('peaking', { frequency: frequency, q: width, gain: gain });
-    }
-
-    function notch(frequency, width, gain) {
-        return filter('notch', { frequency: frequency, q: width, gain: gain });
-    }
-
-    function allpass(frequency, sharpness) {
-        return filter('allpass', { frequency: frequency, q: sharpness });
-    }
-
-    function flanger(config) {
-        return add(new Flanger(context, config));
-    }
-
-    function gainNode(value) {
-        var node = context.createGain();
-        if (typeof value !== 'undefined') {
-            node.gain.value = value;
-        }
-        return node;
-    }
-
-    function panner() {
-        return add(new Panner(context));
-    }
-
-    function phaser(config) {
-        return add(new Phaser(context, config));
-    }
-
-    function recorder(passThrough) {
-        return add(new Recorder(context, passThrough));
-    }
-
-    function reverb(seconds, decay, reverse) {
-        return add(new Reverb(context, seconds, decay, reverse));
-    }
-
-    function script() {
-        var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-        // bufferSize 256 - 16384 (pow 2)
-        var bufferSize = config.bufferSize || 1024;
-        var inputChannels = typeof config.inputChannels === 'undefined' ? 0 : config.inputChannels;
-        var outputChannels = typeof config.outputChannels === 'undefined' ? 1 : config.outputChannels;
-
-        var node = context.createScriptProcessor(bufferSize, inputChannels, outputChannels);
-
-        var thisArg = config.thisArg || config.context || node;
-        var callback = config.callback || function () {};
-
-        // available props:
-        /*
-        event.inputBuffer
-        event.outputBuffer
-        event.playbackTime
-        */
-        // Example: generate noise
-        /*
-        const output = event.outputBuffer.getChannelData(0);
-        const l = output.length;
-        for (let i = 0; i < l; i++) {
-            output[i] = Math.random();
-        }
-        */
-        node.onaudioprocess = callback.bind(thisArg);
-
-        return add(node);
-    }
-
-    function setSource(node) {
-        sourceNode = node;
-        updateConnections();
-        return node;
-    }
-
-    function setDestination(node) {
-        connectToDestination(node);
-        return node;
-    }
-
-    //
-
-    api = {
-        context: context,
-        nodeList: nodeList,
-        panning: panning,
-
-        has: has,
-        add: add,
-        remove: remove,
-        toggle: toggle,
-        removeAll: removeAll,
-        destroy: destroy,
-        setSource: setSource,
-        setDestination: setDestination,
-
-        analyser: analyser,
-        compressor: compressor,
-        convolver: convolver,
-        delay: delay,
-        echo: echo,
-        distortion: distortion,
-        filter: filter,
-        lowpass: lowpass,
-        highpass: highpass,
-        bandpass: bandpass,
-        lowshelf: lowshelf,
-        highshelf: highshelf,
-        peaking: peaking,
-        notch: notch,
-        allpass: allpass,
-        flanger: flanger,
-        gain: gainNode,
-        panner: panner,
-        phaser: phaser,
-        recorder: recorder,
-        reverb: reverb,
-        script: script
     };
 
-    return Object.freeze(api);
-}
+    return Effects;
+}();
 
 function Group(context, destination) {
     var sounds = [];
-    var effect = new Effect(context);
-    var gain = effect.gain();
+    var effects = new Effects(context);
+    var gain = context.createGain();
     var preMuteVolume = 1;
     var group = null;
 
     if (context) {
-        effect.setSource(gain);
-        effect.setDestination(destination || context.destination);
+        effects.setSource(gain);
+        effects.setDestination(destination || context.destination);
     }
 
     /*
@@ -1871,54 +831,54 @@ function Group(context, destination) {
         fade: fade,
         load: load,
         unload: unload,
-        destroy: destroy
-    };
-
-    /*
-     * Getters & Setters
-     */
-
-    Object.defineProperties(group, {
-        effect: {
-            value: effect
+        destroy: destroy,
+        gain: gain,
+        get effects() {
+            return effects;
+            // return effects._nodes;
         },
-        gain: {
-            value: gain
+        set effects(value) {
+            effects.removeAll().add(value);
         },
-        sounds: {
-            value: sounds
+        get fx() {
+            return effects;
+            // return effects._nodes;
         },
-        volume: {
-            get: function get() {
-                return gain.gain.value;
-            },
-            set: function set(value) {
-                if (isNaN(value)) {
-                    return;
-                }
-
-                value = Math.min(Math.max(value, 0), 1);
-
-                if (context) {
-                    gain.gain.cancelScheduledValues(context.currentTime);
-                    gain.gain.value = value;
-                    gain.gain.setValueAtTime(value, context.currentTime);
-                } else {
-                    gain.gain.value = value;
-                }
-                sounds.forEach(function (sound) {
-                    if (!sound.context) {
-                        sound.groupVolume = value;
-                    }
-                });
+        set fx(value) {
+            effects.removeAll().add(value);
+        },
+        get sounds() {
+            return sounds;
+        },
+        get volume() {
+            return gain.gain.value;
+        },
+        set volume(value) {
+            if (isNaN(value)) {
+                return;
             }
+
+            value = Math.min(Math.max(value, 0), 1);
+
+            if (context) {
+                gain.gain.cancelScheduledValues(context.currentTime);
+                gain.gain.value = value;
+                gain.gain.setValueAtTime(value, context.currentTime);
+            } else {
+                gain.gain.value = value;
+            }
+            sounds.forEach(function (sound) {
+                if (!sound.context) {
+                    sound.groupVolume = value;
+                }
+            });
         }
-    });
+    };
 
     return group;
 }
 
-Group.Effect = Effect;
+Group.Effects = Effects;
 
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2701,6 +1661,122 @@ function BufferSource(buffer, context, onEnded) {
 
     return Object.freeze(api);
 }
+
+var offlineCtx = void 0;
+/*
+In contrast with a standard AudioContext, an OfflineAudioContext doesn't render
+the audio to the device hardware;
+instead, it generates it, as fast as it can, and outputs the result to an AudioBuffer.
+*/
+function getOfflineContext(numOfChannels, length, sampleRate) {
+    if (offlineCtx) {
+        return offlineCtx;
+    }
+    numOfChannels = numOfChannels || 2;
+    sampleRate = sampleRate || 44100;
+    length = sampleRate || numOfChannels;
+
+    var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+
+    offlineCtx = OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null;
+
+    return offlineCtx;
+}
+
+/*
+ * clone audio buffer
+ */
+
+function cloneBuffer(buffer) {
+    if (!context) {
+        return buffer;
+    }
+
+    var numChannels = buffer.numberOfChannels,
+        cloned = context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+    for (var i = 0; i < numChannels; i++) {
+        cloned.getChannelData(i).set(buffer.getChannelData(i));
+    }
+    return cloned;
+}
+
+/*
+ * reverse audio buffer
+ */
+
+function reverseBuffer(buffer) {
+    var numChannels = buffer.numberOfChannels;
+    for (var i = 0; i < numChannels; i++) {
+        Array.prototype.reverse.call(buffer.getChannelData(i));
+    }
+    return buffer;
+}
+
+/*
+ * ramp audio param
+ */
+
+function ramp(param, fromValue, toValue, duration, linear) {
+    if (context.isFake) {
+        return;
+    }
+
+    param.setValueAtTime(fromValue, context.currentTime);
+
+    if (linear) {
+        param.linearRampToValueAtTime(toValue, context.currentTime + duration);
+    } else {
+        param.exponentialRampToValueAtTime(toValue, context.currentTime + duration);
+    }
+}
+
+/*
+ * get frequency from min to max by passing 0 to 1
+ */
+
+function getFrequency(value) {
+    if (context.isFake) {
+        return 0;
+    }
+    // get frequency by passing number from 0 to 1
+    // Clamp the frequency between the minimum value (40 Hz) and half of the
+    // sampling rate.
+    var minValue = 40;
+    var maxValue = context.sampleRate / 2;
+    // Logarithm (base 2) to compute how many octaves fall in the range.
+    var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+    // Compute a multiplier from 0 to 1 based on an exponential scale.
+    var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+    // Get back to the frequency value between min and max.
+    return maxValue * multiplier;
+}
+
+/*
+ * Format seconds as timecode string
+ */
+
+function timeCode(seconds) {
+    var delim = arguments.length <= 1 || arguments[1] === undefined ? ':' : arguments[1];
+
+    // const h = Math.floor(seconds / 3600);
+    // const m = Math.floor((seconds % 3600) / 60);
+    var m = Math.floor(seconds / 60);
+    var s = Math.floor(seconds % 3600 % 60);
+    // const hr = (h < 10 ? '0' + h + delim : h + delim);
+    var mn = (m < 10 ? '0' + m : m) + delim;
+    var sc = s < 10 ? '0' + s : s;
+    // return hr + mn + sc;
+    return mn + sc;
+}
+
+var utils = {
+    getOfflineContext: getOfflineContext,
+    cloneBuffer: cloneBuffer,
+    reverseBuffer: reverseBuffer,
+    ramp: ramp,
+    getFrequency: getFrequency,
+    timeCode: timeCode
+};
 
 function AudioSource(Type, data, context, onEnded) {
     var sourceNode = context ? context.createGain() : null;
@@ -3600,523 +2676,459 @@ function ScriptSource(data, context) {
     return Object.freeze(api);
 }
 
-function waveform() {
-    var buffer = void 0,
-        wave = void 0;
+var Sound = function (_Emitter) {
+    inherits(Sound, _Emitter);
 
-    return function (audioBuffer, length) {
-        if (!window.Float32Array || !window.AudioBuffer) {
-            return [];
+    function Sound(config) {
+        classCallCheck(this, Sound);
+
+        var _this = possibleConstructorReturn(this, _Emitter.call(this));
+
+        _this.id = config.id || null;
+
+        _this._context = config.context || context;
+        _this._destination = config.destination || _this._context.destination;
+        _this._effects = new Effects(_this._context);
+        _this._gain = _this._context.createGain();
+        _this._config = config;
+
+        _this._data = null;
+        _this._isTouchLocked = false;
+        _this._loader = null;
+        _this._loop = false;
+        _this._playbackRate = 1;
+        _this._playWhenReady = null;
+        _this._source = null;
+        _this._wave = null;
+
+        _this._effects.setDestination(_this._gain);
+        _this._gain.connect(_this._destination);
+
+        _this._onEnded = _this._onEnded.bind(_this);
+        _this._onLoad = _this._onLoad.bind(_this);
+        _this._onLoadError = _this._onLoadError.bind(_this);
+        return _this;
+    }
+
+    Sound.prototype.load = function load() {
+        var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+        var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+        var skipLoad = !force && !this._source && !!this._config.deferLoad;
+
+        if (newConfig) {
+            var configSrc = newConfig.src || newConfig.url || newConfig.data || newConfig;
+            var src = file.getSupportedFile(configSrc) || this._config.src;
+            this._config = Object.assign(this._config, newConfig, { src: src });
         }
 
-        var sameBuffer = buffer === audioBuffer;
-        var sameLength = wave && wave.length === length;
-        if (sameBuffer && sameLength) {
-            return wave;
+        if (this._source && this._data && this._data.tagName) {
+            this._source.load(this._config.src);
+        } else {
+            this._loader = this._loader || new Loader(this._config.src, skipLoad);
+            this._loader.audioContext = !!this._config.asMediaElement || this._context.isFake ? null : this._context;
+            this._loader.isTouchLocked = this._isTouchLocked;
+            this._loader.off('loaded', this._onLoad);
+            this._loader.once('loaded', this._onLoad);
+            this._loader.off('error', this._onLoadError);
+            this._loader.on('error', this._onLoadError);
         }
-
-        //console.time('waveData');
-        if (!wave || wave.length !== length) {
-            wave = new Float32Array(length);
-        }
-
-        if (!audioBuffer) {
-            return wave;
-        }
-
-        // cache for repeated calls
-        buffer = audioBuffer;
-
-        var chunk = Math.floor(buffer.length / length),
-            resolution = 5,
-            // 10
-        incr = Math.max(Math.floor(chunk / resolution), 1);
-        var greatest = 0;
-
-        for (var i = 0; i < buffer.numberOfChannels; i++) {
-            // check each channel
-            var channel = buffer.getChannelData(i);
-            for (var j = 0; j < length; j++) {
-                // get highest value within the chunk
-                for (var k = j * chunk, l = k + chunk; k < l; k += incr) {
-                    // select highest value from channels
-                    var a = channel[k];
-                    if (a < 0) {
-                        a = -a;
-                    }
-                    if (a > wave[j]) {
-                        wave[j] = a;
-                    }
-                    // update highest overall for scaling
-                    if (a > greatest) {
-                        greatest = a;
-                    }
-                }
-            }
-        }
-        // scale up
-        var scale = 1 / greatest;
-        for (var _i = 0; _i < wave.length; _i++) {
-            wave[_i] *= scale;
-        }
-        //console.timeEnd('waveData');
-
-        return wave;
+        return this;
     };
-}
 
-function Sound(config) {
-    var context = config.context;
-    var destination = config.destination;
-    var effect = new Effect(context);
-    var gain = effect.gain();
-    var wave = waveform();
+    Sound.prototype.play = function play(delay, offset) {
+        var _this2 = this;
 
-    var id = null;
-    var data = null;
-    var isTouchLocked = false;
-    var loader = null;
-    var loop = false;
-    var playbackRate = 1;
-    var playWhenReady = null;
-    var source = null;
-    var sound = null;
+        if (!this._source || this._isTouchLocked) {
+            this._playWhenReady = function () {
+                if (_this2._source) {
+                    _this2.play(delay, offset);
+                }
+            };
+            if (!!this._config.deferLoad) {
+                if (!this._loader) {
+                    this._load(null, true);
+                }
+                this._loader.start(true);
+            }
+            return this;
+        }
+        this._playWhenReady = null;
+        this._effects.setSource(this._source.sourceNode);
 
-    if (context) {
-        effect.setDestination(gain);
-        gain.connect(destination || context.destination);
-    }
+        // update volume needed for no webaudio
+        if (this._context.isFake) {
+            this.volume = this._gain.gain.value;
+        }
 
-    /*
-     * Create source
-     */
+        this._source.play(delay, offset);
 
-    function onEnded() {
-        sound.emit('ended', sound);
-    }
+        if (this._source.hasOwnProperty('loop')) {
+            this._source.loop = this._loop;
+        }
 
-    function createSource(value) {
-        data = value;
+        this.emit('play', this);
+
+        return this;
+    };
+
+    Sound.prototype.pause = function pause() {
+        this._source && this._source.pause();
+        this.emit('pause', this);
+        return this;
+    };
+
+    Sound.prototype.stop = function stop(delay) {
+        this._source && this._source.stop(delay || 0);
+        this.emit('stop', this);
+        return this;
+    };
+
+    Sound.prototype.seek = function seek(percent) {
+        if (this._source) {
+            this._source.stop();
+            this.play(0, this._source.duration * percent);
+        }
+        return this;
+    };
+
+    Sound.prototype.fade = function fade(volume) {
+        var duration = arguments.length <= 1 || arguments[1] === undefined ? 1 : arguments[1];
+
+        if (!this._source) {
+            return this;
+        }
+
+        var param = this._gain.gain;
+
+        if (this._context && !this._context.isFake) {
+            var time = this._context.currentTime;
+            param.cancelScheduledValues(time);
+            param.setValueAtTime(param.value, time);
+            param.linearRampToValueAtTime(volume, time + duration);
+        } else if (typeof this._source.fade === 'function') {
+            this._source.fade(volume, duration);
+            param.value = volume;
+        }
+
+        this.emit('fade', this, volume);
+
+        return this;
+    };
+
+    Sound.prototype.unload = function unload() {
+        this._source && this._source.destroy();
+        this._loader && this._loader.destroy();
+        this._data = null;
+        this._playWhenReady = null;
+        this._source = null;
+        this._loader = null;
+        this._config.deferLoad = true;
+        this.emit('unload', this);
+    };
+
+    Sound.prototype.reload = function reload() {
+        return this.load(null, true);
+    };
+
+    Sound.prototype.destroy = function destroy() {
+        this._source && this._source.destroy();
+        this._effects && this._effects.destroy();
+        this._gain && this._gain.disconnect();
+        if (this._loader) {
+            this._loader.off('loaded');
+            this._loader.off('error');
+            this._loader.destroy();
+        }
+        this._gain = null;
+        this._context = null;
+        this._destination = null;
+        this._data = null;
+        this._playWhenReady = null;
+        this._source = null;
+        this._effects = null;
+        this._loader = null;
+        this._config = null;
+        this.emit('destroy', this);
+        this.off();
+    };
+
+    Sound.prototype.has = function has(node) {
+        return this._effects.has(node);
+    };
+
+    Sound.prototype.add = function add(node) {
+        return this._effects.add(node);
+    };
+
+    Sound.prototype.remove = function remove(node) {
+        return this._effects.remove(node);
+    };
+
+    Sound.prototype.toggle = function toggle(node, force) {
+        this._effects.toggle(node, force);
+        return this;
+    };
+
+    Sound.prototype.removeAll = function removeAll() {
+        this._effects.removeAll();
+        return this;
+    };
+
+    Sound.prototype.waveform = function waveform(length) {
+        var _this3 = this;
+
+        if (!this._wave) {
+            this._wave = utils.waveform();
+        }
+        if (!this._data) {
+            this.once('ready', function () {
+                return _this3._wave(_this3._data, length);
+            });
+        }
+        return this._wave(this._data, length);
+    };
+
+    Sound.prototype._createSource = function _createSource(data) {
+        this._data = data;
 
         var isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             var Fn = isAudioBuffer ? BufferSource : MediaSource;
-            source = new AudioSource(Fn, data, context, onEnded);
-            source.multiPlay = !!config.multiPlay;
+            this._source = new AudioSource(Fn, data, this._context, this._onEnded);
+            this._source.multiPlay = !!this._config.multiPlay;
         } else if (file.isMediaStream(data)) {
-            source = new MicrophoneSource(data, context);
+            this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType(data && data.type || data)) {
-            source = new OscillatorSource(data.type || data, context);
+            this._source = new OscillatorSource(data.type || data, this._context);
         } else if (file.isScriptConfig(data)) {
-            source = new ScriptSource(data, context);
+            this._source = new ScriptSource(data, this._context);
         } else {
             throw new Error('Cannot detect data type: ' + data);
         }
 
-        effect.setSource(source.sourceNode);
+        this._effects.setSource(this._source.sourceNode);
 
-        sound.emit('ready', sound);
+        this.emit('ready', this);
 
-        if (playWhenReady) {
-            playWhenReady();
+        if (this._playWhenReady) {
+            this._playWhenReady();
         }
-    }
+    };
 
-    /*
-     * Load
-     */
+    Sound.prototype._onEnded = function _onEnded() {
+        this.emit('ended', this);
+    };
 
-    function onLoad(fileData) {
-        createSource(fileData);
-        sound.emit('loaded', sound);
-    }
+    Sound.prototype._onLoad = function _onLoad(fileData) {
+        this._createSource(fileData);
+        this.emit('loaded', this);
+    };
 
-    function onLoadError(err) {
-        sound.emit('error', sound, err);
-    }
+    Sound.prototype._onLoadError = function _onLoadError(err) {
+        this.emit('error', this, err);
+    };
 
-    function load() {
-        var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
-        var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
-
-        var skipLoad = !force && !source && !!config.deferLoad;
-
-        if (newConfig) {
-            var src = file.getSupportedFile(config.src || config.url || config.data || config) || config.src;
-            config = Object.assign(config, newConfig, { src: src });
+    createClass(Sound, [{
+        key: 'currentTime',
+        get: function get() {
+            return this._source ? this._source.currentTime : 0;
+        },
+        set: function set(value) {
+            this._source && this._source.stop();
+            this.play(0, value);
         }
-
-        if (source && data && data.tagName) {
-            source.load(config.src);
-        } else {
-            loader = loader || new Loader(config.src, skipLoad);
-            loader.audioContext = !!config.asMediaElement ? null : context;
-            loader.isTouchLocked = isTouchLocked;
-            loader.off('loaded', onLoad);
-            loader.once('loaded', onLoad);
-            loader.off('error', onLoadError);
-            loader.on('error', onLoadError);
+    }, {
+        key: 'context',
+        get: function get() {
+            return this._context;
         }
-        return sound;
-    }
-
-    /*
-     * Controls
-     */
-
-    function play(delay, offset) {
-        if (!source || isTouchLocked) {
-            playWhenReady = function playWhenReady() {
-                if (source) {
-                    play(delay, offset);
-                }
-            };
-            if (!!config.deferLoad) {
-                if (!loader) {
-                    load(null, true);
-                }
-                loader.start(true);
+    }, {
+        key: 'data',
+        get: function get() {
+            return this._data;
+        },
+        set: function set(value) {
+            if (!value) {
+                return;
             }
-            return sound;
+            this._createSource(value);
         }
-        playWhenReady = null;
-        effect.setSource(source.sourceNode);
-
-        // update volume needed for no webaudio
-        if (!context) {
-            sound.volume = gain.gain.value;
+    }, {
+        key: 'duration',
+        get: function get() {
+            return this._source ? this._source.duration : 0;
         }
-
-        source.play(delay, offset);
-
-        if (source.hasOwnProperty('loop')) {
-            source.loop = loop;
+    }, {
+        key: 'effects',
+        get: function get() {
+            // return this._effects._nodes;
+            return this._effects;
+        },
+        set: function set(value) {
+            this._effects.removeAll().add(value);
         }
-
-        sound.emit('play', sound);
-
-        return sound;
-    }
-
-    function pause() {
-        source && source.pause();
-        sound.emit('pause', sound);
-        return sound;
-    }
-
-    function stop(delay) {
-        source && source.stop(delay || 0);
-        sound.emit('stop', sound);
-        return sound;
-    }
-
-    function seek(percent) {
-        if (source) {
-            source.stop();
-            play(0, source.duration * percent);
+    }, {
+        key: 'fx',
+        get: function get() {
+            return this._effects;
+        },
+        set: function set(value) {
+            this._effects.removeAll().add(value);
         }
-        return sound;
-    }
-
-    function fade(volume, duration) {
-        if (!source) {
-            return sound;
+    }, {
+        key: 'ended',
+        get: function get() {
+            return !!this._source && this._source.ended;
+        }
+    }, {
+        key: 'frequency',
+        get: function get() {
+            return this._source ? this._source.frequency : 0;
+        },
+        set: function set(value) {
+            if (this._source && this._source.hasOwnProperty('frequency')) {
+                this._source.frequency = value;
+            }
+        }
+    }, {
+        key: 'gain',
+        get: function get() {
+            return this._gain;
         }
 
-        var param = gain.gain;
-
-        if (context) {
-            var time = context.currentTime;
-            param.cancelScheduledValues(time);
-            param.setValueAtTime(param.value, time);
-            param.linearRampToValueAtTime(volume, time + duration);
-        } else if (typeof source.fade === 'function') {
-            source.fade(volume, duration);
-            param.value = volume;
-        }
-
-        sound.emit('fade', sound, volume);
-
-        return sound;
-    }
-
-    function unload() {
-        source && source.destroy();
-        loader && loader.destroy();
-        data = null;
-        playWhenReady = null;
-        source = null;
-        loader = null;
-        config.deferLoad = true;
-        sound.emit('unload', sound);
-    }
-
-    function reload() {
-        load(null, true);
-    }
-
-    /*
-     * Destroy
-     */
-
-    function destroy() {
-        source && source.destroy();
-        effect && effect.destroy();
-        gain && gain.disconnect();
-        loader && loader.off('loaded');
-        loader && loader.off('error');
-        loader && loader.destroy();
-        sound.off('loaded');
-        sound.off('ended');
-        sound.off('error');
-        gain = null;
-        context = null;
-        destination = null;
-        data = null;
-        playWhenReady = null;
-        source = null;
-        effect = null;
-        loader = null;
-        wave = null;
-        config = null;
-        sound.emit('destroy', sound);
-        sound.off('destroy');
-    }
-
-    sound = Object.create(Emitter.prototype, {
-        _events: {
-            value: {}
-        },
-        constructor: {
-            value: Sound
-        },
-        play: {
-            value: play
-        },
-        pause: {
-            value: pause
-        },
-        load: {
-            value: load
-        },
-        seek: {
-            value: seek
-        },
-        stop: {
-            value: stop
-        },
-        fade: {
-            value: fade
-        },
-        unload: {
-            value: unload
-        },
-        reload: {
-            value: reload
-        },
-        destroy: {
-            value: destroy
-        },
-        context: {
-            value: context
-        },
-        currentTime: {
-            get: function get() {
-                return source ? source.currentTime : 0;
-            },
-            set: function set(value) {
-                // const silent = sound.playing;
-                source && source.stop();
-                // play(0, value, silent);
-                play(0, value);
-            }
-        },
-        data: {
-            get: function get() {
-                return data;
-            },
-            set: function set(value) {
-                if (!value) {
-                    return;
-                }
-                createSource(value);
-            }
-        },
-        duration: {
-            get: function get() {
-                return source ? source.duration : 0;
-            }
-        },
-        effect: {
-            value: effect
-        },
-        ended: {
-            get: function get() {
-                return !!source && source.ended;
-            }
-        },
-        frequency: {
-            get: function get() {
-                return source ? source.frequency : 0;
-            },
-            set: function set(value) {
-                if (source && source.hasOwnProperty('frequency')) {
-                    source.frequency = value;
-                }
-            }
-        },
-        gain: {
-            value: gain
-        },
-        id: {
-            get: function get() {
-                return id;
-            },
-            set: function set(value) {
-                id = value;
-            }
-        },
-        isTouchLocked: {
-            set: function set(value) {
-                isTouchLocked = value;
-                if (loader) {
-                    loader.isTouchLocked = value;
-                }
-                if (!value && playWhenReady) {
-                    playWhenReady();
-                }
-            }
-        },
-        loader: {
-            get: function get() {
-                return loader;
-            }
-        },
-        loop: {
-            get: function get() {
-                return loop;
-            },
-            set: function set(value) {
-                loop = !!value;
-
-                if (source && source.hasOwnProperty('loop') && source.loop !== loop) {
-                    source.loop = loop;
-                }
-            }
-        },
-        multiPlay: {
-            get: function get() {
-                return config.multiPlay;
-            },
-            set: function set(value) {
-                config.multiPlay = value;
-                source.multiPlay = value;
-            }
-        },
-        config: {
-            get: function get() {
-                return config;
-            }
-        },
-        paused: {
-            get: function get() {
-                return !!source && source.paused;
-            }
-        },
-        playing: {
-            get: function get() {
-                return !!source && source.playing;
-            }
-        },
-        playbackRate: {
-            get: function get() {
-                return playbackRate;
-            },
-            set: function set(value) {
-                playbackRate = value;
-                if (source) {
-                    source.playbackRate = playbackRate;
-                }
-            }
-        },
-        progress: {
-            get: function get() {
-                return source ? source.progress : 0;
-            }
-        },
-        sourceInfo: {
-            get: function get() {
-                return source && source.info ? source.info : {};
-            }
-        },
-        sourceNode: {
-            get: function get() {
-                return source ? source.sourceNode : null;
-            }
-        },
-        volume: {
-            get: function get() {
-                if (context) {
-                    return gain.gain.value;
-                }
-                if (source && source.hasOwnProperty('volume')) {
-                    return source.volume;
-                }
-                return 1;
-            },
-            set: function set(value) {
-                if (isNaN(value)) {
-                    return;
-                }
-
-                value = Math.min(Math.max(value, 0), 1);
-
-                var param = gain.gain;
-
-                if (context) {
-                    var time = context.currentTime;
-                    param.cancelScheduledValues(time);
-                    param.value = value;
-                    param.setValueAtTime(value, time);
-                } else {
-                    param.value = value;
-
-                    if (source && source.hasOwnProperty('volume')) {
-                        source.volume = value;
-                    }
-                }
-            }
-        },
         // for media element source
-        groupVolume: {
-            get: function get() {
-                return source.groupVolume;
-            },
-            set: function set(value) {
-                if (source && source.hasOwnProperty('groupVolume')) {
-                    source.groupVolume = value;
-                }
-            }
+
+    }, {
+        key: 'groupVolume',
+        get: function get() {
+            return this._source.groupVolume;
         },
-        waveform: {
-            value: function value(length) {
-                if (!data) {
-                    sound.once('ready', function () {
-                        return wave(data, length);
-                    });
-                }
-                return wave(data, length);
+        set: function set(value) {
+            if (this._source && this._source.hasOwnProperty('groupVolume')) {
+                this._source.groupVolume = value;
             }
-        },
-        userData: {
-            value: {}
         }
-    });
+    }, {
+        key: 'isTouchLocked',
+        set: function set(value) {
+            this._isTouchLocked = value;
+            if (this._loader) {
+                this._loader.isTouchLocked = value;
+            }
+            if (!value && this._playWhenReady) {
+                this._playWhenReady();
+            }
+        }
+    }, {
+        key: 'loader',
+        get: function get() {
+            return this._loader;
+        }
+    }, {
+        key: 'loop',
+        get: function get() {
+            return this._loop;
+        },
+        set: function set(value) {
+            this._loop = !!value;
 
-    return sound;
-}
+            if (this._source && this._source.hasOwnProperty('loop') && this._source.loop !== this._loop) {
+                this._source.loop = this._loop;
+            }
+        }
+    }, {
+        key: 'multiPlay',
+        get: function get() {
+            return this._config.multiPlay;
+        },
+        set: function set(value) {
+            this._config.multiPlay = value;
+            this._source.multiPlay = value;
+        }
+    }, {
+        key: 'config',
+        get: function get() {
+            return this._config;
+        }
+    }, {
+        key: 'paused',
+        get: function get() {
+            return !!this._source && this._source.paused;
+        }
+    }, {
+        key: 'playing',
+        get: function get() {
+            return !!this._source && this._source.playing;
+        }
+    }, {
+        key: 'playbackRate',
+        get: function get() {
+            return this._playbackRate;
+        },
+        set: function set(value) {
+            this._playbackRate = value;
+            if (this._source) {
+                this._source.playbackRate = value;
+            }
+        }
+    }, {
+        key: 'progress',
+        get: function get() {
+            return this._source ? this._source.progress || 0 : 0;
+        }
+    }, {
+        key: 'sourceInfo',
+        get: function get() {
+            return this._source && this._source.info ? this._source.info : {};
+        }
+    }, {
+        key: 'sourceNode',
+        get: function get() {
+            return this._source ? this._source.sourceNode : null;
+        }
+    }, {
+        key: 'volume',
+        get: function get() {
+            if (this._context && !this._context.isFake) {
+                return this._gain.gain.value;
+            }
+            if (this._source && this._source.hasOwnProperty('volume')) {
+                return this._source.volume;
+            }
+            return 1;
+        },
+        set: function set(value) {
+            if (isNaN(value)) {
+                return;
+            }
 
-// expose for unit tests
+            value = Math.min(Math.max(value, 0), 1);
+
+            var param = this._gain.gain;
+
+            if (this._context && !this._context.isFake) {
+                var time = this._context.currentTime;
+                param.cancelScheduledValues(time);
+                param.value = value;
+                param.setValueAtTime(value, time);
+            } else {
+                param.value = value;
+
+                if (this._source && this._source.hasOwnProperty('volume')) {
+                    this._source.volume = value;
+                }
+            }
+        }
+    }, {
+        key: 'userData',
+        get: function get() {
+            return {};
+        }
+    }]);
+    return Sound;
+}(Emitter);
+
 Sound.__source = {
     BufferSource: BufferSource,
     MediaSource: MediaSource,
@@ -4220,421 +3232,11 @@ function SoundGroup(context, destination) {
     return group;
 }
 
-function Microphone(connected, denied, error) {
-    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-    error = error || function () {};
-
-    var isSupported = !!navigator.getUserMedia;
-    var api = {};
-    var stream = null;
-
-    function connect() {
-        if (!isSupported) {
-            return api;
-        }
-
-        navigator.getUserMedia({
-            audio: true
-        }, function (micStream) {
-            stream = micStream;
-            connected(stream);
-        }, function (e) {
-            if (denied && e.name === 'PermissionDeniedError' || e === 'PERMISSION_DENIED') {
-                // console.log('Permission denied. Reset by clicking the camera icon with the red cross.');
-                denied();
-            } else {
-                error(e.message || e);
-            }
-        });
-        return api;
-    }
-
-    function disconnect() {
-        if (stream) {
-            stream.stop();
-            stream = null;
-        }
-        return api;
-    }
-
-    Object.defineProperties(api, {
-        connect: {
-            value: connect
-        },
-        disconnect: {
-            value: disconnect
-        },
-        isSupported: {
-            value: isSupported
-        },
-        stream: {
-            get: function get() {
-                return stream;
-            }
-        }
-    });
-
-    return Object.freeze(api);
-}
-
-var halfPI = Math.PI / 2;
-var twoPI = Math.PI * 2;
-
-function waveformer(config) {
-
-    var style = config.style || 'fill',
-        // 'fill' or 'line'
-    shape = config.shape || 'linear',
-        // 'circular' or 'linear'
-    color = config.color || 0,
-        bgColor = config.bgColor,
-        lineWidth = config.lineWidth || 1,
-        percent = config.percent || 1,
-        originX = config.x || 0,
-        originY = config.y || 0,
-        transform = config.transform;
-
-    var canvas = config.canvas,
-        width = config.width || canvas && canvas.width,
-        height = config.height || canvas && canvas.height;
-
-    var ctx = null,
-        currentColor = void 0,
-        i = void 0,
-        x = void 0,
-        y = void 0,
-        radius = void 0,
-        innerRadius = void 0,
-        centerX = void 0,
-        centerY = void 0;
-
-    if (!canvas && !config.context) {
-        canvas = document.createElement('canvas');
-        width = width || canvas.width;
-        height = height || canvas.height;
-        canvas.width = height;
-        canvas.height = height;
-    }
-
-    if (shape === 'circular') {
-        radius = config.radius || Math.min(height / 2, width / 2);
-        innerRadius = config.innerRadius || radius / 2;
-        centerX = originX + width / 2;
-        centerY = originY + height / 2;
-    }
-
-    ctx = config.context || canvas.getContext('2d');
-
-    function clear() {
-        if (bgColor) {
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(originX, originY, width, height);
-        } else {
-            ctx.clearRect(originX, originY, width, height);
-        }
-
-        ctx.lineWidth = lineWidth;
-
-        currentColor = null;
-
-        if (typeof color !== 'function') {
-            ctx.strokeStyle = color;
-            ctx.beginPath();
-        }
-    }
-
-    function updateColor(position, length, value) {
-        if (typeof color === 'function') {
-            var newColor = color(position, length, value);
-            if (newColor !== currentColor) {
-                currentColor = newColor;
-                ctx.stroke();
-                ctx.strokeStyle = currentColor;
-                ctx.beginPath();
-            }
-        }
-    }
-
-    function getValue(value, position, length) {
-        if (typeof transform === 'function') {
-            return transform(value, position, length);
-        }
-        return value;
-    }
-
-    function getWaveform(value, length) {
-        if (value && typeof value.waveform === 'function') {
-            return value.waveform(length);
-        }
-        if (value) {
-            return value;
-        }
-        if (config.waveform) {
-            return config.waveform;
-        }
-        if (config.sound) {
-            return config.sound.waveform(length);
-        }
-        return null;
-    }
-
-    function update(wave) {
-
-        clear();
-
-        if (shape === 'circular') {
-            var waveform = getWaveform(wave, 360);
-            var length = Math.floor(waveform.length * percent);
-
-            var step = twoPI / length;
-            var angle = void 0,
-                magnitude = void 0,
-                sine = void 0,
-                cosine = void 0;
-
-            for (i = 0; i < length; i++) {
-                var value = getValue(waveform[i], i, length);
-                updateColor(i, length, value);
-
-                angle = i * step - halfPI;
-                cosine = Math.cos(angle);
-                sine = Math.sin(angle);
-
-                if (style === 'fill') {
-                    x = centerX + innerRadius * cosine;
-                    y = centerY + innerRadius * sine;
-                    ctx.moveTo(x, y);
-                }
-
-                magnitude = innerRadius + (radius - innerRadius) * value;
-                x = centerX + magnitude * cosine;
-                y = centerY + magnitude * sine;
-
-                if (style === 'line' && i === 0) {
-                    ctx.moveTo(x, y);
-                }
-
-                ctx.lineTo(x, y);
-            }
-
-            if (style === 'line') {
-                ctx.closePath();
-            }
-        } else {
-
-            var _waveform = getWaveform(wave, width);
-            var _length = Math.min(_waveform.length, width - lineWidth / 2);
-            _length = Math.floor(_length * percent);
-
-            for (i = 0; i < _length; i++) {
-                var _value = getValue(_waveform[i], i, _length);
-                updateColor(i, _length, _value);
-
-                if (style === 'line' && i > 0) {
-                    ctx.lineTo(x, y);
-                }
-
-                x = originX + i;
-                y = originY + height - Math.round(height * _value);
-                y = Math.floor(Math.min(y, originY + height - lineWidth / 2));
-
-                if (style === 'fill') {
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x, originY + height);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-        }
-        ctx.stroke();
-    }
-
-    update.canvas = canvas;
-
-    if (config.waveform || config.sound) {
-        update();
-    }
-
-    return update;
-}
-
-/*
- * audio ctx
- */
-var ctx = void 0;
-var offlineCtx = void 0;
-
-function getContext() {
-    if (ctx) {
-        return ctx;
-    }
-
-    var desiredSampleRate = 44100;
-
-    var Ctx = window.AudioContext || window.webkitAudioContext;
-
-    ctx = Ctx ? new Ctx() : null;
-
-    // Check if hack is necessary. Only occurs in iOS6+ devices
-    // and only when you first boot the iPhone, or play a audio/video
-    // with a different sample rate
-    // https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
-    if (/(iPhone|iPad)/i.test(navigator.userAgent) && ctx.sampleRate !== desiredSampleRate) {
-        var buffer = ctx.createBuffer(1, 1, desiredSampleRate);
-        var dummy = ctx.createBufferSource();
-        dummy.buffer = buffer;
-        dummy.connect(ctx.destination);
-        dummy.start(0);
-        dummy.disconnect();
-
-        ctx.close(); // dispose old context
-        ctx = Ctx ? new Ctx() : null;
-    }
-
-    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
-
-    var isSuspended = ctx && ctx.state === 'suspended';
-
-    if (isSuspended && typeof ctx.resume === 'function') {
-        window.setTimeout(function () {
-            ctx.resume();
-        }, 1000);
-    }
-
-    return ctx;
-}
-
-/*
-In contrast with a standard AudioContext, an OfflineAudioContext doesn't render
-the audio to the device hardware;
-instead, it generates it, as fast as it can, and outputs the result to an AudioBuffer.
-*/
-function getOfflineContext(numOfChannels, length, sampleRate) {
-    if (offlineCtx) {
-        return offlineCtx;
-    }
-    numOfChannels = numOfChannels || 2;
-    sampleRate = sampleRate || 44100;
-    length = sampleRate || numOfChannels;
-
-    var OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-
-    offlineCtx = OfflineCtx ? new OfflineCtx(numOfChannels, length, sampleRate) : null;
-
-    return offlineCtx;
-}
-
-/*
- * clone audio buffer
- */
-
-function cloneBuffer(buffer) {
-    if (!ctx) {
-        return buffer;
-    }
-
-    var numChannels = buffer.numberOfChannels,
-        cloned = ctx.createBuffer(numChannels, buffer.length, buffer.sampleRate);
-    for (var i = 0; i < numChannels; i++) {
-        cloned.getChannelData(i).set(buffer.getChannelData(i));
-    }
-    return cloned;
-}
-
-/*
- * reverse audio buffer
- */
-
-function reverseBuffer(buffer) {
-    var numChannels = buffer.numberOfChannels;
-    for (var i = 0; i < numChannels; i++) {
-        Array.prototype.reverse.call(buffer.getChannelData(i));
-    }
-    return buffer;
-}
-
-/*
- * ramp audio param
- */
-
-function ramp(param, fromValue, toValue, duration, linear) {
-    if (!ctx) {
-        return;
-    }
-
-    param.setValueAtTime(fromValue, ctx.currentTime);
-
-    if (linear) {
-        param.linearRampToValueAtTime(toValue, ctx.currentTime + duration);
-    } else {
-        param.exponentialRampToValueAtTime(toValue, ctx.currentTime + duration);
-    }
-}
-
-/*
- * get frequency from min to max by passing 0 to 1
- */
-
-function getFrequency(value) {
-    if (!ctx) {
-        return 0;
-    }
-    // get frequency by passing number from 0 to 1
-    // Clamp the frequency between the minimum value (40 Hz) and half of the
-    // sampling rate.
-    var minValue = 40;
-    var maxValue = ctx.sampleRate / 2;
-    // Logarithm (base 2) to compute how many octaves fall in the range.
-    var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-    // Compute a multiplier from 0 to 1 based on an exponential scale.
-    var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-    // Get back to the frequency value between min and max.
-    return maxValue * multiplier;
-}
-
-/*
- * microphone util
- */
-
-function microphone(connected, denied, error) {
-    return new Microphone(connected, denied, error);
-}
-
-/*
- * Format seconds as timecode string
- */
-
-function timeCode(seconds) {
-    var delim = arguments.length <= 1 || arguments[1] === undefined ? ':' : arguments[1];
-
-    // const h = Math.floor(seconds / 3600);
-    // const m = Math.floor((seconds % 3600) / 60);
-    var m = Math.floor(seconds / 60);
-    var s = Math.floor(seconds % 3600 % 60);
-    // const hr = (h < 10 ? '0' + h + delim : h + delim);
-    var mn = (m < 10 ? '0' + m : m) + delim;
-    var sc = s < 10 ? '0' + s : s;
-    // return hr + mn + sc;
-    return mn + sc;
-}
-
-var utils = Object.freeze({
-    getContext: getContext,
-    getOfflineContext: getOfflineContext,
-    cloneBuffer: cloneBuffer,
-    reverseBuffer: reverseBuffer,
-    ramp: ramp,
-    getFrequency: getFrequency,
-    microphone: microphone,
-    timeCode: timeCode,
-    waveformer: waveformer
-});
-
 function Sono() {
+    var _effects, _effects2, _fx, _fx2, _isTouchLocked, _sounds, _volume, _volume2, _api, _mutatorMap;
+
     var VERSION = '0.1.9';
-    var context = utils.getContext();
-    var destination = context ? context.destination : null;
-    var group = new Group(context, destination);
+    var group = new Group(context, context.destination);
 
     var api = null;
     var isTouchLocked = false;
@@ -4890,72 +3492,1823 @@ function Sono() {
         }
     }
 
-    api = {
-        createSound: createSound,
-        create: createSound,
-        destroySound: destroySound,
-        destroyAll: destroyAll,
-        getSound: getSound,
-        createGroup: createGroup,
-        file: file,
-        load: load,
-        mute: mute,
-        unMute: unMute,
-        fade: fade,
-        pauseAll: pauseAll,
-        resumeAll: resumeAll,
-        stopAll: stopAll,
-        play: play,
-        pause: pause,
-        stop: stop,
-        log: log,
+    function register(name, fn) {
+        var attachTo = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
 
+
+        if (attachTo.length) {
+            attachTo.forEach(function (ob) {
+                ob[name] = fn;
+            });
+        } else {
+            // Effects.prototype[name] = Sound.prototype[name] = function(config) {
+            //     return this.add(fn(config));
+            // };
+
+            Effects.prototype[name] = function (opts) {
+                return this.add(fn(opts));
+            };
+        }
+
+        // Object.assign(api, {
+        //     [name]: fn
+        // });
+        api[name] = fn;
+
+        return fn;
+    }
+
+    api = (_api = {
         canPlay: file.canPlay,
         context: context,
-        getOfflineContext: utils.getOfflineContext,
-        effect: group.effect,
+        create: createSound,
+        createGroup: createGroup,
+        createSound: createSound,
+        destroyAll: destroyAll,
+        destroySound: destroySound,
+        Effects: Effects,
+        effects: group.effects,
         extensions: file.extensions,
-        hasWebAudio: !!context,
-        isSupported: file.extensions.length > 0,
+        fade: fade,
+        file: file,
         gain: group.gain,
-        utils: utils,
-        VERSION: VERSION,
-
+        getOfflineContext: utils.getOfflineContext,
+        getSound: getSound,
+        Group: Group,
+        hasWebAudio: !context.isFake,
+        isSupported: file.extensions.length > 0,
+        load: load,
+        log: log,
+        mute: mute,
+        pause: pause,
+        pauseAll: pauseAll,
+        play: play,
+        register: register,
+        resumeAll: resumeAll,
         Sound: Sound,
-        Group: Group
-    };
-
-    /*
-     * Getters & Setters
-     */
-
-    Object.defineProperties(api, {
-        isTouchLocked: {
-            get: function get() {
-                return isTouchLocked;
-            }
-        },
-        sounds: {
-            get: function get() {
-                return group.sounds.slice(0);
-            }
-        },
-        volume: {
-            get: function get() {
-                return group.volume;
-            },
-            set: function set(value) {
-                group.volume = value;
-            }
-        }
-    });
-
-    return Object.freeze(api);
+        stop: stop,
+        stopAll: stopAll,
+        unMute: unMute,
+        utils: utils,
+        VERSION: VERSION
+    }, _effects = 'effects', _mutatorMap = {}, _mutatorMap[_effects] = _mutatorMap[_effects] || {}, _mutatorMap[_effects].get = function () {
+        // return group.effects._nodes;
+        return group.effects;
+    }, _effects2 = 'effects', _mutatorMap[_effects2] = _mutatorMap[_effects2] || {}, _mutatorMap[_effects2].set = function (value) {
+        group.effects.removeAll().add(value);
+    }, _fx = 'fx', _mutatorMap[_fx] = _mutatorMap[_fx] || {}, _mutatorMap[_fx].get = function () {
+        // return group.effects._nodes;
+        return group.effects;
+    }, _fx2 = 'fx', _mutatorMap[_fx2] = _mutatorMap[_fx2] || {}, _mutatorMap[_fx2].set = function (value) {
+        group.effects.removeAll().add(value);
+    }, _isTouchLocked = 'isTouchLocked', _mutatorMap[_isTouchLocked] = _mutatorMap[_isTouchLocked] || {}, _mutatorMap[_isTouchLocked].get = function () {
+        return isTouchLocked;
+    }, _sounds = 'sounds', _mutatorMap[_sounds] = _mutatorMap[_sounds] || {}, _mutatorMap[_sounds].get = function () {
+        return group.sounds.slice(0);
+    }, _volume = 'volume', _mutatorMap[_volume] = _mutatorMap[_volume] || {}, _mutatorMap[_volume].get = function () {
+        return group.volume;
+    }, _volume2 = 'volume', _mutatorMap[_volume2] = _mutatorMap[_volume2] || {}, _mutatorMap[_volume2].set = function (value) {
+        group.volume = value;
+    }, defineEnumerableProperties(_api, _mutatorMap), _api);
+    return api;
 }
 
-var sono = new Sono();
+var sono$1 = new Sono();
 
-return sono;
+function isSafeNumber(value) {
+    return typeof value === 'number' && !isNaN(value) && isFinite(value);
+}
+
+var AbstractEffect = function () {
+    function AbstractEffect() {
+        var node = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+        classCallCheck(this, AbstractEffect);
+
+        this._in = node || this.context.createGain();
+        this._out = node || this.context.createGain();
+        if (node) {
+            this._node = node;
+        }
+    }
+
+    AbstractEffect.prototype.connect = function connect(node) {
+        this._out.connect(node._in || node);
+    };
+
+    AbstractEffect.prototype.disconnect = function disconnect() {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        this._out.disconnect(args);
+    };
+
+    AbstractEffect.prototype.setSafeParamValue = function setSafeParamValue(param, value) {
+        if (!isSafeNumber(value)) {
+            console.warn('Attempt to set invalid value ' + value + ' on AudioParam');
+            return;
+        }
+        param.value = value;
+    };
+
+    AbstractEffect.prototype.update = function update() {
+        throw new Error('update must be overridden');
+    };
+
+    createClass(AbstractEffect, [{
+        key: 'context',
+        get: function get() {
+            return context;
+        }
+    }, {
+        key: 'numberOfInputs',
+        get: function get() {
+            return 1;
+        }
+    }, {
+        key: 'numberOfOutputs',
+        get: function get() {
+            return 1;
+        }
+    }, {
+        key: 'channelCount',
+        get: function get() {
+            return 1;
+        }
+    }, {
+        key: 'channelCountMode',
+        get: function get() {
+            return 'max';
+        }
+    }, {
+        key: 'channelInterpretation',
+        get: function get() {
+            return 'speakers';
+        }
+    }]);
+    return AbstractEffect;
+}();
+
+function noteFromPitch(frequency) {
+    var noteNum = 12 * (Math.log(frequency / 440) * Math.LOG2E);
+    return Math.round(noteNum) + 69;
+}
+
+function frequencyFromNoteNumber(note) {
+    return 440 * Math.pow(2, (note - 69) / 12);
+}
+
+function centsOffFromPitch(frequency, note) {
+    return Math.floor(1200 * Math.log(frequency / frequencyFromNoteNumber(note)) * Math.LOG2E);
+}
+
+var Analyser = function (_AbstractEffect) {
+    inherits(Analyser, _AbstractEffect);
+
+    function Analyser() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$fftSize = _ref.fftSize;
+        var fftSize = _ref$fftSize === undefined ? 512 : _ref$fftSize;
+        var _ref$float = _ref.float;
+        var float = _ref$float === undefined ? false : _ref$float;
+        var _ref$minDecibels = _ref.minDecibels;
+        var minDecibels = _ref$minDecibels === undefined ? 0 : _ref$minDecibels;
+        var _ref$maxDecibels = _ref.maxDecibels;
+        var maxDecibels = _ref$maxDecibels === undefined ? 0 : _ref$maxDecibels;
+        var _ref$smoothing = _ref.smoothing;
+        var smoothing = _ref$smoothing === undefined ? 0.9 : _ref$smoothing;
+        classCallCheck(this, Analyser);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createAnalyser()));
+
+        _this._freqFloat = !!float;
+        _this._waveFloat = !!float;
+        _this._waveform = null;
+        _this._frequencies = null;
+
+        _this._node.fftSize = fftSize; // frequencyBinCount will be half this value
+        _this._node.smoothingTimeConstant = smoothing || _this._node.smoothingTimeConstant;
+        _this._node.minDecibels = minDecibels || _this._node.minDecibels;
+        _this._node.maxDecibels = maxDecibels || _this._node.maxDecibels;
+        return _this;
+    }
+
+    Analyser.prototype.update = function update() {};
+
+    Analyser.prototype.getWaveform = function getWaveform(useFloat) {
+        if (!arguments.length) {
+            useFloat = this._waveFloat;
+        }
+
+        if (this._needsUpdate(this._waveform, useFloat)) {
+            this._fftSize = this._node.fftSize;
+            this._waveFloat = useFloat;
+            this._waveform = this._createArray(useFloat, this._fftSize);
+        }
+        if (useFloat && this._node.getFloatTimeDomainData) {
+            this._node.getFloatTimeDomainData(this._waveform);
+        } else {
+            this._node.getByteTimeDomainData(this._waveform);
+        }
+
+        return this._waveform;
+    };
+
+    Analyser.prototype.getFrequencies = function getFrequencies(useFloat) {
+        if (!arguments.length) {
+            useFloat = this._freqFloat;
+        }
+
+        if (this._needsUpdate(this._frequencies, useFloat)) {
+            this._fftSize = this._node.fftSize;
+            this._freqFloat = useFloat;
+            this._frequencies = this._createArray(useFloat, this._node.frequencyBinCount);
+        }
+
+        if (useFloat) {
+            this._node.getFloatFrequencyData(this._frequencies);
+        } else {
+            this._node.getByteFrequencyData(this._frequencies);
+        }
+
+        return this._frequencies;
+    };
+
+    Analyser.prototype.getAmplitude = function getAmplitude(callback) {
+        if (!this._amplitudeWorker) {
+            this._createAmplitudeAnalyser();
+        }
+        this._amplitudeCallback = callback || this._amplitudeCallback;
+        var f = new Float32Array(this._node.fftSize);
+        f.set(this.getFrequencies(true));
+        this._amplitudeWorker.postMessage({
+            sum: 0,
+            length: f.byteLength,
+            numSamples: this._node.fftSize / 2,
+            b: f.buffer
+        }, [f.buffer]);
+    };
+
+    Analyser.prototype.getPitch = function getPitch(callback) {
+        if (!this._pitchWorker) {
+            this._createPitchAnalyser();
+        }
+        this._pitchCallback = callback || this._pitchCallback;
+        var f = new Float32Array(this._node.fftSize);
+        f.set(this.getWaveform(true));
+        this._pitchWorker.postMessage({
+            sampleRate: sono$1.context.sampleRate,
+            b: f.buffer
+        }, [f.buffer]);
+    };
+
+    Analyser.prototype._needsUpdate = function _needsUpdate(arr, useFloat) {
+        if (!arr) {
+            return true;
+        }
+        if (this._node.fftSize !== this._fftSize) {
+            return true;
+        }
+        if (useFloat && arr instanceof Uint8Array) {
+            return true;
+        }
+        return !useFloat && arr instanceof Float32Array;
+    };
+
+    Analyser.prototype._createArray = function _createArray(useFloat, length) {
+        return useFloat ? new Float32Array(length) : new Uint8Array(length);
+    };
+
+    Analyser.prototype._createAmplitudeAnalyser = function _createAmplitudeAnalyser() {
+        var _this2 = this;
+
+        //the worker returns a normalized value
+        //first a sum of all magnitudes devided by the byteLength, then devide  by half the fft (1channel)
+        var amplitudeBlob = new Blob(['onmessage = function(e) {\n                var data = e.data;\n                var f = new Float32Array(data.b);\n                for (var i = 0; i < f.length; i++) {\n                    data.sum += f[i];\n                }\n                data.sum /= f.length;\n                postMessage(Math.max(1.0 - (data.sum / data.numSamples * -1.0), 0));\n            };']);
+        var amplitudeBlobURL = URL.createObjectURL(amplitudeBlob);
+        this._amplitudeWorker = new Worker(amplitudeBlobURL);
+        this._amplitudeWorker.onmessage = function (event) {
+            if (!_this2._amplitudeCallback) {
+                return;
+            }
+            _this2._amplitudeCallback(event.data);
+        };
+    };
+
+    Analyser.prototype._createPitchAnalyser = function _createPitchAnalyser() {
+        var _this3 = this;
+
+        var pitchBlob = new Blob(['onmessage = function(e) {\n                var data = e.data;\n                var sampleRate = data.sampleRate;\n                var buf = new Float32Array(data.b);\n                var SIZE = buf.length;\n                var MAX_SAMPLES = Math.floor(SIZE / 2);\n                var bestOffset = -1;\n                var bestCorrel = 0;\n                var rms = 0;\n                var foundGoodCorrelation = false;\n                var correls = new Array(MAX_SAMPLES);\n                for (var i = 0; i < SIZE; i++) {\n                    var val = buf[i];\n                    rms += val * val;\n                }\n                rms = Math.sqrt(rms / SIZE);\n                if (rms < 0.01) {\n                    postMessage(-1);\n                } else {\n                    var lastCorrelation = 1;\n                    for (var offset = 0; offset < MAX_SAMPLES; offset++) {\n                        var correl = 0;\n                        for (var i = 0; i < MAX_SAMPLES; i++) {\n                            correl += Math.abs(buf[i] - buf[i + offset]);\n                        }\n                        correl = 1 - correl / MAX_SAMPLES;\n                        correls[offset] = correl;\n                        if (correl > 0.9 && correl > lastCorrelation) {\n                            foundGoodCorrelation = true;\n                            if (correl > bestCorrel) {\n                                bestCorrel = correl;\n                                bestOffset = offset;\n                            }\n                        } else if (foundGoodCorrelation) {\n                            var shift = (correls[bestOffset + 1] - correls[bestOffset - 1]) / correls[bestOffset];\n                            postMessage(sampleRate / (bestOffset + 8 * shift));\n                        }\n                        lastCorrelation = correl;\n                    }\n                    if (bestCorrel > 0.01) {\n                        postMessage(sampleRate / bestOffset);\n                    } else {\n                        postMessage(-1);\n                    }\n                }\n            };']);
+
+        var pitchBlobURL = URL.createObjectURL(pitchBlob);
+        this._pitchWorker = new Worker(pitchBlobURL);
+
+        var noteStrings = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        var pitchCallbackObject = {
+            hertz: 0,
+            note: '',
+            noteIndex: 0,
+            detuneCents: 0,
+            detune: ''
+        };
+
+        this._pitchWorker.onmessage = function (event) {
+            if (!_this3._pitchCallback) {
+                return;
+            }
+            var hz = event.data;
+            if (hz !== -1) {
+                var note = noteFromPitch(hz);
+                var detune = centsOffFromPitch(hz, note);
+                pitchCallbackObject.hertz = hz;
+                pitchCallbackObject.noteIndex = note % 12;
+                pitchCallbackObject.note = noteStrings[note % 12];
+                pitchCallbackObject.detuneCents = detune;
+                if (detune === 0) {
+                    pitchCallbackObject.detune = '';
+                } else if (detune < 0) {
+                    pitchCallbackObject.detune = 'flat';
+                } else {
+                    pitchCallbackObject.detune = 'sharp';
+                }
+            }
+            _this3._pitchCallback(pitchCallbackObject);
+        };
+    };
+
+    createClass(Analyser, [{
+        key: 'smoothing',
+        get: function get() {
+            return this._node.smoothingTimeConstant;
+        },
+        set: function set(value) {
+            this._node.smoothingTimeConstant = value;
+        }
+    }]);
+    return Analyser;
+}(AbstractEffect);
+
+sono$1.register('analyser', function (opts) {
+    return new Analyser(opts);
+});
+
+var Compressor = function (_AbstractEffect) {
+    inherits(Compressor, _AbstractEffect);
+
+    function Compressor() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$threshold = _ref.threshold;
+        var threshold = _ref$threshold === undefined ? -24 : _ref$threshold;
+        var _ref$knee = _ref.knee;
+        var knee = _ref$knee === undefined ? 30 : _ref$knee;
+        var _ref$ratio = _ref.ratio;
+        var ratio = _ref$ratio === undefined ? 12 : _ref$ratio;
+        var _ref$attack = _ref.attack;
+        var attack = _ref$attack === undefined ? 0.0003 : _ref$attack;
+        var _ref$release = _ref.release;
+        var release = _ref$release === undefined ? 0.25 : _ref$release;
+        classCallCheck(this, Compressor);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDynamicsCompressor()));
+
+        _this.update({ threshold: threshold, knee: knee, ratio: ratio, attack: attack, release: release });
+        return _this;
+    }
+
+    Compressor.prototype.update = function update(options) {
+        // min decibels to start compressing at from -100 to 0
+        this.setSafeParamValue(this._node.threshold, options.threshold);
+        // decibel value to start curve to compressed value from 0 to 40
+        this.setSafeParamValue(this._node.knee, options.knee);
+        // amount of change per decibel from 1 to 20
+        this.setSafeParamValue(this._node.ratio, options.ratio);
+        // gain reduction currently applied by compressor from -20 to 0
+        // node.reduction.value = typeof config.reduction !== 'undefined' ? config.reduction : -10;)
+        // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
+        this.setSafeParamValue(this._node.attack, options.attack);
+        // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
+        this.setSafeParamValue(this._node.release, options.release);
+    };
+
+    return Compressor;
+}(AbstractEffect);
+
+sono$1.register('compressor', function (opts) {
+    return new Compressor(opts);
+});
+
+var n = 22050;
+
+// Float32Array defining curve (values are interpolated)
+// up-sample before applying curve for better resolution result 'none', '2x' or '4x'
+// node.oversample = '2x';
+
+var Distortion = function (_AbstractEffect) {
+    inherits(Distortion, _AbstractEffect);
+
+    function Distortion() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$level = _ref.level;
+        var level = _ref$level === undefined ? 1 : _ref$level;
+        classCallCheck(this, Distortion);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createWaveShaper()));
+
+        _this._curve = new Float32Array(n);
+
+        _this._level = 0;
+
+        _this.update({ level: level });
+        return _this;
+    }
+
+    Distortion.prototype.update = function update(_ref2) {
+        var level = _ref2.level;
+
+        if (level === this._level || !isSafeNumber(level)) {
+            return;
+        }
+
+        if (level <= 0) {
+            this._node.curve = null;
+            return;
+        }
+
+        var k = level * 100;
+        var deg = Math.PI / 180;
+
+        var x = void 0;
+        for (var i = 0; i < n; i++) {
+            x = i * 2 / n - 1;
+            this._curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+        }
+
+        this._level = level;
+        this._node.curve = this._curve;
+    };
+
+    createClass(Distortion, [{
+        key: 'level',
+        get: function get() {
+            return this._level;
+        },
+        set: function set(level) {
+            this._update({ level: level });
+        }
+    }]);
+    return Distortion;
+}(AbstractEffect);
+
+sono$1.register('distortion', function (opts) {
+    return new Distortion(opts);
+});
+
+var Echo = function (_AbstractEffect) {
+    inherits(Echo, _AbstractEffect);
+
+    function Echo() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$delay = _ref.delay;
+        var delay = _ref$delay === undefined ? 0.5 : _ref$delay;
+        var _ref$feedback = _ref.feedback;
+        var feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
+        classCallCheck(this, Echo);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+
+        _this._delay = _this.context.createDelay();
+        _this._feedback = _this.context.createGain();
+
+        _this._in.connect(_this._delay);
+        _this._in.connect(_this._out);
+        _this._delay.connect(_this._feedback);
+        _this._feedback.connect(_this._delay);
+        _this._feedback.connect(_this._out);
+
+        _this.delay = delay;
+        _this.feedback = feedback;
+        return _this;
+    }
+
+    Echo.prototype.update = function update(options) {
+        this.delay = options.delay;
+        this.feedback = options.feedback;
+    };
+
+    createClass(Echo, [{
+        key: 'delay',
+        get: function get() {
+            return this._delay.delayTime.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._delay.delayTime, value);
+        }
+    }, {
+        key: 'feedback',
+        get: function get() {
+            return this._feedback.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._feedback.gain, value);
+        }
+    }]);
+    return Echo;
+}(AbstractEffect);
+
+sono$1.register('echo', function (opts) {
+    return new Echo(opts);
+});
+
+function safeOption(a, b) {
+    if (isSafeNumber(a)) {
+        return a;
+    }
+    return b;
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
+// For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
+// The greater the value is, the greater is the peak
+var minFrequency = 40;
+var maxFrequency = sono$1.context.sampleRate / 2;
+
+function getFrequency$1(value) {
+    // Logarithm (base 2) to compute how many octaves fall in the range.
+    var numberOfOctaves = Math.log(maxFrequency / minFrequency) / Math.LN2;
+    // Compute a multiplier from 0 to 1 based on an exponential scale.
+    var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+    // Get back to the frequency value between min and max.
+    return maxFrequency * multiplier;
+}
+
+var Filter = function (_AbstractEffect) {
+    inherits(Filter, _AbstractEffect);
+
+    function Filter() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$type = _ref.type;
+        var type = _ref$type === undefined ? 'lowpass' : _ref$type;
+        var _ref$frequency = _ref.frequency;
+        var frequency = _ref$frequency === undefined ? 1000 : _ref$frequency;
+        var _ref$q = _ref.q;
+        var q = _ref$q === undefined ? 0 : _ref$q;
+        var _ref$gain = _ref.gain;
+        var gain = _ref$gain === undefined ? 1 : _ref$gain;
+        classCallCheck(this, Filter);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createBiquadFilter()));
+
+        _this._node.type = type;
+
+        _this.update({ frequency: frequency, q: q, gain: gain });
+        return _this;
+    }
+
+    Filter.prototype.update = function update(options) {
+        this.setSafeParamValue(this._node.frequency, options.frequency);
+        this.setSafeParamValue(this._node.Q, options.q);
+        this.setSafeParamValue(this._node.gain, options.gain);
+    };
+
+    Filter.prototype.setByPercent = function setByPercent(_ref2) {
+        var _ref2$percent = _ref2.percent;
+        var percent = _ref2$percent === undefined ? 0.5 : _ref2$percent;
+
+        this.update({
+            frequency: getFrequency$1(percent)
+        });
+    };
+
+    createClass(Filter, [{
+        key: 'frequency',
+        get: function get() {
+            return this._node.frequency.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._node.frequency, value);
+        }
+    }, {
+        key: 'q',
+        get: function get() {
+            return this._node.Q.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._node.Q, value);
+        }
+    }, {
+        key: 'Q',
+        get: function get() {
+            return this._node.Q.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._node.Q, value);
+        }
+    }, {
+        key: 'gain',
+        get: function get() {
+            return this._node.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._node.gain, value);
+        }
+    }, {
+        key: 'detune',
+        get: function get() {
+            return this._node.detune.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._node.detune, value);
+        }
+    }]);
+    return Filter;
+}(AbstractEffect);
+
+sono$1.register('lowpass', function () {
+    var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref3.frequency;
+    var peak = _ref3.peak;
+    var q = _ref3.q;
+
+    return new Filter({ type: 'lowpass', frequency: frequency, q: safeOption(peak, q) });
+});
+
+sono$1.register('highpass', function () {
+    var _ref4 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref4.frequency;
+    var peak = _ref4.peak;
+    var q = _ref4.q;
+
+    return new Filter({ type: 'highpass', frequency: frequency, q: safeOption(peak, q) });
+});
+
+sono$1.register('bandpass', function () {
+    var _ref5 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref5.frequency;
+    var width = _ref5.width;
+    var q = _ref5.q;
+
+    return new Filter({ type: 'bandpass', frequency: frequency, q: safeOption(width, q) });
+});
+
+sono$1.register('lowshelf', function () {
+    var _ref6 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref6.frequency;
+    var gain = _ref6.gain;
+
+    return new Filter({ type: 'lowshelf', frequency: frequency, q: 0, gain: gain });
+});
+
+sono$1.register('highshelf', function () {
+    var _ref7 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref7.frequency;
+    var gain = _ref7.gain;
+
+    return new Filter({ type: 'highshelf', frequency: frequency, q: 0, gain: gain });
+});
+
+sono$1.register('peaking', function () {
+    var _ref8 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref8.frequency;
+    var width = _ref8.width;
+    var gain = _ref8.gain;
+
+    return new Filter({ type: 'peaking', frequency: frequency, q: width, gain: gain });
+});
+
+sono$1.register('notch', function () {
+    var _ref9 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref9.frequency;
+    var width = _ref9.width;
+    var gain = _ref9.gain;
+    var q = _ref9.q;
+
+    return new Filter({ type: 'notch', frequency: frequency, q: safeOption(width, q), gain: gain });
+});
+
+sono$1.register('allpass', function () {
+    var _ref10 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var frequency = _ref10.frequency;
+    var sharpness = _ref10.sharpness;
+    var q = _ref10.q;
+
+    return new Filter({ type: 'allpass', frequency: frequency, q: safeOption(sharpness, q) });
+});
+
+sono$1.register('filter', function (opts) {
+    return new Filter(opts);
+});
+
+var MonoFlanger = function (_AbstractEffect) {
+    inherits(MonoFlanger, _AbstractEffect);
+
+    function MonoFlanger() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$delay = _ref.delay;
+        var delay = _ref$delay === undefined ? 0.005 : _ref$delay;
+        var _ref$feedback = _ref.feedback;
+        var feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
+        var _ref$frequency = _ref.frequency;
+        var frequency = _ref$frequency === undefined ? 0.002 : _ref$frequency;
+        var _ref$gain = _ref.gain;
+        var gain = _ref$gain === undefined ? 0.25 : _ref$gain;
+        classCallCheck(this, MonoFlanger);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+
+        _this._delay = sono$1.context.createDelay();
+        _this._feedback = sono$1.context.createGain();
+        _this._lfo = sono$1.context.createOscillator();
+        _this._gain = sono$1.context.createGain();
+        _this._lfo.type = 'sine';
+
+        _this._in.connect(_this._out);
+        _this._in.connect(_this._delay);
+        _this._delay.connect(_this._out);
+        _this._delay.connect(_this._feedback);
+        _this._feedback.connect(_this._in);
+
+        _this._lfo.connect(_this._gain);
+        _this._gain.connect(_this._delay.delayTime);
+        _this._lfo.start(0);
+
+        _this.update({ delay: delay, feedback: feedback, frequency: frequency, gain: gain });
+        return _this;
+    }
+
+    MonoFlanger.prototype.update = function update(options) {
+        this.delay = options.delay;
+        this.lfoFrequency = options.lfoFrequency;
+        this.lfoGain = options.lfoGain;
+        this.feedback = options.feedback;
+    };
+
+    createClass(MonoFlanger, [{
+        key: 'delay',
+        get: function get() {
+            return this._delay.delayTime.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._delay.delayTime, value);
+        }
+    }, {
+        key: 'lfoFrequency',
+        get: function get() {
+            return this._lfo.frequency.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._lfo.frequency, value);
+        }
+    }, {
+        key: 'lfoGain',
+        get: function get() {
+            return this._gain.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._gain.gain, value);
+        }
+    }, {
+        key: 'feedback',
+        get: function get() {
+            return this._feedback.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._feedback.gain, value);
+        }
+    }]);
+    return MonoFlanger;
+}(AbstractEffect);
+
+sono$1.register('monoFlanger', function (opts) {
+    return new MonoFlanger(opts);
+});
+
+var StereoFlanger = function (_AbstractEffect2) {
+    inherits(StereoFlanger, _AbstractEffect2);
+
+    function StereoFlanger() {
+        var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref2$delay = _ref2.delay;
+        var delay = _ref2$delay === undefined ? 0.003 : _ref2$delay;
+        var _ref2$feedback = _ref2.feedback;
+        var feedback = _ref2$feedback === undefined ? 0.5 : _ref2$feedback;
+        var _ref2$frequency = _ref2.frequency;
+        var frequency = _ref2$frequency === undefined ? 0.5 : _ref2$frequency;
+        var _ref2$gain = _ref2.gain;
+        var gain = _ref2$gain === undefined ? 0.005 : _ref2$gain;
+        classCallCheck(this, StereoFlanger);
+
+        var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this));
+
+        _this2._splitter = sono$1.context.createChannelSplitter(2);
+        _this2._merger = sono$1.context.createChannelMerger(2);
+        _this2._feedbackL = sono$1.context.createGain();
+        _this2._feedbackR = sono$1.context.createGain();
+        _this2._lfo = sono$1.context.createOscillator();
+        _this2._lfoGainL = sono$1.context.createGain();
+        _this2._lfoGainR = sono$1.context.createGain();
+        _this2._delayL = sono$1.context.createDelay();
+        _this2._delayR = sono$1.context.createDelay();
+
+        _this2._lfo.type = 'sine';
+
+        _this2._in.connect(_this2._splitter);
+
+        _this2._splitter.connect(_this2._delayL, 0);
+        _this2._splitter.connect(_this2._delayR, 1);
+
+        _this2._delayL.connect(_this2._feedbackL);
+        _this2._delayR.connect(_this2._feedbackR);
+
+        _this2._feedbackL.connect(_this2._delayR);
+        _this2._feedbackR.connect(_this2._delayL);
+
+        _this2._delayL.connect(_this2._merger, 0, 0);
+        _this2._delayR.connect(_this2._merger, 0, 1);
+
+        _this2._merger.connect(_this2._out);
+        _this2._in.connect(_this2._out);
+
+        _this2._lfo.connect(_this2._lfoGainL);
+        _this2._lfo.connect(_this2._lfoGainR);
+        _this2._lfoGainL.connect(_this2._delayL.delayTime);
+        _this2._lfoGainR.connect(_this2._delayR.delayTime);
+        _this2._lfo.start(0);
+
+        _this2.update({ delay: delay, feedback: feedback, frequency: frequency, gain: gain });
+        return _this2;
+    }
+
+    StereoFlanger.prototype.update = function update(options) {
+        this.delay = options.delay;
+        this.lfoFrequency = options.lfoFrequency;
+        this.lfoGain = options.lfoGain;
+        this.feedback = options.feedback;
+    };
+
+    createClass(StereoFlanger, [{
+        key: 'delay',
+        get: function get() {
+            return this._delayL.delayTime.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._delayL.delayTime, value);
+            this._delayR.delayTime.value = this._delayL.delayTime.value;
+        }
+    }, {
+        key: 'frequency',
+        get: function get() {
+            return this._lfo.frequency.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._lfo.frequency, value);
+        }
+    }, {
+        key: 'gain',
+        get: function get() {
+            return this._lfoGainL.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._lfoGainL.gain, value);
+            this._lfoGainR.gain.value = 0 - this._lfoGainL.gain.value;
+        }
+    }, {
+        key: 'feedback',
+        get: function get() {
+            return this._feedbackL.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._feedbackL.gain, value);
+            this._feedbackR.gain.value = this._feedbackL.gain.value;
+        }
+    }]);
+    return StereoFlanger;
+}(AbstractEffect);
+
+sono$1.register('stereoFlanger', function (opts) {
+    return new StereoFlanger(opts);
+});
+
+sono$1.register('flanger', function () {
+    var opts = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    return opts.stereo ? new StereoFlanger(opts) : new MonoFlanger(opts);
+});
+
+var pannerDefaults = {
+    panningModel: 'HRTF',
+    distanceModel: 'linear',
+    refDistance: 1,
+    maxDistance: 1000,
+    rolloffFactor: 1,
+    coneInnerAngle: 360,
+    coneOuterAngle: 0,
+    coneOuterGain: 0
+};
+
+function safeNumber(x, y) {
+    if (isSafeNumber(x)) {
+        return x;
+    }
+    return y;
+}
+
+// cross product of 2 vectors
+function cross(a, b) {
+    var ax = a.x,
+        ay = a.y,
+        az = a.z;
+    var bx = b.x,
+        by = b.y,
+        bz = b.z;
+    a.x = ay * bz - az * by;
+    a.y = az * bx - ax * bz;
+    a.z = ax * by - ay * bx;
+}
+
+// normalise to unit vector
+function normalize(vec3) {
+    if (vec3.x === 0 && vec3.y === 0 && vec3.z === 0) {
+        return vec3;
+    }
+    var length = Math.sqrt(vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z);
+    var invScalar = 1 / length;
+    vec3.x *= invScalar;
+    vec3.y *= invScalar;
+    vec3.z *= invScalar;
+    return vec3;
+}
+
+var vecPool = {
+    pool: [],
+    get: function get(x, y, z) {
+        var v = this.pool.length ? this.pool.pop() : {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        // check if a vector has been passed in
+        if (typeof x !== 'undefined' && isNaN(x) && 'x' in x && 'y' in x && 'z' in x) {
+            v.x = safeNumber(x.x, 0);
+            v.y = safeNumber(x.y);
+            v.z = safeNumber(x.z);
+        } else {
+            v.x = safeNumber(x);
+            v.y = safeNumber(y);
+            v.z = safeNumber(z);
+        }
+        return v;
+    },
+    dispose: function dispose(instance) {
+        this.pool.push(instance);
+    }
+};
+
+var globalUp = vecPool.get(0, 1, 0);
+var angle45 = Math.PI / 4;
+var angle90 = Math.PI / 2;
+
+var Panner = function (_AbstractEffect) {
+    inherits(Panner, _AbstractEffect);
+
+    function Panner() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        objectDestructuringEmpty(_ref);
+        classCallCheck(this, Panner);
+
+        // Default for stereo is 'HRTF' can also be 'equalpower'
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createPanner()));
+
+        _this._node.panningModel = pannerDefaults.panningModel;
+
+        // Distance model and attributes
+        // Can be 'linear' 'inverse' 'exponential'
+        _this._node.distanceModel = pannerDefaults.distanceModel;
+        _this._node.refDistance = pannerDefaults.refDistance;
+        _this._node.maxDistance = pannerDefaults.maxDistance;
+        _this._node.rolloffFactor = pannerDefaults.rolloffFactor;
+        _this._node.coneInnerAngle = pannerDefaults.coneInnerAngle;
+        _this._node.coneOuterAngle = pannerDefaults.coneOuterAngle;
+        _this._node.coneOuterGain = pannerDefaults.coneOuterGain;
+        // set to defaults (needed in Firefox)
+        _this._node.setPosition(0, 0, 1);
+        _this._node.setOrientation(0, 0, 0);
+        return _this;
+    }
+    // set the orientation of the source (where the audio is coming from)
+
+
+    Panner.prototype.setOrientation = function setOrientation(pannerNode, fw) {
+        // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+        var up = vecPool.get(fw.x, fw.y, fw.z);
+        cross(up, globalUp);
+        cross(up, fw);
+        normalize(up);
+        normalize(fw);
+        // set the audio context's listener position to match the camera position
+        pannerNode.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+        // return the vecs to the pool
+        vecPool.dispose(fw);
+        vecPool.dispose(up);
+    };
+
+    Panner.prototype.setPosition = function setPosition(nodeOrListener, vec) {
+        nodeOrListener.setPosition(vec.x, vec.y, vec.z);
+        vecPool.dispose(vec);
+    };
+
+    Panner.prototype.update = function update(_ref2) {
+        var x = _ref2.x;
+        var y = _ref2.y;
+        var z = _ref2.z;
+
+        var v = vecPool.get(x, y, z);
+
+        if (isSafeNumber(x) && !isSafeNumber(y) && !isSafeNumber(z)) {
+            // pan left to right with value from -1 to 1
+            x = v.x;
+
+            if (x > 1) {
+                x = 1;
+            }
+            if (x < -1) {
+                x = -1;
+            }
+
+            // creates a nice curve with z
+            x = x * angle45;
+            z = x + angle90;
+
+            if (z > angle90) {
+                z = Math.PI - z;
+            }
+
+            v.x = Math.sin(x);
+            v.y = 0;
+            v.z = Math.sin(z);
+        }
+        this.setPosition(this._node, v);
+    };
+
+    // set the position the audio is coming from)
+
+
+    Panner.prototype.setSourcePosition = function setSourcePosition(x, y, z) {
+        this.setPosition(this._node, vecPool.get(x, y, z));
+    };
+
+    // set the direction the audio is coming from)
+
+
+    Panner.prototype.setSourceOrientation = function setSourceOrientation(x, y, z) {
+        this.setOrientation(this._node, vecPool.get(x, y, z));
+    };
+
+    // set the position of who or what is hearing the audio (could be camera or some character)
+
+
+    Panner.prototype.setListenerPosition = function setListenerPosition(x, y, z) {
+        this.setPosition(sono$1.context.listener, vecPool.get(x, y, z));
+    };
+
+    // set the position of who or what is hearing the audio (could be camera or some character)
+
+
+    Panner.prototype.setListenerOrientation = function setListenerOrientation(x, y, z) {
+        this.setOrientation(sono$1.context.listener, vecPool.get(x, y, z));
+    };
+
+    Panner.prototype.getDefaults = function getDefaults() {
+        return pannerDefaults;
+    };
+
+    Panner.prototype.setDefaults = function setDefaults(defaults$$1) {
+        Object.keys(defaults$$1).forEach(function (key) {
+            pannerDefaults[key] = defaults$$1[key];
+        });
+    };
+
+    Panner.prototype.set = function set(x, y, z) {
+        return this.update({ x: x, y: y, z: z });
+    };
+
+    return Panner;
+}(AbstractEffect);
+
+sono$1.register('panner', function (opts) {
+    return new Panner(opts);
+});
+
+var Phaser = function (_AbstractEffect) {
+    inherits(Phaser, _AbstractEffect);
+
+    function Phaser() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$stages = _ref.stages;
+        var stages = _ref$stages === undefined ? 8 : _ref$stages;
+        var _ref$feedback = _ref.feedback;
+        var feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
+        var _ref$frequency = _ref.frequency;
+        var frequency = _ref$frequency === undefined ? 0.5 : _ref$frequency;
+        var _ref$gain = _ref.gain;
+        var gain = _ref$gain === undefined ? 300 : _ref$gain;
+        classCallCheck(this, Phaser);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+
+        stages = stages || 8;
+
+        _this._feedback = sono$1.context.createGain();
+        _this._lfo = sono$1.context.createOscillator();
+        _this._lfoGain = sono$1.context.createGain();
+        _this._lfo.type = 'sine';
+
+        var filters = [];
+        for (var i = 0; i < stages; i++) {
+            var filter = sono$1.context.createBiquadFilter();
+            filter.type = 'allpass';
+            filter.frequency.value = 1000 * i;
+            //filter.Q.value = 10;
+            if (i > 0) {
+                filters[i - 1].connect(filter);
+            }
+            _this._lfoGain.connect(filter.frequency);
+            filters.push(filter);
+        }
+
+        var first = filters[0];
+        var last = filters[filters.length - 1];
+
+        _this._in.connect(first);
+        _this._in.connect(_this._out);
+        last.connect(_this._out);
+        last.connect(_this._feedback);
+        _this._feedback.connect(first);
+        _this._lfo.connect(_this._lfoGain);
+        _this._lfo.start(0);
+
+        _this.update({ frequency: frequency, gain: gain, feedback: feedback });
+        return _this;
+    }
+
+    Phaser.prototype.update = function update(options) {
+        this.frequency = options.frequency;
+        this.gain = options.gain;
+        this.feedback = options.feedback;
+    };
+
+    createClass(Phaser, [{
+        key: 'frequency',
+        get: function get() {
+            return this._lfo.frequency.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._lfo.frequency, value);
+        }
+    }, {
+        key: 'gain',
+        get: function get() {
+            return this._lfoGain.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._lfoGain.gain, value);
+        }
+    }, {
+        key: 'feedback',
+        get: function get() {
+            return this._feedback.gain.value;
+        },
+        set: function set(value) {
+            this.setSafeParamValue(this._feedback.gain, value);
+        }
+    }]);
+    return Phaser;
+}(AbstractEffect);
+
+sono$1.register('phaser', function (opts) {
+    return new Phaser(opts);
+});
+
+function createImpulseResponse(_ref) {
+    var time = _ref.time;
+    var decay = _ref.decay;
+    var reverse = _ref.reverse;
+    var buffer = _ref.buffer;
+
+    var rate = sono$1.context.sampleRate;
+    var length = Math.floor(rate * time);
+
+    var impulseResponse = void 0;
+
+    if (buffer && buffer.length === length) {
+        impulseResponse = buffer;
+    } else {
+        impulseResponse = sono$1.context.createBuffer(2, length, rate);
+    }
+
+    var left = impulseResponse.getChannelData(0);
+    var right = impulseResponse.getChannelData(1);
+
+    var n = void 0,
+        e = void 0;
+    for (var i = 0; i < length; i++) {
+        n = reverse ? length - i : i;
+        e = Math.pow(1 - n / length, decay);
+        left[i] = (Math.random() * 2 - 1) * e;
+        right[i] = (Math.random() * 2 - 1) * e;
+    }
+
+    return impulseResponse;
+}
+
+var Reverb = function (_AbstractEffect) {
+    inherits(Reverb, _AbstractEffect);
+
+    function Reverb() {
+        var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref2$time = _ref2.time;
+        var time = _ref2$time === undefined ? 1 : _ref2$time;
+        var _ref2$decay = _ref2.decay;
+        var decay = _ref2$decay === undefined ? 5 : _ref2$decay;
+        var _ref2$reverse = _ref2.reverse;
+        var reverse = _ref2$reverse === undefined ? false : _ref2$reverse;
+        classCallCheck(this, Reverb);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+
+        _this._length = 0;
+        _this._impulseResponse = null;
+
+        _this._convolver = _this.context.createConvolver();
+
+        _this._in.connect(_this._convolver);
+        _this._in.connect(_this._out);
+        _this._convolver.connect(_this._out);
+
+        _this._opts = {};
+
+        _this.update({ time: time, decay: decay, reverse: reverse });
+        return _this;
+    }
+
+    Reverb.prototype.update = function update(_ref3) {
+        var time = _ref3.time;
+        var decay = _ref3.decay;
+        var reverse = _ref3.reverse;
+
+        var changed = false;
+        if (time !== this._opts.time || isSafeNumber(time)) {
+            this._opts.time = time;
+            changed = true;
+        }
+        if (decay !== this._opts.decay || isSafeNumber(decay)) {
+            this._opts.decay = decay;
+            changed = true;
+        }
+        if (!!reverse !== this._reverse) {
+            this._opts.reverse = !!reverse;
+            changed = true;
+        }
+        if (!changed) {
+            return;
+        }
+        this._opts.buffer = createImpulseResponse(this._opts);
+        this._convolver.buffer = this._opts.buffer;
+    };
+
+    createClass(Reverb, [{
+        key: 'time',
+        get: function get() {
+            return this._opts.time;
+        },
+        set: function set(value) {
+            this.update({ time: value });
+        }
+    }, {
+        key: 'decay',
+        get: function get() {
+            return this._opts.decay;
+        },
+        set: function set(value) {
+            this.update({ decay: value });
+        }
+    }, {
+        key: 'reverse',
+        get: function get() {
+            return this._opts.reverse;
+        },
+        set: function set(value) {
+            this.update({ reverse: value });
+        }
+    }]);
+    return Reverb;
+}(AbstractEffect);
+
+sono$1.register('reverb', function (opts) {
+    return new Reverb(opts);
+});
+
+var Script = function (_AbstractEffect) {
+    inherits(Script, _AbstractEffect);
+
+    function Script() {
+        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+        var _ref$inputChannels = _ref.inputChannels;
+        var inputChannels = _ref$inputChannels === undefined ? 1 : _ref$inputChannels;
+        var _ref$outputChannels = _ref.outputChannels;
+        var outputChannels = _ref$outputChannels === undefined ? 1 : _ref$outputChannels;
+        var _ref$bufferSize = _ref.bufferSize;
+        var bufferSize = _ref$bufferSize === undefined ? 1024 : _ref$bufferSize;
+        var _ref$callback = _ref.callback;
+        var callback = _ref$callback === undefined ? null : _ref$callback;
+        classCallCheck(this, Script);
+
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createScriptProcessor(bufferSize, inputChannels, outputChannels)));
+
+        _this._callback = callback || function (event) {
+            var input = event.inputBuffer.getChannelData(0);
+            var output = event.outputBuffer.getChannelData(0);
+            var l = output.length;
+            for (var i = 0; i < l; i++) {
+                output[i] = input[i];
+            }
+        };
+
+        _this._node.onaudioprocess = _this._callback;
+        return _this;
+    }
+
+    Script.prototype.update = function update() {};
+
+    return Script;
+}(AbstractEffect);
+
+sono$1.register('script', function (opts) {
+    return new Script(opts);
+});
+
+// sono.register('convolver', function(impulseResponse) {
+//     // impulseResponse is an audio file buffer
+//     const node = sono.context.createConvolver();
+//     node.buffer = impulseResponse;
+//     return node;
+// });
+
+// sono.register('delay', function(time) {
+//     const node = sono.context.createDelay();
+//     if (typeof time !== 'undefined') {
+//         node.delayTime.value = time;
+//     }
+//     return node;
+// });
+
+function microphone(connected, denied, error) {
+    navigator.getUserMedia = navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+    error = error || function (err) {
+        console.error(err);
+    };
+
+    var isSupported = !!navigator.getUserMedia;
+    var api = {};
+    var stream = null;
+
+    function onConnect(micStream) {
+        stream = micStream;
+        connected(stream);
+    }
+
+    function onError(e) {
+        if (denied && e.name === 'PermissionDeniedError' || e === 'PERMISSION_DENIED') {
+            denied();
+        } else {
+            error(e.message || e);
+        }
+    }
+
+    function connect() {
+        if (!isSupported) {
+            return api;
+        }
+
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({
+                audio: true
+            }).then(onConnect).catch(onError);
+        } else {
+            navigator.getUserMedia({
+                audio: true
+            }, onConnect, onError);
+        }
+        return api;
+    }
+
+    function disconnect() {
+        if (stream.stop) {
+            stream.stop();
+        } else {
+            stream.getAudioTracks()[0].stop();
+        }
+        stream = null;
+        return api;
+    }
+
+    return Object.assign(api, {
+        connect: connect,
+        disconnect: disconnect,
+        isSupported: isSupported,
+        get stream() {
+            return stream;
+        }
+    });
+}
+
+sono$1.register('microphone', microphone, [sono$1.utils]);
+
+function recorder() {
+    var passThrough = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+    var bufferLength = 4096;
+    var buffersL = [];
+    var buffersR = [];
+    var startedAt = 0;
+    var stoppedAt = 0;
+    var script = null;
+    var isRecording = false;
+    var soundOb = null;
+
+    var input = sono$1.context.createGain();
+    var output = sono$1.context.createGain();
+    output.gain.value = passThrough ? 1 : 0;
+
+    var node = {
+        in: input,
+        out: output
+    };
+
+    function mergeBuffers(buffers, length) {
+        var buffer = new Float32Array(length);
+        var offset = 0;
+        for (var i = 0; i < buffers.length; i++) {
+            buffer.set(buffers[i], offset);
+            offset += buffers[i].length;
+        }
+        return buffer;
+    }
+
+    function getBuffer() {
+        if (!buffersL.length) {
+            return sono$1.context.createBuffer(2, bufferLength, sono$1.context.sampleRate);
+        }
+        var recordingLength = buffersL.length * bufferLength;
+        var buffer = sono$1.context.createBuffer(2, recordingLength, sono$1.context.sampleRate);
+        buffer.getChannelData(0).set(mergeBuffers(buffersL, recordingLength));
+        buffer.getChannelData(1).set(mergeBuffers(buffersR, recordingLength));
+        return buffer;
+    }
+
+    function destroyScriptProcessor() {
+        if (script) {
+            script.onaudioprocess = null;
+            input.disconnect();
+            script.disconnect();
+        }
+    }
+
+    function createScriptProcessor() {
+        destroyScriptProcessor();
+
+        script = sono$1.context.createScriptProcessor(bufferLength, 2, 2);
+        input.connect(script);
+        script.connect(output);
+        script.connect(sono$1.context.destination);
+        // output.connect(sono.context.destination);
+
+
+        script.onaudioprocess = function (event) {
+            var inputL = event.inputBuffer.getChannelData(0);
+            var inputR = event.inputBuffer.getChannelData(1);
+
+            if (passThrough) {
+                var outputL = event.outputBuffer.getChannelData(0);
+                var outputR = event.outputBuffer.getChannelData(1);
+                outputL.set(inputL);
+                outputR.set(inputR);
+            }
+
+            if (isRecording) {
+                buffersL.push(new Float32Array(inputL));
+                buffersR.push(new Float32Array(inputR));
+            }
+        };
+    }
+
+    return {
+        start: function start(sound) {
+            if (!sound) {
+                return;
+            }
+            createScriptProcessor();
+            buffersL.length = 0;
+            buffersR.length = 0;
+            startedAt = sono$1.context.currentTime;
+            stoppedAt = 0;
+            soundOb = sound;
+            sound.effect.add(node);
+            isRecording = true;
+        },
+        stop: function stop() {
+            soundOb.effect.remove(node);
+            soundOb = null;
+            stoppedAt = sono$1.context.currentTime;
+            isRecording = false;
+            destroyScriptProcessor();
+            return getBuffer();
+        },
+        getDuration: function getDuration() {
+            if (!isRecording) {
+                return stoppedAt - startedAt;
+            }
+            return sono$1.context.currentTime - startedAt;
+        },
+
+        get isRecording() {
+            return isRecording;
+        }
+    };
+}
+
+sono$1.register('recorder', recorder, [sono$1.utils]);
+
+function waveform$1() {
+    var buffer = void 0,
+        wave = void 0;
+
+    return function (audioBuffer, length) {
+        if (!window.Float32Array || !window.AudioBuffer) {
+            return [];
+        }
+
+        var sameBuffer = buffer === audioBuffer;
+        var sameLength = wave && wave.length === length;
+        if (sameBuffer && sameLength) {
+            return wave;
+        }
+
+        //console.time('waveData');
+        if (!wave || wave.length !== length) {
+            wave = new Float32Array(length);
+        }
+
+        if (!audioBuffer) {
+            return wave;
+        }
+
+        // cache for repeated calls
+        buffer = audioBuffer;
+
+        var chunk = Math.floor(buffer.length / length),
+            resolution = 5,
+            // 10
+        incr = Math.max(Math.floor(chunk / resolution), 1);
+        var greatest = 0;
+
+        for (var i = 0; i < buffer.numberOfChannels; i++) {
+            // check each channel
+            var channel = buffer.getChannelData(i);
+            for (var j = 0; j < length; j++) {
+                // get highest value within the chunk
+                for (var k = j * chunk, l = k + chunk; k < l; k += incr) {
+                    // select highest value from channels
+                    var a = channel[k];
+                    if (a < 0) {
+                        a = -a;
+                    }
+                    if (a > wave[j]) {
+                        wave[j] = a;
+                    }
+                    // update highest overall for scaling
+                    if (a > greatest) {
+                        greatest = a;
+                    }
+                }
+            }
+        }
+        // scale up
+        var scale = 1 / greatest;
+        for (var _i = 0; _i < wave.length; _i++) {
+            wave[_i] *= scale;
+        }
+        //console.timeEnd('waveData');
+
+        return wave;
+    };
+}
+
+sono$1.register('waveform', waveform$1, [sono$1.utils]);
+
+var halfPI = Math.PI / 2;
+var twoPI = Math.PI * 2;
+
+function waveformer(config) {
+
+    var style = config.style || 'fill',
+        // 'fill' or 'line'
+    shape = config.shape || 'linear',
+        // 'circular' or 'linear'
+    color = config.color || 0,
+        bgColor = config.bgColor,
+        lineWidth = config.lineWidth || 1,
+        percent = config.percent || 1,
+        originX = config.x || 0,
+        originY = config.y || 0,
+        transform = config.transform;
+
+    var canvas = config.canvas,
+        width = config.width || canvas && canvas.width,
+        height = config.height || canvas && canvas.height;
+
+    var ctx = null,
+        currentColor = void 0,
+        i = void 0,
+        x = void 0,
+        y = void 0,
+        radius = void 0,
+        innerRadius = void 0,
+        centerX = void 0,
+        centerY = void 0;
+
+    if (!canvas && !config.context) {
+        canvas = document.createElement('canvas');
+        width = width || canvas.width;
+        height = height || canvas.height;
+        canvas.width = height;
+        canvas.height = height;
+    }
+
+    if (shape === 'circular') {
+        radius = config.radius || Math.min(height / 2, width / 2);
+        innerRadius = config.innerRadius || radius / 2;
+        centerX = originX + width / 2;
+        centerY = originY + height / 2;
+    }
+
+    ctx = config.context || canvas.getContext('2d');
+
+    function clear() {
+        if (bgColor) {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(originX, originY, width, height);
+        } else {
+            ctx.clearRect(originX, originY, width, height);
+        }
+
+        ctx.lineWidth = lineWidth;
+
+        currentColor = null;
+
+        if (typeof color !== 'function') {
+            ctx.strokeStyle = color;
+            ctx.beginPath();
+        }
+    }
+
+    function updateColor(position, length, value) {
+        if (typeof color === 'function') {
+            var newColor = color(position, length, value);
+            if (newColor !== currentColor) {
+                currentColor = newColor;
+                ctx.stroke();
+                ctx.strokeStyle = currentColor;
+                ctx.beginPath();
+            }
+        }
+    }
+
+    function getValue(value, position, length) {
+        if (typeof transform === 'function') {
+            return transform(value, position, length);
+        }
+        return value;
+    }
+
+    function getWaveform(value, length) {
+        if (value && typeof value.waveform === 'function') {
+            return value.waveform(length);
+        }
+        if (value) {
+            return value;
+        }
+        if (config.waveform) {
+            return config.waveform;
+        }
+        if (config.sound) {
+            return config.sound.waveform(length);
+        }
+        return null;
+    }
+
+    function update(wave) {
+
+        clear();
+
+        if (shape === 'circular') {
+            var waveform = getWaveform(wave, 360);
+            var length = Math.floor(waveform.length * percent);
+
+            var step = twoPI / length;
+            var angle = void 0,
+                magnitude = void 0,
+                sine = void 0,
+                cosine = void 0;
+
+            for (i = 0; i < length; i++) {
+                var value = getValue(waveform[i], i, length);
+                updateColor(i, length, value);
+
+                angle = i * step - halfPI;
+                cosine = Math.cos(angle);
+                sine = Math.sin(angle);
+
+                if (style === 'fill') {
+                    x = centerX + innerRadius * cosine;
+                    y = centerY + innerRadius * sine;
+                    ctx.moveTo(x, y);
+                }
+
+                magnitude = innerRadius + (radius - innerRadius) * value;
+                x = centerX + magnitude * cosine;
+                y = centerY + magnitude * sine;
+
+                if (style === 'line' && i === 0) {
+                    ctx.moveTo(x, y);
+                }
+
+                ctx.lineTo(x, y);
+            }
+
+            if (style === 'line') {
+                ctx.closePath();
+            }
+        } else {
+
+            var _waveform = getWaveform(wave, width);
+            var _length = Math.min(_waveform.length, width - lineWidth / 2);
+            _length = Math.floor(_length * percent);
+
+            for (i = 0; i < _length; i++) {
+                var _value = getValue(_waveform[i], i, _length);
+                updateColor(i, _length, _value);
+
+                if (style === 'line' && i > 0) {
+                    ctx.lineTo(x, y);
+                }
+
+                x = originX + i;
+                y = originY + height - Math.round(height * _value);
+                y = Math.floor(Math.min(y, originY + height - lineWidth / 2));
+
+                if (style === 'fill') {
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x, originY + height);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+        }
+        ctx.stroke();
+    }
+
+    update.canvas = canvas;
+
+    if (config.waveform || config.sound) {
+        update();
+    }
+
+    return update;
+}
+
+sono$1.register('waveformer', waveformer, [sono$1.utils]);
+
+return sono$1;
 
 })));
 //# sourceMappingURL=sono.js.map

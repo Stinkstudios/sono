@@ -160,8 +160,8 @@ describe('sono API', function() {
     });
 
     describe('node', function() {
-        it('should have effect module', function() {
-            expect(sono.effect)
+        it('should have effects module', function() {
+            expect(sono.effects)
                 .to.be.an('object');
         });
         // it('should have get effect', function() {

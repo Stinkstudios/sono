@@ -1,5 +1,5 @@
 (function() {
-    'use strict';
+
 
     var sono = window.sono;
     var ui = window.ui;
@@ -15,10 +15,10 @@
 
     var onConnect = function(stream) {
         sound = sono.createSound(stream);
-        recorder = sound.effect.recorder(true);
-        analyser = sound.effect.analyser(1024);
+        recorder = sono.utils.recorder(false);
+        analyser = sound.effect.analyser({fftSize: 1024});
         analyser.maxDecibels = -60;
-        recorder.start();
+        recorder.start(sound);
         update();
     };
     var mic = sono.utils.microphone(onConnect);
@@ -31,10 +31,12 @@
     var toggle = function() {
         if (recorder && recorder.isRecording) {
             var recording = recorder.stop();
+            console.log(recording);
             createPlayer(recording);
+            mic.disconnect();
         } else {
             if (mic.stream) {
-                recorder.start();
+                //recorder.start(sound);
             } else {
                 mic.connect();
             }
