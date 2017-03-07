@@ -6,11 +6,20 @@ export default class Effects {
         // this.panning = new Panner(this.context);
 
         this._nodes = [];
-        // this._nodes.has = node => this.has(node);
-        // this._nodes.add = node => this.add(node);
-        // this._nodes.remove = node => this.remove(node);
-        // this._nodes.toggle = (node, force) => this.toggle(node, force);
-        // this._nodes.removeAll = () => this.removeAll();
+        this._nodes.has = node => this.has(node);
+        this._nodes.add = node => this.add(node);
+        this._nodes.remove = node => this.remove(node);
+        this._nodes.toggle = (node, force) => this.toggle(node, force);
+        this._nodes.removeAll = () => this.removeAll();
+
+        Object.keys(Effects.prototype).forEach(key => {
+            if (!this._nodes.hasOwnProperty(key) && typeof Effects.prototype[key] === 'function') {
+                // console.log('-->', key, this[key]);
+                // this._nodes[key] = Effects.prototype[key].bind(this);
+                // this._nodes[key] = (opts) => this[key](opts);
+                this._nodes[key] = this[key].bind(this);
+            }
+        });
     }
 
     setSource(node) {
@@ -100,10 +109,6 @@ export default class Effects {
             this._source.disconnect();
         }
         this._source = null;
-    }
-
-    list() {
-        return this._nodes;
     }
 
     _connect(a, b) {

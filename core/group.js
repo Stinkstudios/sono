@@ -174,18 +174,16 @@ export default function Group(context, destination) {
         destroy,
         gain,
         get effects() {
-            return effects;
-            // return effects._nodes;
+            return effects._nodes;
         },
         set effects(value) {
             effects.removeAll().add(value);
         },
         get fx() {
-            return effects;
-            // return effects._nodes;
+            return this.effects;
         },
         set fx(value) {
-            effects.removeAll().add(value);
+            this.effects = value;
         },
         get sounds() {
             return sounds;

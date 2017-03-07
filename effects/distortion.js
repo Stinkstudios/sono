@@ -47,7 +47,7 @@ class Distortion extends AbstractEffect {
     }
 
     set level(level) {
-        this._update({level});
+        this.update({level});
     }
 }
 

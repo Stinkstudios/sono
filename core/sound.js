@@ -237,8 +237,7 @@ export default class Sound extends Emitter {
     }
 
     get effects() {
-        // return this._effects._nodes;
-        return this._effects;
+        return this._effects._nodes;
     }
 
     set effects(value) {
@@ -246,11 +245,11 @@ export default class Sound extends Emitter {
     }
 
     get fx() {
-        return this._effects;
+        return this.effects;
     }
 
     set fx(value) {
-        this._effects.removeAll().add(value);
+        this.effects = value;
     }
 
     get ended() {

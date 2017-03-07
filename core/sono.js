@@ -266,19 +266,11 @@ function Sono() {
                 ob[name] = fn;
             });
         } else {
-            // Effects.prototype[name] = Sound.prototype[name] = function(config) {
-            //     return this.add(fn(config));
-            // };
-
             Effects.prototype[name] = function(opts) {
                 return this.add(fn(opts));
             };
-
         }
 
-        // Object.assign(api, {
-        //     [name]: fn
-        // });
         api[name] = fn;
 
         return fn;
@@ -318,18 +310,16 @@ function Sono() {
         utils,
         VERSION,
         get effects() {
-            // return group.effects._nodes;
             return group.effects;
         },
         set effects(value) {
             group.effects.removeAll().add(value);
         },
         get fx() {
-            // return group.effects._nodes;
-            return group.effects;
+            return this.effects;
         },
         set fx(value) {
-            group.effects.removeAll().add(value);
+            this.effects = value;
         },
         get isTouchLocked() {
             return isTouchLocked;

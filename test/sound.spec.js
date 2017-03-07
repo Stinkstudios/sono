@@ -46,11 +46,7 @@ describe('Sound', function() {
 
     it('should have expected members (effects)', function() {
         expect(sound.effects)
-            .to.be.an('object');
-        expect(sound.effects.setSource)
-            .to.be.a('function');
-        expect(sound.effects.setDestination)
-            .to.be.a('function');
+            .to.exist;
         expect(sound.effects.add)
             .to.be.a('function');
         expect(sound.effects.remove)

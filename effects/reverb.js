@@ -1,6 +1,7 @@
 import AbstractEffect from './AbstractEffect';
 import sono from '../core/sono';
 import isSafeNumber from '../core/utils/isSafeNumber';
+import isDefined from '../core/utils/isDefined';
 
 function createImpulseResponse({time, decay, reverse, buffer}) {
     const rate = sono.context.sampleRate;
@@ -48,21 +49,22 @@ class Reverb extends AbstractEffect {
 
     update({time, decay, reverse}) {
         let changed = false;
-        if (time !== this._opts.time || isSafeNumber(time)) {
+        if (time !== this._opts.time && isSafeNumber(time)) {
             this._opts.time = time;
             changed = true;
         }
-        if (decay !== this._opts.decay || isSafeNumber(decay)) {
+        if (decay !== this._opts.decay && isSafeNumber(decay)) {
             this._opts.decay = decay;
             changed = true;
         }
-        if (!!reverse !== this._reverse) {
-            this._opts.reverse = !!reverse;
+        if (isDefined(reverse) && reverse !== this._reverse) {
+            this._opts.reverse = reverse;
             changed = true;
         }
         if (!changed) {
             return;
         }
+        console.log('this._opts', this._opts);
         this._opts.buffer = createImpulseResponse(this._opts);
         this._convolver.buffer = this._opts.buffer;
     }

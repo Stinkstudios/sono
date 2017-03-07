@@ -499,6 +499,8 @@ var file = {
 
 var Effects = function () {
     function Effects(context) {
+        var _this = this;
+
         classCallCheck(this, Effects);
 
         this.context = context;
@@ -507,11 +509,30 @@ var Effects = function () {
         // this.panning = new Panner(this.context);
 
         this._nodes = [];
-        // this._nodes.has = node => this.has(node);
-        // this._nodes.add = node => this.add(node);
-        // this._nodes.remove = node => this.remove(node);
-        // this._nodes.toggle = (node, force) => this.toggle(node, force);
-        // this._nodes.removeAll = () => this.removeAll();
+        this._nodes.has = function (node) {
+            return _this.has(node);
+        };
+        this._nodes.add = function (node) {
+            return _this.add(node);
+        };
+        this._nodes.remove = function (node) {
+            return _this.remove(node);
+        };
+        this._nodes.toggle = function (node, force) {
+            return _this.toggle(node, force);
+        };
+        this._nodes.removeAll = function () {
+            return _this.removeAll();
+        };
+
+        Object.keys(Effects.prototype).forEach(function (key) {
+            if (!_this._nodes.hasOwnProperty(key) && typeof Effects.prototype[key] === 'function') {
+                // console.log('-->', key, this[key]);
+                // this._nodes[key] = Effects.prototype[key].bind(this);
+                // this._nodes[key] = (opts) => this[key](opts);
+                _this._nodes[key] = _this[key].bind(_this);
+            }
+        });
     }
 
     Effects.prototype.setSource = function setSource(node) {
@@ -601,10 +622,6 @@ var Effects = function () {
             this._source.disconnect();
         }
         this._source = null;
-    };
-
-    Effects.prototype.list = function list() {
-        return this._nodes;
     };
 
     Effects.prototype._connect = function _connect(a, b) {
@@ -834,18 +851,16 @@ function Group(context, destination) {
         destroy: destroy,
         gain: gain,
         get effects() {
-            return effects;
-            // return effects._nodes;
+            return effects._nodes;
         },
         set effects(value) {
             effects.removeAll().add(value);
         },
         get fx() {
-            return effects;
-            // return effects._nodes;
+            return this.effects;
         },
         set fx(value) {
-            effects.removeAll().add(value);
+            this.effects = value;
         },
         get sounds() {
             return sounds;
@@ -2962,8 +2977,7 @@ var Sound = function (_Emitter) {
     }, {
         key: 'effects',
         get: function get() {
-            // return this._effects._nodes;
-            return this._effects;
+            return this._effects._nodes;
         },
         set: function set(value) {
             this._effects.removeAll().add(value);
@@ -2971,10 +2985,10 @@ var Sound = function (_Emitter) {
     }, {
         key: 'fx',
         get: function get() {
-            return this._effects;
+            return this.effects;
         },
         set: function set(value) {
-            this._effects.removeAll().add(value);
+            this.effects = value;
         }
     }, {
         key: 'ended',
@@ -3501,18 +3515,11 @@ function Sono() {
                 ob[name] = fn;
             });
         } else {
-            // Effects.prototype[name] = Sound.prototype[name] = function(config) {
-            //     return this.add(fn(config));
-            // };
-
             Effects.prototype[name] = function (opts) {
                 return this.add(fn(opts));
             };
         }
 
-        // Object.assign(api, {
-        //     [name]: fn
-        // });
         api[name] = fn;
 
         return fn;
@@ -3552,15 +3559,13 @@ function Sono() {
         utils: utils,
         VERSION: VERSION
     }, _effects = 'effects', _mutatorMap = {}, _mutatorMap[_effects] = _mutatorMap[_effects] || {}, _mutatorMap[_effects].get = function () {
-        // return group.effects._nodes;
         return group.effects;
     }, _effects2 = 'effects', _mutatorMap[_effects2] = _mutatorMap[_effects2] || {}, _mutatorMap[_effects2].set = function (value) {
         group.effects.removeAll().add(value);
     }, _fx = 'fx', _mutatorMap[_fx] = _mutatorMap[_fx] || {}, _mutatorMap[_fx].get = function () {
-        // return group.effects._nodes;
-        return group.effects;
+        return this.effects;
     }, _fx2 = 'fx', _mutatorMap[_fx2] = _mutatorMap[_fx2] || {}, _mutatorMap[_fx2].set = function (value) {
-        group.effects.removeAll().add(value);
+        this.effects = value;
     }, _isTouchLocked = 'isTouchLocked', _mutatorMap[_isTouchLocked] = _mutatorMap[_isTouchLocked] || {}, _mutatorMap[_isTouchLocked].get = function () {
         return isTouchLocked;
     }, _sounds = 'sounds', _mutatorMap[_sounds] = _mutatorMap[_sounds] || {}, _mutatorMap[_sounds].get = function () {
@@ -3956,7 +3961,7 @@ var Distortion = function (_AbstractEffect) {
             return this._level;
         },
         set: function set(level) {
-            this._update({ level: level });
+            this.update({ level: level });
         }
     }]);
     return Distortion;
@@ -4705,6 +4710,10 @@ sono$1.register('phaser', function (opts) {
     return new Phaser(opts);
 });
 
+function isDefined(value) {
+    return typeof value !== 'undefined';
+}
+
 function createImpulseResponse(_ref) {
     var time = _ref.time;
     var decay = _ref.decay;
@@ -4774,21 +4783,22 @@ var Reverb = function (_AbstractEffect) {
         var reverse = _ref3.reverse;
 
         var changed = false;
-        if (time !== this._opts.time || isSafeNumber(time)) {
+        if (time !== this._opts.time && isSafeNumber(time)) {
             this._opts.time = time;
             changed = true;
         }
-        if (decay !== this._opts.decay || isSafeNumber(decay)) {
+        if (decay !== this._opts.decay && isSafeNumber(decay)) {
             this._opts.decay = decay;
             changed = true;
         }
-        if (!!reverse !== this._reverse) {
-            this._opts.reverse = !!reverse;
+        if (isDefined(reverse) && reverse !== this._reverse) {
+            this._opts.reverse = reverse;
             changed = true;
         }
         if (!changed) {
             return;
         }
+        console.log('this._opts', this._opts);
         this._opts.buffer = createImpulseResponse(this._opts);
         this._convolver.buffer = this._opts.buffer;
     };

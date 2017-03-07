@@ -159,10 +159,10 @@ describe('sono API', function() {
         });
     });
 
-    describe('node', function() {
+    describe('effects', function() {
         it('should have effects module', function() {
             expect(sono.effects)
-                .to.be.an('object');
+                .to.exist;
         });
         // it('should have get effect', function() {
         //     var desc = Object.getOwnPropertyDescriptor(sono, 'effect');
