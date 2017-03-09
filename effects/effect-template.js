@@ -6,14 +6,17 @@ class EffectTemplate extends AbstractEffect {
     constructor() {
         super();
     }
+
     update(options) {
         if (isSafeNumber(options.value)) {
             // do update
         }
     }
+
     get value() {
         return this._value;
     }
+
     set value(value) {
         this.update({value});
     }
