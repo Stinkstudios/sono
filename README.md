@@ -18,110 +18,65 @@ A simple yet powerful JavaScript library for working with Web Audio
 
 ## Installation
 
-```
-npm install sono --save
+```shell
+npm i -S sono
 ```
 
 ## Usage
 
-### Adding sounds to sono
-
-New sounds are created through the `createSound` method.
-
-If you pass in an array of URLs, sono will use the first one that matches the browser's capabilities:
-
 ```javascript
-var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
+import sono from 'sono';
+import 'sono/effects';
+import 'sono/utils';
+
+const sound = sono.create('boom.mp3');
+sound.effects = [sono.echo(), sono.reverb()];
+sound.play();
 ```
 
-You can pass a configuration object:
+## Documentation
 
-```javascript
-var sound = sono.createSound({
-    id: 'foo',
-    src: ['audio/foo.ogg', 'audio/foo.mp3'],
-    volume: 0.5,
-    loop: true
-});
-```
+### [Getting started](docs/getting-started.md)
 
-You can also supply media elements from the DOM (watch out for patchy browser support!):
+### [Sounds](docs/sounds.md)
 
-```javascript
-var videoEl = document.querySelector('video');
-var videoElSound = sono.createSound(videoEl);
-```
+### [Effects](docs/effects.md)
 
-[Further examples, covering all valid sound sources](docs/Sono.md#createsound)
+### [Controls](docs/controls.md)
 
+### [Loading](docs/loading.md)
 
-### Adding effects
-
-Effect and processing nodes can be chained to individual sounds or to the overall mix, via sono.effect or sound.effect.
-
-sono extends native Web Audio nodes to add capabilities and make them easy to work with.
-
-For example, apply a reverb effect to all sounds:
-
-```javascript
-var reverb = sono.effect.reverb({
-  time: 1,
-  decay: 5
-});
-// change time, decay and reverse the reverb
-reverb.time = 2;
-reverb.decay = 6;
-reverb.reverse = true;
-```
-
-Or apply an echo effect to a specific sound:
-
-```javascript
-var sound = sono.createSound(['audio/foo.ogg', 'audio/foo.mp3']);
-var echo = sound.effect.echo({
-  delay: 0.8,
-  feedback: 0.5
-});
-// change the delay time and feedback amount:
-echo.delay = 0.5;
-echo.feedback = 0.9;
-```
-
-[Further examples and full list of effects](docs/Sono.md#effects)
-
-
-### Further documentation
-
-[sound object api](docs/Sono.md#sound)
-
-[loading sounds](docs/Sono.md#load)
-
-[utils](docs/Sono.md#utils)
-
+### [Utils](docs/utils.md)
 
 ## Dev setup
 
-Install dependencies:
+### Install dependencies
 
-```
-$ npm install
-```
-
-Run tests:
-
-```
-$ npm install -g karma-cli
-$ npm test
+```shell
+npm i
 ```
 
-Build bundles:
+### Run tests
 
-```
-$ npm run build
+```shell
+npm i -g karma-cli
+npm test
 ```
 
-Watch and continuous tests:
+### Run examples
 
+```shell
+npm run examples
 ```
-$ npm start
+
+### Build bundles
+
+```shell
+npm run build
+```
+
+### Watch and test
+
+```shell
+npm start
 ```
