@@ -7,10 +7,11 @@ import Effects from './effects';
 import Sound from './sound';
 import SoundGroup from './utils/sound-group';
 import utils from './utils/utils';
+import log from './utils/log';
 
 function Sono() {
     const VERSION = '0.1.9';
-    const group = new Group(context, context.destination);
+    const bus = new Group(context, context.destination);
 
     let api = null;
     let isTouchLocked = false;
@@ -19,16 +20,16 @@ function Sono() {
      * Get Sound by id
      */
 
-    function getSound(id) {
-        return group.find(id);
+    function get(id) {
+        return bus.find(id);
     }
 
     /*
      * Create group
      */
 
-    function createGroup(sounds) {
-        const soundGroup = new SoundGroup(context, group.gain);
+    function group(sounds) {
+        const soundGroup = new SoundGroup(context, bus.gain);
         if (sounds) {
             sounds.forEach((sound) => soundGroup.add(sound));
         }
@@ -40,21 +41,20 @@ function Sono() {
      */
 
     function add(config) {
-        const soundContext = config && config.webAudio === false ? null : context;
-        // const sound = new Sound(soundContext, group.gain);
         const src = file.getSupportedFile(config.src || config.url || config.data || config);
         const sound = new Sound(Object.assign({}, config || {}, {
             src,
-            context: soundContext,
-            destination: group.gain
+            context,
+            destination: bus.gain
         }));
         sound.isTouchLocked = isTouchLocked;
         if (config) {
             sound.id = config.id || config.name || '';
             sound.loop = !!config.loop;
             sound.volume = config.volume;
+            sound.effects = config.effects || [];
         }
-        group.add(sound);
+        bus.add(sound);
         return sound;
     }
 
@@ -91,12 +91,12 @@ function Sono() {
             loader.on('progress', (progress) => config.onProgress(progress));
         }
         if (config.onComplete) {
-            loader.once('complete', function() {
+            loader.once('complete', () => {
                 loader.off('progress');
                 config.onComplete(sound);
             });
         }
-        loader.once('error', function(err) {
+        loader.once('error', err => {
             loader.off('error');
             if (config.onError) {
                 config.onError(err);
@@ -119,10 +119,9 @@ function Sono() {
      * HTMLMediaElement
      * Filename string (e.g. 'foo.ogg')
      * Oscillator type string (i.e. 'sine', 'square', 'sawtooth', 'triangle')
-     * ScriptProcessor config object (e.g. { bufferSize: 1024, channels: 1, callback: fn })
      */
 
-    function createSound(config) {
+    function create(config) {
         // try to load if config contains URLs
         if (file.containsURL(config)) {
             return load(config);
@@ -138,13 +137,13 @@ function Sono() {
      * Destroy
      */
 
-    function destroySound(soundOrId) {
-        group.find(soundOrId, (sound) => sound.destroy());
+    function destroy(soundOrId) {
+        bus.find(soundOrId, (sound) => sound.destroy());
         return api;
     }
 
     function destroyAll() {
-        group.destroy();
+        bus.destroy();
         return api;
     }
 
@@ -153,47 +152,47 @@ function Sono() {
      */
 
     function mute() {
-        group.mute();
+        bus.mute();
         return api;
     }
 
     function unMute() {
-        group.unMute();
+        bus.unMute();
         return api;
     }
 
     function fade(volume, duration) {
-        group.fade(volume, duration);
+        bus.fade(volume, duration);
         return api;
     }
 
     function pauseAll() {
-        group.pause();
+        bus.pause();
         return api;
     }
 
     function resumeAll() {
-        group.resume();
+        bus.resume();
         return api;
     }
 
     function stopAll() {
-        group.stop();
+        bus.stop();
         return api;
     }
 
     function play(id, delay, offset) {
-        group.find(id, (sound) => sound.play(delay, offset));
+        bus.find(id, (sound) => sound.play(delay, offset));
         return api;
     }
 
     function pause(id) {
-        group.find(id, (sound) => sound.pause());
+        bus.find(id, (sound) => sound.pause());
         return api;
     }
 
     function stop(id) {
-        group.find(id, (sound) => sound.stop());
+        bus.find(id, (sound) => sound.stop());
         return api;
     }
 
@@ -203,7 +202,7 @@ function Sono() {
 
     isTouchLocked = browser.handleTouchLock(context, function() {
         isTouchLocked = false;
-        group.sounds.forEach((sound) => (sound.isTouchLocked = false));
+        bus.sounds.forEach((sound) => (sound.isTouchLocked = false));
     });
 
     /*
@@ -215,7 +214,7 @@ function Sono() {
 
         // pause currently playing sounds and store refs
         function onHidden() {
-            group.sounds.forEach(function(sound) {
+            bus.sounds.forEach(function(sound) {
                 if (sound.playing) {
                     sound.pause();
                     pageHiddenPaused.push(sound);
@@ -234,43 +233,8 @@ function Sono() {
         browser.handlePageVisibility(onHidden, onShown);
     }());
 
-    /*
-     * Log version & device support info
-     */
-
-    function log() {
-        const title = 'sono ' + VERSION,
-            info = 'Supported:' + api.isSupported +
-            ' WebAudioAPI:' + api.hasWebAudio +
-            ' TouchLocked:' + isTouchLocked +
-            ' State:' + (context && context.state) +
-            ' Extensions:' + file.extensions;
-
-        if (navigator.userAgent.indexOf('Chrome') > -1) {
-            const args = [
-                '%c ♫ ' + title +
-                ' ♫ %c ' + info + ' ',
-                'color: #FFFFFF; background: #379F7A',
-                'color: #1F1C0D; background: #E0FBAC'
-            ];
-            console.log.apply(console, args);
-        } else if (window.console && window.console.log.call) {
-            console.log.call(console, title + ' ' + info);
-        }
-    }
-
-    function register(name, fn, attachTo = []) {
-
-        if (attachTo.length) {
-            attachTo.forEach((ob) => {
-                ob[name] = fn;
-            });
-        } else {
-            Effects.prototype[name] = function(opts) {
-                return this.add(fn(opts));
-            };
-        }
-
+    function register(name, fn, attachTo = Effects.prototype) {
+        attachTo[name] = fn;
         api[name] = fn;
 
         return fn;
@@ -279,41 +243,40 @@ function Sono() {
     api = {
         canPlay: file.canPlay,
         context,
-        create: createSound,
-        createGroup,
-        createSound,
+        create,
+        createGroup: group,
+        createSound: create,
         destroyAll,
-        destroySound,
-        Effects,
-        effects: group.effects,
+        destroy,
+        effects: bus.effects,
         extensions: file.extensions,
         fade,
         file,
-        gain: group.gain,
+        gain: bus.gain,
         getOfflineContext: utils.getOfflineContext,
-        getSound,
-        Group,
+        get,
+        getSound: get,
+        group,
         hasWebAudio: !context.isFake,
         isSupported: file.extensions.length > 0,
         load,
-        log,
+        log: () => log(api),
         mute,
         pause,
         pauseAll,
         play,
         register,
         resumeAll,
-        Sound,
         stop,
         stopAll,
         unMute,
         utils,
         VERSION,
         get effects() {
-            return group.effects;
+            return bus.effects;
         },
         set effects(value) {
-            group.effects.removeAll().add(value);
+            bus.effects.removeAll().add(value);
         },
         get fx() {
             return this.effects;
@@ -325,14 +288,21 @@ function Sono() {
             return isTouchLocked;
         },
         get sounds() {
-            return group.sounds.slice(0);
+            return bus.sounds.slice(0);
         },
         get volume() {
-            return group.volume;
+            return bus.volume;
         },
         set volume(value) {
-            group.volume = value;
+            bus.volume = value;
+        },
+        // expose for unit testing
+        __test: {
+            Effects,
+            Group,
+            Sound
         }
+
     };
     return api;
 }

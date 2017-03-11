@@ -20,7 +20,7 @@ export default class AbstractEffect {
 
     setSafeParamValue(param, value) {
         if (!isSafeNumber(value)) {
-            console.warn('Attempt to set invalid value ' + value + ' on AudioParam');
+            console.warn(this, 'Attempt to set invalid value ' + value + ' on AudioParam');
             return;
         }
         param.value = value;

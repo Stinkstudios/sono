@@ -8,7 +8,6 @@ import flanger from './flanger';
 import panner from './panner';
 import phaser from './phaser';
 import reverb from './reverb';
-import script from './script';
 
 export {
     analyser,
@@ -20,8 +19,7 @@ export {
     flanger,
     panner,
     phaser,
-    reverb,
-    script
+    reverb
 };
 
 export default {
@@ -34,6 +32,5 @@ export default {
     flanger,
     panner,
     phaser,
-    reverb,
-    script
+    reverb
 };

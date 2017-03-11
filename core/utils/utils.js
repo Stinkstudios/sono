@@ -27,7 +27,7 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  */
 
 function cloneBuffer(buffer) {
-    if (!context) {
+    if (!context || context.isFake) {
         return buffer;
     }
 

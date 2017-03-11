@@ -112,4 +112,4 @@ function recorder(passThrough = false) {
     };
 }
 
-export default sono.register('recorder', recorder, [sono.utils]);
+export default sono.register('recorder', recorder, sono.utils);

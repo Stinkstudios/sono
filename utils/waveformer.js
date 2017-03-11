@@ -169,4 +169,4 @@ function waveformer(config) {
     return update;
 }
 
-export default sono.register('waveformer', waveformer, [sono.utils]);
+export default sono.register('waveformer', waveformer, sono.utils);

@@ -2,11 +2,15 @@ import AbstractEffect from './AbstractEffect';
 import sono from '../core/sono';
 import isSafeNumber from '../core/utils/isSafeNumber';
 
-function safeOption(a, b) {
-    if (isSafeNumber(a)) {
-        return a;
+function safeOption(...args) {
+    let value = null;
+    for (let i = 0; i < args.length; i++) {
+        if (isSafeNumber(args[i])) {
+            value = args[i];
+            break;
+        }
     }
-    return b;
+    return value;
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
@@ -25,24 +29,31 @@ function getFrequency(value) {
 }
 
 class Filter extends AbstractEffect {
-    constructor({type = 'lowpass', frequency = 1000, q = 0, gain = 1} = {}) {
+    constructor({type = 'lowpass', frequency = 1000, detune = 0, q = 0, gain = 1, peak = 0, boost = 0, width = 100, sharpness = 0} = {}) {
         super(sono.context.createBiquadFilter());
 
         this._node.type = type;
 
-        this.update({frequency, q, gain});
+        this.update({frequency, gain, detune, q, peak, boost, width, sharpness});
     }
 
     update(options) {
         this.setSafeParamValue(this._node.frequency, options.frequency);
-        this.setSafeParamValue(this._node.Q, options.q);
-        this.setSafeParamValue(this._node.gain, options.gain);
+        this.setSafeParamValue(this._node.gain, safeOption(options.boost, options.gain));
+        this.setSafeParamValue(this._node.detune, options.detune);
+
+        const q = safeOption(options.peak, options.width, options.sharpness, options.q);
+        this.setSafeParamValue(this._node.Q, q);
     }
 
     setByPercent({percent = 0.5}) {
         this.update({
             frequency: getFrequency(percent)
         });
+    }
+
+    get type() {
+        return this._node.type;
     }
 
     get frequency() {
@@ -62,11 +73,43 @@ class Filter extends AbstractEffect {
     }
 
     get Q() {
-        return this._node.Q.value;
+        return this.q;
     }
 
     set Q(value) {
-        this.setSafeParamValue(this._node.Q, value);
+        this.q = value;
+    }
+
+    get peak() {
+        return this.q;
+    }
+
+    set peak(value) {
+        this.q = value;
+    }
+
+    get boost() {
+        return this.q;
+    }
+
+    set boost(value) {
+        this.q = value;
+    }
+
+    get width() {
+        return this.q;
+    }
+
+    set width(value) {
+        this.q = value;
+    }
+
+    get sharpness() {
+        return this.q;
+    }
+
+    set sharpness(value) {
+        this.q = value;
     }
 
     get gain() {
@@ -86,36 +129,47 @@ class Filter extends AbstractEffect {
     }
 }
 
-sono.register('lowpass', ({frequency, peak, q} = {}) => {
-    return new Filter({type: 'lowpass', frequency, q: safeOption(peak, q)});
+const lowpass = sono.register('lowpass', ({frequency, peak, q} = {}) => {
+    return new Filter({type: 'lowpass', frequency, peak, q});
 });
 
-sono.register('highpass', ({frequency, peak, q} = {}) => {
-    return new Filter({type: 'highpass', frequency, q: safeOption(peak, q)});
+const highpass = sono.register('highpass', ({frequency, peak, q} = {}) => {
+    return new Filter({type: 'highpass', frequency, peak, q});
 });
 
-sono.register('bandpass', ({frequency, width, q} = {}) => {
-    return new Filter({type: 'bandpass', frequency, q: safeOption(width, q)});
+const lowshelf = sono.register('lowshelf', ({frequency, boost, gain} = {}) => {
+    return new Filter({type: 'lowshelf', frequency, boost, gain, q: 0});
 });
 
-sono.register('lowshelf', ({frequency, gain} = {}) => {
-    return new Filter({type: 'lowshelf', frequency, q: 0, gain});
+const highshelf = sono.register('highshelf', ({frequency, boost, gain} = {}) => {
+    return new Filter({type: 'highshelf', frequency, boost, gain, q: 0});
 });
 
-sono.register('highshelf', ({frequency, gain} = {}) => {
-    return new Filter({type: 'highshelf', frequency, q: 0, gain});
+const peaking = sono.register('peaking', ({frequency, width, boost, gain, q} = {}) => {
+    return new Filter({type: 'peaking', frequency, width, boost, gain, q});
 });
 
-sono.register('peaking', ({frequency, width, gain} = {}) => {
-    return new Filter({type: 'peaking', frequency, q: width, gain});
+const bandpass = sono.register('bandpass', ({frequency, width, q} = {}) => {
+    return new Filter({type: 'bandpass', frequency, width, q});
 });
 
-sono.register('notch', ({frequency, width, gain, q} = {}) => {
-    return new Filter({type: 'notch', frequency, q: safeOption(width, q), gain});
+const notch = sono.register('notch', ({frequency, width, gain, q} = {}) => {
+    return new Filter({type: 'notch', frequency, width, gain, q});
 });
 
-sono.register('allpass', ({frequency, sharpness, q} = {}) => {
-    return new Filter({type: 'allpass', frequency, q: safeOption(sharpness, q)});
+const allpass = sono.register('allpass', ({frequency, sharpness, q} = {}) => {
+    return new Filter({type: 'allpass', frequency, sharpness, q});
 });
 
 export default sono.register('filter', opts => new Filter(opts));
+
+export {
+    lowpass,
+    highpass,
+    bandpass,
+    lowshelf,
+    highshelf,
+    peaking,
+    notch,
+    allpass
+};

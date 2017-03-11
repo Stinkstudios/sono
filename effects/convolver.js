@@ -5,8 +5,11 @@ import Loader from '../core/utils/loader';
 import Sound from '../core/sound';
 
 class Convolver extends AbstractEffect {
-    constructor({impulse = null} = {}) {
-        super(sono.context.createConvolver());
+    constructor({impulse} = {}) {
+        super();
+
+        this._node = sono.context.createConvolver();
+        this._in.connect(this._out);
 
         this._loader = null;
 
@@ -22,24 +25,32 @@ class Convolver extends AbstractEffect {
         }
         this._loader = new Loader(src);
         this._loader.audioContext = sono.context;
-        this._loader.once('loaded', impulse => this.update({impulse}));
-        this._loader.on('error', error => console.error(error));
+        this._loader.once('complete', impulse => this.update({impulse}));
+        this._loader.once('error', error => console.error(error));
+        this._loader.start();
     }
 
     update({impulse}) {
-        if (impulse instanceof Sound) {
-            if (impulse.data) {
-                this._node.buffer = impulse.data;
-            } else {
-                impulse.once('ready', sound => this.update({
-                    impulse: sound.data
-                }));
-            }
+        if (!impulse) {
             return this;
         }
 
         if (file.isAudioBuffer(impulse)) {
             this._node.buffer = impulse;
+            this._in.disconnect();
+            this._in.connect(this._node);
+            this._node.connect(this._out);
+            return this;
+        }
+
+        if (impulse instanceof Sound) {
+            if (impulse.data) {
+                this.update({impulse: impulse.data});
+            } else {
+                impulse.once('ready', sound => this.update({
+                    impulse: sound.data
+                }));
+            }
             return this;
         }
 

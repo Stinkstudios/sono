@@ -64,4 +64,4 @@ function waveform() {
     };
 }
 
-export default sono.register('waveform', waveform, [sono.utils]);
+export default sono.register('waveform', waveform, sono.utils);

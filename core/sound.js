@@ -4,12 +4,12 @@ import Effects from './effects';
 import Emitter from './utils/emitter';
 import file from './utils/file';
 import utils from './utils/utils';
+import isSafeNumber from './utils/isSafeNumber';
 import Loader from './utils/loader';
 import AudioSource from './source/audio-source';
 import MediaSource from './source/media-source';
 import MicrophoneSource from './source/microphone-source';
 import OscillatorSource from './source/oscillator-source';
-import ScriptSource from './source/script-source';
 
 export default class Sound extends Emitter {
     constructor(config) {
@@ -176,29 +176,29 @@ export default class Sound extends Emitter {
         this.off();
     }
 
-    has(node) {
-        return this._effects.has(node);
-    }
+    // has(node) {
+    //     return this._effects.has(node);
+    // }
+    //
+    // add(node) {
+    //     return this._effects.add(node);
+    // }
+    //
+    // remove(node) {
+    //     return this._effects.remove(node);
+    // }
+    //
+    // toggle(node, force) {
+    //     this._effects.toggle(node, force);
+    //     return this;
+    // }
+    //
+    // removeAll() {
+    //     this._effects.removeAll();
+    //     return this;
+    // }
 
-    add(node) {
-        return this._effects.add(node);
-    }
-
-    remove(node) {
-        return this._effects.remove(node);
-    }
-
-    toggle(node, force) {
-        this._effects.toggle(node, force);
-        return this;
-    }
-
-    removeAll() {
-        this._effects.removeAll();
-        return this;
-    }
-
-    waveform (length) {
+    waveform(length) {
         if (!this._wave) {
             this._wave = utils.waveform();
         }
@@ -229,6 +229,7 @@ export default class Sound extends Emitter {
         if (!value) {
             return;
         }
+        this._data = value;
         this._createSource(value);
     }
 
@@ -352,17 +353,11 @@ export default class Sound extends Emitter {
     }
 
     get volume() {
-        if (this._context && !this._context.isFake) {
-            return this._gain.gain.value;
-        }
-        if (this._source && this._source.hasOwnProperty('volume')) {
-            return this._source.volume;
-        }
-        return 1;
+        return this._gain.gain.value;
     }
 
     set volume(value) {
-        if (isNaN(value)) {
+        if (!isSafeNumber(value)) {
             return;
         }
 
@@ -389,8 +384,6 @@ export default class Sound extends Emitter {
     }
 
     _createSource(data) {
-        this._data = data;
-
         const isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             const Fn = isAudioBuffer ? BufferSource : MediaSource;
@@ -400,8 +393,6 @@ export default class Sound extends Emitter {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType((data && data.type) || data)) {
             this._source = new OscillatorSource(data.type || data, this._context);
-        } else if (file.isScriptConfig(data)) {
-            this._source = new ScriptSource(data, this._context);
         } else {
             throw new Error('Cannot detect data type: ' + data);
         }
@@ -419,9 +410,10 @@ export default class Sound extends Emitter {
         this.emit('ended', this);
     }
 
-    _onLoad(fileData) {
-        this._createSource(fileData);
+    _onLoad(data) {
+        this._data = data;
         this.emit('loaded', this);
+        this._createSource(data);
     }
 
     _onLoadError(err) {
@@ -434,6 +426,5 @@ Sound.__source = {
     BufferSource,
     MediaSource,
     MicrophoneSource,
-    OscillatorSource,
-    ScriptSource
+    OscillatorSource
 };

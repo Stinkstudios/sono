@@ -2,19 +2,21 @@ import AbstractEffect from './AbstractEffect';
 import isSafeNumber from '../core/utils/isSafeNumber';
 import sono from '../core/sono';
 
-const n = 22050;
-
-// Float32Array defining curve (values are interpolated)
 // up-sample before applying curve for better resolution result 'none', '2x' or '4x'
-// node.oversample = '2x';
+// oversample: '2x'
+// oversample: '4x'
 
 class Distortion extends AbstractEffect {
-    constructor({level = 1} = {}) {
+    constructor({level = 1, samples = 22050, oversample = 'none'} = {}) {
         super(sono.context.createWaveShaper());
 
-        this._curve = new Float32Array(n);
+        this._node.oversample = oversample || 'none';
 
-        this._level = 0;
+        this._samples = samples || 22050;
+
+        this._curve = new Float32Array(this._samples);
+
+        this._level;
 
         this.update({level});
     }
@@ -31,10 +33,11 @@ class Distortion extends AbstractEffect {
 
         const k = level * 100;
         const deg = Math.PI / 180;
+        const y = 2 / this._samples;
 
         let x;
-        for (let i = 0; i < n; i++) {
-            x = i * 2 / n - 1;
+        for (let i = 0; i < this._samples; ++i) {
+            x = i * y - 1;
             this._curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
         }
 

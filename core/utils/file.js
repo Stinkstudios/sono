@@ -126,11 +126,6 @@ function isOscillatorType(data) {
             data === 'sawtooth' || data === 'triangle'));
 }
 
-function isScriptConfig(data) {
-    return !!(data && typeof data === 'object' &&
-        data.bufferSize && data.channels && data.callback);
-}
-
 function isURL(data) {
     return !!(data && typeof data === 'string' &&
         (data.indexOf('.') > -1 || data.slice(0, 5) === 'data:'));
@@ -152,9 +147,9 @@ export default {
     getFileExtension,
     getSupportedFile,
     isAudioBuffer,
+    isArrayBuffer,
     isMediaElement,
     isMediaStream,
     isOscillatorType,
-    isScriptConfig,
     isURL
 };

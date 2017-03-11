@@ -1,4 +1,5 @@
 import AbstractEffect from './AbstractEffect';
+import isSafeNumber from '../core/utils/isSafeNumber';
 import sono from '../core/sono';
 
 function noteFromPitch(frequency) {
@@ -15,35 +16,38 @@ function centsOffFromPitch(frequency, note) {
 }
 
 class Analyser extends AbstractEffect {
-    constructor({fftSize = 512, float = false, minDecibels = 0, maxDecibels = 0, smoothing = 0.9} = {}) {
+    constructor({fftSize = 2048, minDecibels = -100, maxDecibels = -30, smoothing = 0.9, useFloats = false} = {}) {
         super(sono.context.createAnalyser());
 
-        this._freqFloat = !!float;
-        this._waveFloat = !!float;
+        this._useFloats = !!useFloats;
         this._waveform = null;
         this._frequencies = null;
 
-        this._node.fftSize = fftSize; // frequencyBinCount will be half this value
-        this._node.smoothingTimeConstant = smoothing || this._node.smoothingTimeConstant;
-        this._node.minDecibels = minDecibels || this._node.minDecibels;
-        this._node.maxDecibels = maxDecibels || this._node.maxDecibels;
+        this._node.fftSize = fftSize;
+
+        this.update({minDecibels, maxDecibels, smoothing});
     }
 
-    update() {
-
+    update({minDecibels, maxDecibels, smoothing}) {
+        if (isSafeNumber(smoothing)) {
+            this._node.smoothingTimeConstant = smoothing;
+        }
+        if (isSafeNumber(minDecibels)) {
+            this._node.minDecibels = minDecibels;
+        }
+        if (isSafeNumber(maxDecibels)) {
+            this._node.maxDecibels = maxDecibels;
+        }
     }
 
-    getWaveform(useFloat) {
-        if (!arguments.length) {
-            useFloat = this._waveFloat;
+    getWaveform() {
+        const useFloats = this._useFloats && this._node.getFloatTimeDomainData;
+
+        if (!this._waveform) {
+            this._waveform = this._createArray(useFloats, this._node.fftSize);
         }
 
-        if (this._needsUpdate(this._waveform, useFloat)) {
-            this._fftSize = this._node.fftSize;
-            this._waveFloat = useFloat;
-            this._waveform = this._createArray(useFloat, this._fftSize);
-        }
-        if (useFloat && this._node.getFloatTimeDomainData) {
+        if (useFloats) {
             this._node.getFloatTimeDomainData(this._waveform);
         } else {
             this._node.getByteTimeDomainData(this._waveform);
@@ -52,18 +56,14 @@ class Analyser extends AbstractEffect {
         return this._waveform;
     }
 
-    getFrequencies(useFloat) {
-        if (!arguments.length) {
-            useFloat = this._freqFloat;
+    getFrequencies() {
+        const useFloats = this._useFloats && this._node.getFloatFrequencyData;
+
+        if (!this._frequencies) {
+            this._frequencies = this._createArray(useFloats, this._node.frequencyBinCount);
         }
 
-        if (this._needsUpdate(this._frequencies, useFloat)) {
-            this._fftSize = this._node.fftSize;
-            this._freqFloat = useFloat;
-            this._frequencies = this._createArray(useFloat, this._node.frequencyBinCount);
-        }
-
-        if (useFloat) {
+        if (useFloats) {
             this._node.getFloatFrequencyData(this._frequencies);
         } else {
             this._node.getByteFrequencyData(this._frequencies);
@@ -100,29 +100,42 @@ class Analyser extends AbstractEffect {
         }, [f.buffer]);
     }
 
+    get frequencyBinCount() {
+        return this._node.frequencyBinCount;
+    }
+
+    get maxDecibels() {
+        return this._node.maxDecibels;
+    }
+
+    set maxDecibels(value) {
+        if (isSafeNumber(value)) {
+            this._node.maxDecibels = value;
+        }
+    }
+
+    get minDecibels() {
+        return this._node.minDecibels;
+    }
+
+    set minDecibels(value) {
+        if (isSafeNumber(value)) {
+            this._node.minDecibels = value;
+        }
+    }
+
     get smoothing() {
         return this._node.smoothingTimeConstant;
     }
 
     set smoothing(value) {
-        this._node.smoothingTimeConstant = value;
+        if (isSafeNumber(value)) {
+            this._node.smoothingTimeConstant = value;
+        }
     }
 
-    _needsUpdate(arr, useFloat) {
-        if (!arr) {
-            return true;
-        }
-        if (this._node.fftSize !== this._fftSize) {
-            return true;
-        }
-        if (useFloat && arr instanceof Uint8Array) {
-            return true;
-        }
-        return !useFloat && arr instanceof Float32Array;
-    }
-
-    _createArray(useFloat, length) {
-        return useFloat ? new Float32Array(length) : new Uint8Array(length);
+    _createArray(useFloats, length) {
+        return useFloats ? new Float32Array(length) : new Uint8Array(length);
     }
 
     _createAmplitudeAnalyser() {

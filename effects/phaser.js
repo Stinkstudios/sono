@@ -1,12 +1,11 @@
 import AbstractEffect from './AbstractEffect';
 import sono from '../core/sono';
-import isSafeNumber from '../core/utils/isSafeNumber';
 
 class Phaser extends AbstractEffect {
     constructor({stages = 8, feedback = 0.5, frequency = 0.5, gain = 300} = {}) {
         super();
 
-        stages = stages || 8;
+        this._stages = stages || 8;
 
         this._feedback = sono.context.createGain();
         this._lfo = sono.context.createOscillator();
@@ -14,7 +13,7 @@ class Phaser extends AbstractEffect {
         this._lfo.type = 'sine';
 
         const filters = [];
-        for (let i = 0; i < stages; i++) {
+        for (let i = 0; i < this._stages; i++) {
             const filter = sono.context.createBiquadFilter();
             filter.type = 'allpass';
             filter.frequency.value = 1000 * i;
@@ -44,6 +43,10 @@ class Phaser extends AbstractEffect {
         this.frequency = options.frequency;
         this.gain = options.gain;
         this.feedback = options.feedback;
+    }
+
+    get stages() {
+        return this._stages;
     }
 
     get frequency() {

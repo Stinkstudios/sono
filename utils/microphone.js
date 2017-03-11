@@ -68,4 +68,4 @@ function microphone(connected, denied, error) {
     });
 }
 
-export default sono.register('microphone', microphone, [sono.utils]);
+export default sono.register('microphone', microphone, sono.utils);

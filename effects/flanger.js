@@ -1,6 +1,5 @@
 import AbstractEffect from './AbstractEffect';
 import sono from '../core/sono';
-import isSafeNumber from '../core/utils/isSafeNumber';
 
 class MonoFlanger extends AbstractEffect {
     constructor({delay = 0.005, feedback = 0.5, frequency = 0.002, gain = 0.25} = {}) {
@@ -26,8 +25,8 @@ class MonoFlanger extends AbstractEffect {
     }
     update(options) {
         this.delay = options.delay;
-        this.lfoFrequency = options.lfoFrequency;
-        this.lfoGain = options.lfoGain;
+        this.frequency = options.frequency;
+        this.gain = options.gain;
         this.feedback = options.feedback;
     }
     get delay() {
@@ -36,16 +35,16 @@ class MonoFlanger extends AbstractEffect {
     set delay(value) {
         this.setSafeParamValue(this._delay.delayTime, value);
     }
-    get lfoFrequency() {
+    get frequency() {
         return this._lfo.frequency.value;
     }
-    set lfoFrequency(value) {
+    set frequency(value) {
         this.setSafeParamValue(this._lfo.frequency, value);
     }
-    get lfoGain() {
+    get gain() {
         return this._gain.gain.value;
     }
-    set lfoGain(value) {
+    set gain(value) {
         this.setSafeParamValue(this._gain.gain, value);
     }
     get feedback() {
@@ -102,8 +101,8 @@ class StereoFlanger extends AbstractEffect {
 
     update(options) {
         this.delay = options.delay;
-        this.lfoFrequency = options.lfoFrequency;
-        this.lfoGain = options.lfoGain;
+        this.frequency = options.frequency;
+        this.gain = options.gain;
         this.feedback = options.feedback;
     }
 

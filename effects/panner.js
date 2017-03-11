@@ -1,6 +1,7 @@
 import AbstractEffect from './AbstractEffect';
 import sono from '../core/sono';
 import isSafeNumber from '../core/utils/isSafeNumber';
+import isDefined from '../core/utils/isDefined';
 
 const pannerDefaults = {
     panningModel: 'HRTF',
@@ -13,7 +14,7 @@ const pannerDefaults = {
     coneOuterGain: 0
 };
 
-function safeNumber(x, y) {
+function safeNumber(x, y = 0) {
     if (isSafeNumber(x)) {
         return x;
     }
@@ -56,7 +57,7 @@ const vecPool = {
         };
         // check if a vector has been passed in
         if (typeof x !== 'undefined' && isNaN(x) && 'x' in x && 'y' in x && 'z' in x) {
-            v.x = safeNumber(x.x, 0);
+            v.x = safeNumber(x.x);
             v.y = safeNumber(x.y);
             v.z = safeNumber(x.z);
         } else {
@@ -75,44 +76,47 @@ const globalUp = vecPool.get(0, 1, 0);
 const angle45 = Math.PI / 4;
 const angle90 = Math.PI / 2;
 
+function setNodeOrientation(pannerNode, fw) {
+    // set the orientation of the source (where the audio is coming from)
+    // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
+    const up = vecPool.get(fw.x, fw.y, fw.z);
+    cross(up, globalUp);
+    cross(up, fw);
+    normalize(up);
+    normalize(fw);
+    // set the audio context's listener position to match the camera position
+    pannerNode.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
+    // return the vecs to the pool
+    vecPool.dispose(fw);
+    vecPool.dispose(up);
+}
+
+function setNodePosition(nodeOrListener, vec) {
+    nodeOrListener.setPosition(vec.x, vec.y, vec.z);
+    vecPool.dispose(vec);
+}
+
 class Panner extends AbstractEffect {
-    constructor({} = {}) {
+    constructor({x, y, z, panningModel, distanceModel, refDistance, maxDistance, rolloffFactor, coneInnerAngle, coneOuterAngle, coneOuterGain} = {}) {
         super(sono.context.createPanner());
 
         // Default for stereo is 'HRTF' can also be 'equalpower'
-        this._node.panningModel = pannerDefaults.panningModel;
+        this._node.panningModel = panningModel || pannerDefaults.panningModel;
 
         // Distance model and attributes
         // Can be 'linear' 'inverse' 'exponential'
-        this._node.distanceModel = pannerDefaults.distanceModel;
-        this._node.refDistance = pannerDefaults.refDistance;
-        this._node.maxDistance = pannerDefaults.maxDistance;
-        this._node.rolloffFactor = pannerDefaults.rolloffFactor;
-        this._node.coneInnerAngle = pannerDefaults.coneInnerAngle;
-        this._node.coneOuterAngle = pannerDefaults.coneOuterAngle;
-        this._node.coneOuterGain = pannerDefaults.coneOuterGain;
+        this._node.distanceModel = distanceModel || pannerDefaults.distanceModel;
+        this._node.refDistance = isDefined(refDistance) ? refDistance : pannerDefaults.refDistance;
+        this._node.maxDistance = isDefined(maxDistance) ? maxDistance : pannerDefaults.maxDistance;
+        this._node.rolloffFactor = isDefined(rolloffFactor) ? rolloffFactor : pannerDefaults.rolloffFactor;
+        this._node.coneInnerAngle = isDefined(coneInnerAngle) ? coneInnerAngle : pannerDefaults.coneInnerAngle;
+        this._node.coneOuterAngle = isDefined(coneOuterAngle) ? coneOuterAngle : pannerDefaults.coneOuterAngle;
+        this._node.coneOuterGain = isDefined(coneOuterGain) ? coneOuterGain : pannerDefaults.coneOuterGain;
         // set to defaults (needed in Firefox)
         this._node.setPosition(0, 0, 1);
         this._node.setOrientation(0, 0, 0);
-    }
-    // set the orientation of the source (where the audio is coming from)
-    setOrientation(pannerNode, fw) {
-        // calculate up vec ( up = (forward cross (0, 1, 0)) cross forward )
-        const up = vecPool.get(fw.x, fw.y, fw.z);
-        cross(up, globalUp);
-        cross(up, fw);
-        normalize(up);
-        normalize(fw);
-        // set the audio context's listener position to match the camera position
-        pannerNode.setOrientation(fw.x, fw.y, fw.z, up.x, up.y, up.z);
-        // return the vecs to the pool
-        vecPool.dispose(fw);
-        vecPool.dispose(up);
-    }
 
-    setPosition(nodeOrListener, vec) {
-        nodeOrListener.setPosition(vec.x, vec.y, vec.z);
-        vecPool.dispose(vec);
+        this.update({x, y, z});
     }
 
     update({x, y, z}) {
@@ -141,38 +145,35 @@ class Panner extends AbstractEffect {
             v.y = 0;
             v.z = Math.sin(z);
         }
-        this.setPosition(this._node, v);
+        setNodePosition(this._node, v);
     }
 
     // set the position the audio is coming from)
-    setSourcePosition(x, y, z) {
-        this.setPosition(this._node, vecPool.get(x, y, z));
+    setPosition(x, y, z) {
+        setNodePosition(this._node, vecPool.get(x, y, z));
     }
 
     // set the direction the audio is coming from)
-    setSourceOrientation(x, y, z) {
-        this.setOrientation(this._node, vecPool.get(x, y, z));
+    setOrientation(x, y, z) {
+        setNodeOrientation(this._node, vecPool.get(x, y, z));
     }
 
     // set the position of who or what is hearing the audio (could be camera or some character)
     setListenerPosition(x, y, z) {
-        this.setPosition(sono.context.listener, vecPool.get(x, y, z));
+        setNodePosition(sono.context.listener, vecPool.get(x, y, z));
     }
 
     // set the position of who or what is hearing the audio (could be camera or some character)
     setListenerOrientation(x, y, z) {
-        this.setOrientation(sono.context.listener, vecPool.get(x, y, z));
+        setNodeOrientation(sono.context.listener, vecPool.get(x, y, z));
     }
 
-    getDefaults() {
+    get defaults() {
         return pannerDefaults;
     }
 
-    setDefaults(defaults) {
-        Object.keys(defaults)
-            .forEach(function(key) {
-                pannerDefaults[key] = defaults[key];
-            });
+    set defaults(value) {
+        Object.assign(pannerDefaults, value);
     }
 
     set(x, y, z) {
@@ -180,4 +181,19 @@ class Panner extends AbstractEffect {
     }
 }
 
-export default sono.register('panner', opts => new Panner(opts));
+const panner = sono.register('panner', opts => new Panner(opts));
+
+Object.defineProperties(panner, {
+    defaults: {
+        get: () => pannerDefaults,
+        set: (value) => Object.assign(pannerDefaults, value)
+    },
+    setListenerPosition: {
+        value: (x, y, z) => setNodePosition(sono.context.listener, vecPool.get(x, y, z))
+    },
+    setListenerOrientation: {
+        value: (x, y, z) => setNodeOrientation(sono.context.listener, vecPool.get(x, y, z))
+    }
+});
+
+export default panner;
