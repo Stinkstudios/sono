@@ -1,43 +1,37 @@
-describe('utils', function() {
+describe('utils', () => {
     const utils = sono.utils;
 
-    describe('buffer', function() {
+    describe('buffer', () => {
+        const expectedAudioBufferType = sono.hasWebAudio ? window.AudioBuffer : Object;
+        const expectedValue = sono.hasWebAudio ? 1 : 0;
         const buffer = sono.context.createBuffer(1, 4096, sono.context.sampleRate);
 
-        it('should clone buffer', function() {
+        it('should clone buffer', () => {
             const cloned = utils.cloneBuffer(buffer);
-            expect(cloned)
-                .to.be.an.instanceof(window.AudioBuffer);
-            expect(cloned)
-                .to.eql(buffer);
+            expect(cloned).to.be.an.instanceof(expectedAudioBufferType);
+            expect(cloned).to.eql(buffer);
         });
 
-        it('should reverse buffer', function() {
+        it('should reverse buffer', () => {
             const data = buffer.getChannelData(0);
-            data[0] = 1;
-            expect(data[0])
-                .to.eql(1);
+            data[0] = expectedValue;
+            expect(data[0]).to.eql(expectedValue);
             utils.reverseBuffer(buffer);
-            expect(data[0])
-                .to.eql(0);
-            expect(data[data.length - 1])
-                .to.eql(1);
+            expect(data[0]).to.eql(0);
+            expect(data[data.length - 1]).to.eql(expectedValue);
         });
     });
 
-    describe('timecode', function() {
-        it('should format timecode', function() {
-            expect(utils.timeCode(217.8))
-                .to.eql('03:37');
+    describe('timecode', () => {
+        it('should format timecode', () => {
+            expect(utils.timeCode(217.8)).to.eql('03:37');
         });
     });
 
-    describe('recorder', function() {
-        it('should have expected api', function() {
-            expect(utils.recorder)
-                .to.be.a('function');
-            expect(utils.recorder())
-                .to.exist;
+    describe('recorder', () => {
+        it('should have expected api', () => {
+            expect(utils.recorder).to.be.a('function');
+            expect(utils.recorder()).to.exist;
         });
     });
 });

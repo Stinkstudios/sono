@@ -1,49 +1,50 @@
 describe('sono playback', function() {
     this.timeout(10000);
 
-    describe('create', function() {
+    describe('create', () => {
         const config = {
             id: 'foo',
             url: [
                 window.baseURL + 'bullet.ogg',
                 window.baseURL + 'bullet.mp3'
-            ],
-            onError: function(err) {
-                console.log(err);
-            }
+            ]
         };
 
-        var sound;
+        let sound;
 
-        beforeEach(function(done) {
-            sound = sono.createSound(config);
-            sound.on('ended', function() {
+        beforeEach((done) => {
+            sound = sono.create(config);
+            sound.on('ended', () => {
                 done();
             });
             sound.play();
         });
 
-        afterEach(function() {
-            sono.destroySound(sound.id);
+        afterEach(() => {
+            sono.destroy(sound.id);
         });
 
-        it('should get ended callback', function() {
-            expect(sound)
-                .to.exist;
+        it('should get ended callback', () => {
+            expect(sound).to.exist;
         });
     });
 
-    describe('play and end', function() {
-        var sound,
+    describe('play and end', () => {
+        let sound,
             ended = false;
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
             function onComplete(loadedSound) {
                 sound = loadedSound;
-                sound.on('ended', function() {
-                    ended = true;
-                    done();
-                });
+                sound
+                    .on('error', (s, err) => console.error('error', err, s))
+                    .on('loaded', () => console.log('loaded'))
+                    .on('ready', () => console.log('ready'))
+                    .on('play', () => console.log('play'))
+                    .on('ended', () => {
+                        ended = true;
+                        done();
+                    });
                 sound.play();
             }
             sono.load({
@@ -53,102 +54,51 @@ describe('sono playback', function() {
                 ],
                 onComplete: onComplete,
                 onError: function(err) {
-                    console.log(err);
+                    console.error(err);
                 }
             });
         });
 
-        afterEach(function() {
-            sono.destroySound(sound.id);
+        afterEach(() => {
+            sono.destroy(sound.id);
         });
 
-        it('should get ended callback', function() {
-            expect(sound)
-                .to.exist;
-            expect(ended)
-                .to.be.true;
+        it('should get ended callback', () => {
+            expect(sound).to.exist;
+            expect(ended).to.be.true;
         });
     });
 
-    describe('play when ready', function() {
-        var sound,
+    describe('play when ready', () => {
+        let sound,
             ended = false;
 
-        beforeEach(function(done) {
-            sound = sono.createSound({
+        beforeEach((done) => {
+            sound = sono.create({
                 url: [
                     window.baseURL + 'select.ogg',
                     window.baseURL + 'select.mp3'
                 ]
             })
-            .on('ended', function() {
+            .on('error', (s, err) => console.error('error', err, s))
+            .on('loaded', () => console.log('loaded'))
+            .on('ready', () => console.log('ready'))
+            .on('play', () => console.log('play'))
+            .on('ended', () => {
                 ended = true;
                 done();
             })
             .play(0.1, 0.1);
         });
 
-        afterEach(function() {
-            sono.destroySound(sound);
+        afterEach(() => {
+            sono.destroy(sound);
         });
 
-        it('should have played', function() {
-            expect(sound)
-                .to.exist;
-            expect(ended)
-                .to.be.true;
+        it('should have played', () => {
+            expect(sound).to.exist;
+            expect(ended).to.be.true;
         });
     });
-
-    // Firefox 35 and less has a bug where audio param ramping does not change the readable value in the param itself
-    // Fading still audibly affects the sound, but the value is untouched
-    // if (navigator.userAgent.toLowerCase()
-    //     .indexOf('firefox') > -1) {
-    //     return;
-    // }
-
-    // describe('fade master', function() {
-    //     beforeEach(function(done) {
-    //         setTimeout(function() {
-    //             console.log('sono.volume 2:', sono.volume);
-    //             done();
-    //         }, 600);
-    //     });
-    //     afterEach(function() {
-    //         sono.volume = 1;
-    //     });
-    //
-    //     sono.volume = 1;
-    //     sono.fade(0, 0.2);
-    //
-    //     it('should have faded to zero volume', function() {
-    //         console.log('sono.volume:', sono.volume);
-    //         expect(sono.volume)
-    //             .to.eql(0);
-    //     });
-    //
-    // });
-
-    // describe('fade sound', function() {
-    //
-    //     var sound;
-    //
-    //     beforeEach(function(done) {
-    //         sound = sono.createSound({
-    //                 type: 'sine'
-    //             })
-    //             .play()
-    //             .fade(0, 0.2);
-    //         setTimeout(function() {
-    //             done();
-    //         }, 500);
-    //     });
-    //
-    //     it('should have faded to zero volume', function() {
-    //         expect(sound.volume)
-    //             .to.eql(0);
-    //     });
-    //
-    // });
 
 });

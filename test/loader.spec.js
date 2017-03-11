@@ -2,10 +2,10 @@ describe('sono loader', function() {
     this.timeout(5000);
 
     describe('single', function() {
-        var sound,
+        let sound,
             progress = 0;
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
             sono.load({
                 url: [
                     window.baseURL + 'hit.ogg',
@@ -35,14 +35,14 @@ describe('sono loader', function() {
                 .to.exist;
             expect(sound.play)
                 .to.be.a('function');
-            sono.destroySound(sound);
+            sono.destroy(sound);
             expect(sono.getSound(sound.id))
                 .to.not.exist;
         });
     });
 
     describe('multiple', function() {
-        var sounds,
+        let sounds,
             progress = 0,
             multiple = [{
                 id: 'bullet',
@@ -58,7 +58,7 @@ describe('sono loader', function() {
                 ]
             }];
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
             sono.load({
                 url: multiple,
                 onComplete: function(loadedSounds) {
@@ -86,20 +86,20 @@ describe('sono loader', function() {
                 .to.eql(multiple[1].id);
             expect(sounds[0].play)
                 .to.be.a('function');
-            sono.destroySound(sounds[0]);
-            sono.destroySound(sounds[1]);
+            sono.destroy(sounds[0]);
+            sono.destroy(sounds[1]);
         });
     });
 
     describe('audio element', function() {
-        var sound,
+        let sound,
             progress = 0,
             el = [
                 window.baseURL + 'select.ogg',
                 window.baseURL + 'select.mp3'
             ];
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
             sono.load({
                 url: el,
                 onComplete: function(loadedSound) {
@@ -129,17 +129,17 @@ describe('sono loader', function() {
                 .to.be.a('function');
             expect(sound.data)
                 .to.be.an.instanceof(window.HTMLMediaElement);
-            sono.destroySound(sound);
+            sono.destroy(sound);
             expect(sono.getSound(sound.id))
                 .to.not.exist;
         });
     });
 
     describe('audio config', function() {
-        var sound,
+        let sound,
             progress = 0;
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
             sono.load({
                 id: 'hit',
                 url: [
@@ -161,25 +161,28 @@ describe('sono loader', function() {
         it('should have loaded sound', function() {
             expect(sound)
                 .to.exist;
-            expect(progress)
-                .to.eql(1);
             expect(sono.getSound(sound.id))
                 .to.exist;
-            expect(sound.id)
-                .to.eql('hit');
-            expect(sound.loop)
-                .to.be.true;
-            expect(sound.volume)
-                .to.eql(0.5);
             expect(sound.loader)
                 .to.exist;
             expect(sound.loader.data)
                 .to.exist;
             expect(sound.play)
                 .to.be.a('function');
-            sono.destroySound(sound);
+            sono.destroy(sound);
             expect(sono.getSound(sound.id))
                 .to.not.exist;
+        });
+
+        it('should have set properties', function() {
+            expect(progress)
+                .to.eql(1);
+            expect(sound.id)
+                .to.eql('hit');
+            expect(sound.loop)
+                .to.be.true;
+            expect(sound.volume)
+                .to.eql(0.5);
         });
     });
 
