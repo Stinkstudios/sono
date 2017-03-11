@@ -109,7 +109,7 @@ Add to a sound group:
 ```javascript
 import distortion from 'sono/effects/distortion';
 
-const effectsBus = sono.createGroup([
+const effectsBus = sono.group([
 	sono.create({id: 'boom', url: 'boom.mp3'}),
 	sono.create({id: 'bang', url: 'bang.mp3'})
 ]);

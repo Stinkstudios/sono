@@ -25,7 +25,7 @@ sono.fade(0, 2);
 
 ```javascript
 // return instance of a sound by id
-sono.getSound('foo');
+sono.get('foo');
 
 // play sound by id after a 1 second delay
 sono.play('foo', 1);
@@ -37,8 +37,8 @@ sono.pause('foo');
 sono.stop('foo');
 
 // destroy a sound (by instance or id)
-sono.destroySound(sound);
-sono.destroySound('bar');
+sono.destroy(sound);
+sono.destroy('bar');
 ```
 
 ## Update all sounds

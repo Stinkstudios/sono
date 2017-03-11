@@ -12,8 +12,6 @@ compress.threshold = -24;
 compress.knee = 30;
 // amount of change per decibel from 1 to 20
 compress.ratio = 12;
-// gain reduction currently applied from -20 to 0
-compress.reduction = -10;
 // seconds to reduce gain by 10db from 0 to 1 - how quickly signal adapted when volume increased
 compress.attack = 0.0003;
 // seconds to increase gain by 10db from 0 to 1 - how quickly signal adapted when volume redcuced
@@ -24,7 +22,6 @@ compress.update({
     threshold = -24,
     knee: 30,
     ratio: 12,
-    reduction: -10,
     attack: 0.0003,
     release: 0.25
 });

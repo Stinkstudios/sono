@@ -17,7 +17,7 @@ sono.load({
     onProgress: progress => console.log(progress)
 });
 
-const foo = sono.getSound('foo');
+const foo = sono.get('foo');
 sono.play('bar');
 ```
 

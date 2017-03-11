@@ -35,8 +35,8 @@ function update() {
     window.requestAnimationFrame(update);
 
     // update the 3d position and orientation (forward vector) of the sound
-    pan.setSourcePosition(x, y, z);
-    pan.setSourceOrientation(x, y, z);
+    pan.setPosition(x, y, z);
+    pan.setOrientation(x, y, z);
 
     // update listener position and orientation to 3d camera Vectors
     pan.setListenerPosition(x, y, z);
@@ -48,8 +48,8 @@ function update() {
 
 ```javascript
 // accepts xyz or a 3d vector object
-pan.setSourcePosition(source.position);
-pan.setSourceOrientation(source.forward);
+pan.setPosition(source.position);
+pan.setOrientation(source.forward);
 
 pan.setListenerPosition(camera.position);
 pan.setListenerOrientation(camera.forward);
