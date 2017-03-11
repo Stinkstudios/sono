@@ -18,8 +18,8 @@ describe('Group', () => {
             sono.load({
                 id: 'foo',
                 url: [
-                    window.baseURL + 'bullet.ogg',
-                    window.baseURL + 'bullet.mp3'
+                    '/base/test/audio/blip.ogg',
+                    '/base/test/audio/blip.mp3'
                 ],
                 onComplete: function(s) {
                     sound = s;

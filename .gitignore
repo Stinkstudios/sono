@@ -46,6 +46,7 @@ dploy.yaml
 
 # FOLDERS
 
+!test/audio/*.ogg
 !examples/audio/*.mp3
 !examples/audio/*.ogg
 examples/audio/other

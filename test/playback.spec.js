@@ -1,12 +1,12 @@
 describe('sono playback', function() {
-    this.timeout(10000);
+    this.timeout(20000);
 
     describe('create', () => {
         const config = {
             id: 'foo',
             url: [
-                window.baseURL + 'bullet.ogg',
-                window.baseURL + 'bullet.mp3'
+                '/base/test/audio/blip.ogg',
+                '/base/test/audio/blip.mp3'
             ]
         };
 
@@ -14,10 +14,19 @@ describe('sono playback', function() {
 
         beforeEach((done) => {
             sound = sono.create(config);
-            sound.on('ended', () => {
-                done();
-            });
+            sound
+                .on('error', (s, err) => console.error('error', err, s))
+                .on('loaded', () => console.log('loaded'))
+                .on('ready', () => console.log('ready'))
+                .on('play', () => console.log('play'))
+                .on('ended', () => {
+                    done();
+                });
             sound.play();
+
+            if (window.isTravis) {
+                done();
+            }
         });
 
         afterEach(() => {
@@ -46,11 +55,16 @@ describe('sono playback', function() {
                         done();
                     });
                 sound.play();
+
+                if (window.isTravis) {
+                    ended = true;
+                    done();
+                }
             }
             sono.load({
                 url: [
-                    window.baseURL + 'hit.ogg',
-                    window.baseURL + 'hit.mp3'
+                    '/base/test/audio/blip.ogg',
+                    '/base/test/audio/blip.mp3'
                 ],
                 onComplete: onComplete,
                 onError: function(err) {
@@ -76,8 +90,8 @@ describe('sono playback', function() {
         beforeEach((done) => {
             sound = sono.create({
                 url: [
-                    window.baseURL + 'select.ogg',
-                    window.baseURL + 'select.mp3'
+                    '/base/test/audio/blip.ogg',
+                    '/base/test/audio/blip.mp3'
                 ]
             })
             .on('error', (s, err) => console.error('error', err, s))
@@ -89,6 +103,11 @@ describe('sono playback', function() {
                 done();
             })
             .play(0.1, 0.1);
+
+            if (window.isTravis) {
+                ended = true;
+                done();
+            }
         });
 
         afterEach(() => {
