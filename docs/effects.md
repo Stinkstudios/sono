@@ -180,5 +180,3 @@ sound.effects.toggle(distort, false);
 [phaser](./effects/phaser.md)
 
 [reverb](./effects/reverb.md)
-
-[script](./effects/script.md)

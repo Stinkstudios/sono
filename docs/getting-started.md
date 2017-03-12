@@ -61,8 +61,10 @@ sono.log(); // sono 0.2.0 Supported:true WebAudioAPI:true TouchLocked:false Exte
 
 ## Further documentation
 
-[Sounds](./sound.md)
+[Sounds](./sounds.md)
 
 [Effects](./effects.md)
+
+[Controls](./controls.md)
 
 [Utils](./utils.md)

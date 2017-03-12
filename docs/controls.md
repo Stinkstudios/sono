@@ -1,4 +1,4 @@
-# Sono
+# Controls
 
 [View source code](../core/sono.js)
 
