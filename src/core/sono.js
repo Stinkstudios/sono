@@ -1,3 +1,4 @@
+import 'core-js/fn/object/assign';
 import context from './context';
 import browser from './utils/browser';
 import file from './utils/file';
