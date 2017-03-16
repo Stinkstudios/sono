@@ -19,7 +19,10 @@ export default {
             preferBuiltins: false
         }),
         commonjs({
-            include: 'node_modules/events/*'
+            include: [
+                'node_modules/core-js/**',
+                'node_modules/events/**'
+            ]
         }),
         babel({
             babelrc: false,
