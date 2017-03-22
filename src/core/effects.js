@@ -3,7 +3,6 @@ export default class Effects {
         this.context = context;
         this._destination = null;
         this._source = null;
-        // this.panning = new Panner(this.context);
 
         this._nodes = [];
         this._nodes.has = node => this.has(node);
@@ -14,9 +13,6 @@ export default class Effects {
 
         Object.keys(Effects.prototype).forEach(key => {
             if (!this._nodes.hasOwnProperty(key) && typeof Effects.prototype[key] === 'function') {
-                // console.log('-->', key, this[key]);
-                // this._nodes[key] = Effects.prototype[key].bind(this);
-                // this._nodes[key] = (opts) => this[key](opts);
                 this._nodes[key] = this[key].bind(this);
             }
         });

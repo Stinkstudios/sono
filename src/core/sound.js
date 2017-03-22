@@ -308,13 +308,13 @@ export default class Sound extends Emitter {
         }
     }
 
-    get multiPlay() {
-        return this._config.multiPlay;
+    get singlePlay() {
+        return this._config.singlePlay;
     }
 
-    set multiPlay(value) {
-        this._config.multiPlay = value;
-        this._source.multiPlay = value;
+    set singlePlay(value) {
+        this._config.singlePlay = value;
+        this._source.singlePlay = value;
     }
 
     get config() {
@@ -388,7 +388,7 @@ export default class Sound extends Emitter {
         if (isAudioBuffer || file.isMediaElement(data)) {
             const Fn = isAudioBuffer ? BufferSource : MediaSource;
             this._source = new AudioSource(Fn, data, this._context, this._onEnded);
-            this._source.multiPlay = !!this._config.multiPlay;
+            this._source.singlePlay = !!this._config.singlePlay;
         } else if (file.isMediaStream(data)) {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType((data && data.type) || data)) {

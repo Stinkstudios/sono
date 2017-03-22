@@ -15,7 +15,6 @@ function waveform() {
             return wave;
         }
 
-        //console.time('waveData');
         if (!wave || wave.length !== length) {
             wave = new Float32Array(length);
         }
@@ -58,7 +57,6 @@ function waveform() {
         for (let i = 0; i < wave.length; i++) {
             wave[i] *= scale;
         }
-        //console.timeEnd('waveData');
 
         return wave;
     };

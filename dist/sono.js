@@ -658,7 +658,7 @@ var defineEnumerableProperties = function (obj, descs) {
 
 
 
-var get$1 = function get$1(object, property, receiver) {
+var get$2 = function get$2(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -668,7 +668,7 @@ var get$1 = function get$1(object, property, receiver) {
     if (parent === null) {
       return undefined;
     } else {
-      return get$1(parent, property, receiver);
+      return get$2(parent, property, receiver);
     }
   } else if ("value" in desc) {
     return desc.value;
@@ -890,7 +890,6 @@ var Effects = function () {
         this.context = context;
         this._destination = null;
         this._source = null;
-        // this.panning = new Panner(this.context);
 
         this._nodes = [];
         this._nodes.has = function (node) {
@@ -911,9 +910,6 @@ var Effects = function () {
 
         Object.keys(Effects.prototype).forEach(function (key) {
             if (!_this._nodes.hasOwnProperty(key) && typeof Effects.prototype[key] === 'function') {
-                // console.log('-->', key, this[key]);
-                // this._nodes[key] = Effects.prototype[key].bind(this);
-                // this._nodes[key] = (opts) => this[key](opts);
                 _this._nodes[key] = _this[key].bind(_this);
             }
         });
@@ -2187,7 +2183,7 @@ function AudioSource(Type, data, context, onEnded) {
     var pool = [];
     var sources = [];
     var numCreated = 0;
-    var multiPlay = false;
+    var singlePlay = false;
 
     function createSourceNode() {
         return sourceNode;
@@ -2195,7 +2191,7 @@ function AudioSource(Type, data, context, onEnded) {
 
     function disposeSource(src) {
         src.stop();
-        if (multiPlay) {
+        if (!singlePlay) {
             pool.push(src);
         }
     }
@@ -2210,7 +2206,7 @@ function AudioSource(Type, data, context, onEnded) {
     }
 
     function getSource() {
-        if (!multiPlay && sources.length) {
+        if (singlePlay && sources.length) {
             return sources[0];
         }
         if (pool.length > 0) {
@@ -2311,12 +2307,13 @@ function AudioSource(Type, data, context, onEnded) {
                 });
             }
         },
-        multiPlay: {
+        info: {
             get: function get() {
-                return multiPlay;
-            },
-            set: function set(value) {
-                multiPlay = value;
+                return {
+                    pooled: pool.length,
+                    active: sources.length,
+                    created: numCreated
+                };
             }
         },
         loop: {
@@ -2349,18 +2346,17 @@ function AudioSource(Type, data, context, onEnded) {
                 return sources[0] && sources[0].playing;
             }
         },
-        info: {
-            get: function get() {
-                return {
-                    pooled: pool.length,
-                    active: sources.length,
-                    created: numCreated
-                };
-            }
-        },
         progress: {
             get: function get() {
                 return sources[0] && sources[0].progress;
+            }
+        },
+        singlePlay: {
+            get: function get() {
+                return singlePlay;
+            },
+            set: function set(value) {
+                singlePlay = value;
             }
         },
         sourceNode: {
@@ -3167,7 +3163,7 @@ var Sound = function (_Emitter) {
         if (isAudioBuffer || file.isMediaElement(data)) {
             var Fn = isAudioBuffer ? BufferSource : MediaSource;
             this._source = new AudioSource(Fn, data, this._context, this._onEnded);
-            this._source.multiPlay = !!this._config.multiPlay;
+            this._source.singlePlay = !!this._config.singlePlay;
         } else if (file.isMediaStream(data)) {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType(data && data.type || data)) {
@@ -3308,13 +3304,13 @@ var Sound = function (_Emitter) {
             }
         }
     }, {
-        key: 'multiPlay',
+        key: 'singlePlay',
         get: function get() {
-            return this._config.multiPlay;
+            return this._config.singlePlay;
         },
         set: function set(value) {
-            this._config.multiPlay = value;
-            this._source.multiPlay = value;
+            this._config.singlePlay = value;
+            this._source.singlePlay = value;
         }
     }, {
         key: 'config',
@@ -3507,316 +3503,317 @@ function log$1(api) {
     }
 }
 
-function Sono() {
-    var _effects, _effects2, _fx, _fx2, _isTouchLocked, _sounds, _volume, _volume2, _api, _mutatorMap;
+var _effects;
+var _effects2;
+var _fx;
+var _fx2;
+var _isTouchLocked;
+var _sounds;
+var _volume;
+var _volume2;
+var _sono;
+var _mutatorMap;
 
-    var VERSION = '0.1.9';
-    var bus = new Group(context, context.destination);
+var VERSION = '0.1.9';
+var bus = new Group(context, context.destination);
 
-    var api = null;
-    var isTouchLocked = false;
+/*
+* Get Sound by id
+*/
 
-    /*
-     * Get Sound by id
-     */
-
-    function get$$1(id) {
-        return bus.find(id);
-    }
-
-    /*
-     * Create group
-     */
-
-    function group(sounds) {
-        var soundGroup = new SoundGroup(context, bus.gain);
-        if (sounds) {
-            sounds.forEach(function (sound) {
-                return soundGroup.add(sound);
-            });
-        }
-        return soundGroup;
-    }
-
-    /*
-     * Loading
-     */
-
-    function add(config) {
-        var src = file.getSupportedFile(config.src || config.url || config.data || config);
-        var sound = new Sound(Object.assign({}, config || {}, {
-            src: src,
-            context: context,
-            destination: bus.gain
-        }));
-        sound.isTouchLocked = isTouchLocked;
-        if (config) {
-            sound.id = config.id || config.name || '';
-            sound.loop = !!config.loop;
-            sound.volume = config.volume;
-            sound.effects = config.effects || [];
-        }
-        bus.add(sound);
-        return sound;
-    }
-
-    function queue(config, loaderGroup) {
-        var sound = add(config).load();
-
-        if (loaderGroup) {
-            loaderGroup.add(sound.loader);
-        }
-        return sound;
-    }
-
-    function load(config) {
-        var src = config.src || config.url || config.data || config;
-        var sound = void 0,
-            loader = void 0;
-
-        if (file.containsURL(src)) {
-            sound = queue(config);
-            loader = sound.loader;
-        } else if (Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
-            sound = [];
-            loader = new Loader.Group();
-            src.forEach(function (url) {
-                return sound.push(queue(url, loader));
-            });
-        } else {
-            var errorMessage = 'sono.load: No audio file URLs found in config.';
-            if (config.onError) {
-                config.onError('[ERROR] ' + errorMessage);
-            } else {
-                throw new Error(errorMessage);
-            }
-            return null;
-        }
-        if (config.onProgress) {
-            loader.on('progress', function (progress) {
-                return config.onProgress(progress);
-            });
-        }
-        if (config.onComplete) {
-            loader.once('complete', function () {
-                loader.off('progress');
-                config.onComplete(sound);
-            });
-        }
-        loader.once('error', function (err) {
-            loader.off('error');
-            if (config.onError) {
-                config.onError(err);
-            } else {
-                console.error('[ERROR] sono.load: ' + err);
-            }
-        });
-        loader.start();
-
-        return sound;
-    }
-
-    /*
-     * Create Sound
-     *
-     * Accepted values for param config:
-     * Object config e.g. { id:'foo', url:['foo.ogg', 'foo.mp3'] }
-     * Array (of files e.g. ['foo.ogg', 'foo.mp3'])
-     * ArrayBuffer
-     * HTMLMediaElement
-     * Filename string (e.g. 'foo.ogg')
-     * Oscillator type string (i.e. 'sine', 'square', 'sawtooth', 'triangle')
-     */
-
-    function create(config) {
-        // try to load if config contains URLs
-        if (file.containsURL(config)) {
-            return load(config);
-        }
-
-        var sound = add(config);
-        sound.data = config.data || config;
-
-        return sound;
-    }
-
-    /*
-     * Destroy
-     */
-
-    function destroy(soundOrId) {
-        bus.find(soundOrId, function (sound) {
-            return sound.destroy();
-        });
-        return api;
-    }
-
-    function destroyAll() {
-        bus.destroy();
-        return api;
-    }
-
-    /*
-     * Controls
-     */
-
-    function mute() {
-        bus.mute();
-        return api;
-    }
-
-    function unMute() {
-        bus.unMute();
-        return api;
-    }
-
-    function fade(volume, duration) {
-        bus.fade(volume, duration);
-        return api;
-    }
-
-    function pauseAll() {
-        bus.pause();
-        return api;
-    }
-
-    function resumeAll() {
-        bus.resume();
-        return api;
-    }
-
-    function stopAll() {
-        bus.stop();
-        return api;
-    }
-
-    function play(id, delay, offset) {
-        bus.find(id, function (sound) {
-            return sound.play(delay, offset);
-        });
-        return api;
-    }
-
-    function pause(id) {
-        bus.find(id, function (sound) {
-            return sound.pause();
-        });
-        return api;
-    }
-
-    function stop(id) {
-        bus.find(id, function (sound) {
-            return sound.stop();
-        });
-        return api;
-    }
-
-    /*
-     * Mobile touch lock
-     */
-
-    isTouchLocked = browser.handleTouchLock(context, function () {
-        isTouchLocked = false;
-        bus.sounds.forEach(function (sound) {
-            return sound.isTouchLocked = false;
-        });
-    });
-
-    /*
-     * Page visibility events
-     */
-
-    (function () {
-        var pageHiddenPaused = [];
-
-        // pause currently playing sounds and store refs
-        function onHidden() {
-            bus.sounds.forEach(function (sound) {
-                if (sound.playing) {
-                    sound.pause();
-                    pageHiddenPaused.push(sound);
-                }
-            });
-        }
-
-        // play sounds that got paused when page was hidden
-        function onShown() {
-            while (pageHiddenPaused.length) {
-                pageHiddenPaused.pop().play();
-            }
-        }
-
-        browser.handlePageVisibility(onHidden, onShown);
-    })();
-
-    function register(name, fn) {
-        var attachTo = arguments.length <= 2 || arguments[2] === undefined ? Effects.prototype : arguments[2];
-
-        attachTo[name] = fn;
-        api[name] = fn;
-
-        return fn;
-    }
-
-    api = (_api = {
-        canPlay: file.canPlay,
-        context: context,
-        create: create,
-        createGroup: group,
-        createSound: create,
-        destroyAll: destroyAll,
-        destroy: destroy,
-        effects: bus.effects,
-        extensions: file.extensions,
-        fade: fade,
-        file: file,
-        gain: bus.gain,
-        getOfflineContext: utils.getOfflineContext,
-        get: get$$1,
-        getSound: get$$1,
-        group: group,
-        hasWebAudio: !context.isFake,
-        isSupported: file.extensions.length > 0,
-        load: load,
-        log: function log() {
-            return log$1(api);
-        },
-        mute: mute,
-        pause: pause,
-        pauseAll: pauseAll,
-        play: play,
-        register: register,
-        resumeAll: resumeAll,
-        stop: stop,
-        stopAll: stopAll,
-        unMute: unMute,
-        utils: utils,
-        VERSION: VERSION
-    }, _effects = 'effects', _mutatorMap = {}, _mutatorMap[_effects] = _mutatorMap[_effects] || {}, _mutatorMap[_effects].get = function () {
-        return bus.effects;
-    }, _effects2 = 'effects', _mutatorMap[_effects2] = _mutatorMap[_effects2] || {}, _mutatorMap[_effects2].set = function (value) {
-        bus.effects.removeAll().add(value);
-    }, _fx = 'fx', _mutatorMap[_fx] = _mutatorMap[_fx] || {}, _mutatorMap[_fx].get = function () {
-        return this.effects;
-    }, _fx2 = 'fx', _mutatorMap[_fx2] = _mutatorMap[_fx2] || {}, _mutatorMap[_fx2].set = function (value) {
-        this.effects = value;
-    }, _isTouchLocked = 'isTouchLocked', _mutatorMap[_isTouchLocked] = _mutatorMap[_isTouchLocked] || {}, _mutatorMap[_isTouchLocked].get = function () {
-        return isTouchLocked;
-    }, _sounds = 'sounds', _mutatorMap[_sounds] = _mutatorMap[_sounds] || {}, _mutatorMap[_sounds].get = function () {
-        return bus.sounds.slice(0);
-    }, _volume = 'volume', _mutatorMap[_volume] = _mutatorMap[_volume] || {}, _mutatorMap[_volume].get = function () {
-        return bus.volume;
-    }, _volume2 = 'volume', _mutatorMap[_volume2] = _mutatorMap[_volume2] || {}, _mutatorMap[_volume2].set = function (value) {
-        bus.volume = value;
-    }, _api.__test = {
-        Effects: Effects,
-        Group: Group,
-        Sound: Sound
-    }, defineEnumerableProperties(_api, _mutatorMap), _api);
-    return api;
+function get$1(id) {
+    return bus.find(id);
 }
 
-var sono$1 = new Sono();
+/*
+* Create group
+*/
+
+function group(sounds) {
+    var soundGroup = new SoundGroup(context, bus.gain);
+    if (sounds) {
+        sounds.forEach(function (sound) {
+            return soundGroup.add(sound);
+        });
+    }
+    return soundGroup;
+}
+
+/*
+* Loading
+*/
+
+function add$1(config) {
+    var src = file.getSupportedFile(config.src || config.url || config.data || config);
+    var sound = new Sound(Object.assign({}, config || {}, {
+        src: src,
+        context: context,
+        destination: bus.gain
+    }));
+    sound.isTouchLocked = isTouchLocked;
+    if (config) {
+        sound.id = config.id || config.name || '';
+        sound.loop = !!config.loop;
+        sound.volume = config.volume;
+        sound.effects = config.effects || [];
+    }
+    bus.add(sound);
+    return sound;
+}
+
+function queue(config, loaderGroup) {
+    var sound = add$1(config).load();
+
+    if (loaderGroup) {
+        loaderGroup.add(sound.loader);
+    }
+    return sound;
+}
+
+function load$1(config) {
+    var src = config.src || config.url || config.data || config;
+    var sound = void 0,
+        loader = void 0;
+
+    if (file.containsURL(src)) {
+        sound = queue(config);
+        loader = sound.loader;
+    } else if (Array.isArray(src) && file.containsURL(src[0].src || src[0].url)) {
+        sound = [];
+        loader = new Loader.Group();
+        src.forEach(function (url) {
+            return sound.push(queue(url, loader));
+        });
+    } else {
+        var errorMessage = 'sono.load: No audio file URLs found in config.';
+        if (config.onError) {
+            config.onError('[ERROR] ' + errorMessage);
+        } else {
+            throw new Error(errorMessage);
+        }
+        return null;
+    }
+    if (config.onProgress) {
+        loader.on('progress', function (progress) {
+            return config.onProgress(progress);
+        });
+    }
+    if (config.onComplete) {
+        loader.once('complete', function () {
+            loader.off('progress');
+            config.onComplete(sound);
+        });
+    }
+    loader.once('error', function (err) {
+        loader.off('error');
+        if (config.onError) {
+            config.onError(err);
+        } else {
+            console.error('[ERROR] sono.load: ' + err);
+        }
+    });
+    loader.start();
+
+    return sound;
+}
+
+/*
+* Create Sound
+*
+* Accepted values for param config:
+* Object config e.g. { id:'foo', url:['foo.ogg', 'foo.mp3'] }
+* Array (of files e.g. ['foo.ogg', 'foo.mp3'])
+* ArrayBuffer
+* HTMLMediaElement
+* Filename string (e.g. 'foo.ogg')
+* Oscillator type string (i.e. 'sine', 'square', 'sawtooth', 'triangle')
+*/
+
+function create(config) {
+    // try to load if config contains URLs
+    if (file.containsURL(config)) {
+        return load$1(config);
+    }
+
+    var sound = add$1(config);
+    sound.data = config.data || config;
+
+    return sound;
+}
+
+/*
+* Destroy
+*/
+
+function destroy$1(soundOrId) {
+    bus.find(soundOrId, function (sound) {
+        return sound.destroy();
+    });
+    return sono$1;
+}
+
+function destroyAll() {
+    bus.destroy();
+    return sono$1;
+}
+
+/*
+* Controls
+*/
+
+function mute() {
+    bus.mute();
+    return sono$1;
+}
+
+function unMute() {
+    bus.unMute();
+    return sono$1;
+}
+
+function fade$1(volume, duration) {
+    bus.fade(volume, duration);
+    return sono$1;
+}
+
+function pauseAll() {
+    bus.pause();
+    return sono$1;
+}
+
+function resumeAll() {
+    bus.resume();
+    return sono$1;
+}
+
+function stopAll() {
+    bus.stop();
+    return sono$1;
+}
+
+function play$1(id, delay, offset) {
+    bus.find(id, function (sound) {
+        return sound.play(delay, offset);
+    });
+    return sono$1;
+}
+
+function pause$1(id) {
+    bus.find(id, function (sound) {
+        return sound.pause();
+    });
+    return sono$1;
+}
+
+function stop$1(id) {
+    bus.find(id, function (sound) {
+        return sound.stop();
+    });
+    return sono$1;
+}
+
+/*
+* Mobile touch lock
+*/
+
+var isTouchLocked = browser.handleTouchLock(context, function () {
+    isTouchLocked = false;
+    bus.sounds.forEach(function (sound) {
+        return sound.isTouchLocked = false;
+    });
+});
+
+/*
+* Page visibility events
+*/
+
+(function () {
+    var pageHiddenPaused = [];
+
+    // pause currently playing sounds and store refs
+    function onHidden() {
+        bus.sounds.forEach(function (sound) {
+            if (sound.playing) {
+                sound.pause();
+                pageHiddenPaused.push(sound);
+            }
+        });
+    }
+
+    // play sounds that got paused when page was hidden
+    function onShown() {
+        while (pageHiddenPaused.length) {
+            pageHiddenPaused.pop().play();
+        }
+    }
+
+    browser.handlePageVisibility(onHidden, onShown);
+})();
+
+function register(name, fn) {
+    var attachTo = arguments.length <= 2 || arguments[2] === undefined ? Effects.prototype : arguments[2];
+
+    attachTo[name] = fn;
+    sono$1[name] = fn;
+
+    return fn;
+}
+
+var sono$1 = (_sono = {
+    canPlay: file.canPlay,
+    context: context,
+    create: create,
+    createGroup: group,
+    createSound: create,
+    destroyAll: destroyAll,
+    destroy: destroy$1,
+    effects: bus.effects,
+    extensions: file.extensions,
+    fade: fade$1,
+    file: file,
+    gain: bus.gain,
+    getOfflineContext: utils.getOfflineContext,
+    get: get$1,
+    getSound: get$1,
+    group: group,
+    hasWebAudio: !context.isFake,
+    isSupported: file.extensions.length > 0,
+    load: load$1,
+    log: function log() {
+        return log$1(sono$1);
+    },
+    mute: mute,
+    pause: pause$1,
+    pauseAll: pauseAll,
+    play: play$1,
+    register: register,
+    resumeAll: resumeAll,
+    stop: stop$1,
+    stopAll: stopAll,
+    unMute: unMute,
+    utils: utils,
+    VERSION: VERSION
+}, _effects = 'effects', _mutatorMap = {}, _mutatorMap[_effects] = _mutatorMap[_effects] || {}, _mutatorMap[_effects].get = function () {
+    return bus.effects;
+}, _effects2 = 'effects', _mutatorMap[_effects2] = _mutatorMap[_effects2] || {}, _mutatorMap[_effects2].set = function (value) {
+    bus.effects.removeAll().add(value);
+}, _fx = 'fx', _mutatorMap[_fx] = _mutatorMap[_fx] || {}, _mutatorMap[_fx].get = function () {
+    return this.effects;
+}, _fx2 = 'fx', _mutatorMap[_fx2] = _mutatorMap[_fx2] || {}, _mutatorMap[_fx2].set = function (value) {
+    this.effects = value;
+}, _isTouchLocked = 'isTouchLocked', _mutatorMap[_isTouchLocked] = _mutatorMap[_isTouchLocked] || {}, _mutatorMap[_isTouchLocked].get = function () {
+    return isTouchLocked;
+}, _sounds = 'sounds', _mutatorMap[_sounds] = _mutatorMap[_sounds] || {}, _mutatorMap[_sounds].get = function () {
+    return bus.sounds.slice(0);
+}, _volume = 'volume', _mutatorMap[_volume] = _mutatorMap[_volume] || {}, _mutatorMap[_volume].get = function () {
+    return bus.volume;
+}, _volume2 = 'volume', _mutatorMap[_volume2] = _mutatorMap[_volume2] || {}, _mutatorMap[_volume2].set = function (value) {
+    bus.volume = value;
+}, _sono.__test = {
+    Effects: Effects,
+    Group: Group,
+    Sound: Sound
+}, defineEnumerableProperties(_sono, _mutatorMap), _sono);
 
 var AbstractEffect = function () {
     function AbstractEffect() {
@@ -5521,7 +5518,6 @@ function waveform$1() {
             return wave;
         }
 
-        //console.time('waveData');
         if (!wave || wave.length !== length) {
             wave = new Float32Array(length);
         }
@@ -5565,7 +5561,6 @@ function waveform$1() {
         for (var _i = 0; _i < wave.length; _i++) {
             wave[_i] *= scale;
         }
-        //console.timeEnd('waveData');
 
         return wave;
     };

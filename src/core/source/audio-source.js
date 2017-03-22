@@ -4,7 +4,7 @@ export default function AudioSource(Type, data, context, onEnded) {
     const pool = [];
     const sources = [];
     let numCreated = 0;
-    let multiPlay = false;
+    let singlePlay = false;
 
     function createSourceNode() {
         return sourceNode;
@@ -12,7 +12,7 @@ export default function AudioSource(Type, data, context, onEnded) {
 
     function disposeSource(src) {
         src.stop();
-        if (multiPlay) {
+        if (!singlePlay) {
             pool.push(src);
         }
     }
@@ -27,7 +27,7 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function getSource() {
-        if (!multiPlay && sources.length) {
+        if (singlePlay && sources.length) {
             return sources[0];
         }
         if ( pool.length > 0 ) {
@@ -122,12 +122,13 @@ export default function AudioSource(Type, data, context, onEnded) {
                 return sources.every((src) => src.ended);
             }
         },
-        multiPlay: {
+        info: {
             get: function() {
-                return multiPlay;
-            },
-            set: function(value) {
-                multiPlay = value;
+                return {
+                    pooled: pool.length,
+                    active: sources.length,
+                    created: numCreated
+                };
             }
         },
         loop: {
@@ -156,18 +157,17 @@ export default function AudioSource(Type, data, context, onEnded) {
                 return sources[0] && sources[0].playing;
             }
         },
-        info: {
-            get: function() {
-                return {
-                    pooled: pool.length,
-                    active: sources.length,
-                    created: numCreated
-                };
-            }
-        },
         progress: {
             get: function() {
                 return sources[0] && sources[0].progress;
+            }
+        },
+        singlePlay: {
+            get: function() {
+                return singlePlay;
+            },
+            set: function(value) {
+                singlePlay = value;
             }
         },
         sourceNode: {
