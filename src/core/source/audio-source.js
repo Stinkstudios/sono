@@ -27,7 +27,7 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function getSource() {
-        if (singlePlay && sources.length) {
+        if (sources.length && (singlePlay || sources[0].paused)) {
             return sources[0];
         }
         if ( pool.length > 0 ) {
