@@ -65,7 +65,7 @@ class Reverb extends AbstractEffect {
             return;
         }
 
-        this._opts.buffer = createImpulseResponse(this._opts);
+        this._opts.buffer = time <= 0 ? null : createImpulseResponse(this._opts);
         this._convolver.buffer = this._opts.buffer;
     }
 

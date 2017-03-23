@@ -2206,7 +2206,7 @@ function AudioSource(Type, data, context, onEnded) {
     }
 
     function getSource() {
-        if (singlePlay && sources.length) {
+        if (sources.length && (singlePlay || sources[0].paused)) {
             return sources[0];
         }
         if (pool.length > 0) {
@@ -2219,7 +2219,7 @@ function AudioSource(Type, data, context, onEnded) {
             return new Type(data, context, onSourceEnded);
         }
     }
-
+    // IF PAUSED DON'T MAKE ANOTHER
     function play() {
         var src = getSource();
         if (sourceNode) {
@@ -5289,7 +5289,7 @@ var Reverb = function (_AbstractEffect) {
             return;
         }
 
-        this._opts.buffer = createImpulseResponse(this._opts);
+        this._opts.buffer = time <= 0 ? null : createImpulseResponse(this._opts);
         this._convolver.buffer = this._opts.buffer;
     };
 
