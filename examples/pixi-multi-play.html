@@ -14,7 +14,7 @@
 <body>
     <section>
         <header>
-            <h2>PixiJS / Multi play</h2>
+            <h2>PixiJS</h2>
         </header>
 
         <div class="Controls">
@@ -44,13 +44,11 @@ const sounds = [{
 }, {
     name: 'shoot',
     url: `audio/shoot3.${ext}`,
-    volume: 0.4,
-    multiPlay: true
+    volume: 0.4
 }, {
     name: 'explode',
     url: `audio/explode2.${ext}`,
-    volume: 0.9,
-    multiPlay: true
+    volume: 0.9
 }];
 
 const loader = new loaders.Loader();
@@ -64,7 +62,7 @@ loader.onComplete.once(() => {
         sono.create(config);
     });
 
-    sono.getSound('shoot').effect.reverb();
+    sono.get('shoot').effects.add(reverb();
     sono.play('music');
 });
 

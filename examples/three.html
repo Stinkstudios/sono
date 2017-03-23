@@ -26,7 +26,7 @@
 
         <pre>
             <code class="js">
-                var panner = sound.effect.panner(); // set max distance before the sound gain is zero panner.maxDistance = 1000; // set source position to the position vector of sound source pan.setSourcePosition(speaker.position); // set source orientation to the normalised
+                var panner = sound.effects.add(panner(); // set max distance before the sound gain is zero panner.maxDistance = 1000; // set source position to the position vector of sound source pan.setSourcePosition(speaker.position); // set source orientation to the normalised
                 position vector of the speaker pan.setSourceOrientation(speaker.position); function update() { window.requestAnimationFrame(update); // set listener orientation to the forward vector of the hero pan.setListenerOrientation(hero.forward);
                 // set listener position to the position vector of the hero pan.setListenerPosition(hero.position); } update();
             </code>

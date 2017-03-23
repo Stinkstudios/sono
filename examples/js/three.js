@@ -1,3 +1,6 @@
+/* eslint no-var: 0 */
+/* eslint strict: 0 */
+
 (function() {
     'use strict';
 
@@ -257,16 +260,16 @@
 
                 group.add(mesh);
 
-                var sound = sono.createSound({
+                var sound = sono.create({
                     src: sounds[index],
                     loop: false
                 });
-                // sound.effect.reverb({
+                // sound.effects.add(reverb({
                 //     time: 1,
                 //     decay: 5
                 // });
 
-                var pan = sound.effect.panner();
+                var pan = sound.effects.add(panner();
                 pan.distanceModel = 'linear'; // 'linear' 'inverse' 'exponential'
                 pan.refDistance = 1;
                 pan.maxDistance = 1500;
@@ -354,7 +357,7 @@
         forward.set(0, 0, -1);
         forward.applyQuaternion(camera.quaternion);
         // set listener orientation to the forward vector of the hero
-        sono.effect.panning.setListenerOrientation(forward.clone()
+        sono.effects.add(panning.setListenerOrientation(forward.clone()
             .normalize());
 
         var velocityY = 0;
@@ -373,7 +376,7 @@
         forward.z *= velocity;
         camera.position.add(forward);
         // set listener position to the position vector of the hero
-        sono.effect.panning.setListenerPosition(camera.position);
+        sono.effects.add(panning.setListenerPosition(camera.position);
 
         // console.log(camera.position.x, camera.position.y, camera.position.z);
 

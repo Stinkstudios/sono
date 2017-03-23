@@ -1,3 +1,6 @@
+/* eslint no-var: 0 */
+/* eslint strict: 0 */
+
 (function() {
     'use strict';
 
@@ -13,8 +16,7 @@
         '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
 
     var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
-    var baseURL = local ? 'examples/audio/' : 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
-    // var baseURL = 'http://prototypes.stinkdigital.com/webaudio/sono/examples/audio/';
+    var baseURL = local ? 'examples/audio/' : 'https://ianmcgregor.co/prototypes/audio/';
 
     var sound,
         panner,
@@ -29,7 +31,7 @@
         player,
         playerTop;
 
-    sound = sono.createSound({
+    sound = sono.create({
         src: [
             baseURL + 'dnb-loop.ogg',
             baseURL + 'dnb-loop.mp3'
@@ -37,34 +39,34 @@
         loop: true
     });
 
-    panner = sono.effect.panner();
+    panner = sono.effects.add(sono.panner());
 
-    distortion = sono.effect.distortion({amount: 0});
+    distortion = sono.effects.add(sono.distortion({level: 0}));
 
-    echo = sono.effect.echo({
-        delayTime: 0,
+    echo = sono.effects.add(sono.echo({
+        delay: 0,
         feedback: 0.2
-    });
+    }));
 
-    flanger = sono.effect.flanger({
+    flanger = sono.effects.add(sono.flanger({
         stereo: true
-    });
-    sono.effect.remove(flanger);
+    }));
+    sono.effects.remove(flanger);
 
-    highpass = sono.effect.highpass({frequency: 20});
+    highpass = sono.effects.add(sono.highpass({frequency: 20}));
 
-    lowshelf = sono.effect.lowshelf({frequency: 80, gain: 0});
+    lowshelf = sono.effects.add(sono.lowshelf({frequency: 80, gain: 0}));
 
-    reverb = sono.effect.reverb({
-        time: 0,
+    reverb = sono.effects.add(sono.reverb({
+        time: 0.1,
         decay: 2
-    });
+    }));
 
-    analyser = sono.effect.analyser({
+    analyser = sono.effects.add(sono.analyser({
         fftSize: 1024,
-        smoothingTimeConstant: 0.7,
+        smoothing: 0.7,
         float: true
-    });
+    }));
 
     waveformsExample = createWaveformsExample();
 
@@ -89,8 +91,7 @@
      */
 
     window.addEventListener('scroll', function() {
-        var scrollTop = document.documentElement.scrollTop || document.body.scrollTop || window.pageYOffset ||
-            0;
+        var scrollTop = document.documentElement.scrollTop || document.body.scrollTop || window.pageYOffset || 0;
         var threshold = Math.max(400, Math.min(600, window.innerWidth));
         var isScrolledDown = scrollTop > threshold;
         playerTop.el.classList.toggle('is-active', isScrolledDown);
@@ -191,17 +192,17 @@
         name: 'Active',
         value: true
     }, function(value) {
-        sono.effect.toggle(distortion, value);
+        sono.effects.toggle(distortion, value);
     });
 
     ui.createControl({
         el: document.querySelector('[data-js="distortion"]'),
-        name: 'Amount',
+        name: 'Level',
         min: 0,
         max: 2,
         value: 0
     }, function(value) {
-        distortion.amount = value;
+        distortion.level = value;
     });
 
     /*
@@ -210,11 +211,12 @@
 
     function createWaveformsExample() {
 
-        var analyser = sono.effect.analyser({
-                fftSize: 256,
-                smoothingTimeConstant: 0.7
-            }),
-            waveformers = [],
+        var analyse = sono.effects.add(sono.analyser({
+            fftSize: 256,
+            smoothing: 0.7
+        }));
+
+        var waveformers = [],
             el = document.querySelector('[data-js="waveforms"]'),
             canvas = el.querySelector('canvas'),
             context = canvas.getContext('2d'),
@@ -226,7 +228,7 @@
                 shape: 'circular',
                 style: 'fill',
                 lineWidth: 1.5,
-                waveform: analyser.getFrequencies(false),
+                waveform: analyse.getFrequencies(false),
                 color: function(position, length) {
                     var hue = (position / length) * 360;
                     return 'hsl(' + hue + ', 100%, 40%)';
@@ -241,7 +243,7 @@
                 height: 250,
                 style: 'line',
                 lineWidth: 1,
-                waveform: analyser.getWaveform(false),
+                waveform: analyse.getWaveform(false),
                 color: function(position, length) {
                     var hue = (position / length) * 360;
                     return 'hsl(' + hue + ', 100%, 40%)';
@@ -282,8 +284,8 @@
         });
 
         return function() {
-            analyser.getFrequencies();
-            analyser.getWaveform();
+            analyse.getFrequencies();
+            analyse.getWaveform();
             waveformers.forEach(function(waveformer) {
                 waveformer();
             });
@@ -299,7 +301,7 @@
         name: 'Active',
         value: true
     }, function(value) {
-        sono.effect.toggle(reverb, value);
+        sono.effects.toggle(reverb, value);
     });
 
     ui.createControl({
@@ -339,7 +341,7 @@
         name: 'Active',
         value: false
     }, function(value) {
-        sono.effect.toggle(flanger, value);
+        sono.effects.toggle(flanger, value);
     });
 
     ui.createControl({
@@ -357,9 +359,9 @@
         name: 'LFO Gain',
         min: 0.0005,
         max: 0.005,
-        value: flanger.lfoGain
+        value: flanger.gain
     }, function(value) {
-        flanger.lfoGain = value;
+        flanger.gain = value;
     });
 
     ui.createControl({
@@ -367,9 +369,9 @@
         name: 'LFO Frequency',
         min: 0.05,
         max: 5.0,
-        value: flanger.lfoFrequency
+        value: flanger.frequency
     }, function(value) {
-        flanger.lfoFrequency = value;
+        flanger.frequency = value;
     });
 
     ui.createControl({
@@ -492,10 +494,10 @@
 
         var file = event.currentTarget.files[0];
         var reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function(e) {
             //console.log(event.target.result);
             sono.context.decodeAudioData(
-                event.target.result,
+                e.target.result,
                 function(buffer) {
                     sound.data = buffer;
                     if (playing) {
@@ -503,8 +505,8 @@
                     }
                     uploadText.innerHTML = 'upload file';
                 },
-                function(e) {
-                    console.error('ERROR: context.decodeAudioData:', e);
+                function(err) {
+                    console.error('ERROR: context.decodeAudioData:', err);
                     uploadText.innerHTML = 'error';
                 }
             );

@@ -73,19 +73,19 @@ sono.create({
 
         var info = document.querySelector('[data-info]');
         var output = document.querySelector('output');
-        var base = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+        var base = 'https://ianmcgregor.co/prototypes/audio/';
         // const url = 'select.mp3';
         var url = base + 'hit.mp3';
 
         function init() {
-            var sound = sono.getSound('sound');
+            var sound = sono.get('sound');
 
             ui.createToggle({
               el: document.querySelector('[data-js="mode"]'),
-              name: 'Toggle multiPlay',
+              name: 'Toggle singlePlay',
               value: true
             }, function(value) {
-              sound.multiPlay = value;
+              sound.singlePlay = value;
             });
 
             ui.createTrigger({

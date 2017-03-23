@@ -1,4 +1,6 @@
-/*global THREE:false */
+/* global THREE:false */
+/* eslint no-var: 0 */
+/* eslint strict: 0 */
 
 'use strict';
 

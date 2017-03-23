@@ -1,5 +1,7 @@
-(function() {
+/* eslint no-var: 0 */
+/* eslint strict: 0 */
 
+(function() {
 
     var sono = window.sono;
     var ui = window.ui;
@@ -13,14 +15,15 @@
         canvas = document.querySelector('[data-js="waveform"]'),
         context = canvas.getContext('2d');
 
-    var onConnect = function(stream) {
-        sound = sono.createSound(stream);
+    function onConnect(stream) {
+        sound = sono.create(stream);
         recorder = sono.utils.recorder(false);
-        analyser = sound.effect.analyser({fftSize: 1024});
+        analyser = sound.effects.add(sono.analyser({fftSize: 1024}));
         analyser.maxDecibels = -60;
         recorder.start(sound);
         update();
-    };
+    }
+
     var mic = sono.utils.microphone(onConnect);
 
     if (!mic.isSupported) {
@@ -28,7 +31,7 @@
             .classList.add('is-visible');
     }
 
-    var toggle = function() {
+    function toggle() {
         if (recorder && recorder.isRecording) {
             var recording = recorder.stop();
             console.log(recording);
@@ -45,7 +48,7 @@
                 player.el.classList.remove('is-active');
             }
         }
-    };
+    }
 
     var control = ui.createToggle({
         el: document.querySelector('[data-js="micToggle"]'),
@@ -59,7 +62,7 @@
         console.log('createPlayer');
         player = ui.createPlayer({
             el: document.querySelector('[data-js="playerTop"]'),
-            sound: sono.createSound(buffer)
+            sound: sono.create(buffer)
                 .play()
         });
         player.el.classList.add('is-active');

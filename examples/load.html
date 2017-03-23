@@ -106,7 +106,7 @@ sound.play(); // loads on demand
         var btnUnload = document.querySelector('[data-js="button-unload"]');
         var btnReload = document.querySelector('[data-js="button-reload"]');
         var btnPlay = document.querySelector('[data-js="button-play"]');
-        var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
+        var baseURL = 'https://ianmcgregor.co/prototypes/audio/';
 
         var sounds = [
             'dnb-loop',
@@ -184,7 +184,7 @@ sound.play(); // loads on demand
                 return;
             }
             var id = config.url[index].id;
-            var sound = sono.getSound(id);
+            var sound = sono.get(id);
             sound.once('ended', play);
             sound.play();
             console.log('playing:', id);

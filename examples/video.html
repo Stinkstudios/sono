@@ -76,7 +76,7 @@
 
     <pre><code class="js">
       var video = document.querySelector('video');
-      var sound = sono.createSound(video);
+      var sound = sono.create(video);
       sound.play();
     </code></pre>
 
@@ -111,58 +111,60 @@
               waveform;
 
           function init(video) {
-              sound = sono.createSound(video);
+              sound = sono.create(video);
               sound.play();
-              lowpass = sound.effect.lowpass({frequency: 1200, q: 8});
-              highpass = sound.effect.highpass({frequency: 1000, q: 5});
-              echo = sound.effect.echo({
-                delayTime: 1,
-                feedback: 0.5
-              });
-              reverb = sound.effect.reverb({
-                time: 2,
-                decay: 2
-              });
-              analyser = sound.effect.analyser({fftSize: 2048});
+              lowpass = sound.effects.add(sono.lowpass({frequency: 1200, q: 8}));
+              highpass = sound.effects.add(sono.highpass({frequency: 1000, q: 5}));
+              echo = sound.effects.add(sono.echo({
+                  delayTime: 1,
+                  feedback: 0.5
+              }));
+              reverb = sound.effects.add(sono.reverb({
+                  time: 2,
+                  decay: 2
+              }));
+              analyser = sound.effects.add(sono.analyser({
+                  fftSize: 2048
+              }));
               waveform = document.querySelector('[data-js="waveform"]');
 
-              sound.effect.remove(lowpass);
-              sound.effect.remove(highpass);
-              sound.effect.remove(echo);
-              sound.effect.remove(reverb);
+              sound.effects.remove(lowpass);
+              sound.effects.remove(highpass);
+              sound.effects.remove(echo);
+              sound.effects.remove(reverb);
 
               createAnalyserDisplay(analyser, waveform);
 
               ui.createToggle({
                 el: document.querySelector('[data-js="lowpass"]'),
                 name: 'Lowpass',
-                value: sound.effect.has(lowpass)
+                value: sound.effects.has(lowpass)
               }, function(value) {
-                sound.effect.toggle(lowpass, value);
+                sound.effects.toggle(lowpass, value);
               });
 
               ui.createToggle({
                 el: document.querySelector('[data-js="highpass"]'),
                 name: 'Highpass',
-                value: sound.effect.has(highpass)
+                value: sound.effects.has(highpass)
               }, function(value) {
-                sound.effect.toggle(highpass, value);
+                sound.effects.toggle(highpass, value);
               });
 
               ui.createToggle({
                 el: document.querySelector('[data-js="echo"]'),
                 name: 'Echo',
-                value: sound.effect.has(echo)
+                value: sound.effects.has(echo)
               }, function(value) {
-                sound.effect.toggle(echo, value);
+                sound.effects.toggle(echo, value);
               });
 
               ui.createToggle({
                 el: document.querySelector('[data-js="reverb"]'),
                 name: 'Reverb',
-                value: sound.effect.has(reverb)
+                value: sound.effects.has(reverb)
               }, function(value) {
-                sound.effect.toggle(reverb, value);
+                sound.effects.toggle(reverb, value);
               });
           }
 

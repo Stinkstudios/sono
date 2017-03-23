@@ -53,7 +53,7 @@
         </div>
         <pre>
             <code class="js">
-    var sound = sono.create({
+    const sound = sono.create({
         src: [ 'dnb-loop-3.ogg', 'dnb-loop-3.mp3' ],
         loop: true,
         volume: 1
@@ -166,7 +166,7 @@
     // set volume to 50%
     sound.volume = 0.5;
     // add panning control to the sound
-    var panner = sound.effect.panner();
+    const panner = sound.effects.add(panner());
     // pan fully left
     panner.set(-1);
     // set playback rate to 50%
@@ -221,10 +221,10 @@
         <pre>
             <code class="js">
     // add an echo effect to the sound
-    var echo = sound.effect.echo({
-        delayTime: 0,
+    const echo = sound.effects.add(echo({
+        delay: 0,
         feedback: 0
-    });
+    }));
     // change delay time and feedback amount
     echo.delay = 1;
     echo.feedback = 1;
@@ -271,9 +271,11 @@
         <pre>
             <code class="js">
     // add a distortion effect to the sound
-    var distortion = sound.effect.distortion(0.5);
+    const distortion = sound.effects.add(distortion({
+        level: 0.5
+    }));
     // change amount of distortion
-    distortion.amount = 1;
+    distortion.level = 1;
             </code>
         </pre>
 
@@ -340,14 +342,16 @@
 
         <pre>
             <code class="js">
-    var reverb = sound.effect.reverb({
+    const reverb = sound.effects.add(reverb({
         time: 1,
         decay: 5
-    });
+    }));
     // update values
-    reverb.time = 2;
-    reverb.decay = 6;
-    reverb.reverse = true;
+    reverb.update({
+        time: 2,
+        decay: 6,
+        reverse: true
+    })
             </code>
         </pre>
 
@@ -432,14 +436,14 @@
 
         <pre>
             <code class="js">
-    var flanger = sound.effect.flanger({
+    const flanger = sound.effects.add(flanger({
         stereo: true,
         delay: 0.003
-    });
+    }));
     // update values
     flanger.delay = 0.003;
-    flanger.lfoGain = 0.005;
-    flanger.lfoFrequency = 0.5;
+    flanger.gain = 0.005;
+    flanger.frequency = 0.5;
     flanger.feedback = 0.5;
             </code>
         </pre>
@@ -547,10 +551,10 @@
 
         <pre>
             <code class="js">
-    var highpass = sound.effect.highpass();
-    highpass.frequency.value = 400;
-    highpass.Q.value = 20;
-    highpass.detune.value = 100;
+    const highpass = sound.effects.add(sono.highpass());
+    highpass.frequency = 400;
+    highpass.peak = 20;
+    highpass.detune = 100;
             </code>
         </pre>
 
@@ -612,9 +616,10 @@
         <pre>
             <code class="js">
     // bass boost
-    var lowshelf = sound.effect.lowshelf();
-    lowshelf.frequency.value = 80;
-    lowshelf.gain.value = 10;
+    const lowshelf = sound.effects.add(lowshelf());
+    lowshelf.frequency = 80;
+    lowshelf.boost = 20;
+    lowshelf.gain = 10;
             </code>
         </pre>
 
@@ -633,12 +638,12 @@
 
         <pre>
             <code class="js">
-    var analyser = sound.effect.analyser({
+    const analyser = sound.effects.add(analyser({
         fftSize: 256,
-        smoothingTimeConstant: 0.7
-    });
+        smoothing: 0.7
+    }));
 
-    var waveformer = sono.utils.waveformer({
+    const waveformer = sono.utils.waveformer({
         x: 0,
         y: 0,
         width: 250,
@@ -648,7 +653,7 @@
         lineWidth: 1.5,
         waveform: analyser.getFrequencies(false),
         color: function(position, length) {
-            var hue = (position / length) * 360;
+            const hue = (position / length) * 360;
             return 'hsl(' + hue + ', 100%, 40%)';
         },
         transform: function(value) {

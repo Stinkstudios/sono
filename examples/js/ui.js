@@ -1,3 +1,6 @@
+/* eslint no-var: 0 */
+/* eslint strict: 0 */
+
 window.ui = (function() {
     'use strict';
 
@@ -17,7 +20,7 @@ window.ui = (function() {
             canvas = el.querySelector('canvas'),
             waveformer;
 
-        var togglePlay = function(event) {
+        function togglePlay(event) {
             if (event.type === 'touchstart') {
                 inner.removeEventListener('mousedown', togglePlay);
             }
@@ -26,43 +29,37 @@ window.ui = (function() {
             } else {
                 sound.play();
             }
-        };
+        }
 
-        var updateState = function() {
+        function updateState() {
             el.classList.toggle('is-playing', sound.playing);
             if (sound.playing) {
                 update();
             } else {
-                draw(0);
+                // draw(0);
             }
-        };
+        }
 
-        var setRotation = function(el, deg) {
+        function setRotation(elem, deg) {
             var transform = 'rotate(' + deg + 'deg)';
-            el.style.webkitTransform = transform;
-            el.style.transform = transform;
-        };
+            elem.style.webkitTransform = transform;
+            elem.style.transform = transform;
+        }
 
-        var draw = function(progress) {
+        function draw(progress) {
             if (elProgressBarA) {
                 var rotation = progress * 360;
                 setRotation(elProgressBarA, Math.min(rotation, 180));
                 setRotation(elProgressBarB, Math.max(rotation - 180, 0));
-                // waveformer(analyser.getWaveform(false));
-                // waveformer(analyser.getFrequencies(true));
                 waveformer();
             } else if (analyser) {
                 waveformer(analyser.getFrequencies(false));
             } else {
                 waveformer();
             }
-        };
+        }
 
-        var update = function() {
-            // if(sound.playing) {
-            //   window.requestAnimationFrame(update);
-            // }
-
+        function update() {
             if (!el.classList.contains('is-active')) {
                 return;
             }
@@ -70,9 +67,9 @@ window.ui = (function() {
             if (sound.data) {
                 draw(sound.progress);
             }
-        };
+        }
 
-        var init = function() {
+        function init() {
             if (elProgressBarA) {
                 waveformer = sono.utils.waveformer({
                     shape: 'circular',
@@ -128,7 +125,7 @@ window.ui = (function() {
 
             inner.addEventListener('touchstart', togglePlay);
             inner.addEventListener('mousedown', togglePlay);
-        };
+        }
 
         sound.on('ready', init)
             .on('ended', updateState)
@@ -165,22 +162,22 @@ window.ui = (function() {
             outputEl = el.querySelector('[data-js="output"]'),
             name = options.name || '',
             value = !!options.value,
-            labelOn = options.labelOn !== undefined ? options.labelOn : 'on',
-            labelOff = options.labelOff !== undefined ? options.labelOff : 'off',
+            labelOn = options.labelOn || 'on',
+            labelOff = options.labelOff || 'off',
             callback = fn;
 
-        var updateState = function(value) {
-            if (value) {
+        function updateState(val) {
+            if (val) {
                 iconEl.classList.remove('Control-mark--cross');
                 iconEl.classList.add('Control-mark--tick');
             } else {
                 iconEl.classList.remove('Control-mark--tick');
                 iconEl.classList.add('Control-mark--cross');
             }
-            setLabel(value ? labelOn : labelOff);
-        };
+            setLabel(val ? labelOn : labelOff);
+        }
 
-        var onDown = function(event) {
+        function onDown(event) {
             if (event.type === 'touchstart') {
                 el.removeEventListener('mousedown', onDown);
             }
@@ -192,20 +189,20 @@ window.ui = (function() {
             if (callback) {
                 callback(value);
             }
-        };
+        }
 
-        var setName = function(value) {
+        function setName(value) {
             nameEl.innerHTML = value;
-        };
+        }
 
-        var setLabel = function(value) {
+        function setLabel(value) {
             outputEl.value = value;
-        };
+        }
 
-        var destroy = function() {
+        function destroy() {
             el.removeEventListener('mousedown', onDown);
             el.removeEventListener('touchstart', onDown);
-        };
+        }
 
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
@@ -218,7 +215,7 @@ window.ui = (function() {
             destroy: destroy
         };
     }
-	
+
 	/*
      * Trigger control
      */
@@ -231,7 +228,7 @@ window.ui = (function() {
             name = options.name || '',
             callback = fn;
 
-        var onDown = function(event) {
+        function onDown(event) {
             if (event.type === 'touchstart') {
                 el.removeEventListener('mousedown', onDown);
             }
@@ -239,16 +236,16 @@ window.ui = (function() {
             if (callback) {
                 callback();
             }
-        };
+        }
 
-        var setName = function(value) {
+        function setName(value) {
             nameEl.innerHTML = value;
-        };
+        }
 
-        var destroy = function() {
+        function destroy() {
             el.removeEventListener('mousedown', onDown);
             el.removeEventListener('touchstart', onDown);
-        };
+        }
 
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
@@ -316,7 +313,7 @@ window.ui = (function() {
             }
         };
 
-        var onDown = function(event) {
+        function onDown(event) {
             event.preventDefault();
             if (event.type === 'touchstart') {
                 el.removeEventListener('mousedown', onDown);
@@ -327,17 +324,17 @@ window.ui = (function() {
                 document.body.addEventListener('mouseup', onUp);
             }
             onMove(event);
-        };
+        }
 
-        var onUp = function(event) {
+        function onUp(event) {
             event.preventDefault();
             document.body.removeEventListener('mousemove', onMove);
             document.body.removeEventListener('touchmove', onMove);
             document.body.removeEventListener('mouseup', onUp);
             document.body.removeEventListener('touchend', onUp);
-        };
+        }
 
-        var onMove = function(event) {
+        function onMove(event) {
             event.preventDefault();
             if (event.touches) {
                 event = event.touches[0];
@@ -390,16 +387,16 @@ window.ui = (function() {
                     callback(value, delta);
                 }
             }
-        };
+        }
 
-        var destroy = function() {
+        function destroy() {
             document.body.removeEventListener('mousemove', onMove);
             document.body.removeEventListener('touchmove', onMove);
             document.body.removeEventListener('mouseup', onUp);
             document.body.removeEventListener('touchend', onUp);
             el.removeEventListener('mousedown', onDown);
             el.removeEventListener('touchstart', onDown);
-        };
+        }
 
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);

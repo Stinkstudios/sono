@@ -48,7 +48,7 @@
             recorder;
         var onConnect = function(stream) {
           // the sound coming through the micophone
-          sound = sono.createSound(stream);
+          sound = sono.create(stream);
           // start recorder
           recorder = sono.utils.recorder(passThrough);
           recorder.start(sound);
@@ -57,7 +57,7 @@
             // recorder returns recorded sound when stopped
             var recording = recorder.stop();
             // create a new sound object from the recording
-            sono.createSound(recording).play();
+            sono.create(recording).play();
           }, 2000);
         };
         // propmt user to connect their mic

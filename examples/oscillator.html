@@ -76,7 +76,7 @@
     </div>
 
     <pre><code class="js">
-      var sineWave = sono.createSound('sine');
+      const sineWave = sono.create('sine');
       sineWave.frequency = 100;
       sineWave.volume = 0.1;
       sineWave.play();
@@ -102,10 +102,10 @@
 
           sono.log();
 
-          var sineWave = sono.createSound('sine'),
-              distort = sineWave.effect.distortion(),
-              filter = sineWave.effect.lowpass({frequency: 100, q: 10}),
-              analyser = sineWave.effect.analyser(2048);
+          var sineWave = sono.create('sine'),
+              distort = sineWave.effects.add(sono.distortion()),
+              filter = sineWave.effects.add(sono.lowpass({frequency: 100, peak: 10})),
+              analyser = sineWave.effects.add(sono.analyser({fftSize: 2048}));
 
           sineWave.frequency = 80;
           sineWave.volume = 0.1;
