@@ -9,7 +9,7 @@
 
     sono.log();
 
-    var info = document.querySelector('[data-js="info"]');
+    var info = document.querySelector('[data-info]');
     info.innerHTML = '<li>Audio support: ' + sono.isSupported + '</li>' +
         '<li>Web Audio support: ' + sono.hasWebAudio + '</li>' +
         '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
@@ -41,7 +41,9 @@
 
     panner = sono.effects.add(sono.panner());
 
-    distortion = sono.effects.add(sono.distortion({level: 0}));
+    distortion = sono.effects.add(sono.distortion({
+        level: 0
+    }));
 
     echo = sono.effects.add(sono.echo({
         delay: 0,
@@ -53,9 +55,12 @@
     }));
     sono.effects.remove(flanger);
 
-    highpass = sono.effects.add(sono.highpass({frequency: 20}));
+    highpass = sono.effects.add(sono.highpass({
+        frequency: 20
+    }));
 
-    lowshelf = sono.effects.add(sono.lowshelf({frequency: 80, gain: 0}));
+    lowshelf = sono.effects.add(sono.lowshelf({
+        frequency: 80, gain: 0}));
 
     reverb = sono.effects.add(sono.reverb({
         time: 0.1,
@@ -75,13 +80,13 @@
      */
 
     playerTop = ui.createPlayer({
-        el: document.querySelector('[data-js="playerTop"]'),
+        el: document.querySelector('[data-playerTop]'),
         sound: sound,
         analyser: analyser
     });
 
     player = ui.createPlayer({
-        el: document.querySelector('[data-js="player"]'),
+        el: document.querySelector('[data-player]'),
         sound: sound,
         analyser: analyser
     });
@@ -102,8 +107,10 @@
      * controls
      */
 
+    var controls = document.querySelector('[data-controls]');
+
     ui.createControl({
-        el: document.querySelector('[data-js="master-volume"]'),
+        el: controls,
         name: 'Master Volume',
         min: 0,
         max: 1,
@@ -113,7 +120,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="volume"]'),
+        el: controls,
         name: 'Volume',
         min: 0,
         max: 1,
@@ -123,7 +130,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="pan"]'),
+        el: controls,
         name: 'Pan',
         min: -1,
         max: 1,
@@ -133,7 +140,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="rate"]'),
+        el: controls,
         name: 'Rate',
         min: 0,
         max: 4,
@@ -143,7 +150,7 @@
     });
 
     ui.createToggle({
-        el: document.querySelector('[data-js="loop"]'),
+        el: controls,
         name: 'Loop',
         value: sound.loop
     }, function(value) {
@@ -152,7 +159,7 @@
     });
 
     ui.createToggle({
-        el: document.querySelector('[data-js="reverse"]'),
+        el: controls,
         name: 'Reverse',
         value: false
     }, function() {
@@ -164,7 +171,7 @@
      */
 
     ui.createControl({
-        el: document.querySelector('[data-js="echoDelay"]'),
+        el: document.querySelector('[data-echo]'),
         name: 'Delay',
         min: 0,
         max: 10,
@@ -174,7 +181,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="echoFeedback"]'),
+        el: document.querySelector('[data-echo]'),
         name: 'Feedback',
         min: 0.1,
         max: 10,
@@ -188,7 +195,7 @@
      */
 
     ui.createToggle({
-        el: document.querySelector('[data-js="distortionToggle"]'),
+        el: document.querySelector('[data-distortion]'),
         name: 'Active',
         value: true
     }, function(value) {
@@ -196,7 +203,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="distortion"]'),
+        el: document.querySelector('[data-distortion]'),
         name: 'Level',
         min: 0,
         max: 2,
@@ -217,7 +224,7 @@
         }));
 
         var waveformers = [],
-            el = document.querySelector('[data-js="waveforms"]'),
+            el = document.querySelector('[data-waveforms]'),
             canvas = el.querySelector('canvas'),
             context = canvas.getContext('2d'),
             examples = [{
@@ -297,7 +304,7 @@
      */
 
     ui.createToggle({
-        el: document.querySelector('[data-js="reverbToggle"]'),
+        el: document.querySelector('[data-reverb]'),
         name: 'Active',
         value: true
     }, function(value) {
@@ -305,7 +312,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="reverbTime"]'),
+        el: document.querySelector('[data-reverb]'),
         name: 'Time',
         min: 0,
         max: 5,
@@ -315,7 +322,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="reverbDecay"]'),
+        el: document.querySelector('[data-reverb]'),
         name: 'Decay',
         min: 0,
         max: 10,
@@ -325,7 +332,7 @@
     });
 
     ui.createToggle({
-        el: document.querySelector('[data-js="reverbReverse"]'),
+        el: document.querySelector('[data-reverb]'),
         name: 'reverse',
         value: false
     }, function(value) {
@@ -337,7 +344,7 @@
      */
 
     ui.createToggle({
-        el: document.querySelector('[data-js="flangerToggle"]'),
+        el: document.querySelector('[data-flanger]'),
         name: 'Active',
         value: false
     }, function(value) {
@@ -345,7 +352,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="flangerDelay"]'),
+        el: document.querySelector('[data-flanger]'),
         name: 'Delay',
         min: 0.005,
         max: 0.05,
@@ -355,7 +362,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="flangerLFOGain"]'),
+        el: document.querySelector('[data-flanger]'),
         name: 'LFO Gain',
         min: 0.0005,
         max: 0.005,
@@ -365,7 +372,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="flangerLFOFrequency"]'),
+        el: document.querySelector('[data-flanger]'),
         name: 'LFO Frequency',
         min: 0.05,
         max: 5.0,
@@ -375,7 +382,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="flangerFeedback"]'),
+        el: document.querySelector('[data-flanger]'),
         name: 'Feedback',
         min: 0.0,
         max: 0.9,
@@ -391,7 +398,7 @@
     var fadeTime = 1;
 
     ui.createToggle({
-        el: document.querySelector('[data-js="fadeToggle"]'),
+        el: document.querySelector('[data-fade]'),
         name: 'Toggle',
         value: false
     }, function(value) {
@@ -399,7 +406,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="fadeTime"]'),
+        el: document.querySelector('[data-fade]'),
         name: 'Time',
         min: 0,
         max: 10,
@@ -415,7 +422,7 @@
     var maxFreq = (sono.context && sono.context.sampleRate / 2) || 0;
 
     ui.createControl({
-        el: document.querySelector('[data-js="highpassFrequency"]'),
+        el: document.querySelector('[data-highpass]'),
         name: 'Frequency',
         min: 20,
         max: maxFreq,
@@ -426,7 +433,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="highpassQ"]'),
+        el: document.querySelector('[data-highpass]'),
         name: 'Peak',
         min: 0.0001,
         max: 40,
@@ -436,7 +443,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="highpassDetune"]'),
+        el: document.querySelector('[data-highpass]'),
         name: 'Detune',
         min: -1000,
         max: 1000,
@@ -451,7 +458,7 @@
      */
 
     ui.createControl({
-        el: document.querySelector('[data-js="lowshelfFrequency"]'),
+        el: document.querySelector('[data-lowshelf]'),
         name: 'Frequency',
         min: 20,
         max: maxFreq,
@@ -462,7 +469,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="lowshelfGain"]'),
+        el: document.querySelector('[data-lowshelf]'),
         name: 'Peak',
         min: -40,
         max: 40,
@@ -472,7 +479,7 @@
     });
 
     ui.createControl({
-        el: document.querySelector('[data-js="lowshelfDetune"]'),
+        el: document.querySelector('[data-lowshelf]'),
         name: 'Detune',
         min: -1000,
         max: 1000,
@@ -485,8 +492,8 @@
      * upload
      */
 
-    var upload = document.querySelector('[data-js="upload"]');
-    var uploadText = document.querySelector('[data-js="upload-text"]');
+    var upload = document.querySelector('[data-upload]');
+    var uploadText = document.querySelector('[data-upload-text]');
     upload.addEventListener('change', function(event) {
         var playing = sound.playing;
         sound.stop();

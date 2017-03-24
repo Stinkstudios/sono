@@ -2219,7 +2219,7 @@ function AudioSource(Type, data, context, onEnded) {
             return new Type(data, context, onSourceEnded);
         }
     }
-    // IF PAUSED DON'T MAKE ANOTHER
+
     function play() {
         var src = getSource();
         if (sourceNode) {
@@ -2489,7 +2489,7 @@ function MediaSource(el, context, onEnded) {
         if (el.readyState < 1) {
             el.removeEventListener('canplaythrough', readyHandler);
             el.addEventListener('canplaythrough', readyHandler, false);
-            el.load();
+            // el.load();
             el.play();
         }
     }

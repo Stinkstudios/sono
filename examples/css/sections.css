@@ -83,3 +83,7 @@ nav a {
   text-decoration: underline;
   font-size: 32px;
 }
+
+* {
+    box-sizing: border-box;
+}

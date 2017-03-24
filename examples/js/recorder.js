@@ -12,7 +12,7 @@
         sound,
         recorder,
         analyser,
-        canvas = document.querySelector('[data-js="waveform"]'),
+        canvas = document.querySelector('[data-waveform]'),
         context = canvas.getContext('2d');
 
     function onConnect(stream) {
@@ -27,7 +27,7 @@
     var mic = sono.utils.microphone(onConnect);
 
     if (!mic.isSupported) {
-        document.querySelector('[data-js="warning"]')
+        document.querySelector('[data-warning]')
             .classList.add('is-visible');
     }
 
@@ -51,7 +51,7 @@
     }
 
     var control = ui.createToggle({
-        el: document.querySelector('[data-js="micToggle"]'),
+        el: document.querySelector('[data-micToggle]'),
         name: 'Record',
         value: false
     }, function() {
@@ -61,7 +61,7 @@
     function createPlayer(buffer) {
         console.log('createPlayer');
         player = ui.createPlayer({
-            el: document.querySelector('[data-js="playerTop"]'),
+            el: document.querySelector('[data-playerTop]'),
             sound: sono.create(buffer)
                 .play()
         });

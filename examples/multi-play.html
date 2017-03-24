@@ -1,49 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>sono - examples - multiPlay</title>
-    <link href="css/styles.css" rel="stylesheet">
-    <link href="css/paraiso.light.css" rel="stylesheet">
-</head>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <title>sono - examples - multiPlay</title>
+        <link href="css/styles.css" rel="stylesheet">
+        <link href="css/paraiso.light.css" rel="stylesheet">
+    </head>
 
-<body>
-    <section>
-        <header>
-            <h2>multi play</h2>
-        </header>
+    <body>
+        <section>
+            <header>
+                <h2>multi play</h2>
+            </header>
 
-        <div class="Controls" style="display: block; text-align: center">
-            <output></output>
-            <div data-info></div>
-        </div>
+            <div class="Controls" style="display: block; text-align: center">
+                <output></output>
+                <div data-info></div>
+            </div>
 
-        <div class="Controls">
-              <div class="Control" data-js="mode">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                  <div class="Control-circle">
-                    <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                  </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-              </div>
+            <div class="Controls" data-controls>
+            </div>
 
-              <div class="Control" data-js="trigger">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                  <div class="Control-circle">
-                    <div class="Control-mark Control-mark--play" data-js="icon"></div>
-                  </div>
-                </div>
-                <output class="Control-output" data-js="output">&nbsp;</output>
-              </div>
-        </div>
-
-    <pre><code class="js">
+            <pre><code class="js">
 sono.create({
     id: 'sound',
     url: 'hit.ogg',
@@ -52,69 +33,69 @@ sono.create({
     </code></pre>
 
 
-    </section>
+        </section>
 
-    <script>
-        if (window.location.search.slice(1) === 'nowebaudio') {
-            window.AudioContext = window.webkitAudioContext = undefined;
-        }
-    </script>
-    <script src="js/highlight.pack.js"></script>
-    <script>
-        hljs.initHighlightingOnLoad();
-    </script>
-    <script src="../dist/sono.js"></script>
-    <script src="js/ui.js"></script>
-    <script>
-        var sono = window.sono;
-        sono.log();
-
-        var sound = null;
-
-        var info = document.querySelector('[data-info]');
-        var output = document.querySelector('output');
-        var base = 'https://ianmcgregor.co/prototypes/audio/';
-        // const url = 'select.mp3';
-        var url = base + 'hit.mp3';
-
-        function init() {
-            var sound = sono.get('sound');
-
-            ui.createToggle({
-              el: document.querySelector('[data-js="mode"]'),
-              name: 'Toggle singlePlay',
-              value: true
-            }, function(value) {
-              sound.singlePlay = value;
-            });
-
-            ui.createTrigger({
-              el: document.querySelector('[data-js="trigger"]'),
-              name: 'Trigger sound'
-            }, function(value) {
-              sound.play();
-            });
-
-            function update() {
-                window.requestAnimationFrame(update);
-                output.value = ((sound.currentTime * 100) / 100).toFixed(2) + '/' + ((sound.duration * 100) / 100).toFixed(2);
-
-                var msg = '';
-                msg += 'created:' + sound.sourceInfo.created + '<br>';
-                msg += 'active:' + sound.sourceInfo.active + '<br>';
-                msg += 'pooled:' + sound.sourceInfo.pooled;
-                info.innerHTML = msg;
+        <script>
+            if (window.location.search.slice(1) === 'nowebaudio') {
+                window.AudioContext = window.webkitAudioContext = undefined;
             }
-            update();
-        }
+        </script>
+        <script src="js/highlight.pack.js"></script>
+        <script>
+            hljs.initHighlightingOnLoad();
+        </script>
+        <script src="../dist/sono.js"></script>
+        <script src="js/ui.min.js"></script>
+        <script>
+            var sono = window.sono;
+            sono.log();
 
-        sound = sono.load({
-            id: 'sound',
-            url: url,
-            multiPlay: true,
-            onComplete: init
-        });
-    </script>
-</body>
+            var sound = null;
+
+            var info = document.querySelector('[data-info]');
+            var output = document.querySelector('output');
+            var base = 'https://ianmcgregor.co/prototypes/audio/';
+            // const url = 'select.mp3';
+            var url = base + 'hit.mp3';
+
+            function init() {
+                var sound = sono.get('sound');
+
+                ui.createToggle({
+                    el: document.querySelector('[data-controls]'),
+                    name: 'Toggle singlePlay',
+                    value: true
+                }, function(value) {
+                    sound.singlePlay = value;
+                });
+
+                ui.createTrigger({
+                    el: document.querySelector('[data-controls]'),
+                    name: 'Trigger sound'
+                }, function(value) {
+                    sound.play();
+                });
+
+                function update() {
+                    window.requestAnimationFrame(update);
+                    output.value = ((sound.currentTime * 100) / 100).toFixed(2) + '/' + ((sound.duration * 100) / 100).toFixed(2);
+
+                    var msg = '';
+                    msg += 'created:' + sound.sourceInfo.created + '<br>';
+                    msg += 'active:' + sound.sourceInfo.active + '<br>';
+                    msg += 'pooled:' + sound.sourceInfo.pooled;
+                    info.innerHTML = msg;
+                }
+                update();
+            }
+
+            sound = sono.load({
+                id: 'sound',
+                url: url,
+                multiPlay: true,
+                onComplete: init
+            });
+        </script>
+    </body>
 
 </html>

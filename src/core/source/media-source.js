@@ -95,7 +95,7 @@ export default function MediaSource(el, context, onEnded) {
         if (el.readyState < 1) {
             el.removeEventListener('canplaythrough', readyHandler);
             el.addEventListener('canplaythrough', readyHandler, false);
-            el.load();
+            // el.load();
             el.play();
         }
     }

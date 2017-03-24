@@ -10,7 +10,7 @@
 
     sono.log();
 
-    var container = document.querySelector('[data-js="container"]');
+    var container = document.querySelector('[data-container]');
     var width = 960;
     var height = 540;
 

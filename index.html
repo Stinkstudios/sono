@@ -15,12 +15,12 @@
 
     <!-- minimized player -->
 
-    <div class="PlayerTop" data-js="playerTop">
-        <div class="PlayerTop-control" data-js="inner">
+    <div class="PlayerTop" data-playerTop>
+        <div class="PlayerTop-control" data-inner>
             <div class="PlayerTop-play"></div>
             <div class="PlayerTop-pause"></div>
         </div>
-        <canvas class="PlayerTop-canvas" width="400" height="60" data-js="wave"></canvas>
+        <canvas class="PlayerTop-canvas" width="400" height="60" data-wave></canvas>
     </div>
 
     <!-- title player -->
@@ -29,17 +29,17 @@
         <header>
             <h1>sono</h1>
         </header>
-        <div class="Player is-active" data-js="player">
+        <div class="Player is-active" data-player>
             <div class="Player-inner">
-                <div class="Player-control" data-js="inner">
+                <div class="Player-control" data-inner>
                     <div class="Player-play"></div>
                     <div class="Player-pause"></div>
                 </div>
                 <div class="Player-mask Player-maskA">
-                    <div class="Player-half Player-halfA" data-js="progressA"></div>
+                    <div class="Player-half Player-halfA" data-progressA></div>
                 </div>
                 <div class="Player-mask Player-maskB">
-                    <div class="Player-half Player-halfB" data-js="progressB"></div>
+                    <div class="Player-half Player-halfB" data-progressB></div>
                 </div>
             </div>
             <canvas class="Player-canvas" width="760" height="760"></canvas>
@@ -47,8 +47,8 @@
         <!-- upload -->
         <div class="Controls">
             <span class="Upload">
-                <span data-js="upload-text">upload file</span>
-                <input type="file" accept="audio/*" data-js="upload">
+                <span data-upload-text>upload file</span>
+                <input type="file" accept="audio/*" data-upload>
             </span>
         </div>
         <pre>
@@ -70,7 +70,7 @@
         </header>
         <pre>
             <code class="js">
-                <ul data-js="info"></ul>
+                <ul data-info></ul>
             </code>
         </pre>
     </section>
@@ -82,85 +82,7 @@
             <h2>controls</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="master-volume">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="volume">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="pan">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="rate">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="loop">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle">
-                        <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                    </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-            </div>
-
-            <div class="Control" data-js="reverse">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle">
-                        <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                    </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-            </div>
-
-        </div>
+        <div class="Controls" data-controls></div>
 
         <pre><code class="js">
     // set volume to 50%
@@ -186,37 +108,7 @@
             <h2>echo</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="echoDelay">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="echoFeedback">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-        </div>
+        <div class="Controls" data-echo></div>
 
         <pre>
             <code class="js">
@@ -240,33 +132,7 @@
             <h2>distortion</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="distortionToggle">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle">
-                        <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                    </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-            </div>
-
-            <div class="Control" data-js="distortion">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-        </div>
+        <div class="Controls" data-distortion></div>
 
         <pre>
             <code class="js">
@@ -288,57 +154,7 @@
             <h2>reverb</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="reverbToggle">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle">
-                        <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                    </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-            </div>
-
-            <div class="Control" data-js="reverbTime">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="reverbDecay">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="reverbReverse">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle">
-                        <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                    </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-            </div>
-
-        </div>
+        <div class="Controls" data-reverb></div>
 
         <pre>
             <code class="js">
@@ -364,75 +180,7 @@
             <h2>flanger</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="flangerToggle">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle">
-                        <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                    </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-            </div>
-
-            <div class="Control" data-js="flangerDelay">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="flangerLFOGain">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="flangerLFOFrequency">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="flangerFeedback">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-        </div>
+        <div class="Controls" data-flanger></div>
 
         <pre>
             <code class="js">
@@ -457,33 +205,7 @@
             <h2>fade</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="fadeToggle">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle">
-                        <div class="Control-mark Control-mark--cross" data-js="icon"></div>
-                    </div>
-                </div>
-                <output class="Control-output" data-js="output"></output>
-            </div>
-
-            <div class="Control" data-js="fadeTime">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-        </div>
+        <div class="Controls" data-fade></div>
 
         <pre>
             <code class="js">
@@ -503,51 +225,7 @@
             <h2>highpass filter</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="highpassFrequency">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="highpassQ">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="highpassDetune">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-        </div>
+        <div class="Controls" data-highpass></div>
 
         <pre>
             <code class="js">
@@ -567,51 +245,7 @@
             <h2>lowshelf filter</h2>
         </header>
 
-        <div class="Controls">
-
-            <div class="Control" data-js="lowshelfFrequency">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="lowshelfGain">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-            <div class="Control" data-js="lowshelfDetune">
-                <h3 class="Control-name" data-js="name"></h3>
-                <div class="Control-inner">
-                    <div class="Control-circle" data-js="wheel">
-                        <div class="Control-mark Control-mark--line"></div>
-                    </div>
-                </div>
-                <div class="Control-inner">
-                    <div class="Control-bound" data-js="min"></div>
-                    <output class="Control-output" data-js="output"></output>
-                    <div class="Control-bound" data-js="max"></div>
-                </div>
-            </div>
-
-        </div>
+        <div class="Controls" data-lowshelf></div>
 
         <pre>
             <code class="js">
@@ -632,7 +266,7 @@
             <h2>waveformer</h2>
         </header>
 
-        <div class="Controls" data-js="waveforms">
+        <div class="Controls" data-waveforms>
             <canvas width="500" height="500"></canvas>
         </div>
 
@@ -715,7 +349,7 @@
         hljs.initHighlightingOnLoad();
     </script>
     <script src="dist/sono.js"></script>
-    <script src="examples/js/ui.js"></script>
+    <script src="examples/js/ui.min.js"></script>
     <script src="examples/js/example.js"></script>
 </body>
 
