@@ -30,7 +30,7 @@ export default function AudioSource(Type, data, context, onEnded) {
         if (sources.length && (singlePlay || sources[0].paused)) {
             return sources[0];
         }
-        if ( pool.length > 0 ) {
+        if (pool.length > 0) {
             return pool.pop();
         } else {
             numCreated++;
