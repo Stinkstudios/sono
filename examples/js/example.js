@@ -18,20 +18,7 @@
     var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
     var baseURL = local ? 'examples/audio/' : 'https://ianmcgregor.co/prototypes/audio/';
 
-    var sound,
-        panner,
-        analyser,
-        distortion,
-        echo,
-        flanger,
-        highpass,
-        lowshelf,
-        reverb,
-        waveformsExample,
-        player,
-        playerTop;
-
-    sound = sono.create({
+    var sound = sono.create({
         src: [
             baseURL + 'dnb-loop.ogg',
             baseURL + 'dnb-loop.mp3'
@@ -39,53 +26,53 @@
         loop: true
     });
 
-    panner = sono.effects.add(sono.panner());
+    var panner = sono.effects.add(sono.panner());
 
-    distortion = sono.effects.add(sono.distortion({
+    var distortion = sono.effects.add(sono.distortion({
         level: 0
     }));
 
-    echo = sono.effects.add(sono.echo({
+    var echo = sono.effects.add(sono.echo({
         delay: 0,
         feedback: 0.2
     }));
 
-    flanger = sono.effects.add(sono.flanger({
+    var flanger = sono.effects.add(sono.flanger({
         stereo: true
     }));
     sono.effects.remove(flanger);
 
-    highpass = sono.effects.add(sono.highpass({
+    var highpass = sono.effects.add(sono.highpass({
         frequency: 20
     }));
 
-    lowshelf = sono.effects.add(sono.lowshelf({
+    var lowshelf = sono.effects.add(sono.lowshelf({
         frequency: 80, gain: 0}));
 
-    reverb = sono.effects.add(sono.reverb({
+    var reverb = sono.effects.add(sono.reverb({
         time: 0.1,
         decay: 2
     }));
 
-    analyser = sono.effects.add(sono.analyser({
+    var analyser = sono.effects.add(sono.analyser({
         fftSize: 1024,
         smoothing: 0.7,
         float: true
     }));
 
-    waveformsExample = createWaveformsExample();
+    var waveformsExample = createWaveformsExample();
 
     /*
      * players
      */
 
-    playerTop = ui.createPlayer({
+    var playerTop = ui.createPlayer({
         el: document.querySelector('[data-playerTop]'),
         sound: sound,
         analyser: analyser
     });
 
-    player = ui.createPlayer({
+    var player = ui.createPlayer({
         el: document.querySelector('[data-player]'),
         sound: sound,
         analyser: analyser
@@ -174,7 +161,7 @@
         el: document.querySelector('[data-echo]'),
         name: 'Delay',
         min: 0,
-        max: 10,
+        max: 1,
         value: 0
     }, function(value) {
         echo.delay = value;

@@ -8,13 +8,13 @@
         <title>sono - examples - 3d</title>
         <link href="favicon.ico" rel="shortcut icon">
         <link href="css/styles.css" rel="stylesheet">
-        <link href="css/paraiso.light.css" rel="stylesheet">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
     </head>
 
     <body>
         <section>
             <header>
-                <h2>3d</h2>
+                <h2>3d Panning</h2>
             </header>
 
 
@@ -24,34 +24,44 @@
 
             <div class="Controls" data-container></div>
 
-            <pre>
-            <code class="js">
-                var panner = sound.effects.add(panner(); // set max distance before the sound gain is zero panner.maxDistance = 1000; // set source position to the position vector of sound source pan.setSourcePosition(speaker.position); // set source orientation to the normalised
-                position vector of the speaker pan.setSourceOrientation(speaker.position); function update() { window.requestAnimationFrame(update); // set listener orientation to the forward vector of the hero pan.setListenerOrientation(hero.forward);
-                // set listener position to the position vector of the hero pan.setListenerPosition(hero.position); } update();
-            </code>
-        </pre>
+        <pre><code class="js">
+    const sound = sono.create({
+        url: 'pulsar.mp3',
+        loop: true,
+        effects: [
+            sono.panner({
+                maxDistance: 1000
+            })
+        ]
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    // set source position to the position vector of sound source
+    sound.effects[0].setPosition(mesh.position);
+
+    function update() {
+        window.requestAnimationFrame(update);
+        // set listener position to the position vector of the camera
+        sono.panner.setListenerPosition(camera.position);
+        // set listener orientation to the forward vector of the camera
+        const forward = new THREE.Vector3(0, 0, -1);
+        forward.applyQuaternion(camera.quaternion);
+        sono.panner.setListenerOrientation(forward.normalize());
+    }
+    update();
+        </code></pre>
 
         </section>
 
-        <script>
-            if (window.location.search.slice(1) === 'nowebaudio') {
-                window.AudioContext = window.webkitAudioContext = undefined;
-            }
-        </script>
-        <script src="js/highlight.pack.js"></script>
-        <script>
-            hljs.initHighlightingOnLoad();
-        </script>
+        <script src="js/disable.js"></script>
         <script src="../dist/sono.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
-        <script src="//threejs.org/examples/js/loaders/OBJLoader.js"></script>
-        <script src="//threejs.org/examples/js/loaders/MTLLoader.js"></script>
-        <script src="//threejs.org/examples/js/loaders/OBJMTLLoader.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.3/dat.gui.min.js"></script>
         <script src="//threejs.org/examples/js/controls/TrackballControls.js"></script>
         <script src="//threejs.org/examples/js/controls/FirstPersonControls.js"></script>
+        <script src="//cdn.rawgit.com/ianmcgregor/boid/cef69760/dist/boid.min.js"></script>
         <script src="js/three.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
     </body>
 
 </html>

@@ -1,17 +1,15 @@
-'use strict';
-
-(function () {
-    var sono = window.sono;
+(function() {
+    const sono = window.sono;
 
     function createPlayer(options) {
-        var sound = options.sound;
-        var el = options.el;
-        var analyser = options.analyser;
-        var inner = el.querySelector('[data-inner]');
-        var elProgressBarA = el.querySelector('[data-progressA]');
-        var elProgressBarB = el.querySelector('[data-progressB]');
-        var canvas = el.querySelector('canvas');
-        var waveformer = void 0;
+        const sound = options.sound;
+        const el = options.el;
+        const analyser = options.analyser;
+        const inner = el.querySelector('[data-inner]');
+        const elProgressBarA = el.querySelector('[data-progressA]');
+        const elProgressBarB = el.querySelector('[data-progressB]');
+        const canvas = el.querySelector('canvas');
+        let waveformer;
 
         function togglePlay(event) {
             if (event.type === 'touchstart') {
@@ -32,14 +30,14 @@
         }
 
         function setRotation(elem, deg) {
-            var transform = 'rotate(' + deg + 'deg)';
+            const transform = 'rotate(' + deg + 'deg)';
             elem.style.webkitTransform = transform;
             elem.style.transform = transform;
         }
 
         function draw(progress) {
             if (elProgressBarA) {
-                var rotation = progress * 360;
+                const rotation = progress * 360;
                 setRotation(elProgressBarA, Math.min(rotation, 180));
                 setRotation(elProgressBarB, Math.max(rotation - 180, 0));
                 waveformer();
@@ -69,8 +67,10 @@
                     canvas: canvas,
                     innerRadius: 180,
                     lineWidth: 1.5,
-                    color: function color(position, length) {
-                        return position / length < sound.progress ? '#bbcccc' : '#dddddd';
+                    color: function(position, length) {
+                        return position / length < sound.progress
+                        ? '#bbcccc'
+                        : '#dddddd';
                     }
                 });
             } else if (analyser) {
@@ -79,11 +79,11 @@
                     style: 'fill',
                     lineWidth: 2,
                     canvas: canvas,
-                    color: function color(position, length) {
-                        var hue = position / length * 360;
+                    color: function(position, length) {
+                        const hue = (position / length) * 360;
                         return 'hsl(' + hue + ', 100%, 50%)';
                     },
-                    transform: function transform(value) {
+                    transform: function(value) {
                         return value / 256;
                     }
                 });
@@ -94,7 +94,7 @@
                     style: 'fill',
                     lineWidth: 2,
                     canvas: canvas,
-                    color: function color(position, length) {
+                    color: function(position, length) {
                         return position / length < sound.progress ? '#bbcccc' : '#dddddd';
                     }
                 });
@@ -110,7 +110,7 @@
 
         update.el = el;
 
-        update.destroy = function (destroySound) {
+        update.destroy = function(destroySound) {
             if (destroySound) {
                 sound.destroy();
             }
@@ -127,21 +127,31 @@
         return update;
     }
 
-    /*
-     * Toggle control
-     */
+/*
+ * Toggle control
+ */
 
     function createToggle(options, fn) {
-        var name = options.name || '';
-        var labelOn = options.labelOn || 'on';
-        var labelOff = options.labelOff || 'off';
-        var value = !!options.value;
+        const name = options.name || '';
+        const labelOn = options.labelOn || 'on';
+        const labelOff = options.labelOff || 'off';
+        let value = !!options.value;
 
-        var el = document.createElement('div');
-        el.innerHTML = '\n        <div class="Control" data-toggle>\n          <h3 class="Control-name" data-name>' + name + '</h3>\n          <div class="Control-inner">\n            <div class="Control-circle">\n              <div class="Control-mark Control-mark--cross" data-icon></div>\n            </div>\n          </div>\n          <output class="Control-output" data-output></output>\n        </div>\n        ';
+        const el = document.createElement('div');
+        el.innerHTML = `
+        <div class="Control" data-toggle>
+          <h3 class="Control-name" data-name>${name}</h3>
+          <div class="Control-inner">
+            <div class="Control-circle">
+              <div class="Control-mark Control-mark--cross" data-icon></div>
+            </div>
+          </div>
+          <output class="Control-output" data-output></output>
+        </div>
+        `;
         options.el.appendChild(el);
-        var iconEl = el.querySelector('[data-icon]');
-        var outputEl = el.querySelector('[data-output]');
+        const iconEl = el.querySelector('[data-icon]');
+        const outputEl = el.querySelector('[data-output]');
 
         function updateState(val) {
             if (val) {
@@ -181,18 +191,28 @@
         el.addEventListener('touchstart', onDown);
         updateState(value);
 
-        return { setLabel: setLabel, destroy: destroy };
+        return {setLabel, destroy};
     }
 
-    /*
-     * Trigger control
-     */
+/*
+ * Trigger control
+ */
 
     function createTrigger(options, fn) {
-        var name = options.name || '';
+        const name = options.name || '';
 
-        var el = document.createElement('div');
-        el.innerHTML = '\n        <div class="Control" data-trigger>\n            <h3 class="Control-name" data-name>' + name + '</h3>\n            <div class="Control-inner">\n                <div class="Control-circle">\n                    <div class="Control-mark Control-mark--play" data-icon></div>\n                </div>\n            </div>\n            <output class="Control-output" data-output>&nbsp;</output>\n        </div>\n        ';
+        const el = document.createElement('div');
+        el.innerHTML = `
+        <div class="Control" data-trigger>
+            <h3 class="Control-name" data-name>${name}</h3>
+            <div class="Control-inner">
+                <div class="Control-circle">
+                    <div class="Control-mark Control-mark--play" data-icon></div>
+                </div>
+            </div>
+            <output class="Control-output" data-output>&nbsp;</output>
+        </div>
+        `;
         options.el.appendChild(el);
 
         function onDown(event) {
@@ -213,40 +233,54 @@
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
 
-        return { destroy: destroy };
+        return {destroy};
     }
 
-    /*
-     * Radial control
-     */
+/*
+ * Radial control
+ */
 
     function createControl(options, fn) {
-        var name = options.name || '';
-        var places = typeof options.places === 'number' ? options.places : 4;
-        var min = options.min || 0;
-        var max = options.max || 0;
-        var range = max - min;
+        const name = options.name || '';
+        const places = typeof options.places === 'number' ? options.places : 4;
+        const min = options.min || 0;
+        const max = options.max || 0;
+        const range = max - min;
 
-        var value = options.value || 0;
-        var lastDeg = 0;
-        var delta = 0;
+        let value = options.value || 0;
+        let lastDeg = 0;
+        let delta = 0;
 
-        var el = document.createElement('div');
-        el.innerHTML = '\n        <div class="Control" data-control>\n            <h3 class="Control-name" data-name>' + name + '</h3>\n            <div class="Control-inner">\n                <div class="Control-circle" data-wheel>\n                    <div class="Control-mark Control-mark--line"></div>\n                </div>\n            </div>\n            <div class="Control-inner">\n                <div class="Control-bound" data-min>' + min.toFixed(places) + '</div>\n                <output class="Control-output" data-output>' + value.toFixed(places) + '</output>\n                <div class="Control-bound" data-max>' + max.toFixed(places) + '</div>\n            </div>\n        </div>\n        ';
+        const el = document.createElement('div');
+        el.innerHTML = `
+        <div class="Control" data-control>
+            <h3 class="Control-name" data-name>${name}</h3>
+            <div class="Control-inner">
+                <div class="Control-circle" data-wheel>
+                    <div class="Control-mark Control-mark--line"></div>
+                </div>
+            </div>
+            <div class="Control-inner">
+                <div class="Control-bound" data-min>${min.toFixed(places)}</div>
+                <output class="Control-output" data-output>${value.toFixed(places)}</output>
+                <div class="Control-bound" data-max>${max.toFixed(places)}</div>
+            </div>
+        </div>
+        `;
         options.el.appendChild(el);
-        var wheelEl = el.querySelector('[data-wheel]');
-        var outputEl = el.querySelector('[data-output]');
+        const wheelEl = el.querySelector('[data-wheel]');
+        const outputEl = el.querySelector('[data-output]');
 
-        var math = {
+        const math = {
             DEG: 180 / Math.PI,
-            angle: function angle(x1, y1, x2, y2) {
-                var dx = x2 - x1;
-                var dy = y2 - y1;
+            angle: function(x1, y1, x2, y2) {
+                const dx = x2 - x1;
+                const dy = y2 - y1;
                 return Math.atan2(dy, dx);
             },
-            clamp: function clamp(val, mn, mx) {
+            clamp: function(val, mn, mx) {
                 if (mn > mx) {
-                    var a = mn;
+                    const a = mn;
                     mn = mx;
                     mx = a;
                 }
@@ -258,16 +292,16 @@
                 }
                 return val;
             },
-            degrees: function degrees(radians) {
+            degrees: function(radians) {
                 return radians * this.DEG;
             },
-            distance: function distance(x1, y1, x2, y2) {
-                var sq = math.distanceSQ(x1, y1, x2, y2);
+            distance: function(x1, y1, x2, y2) {
+                const sq = math.distanceSQ(x1, y1, x2, y2);
                 return Math.sqrt(sq);
             },
-            distanceSQ: function distanceSQ(x1, y1, x2, y2) {
-                var dx = x1 - x2;
-                var dy = y1 - y2;
+            distanceSQ: function(x1, y1, x2, y2) {
+                const dx = x1 - x2;
+                const dy = y1 - y2;
                 return dx * dx + dy * dy;
             }
         };
@@ -298,16 +332,16 @@
             if (event.touches) {
                 event = event.touches[0];
             }
-            var rect = el.getBoundingClientRect();
-            var cX = rect.left + rect.width / 2;
-            var cY = rect.top + rect.height / 2;
-            var mX = event.clientX;
-            var mY = event.clientY;
-            var distance = math.distance(cX, cY, mX, mY);
+            const rect = el.getBoundingClientRect();
+            const cX = rect.left + rect.width / 2;
+            const cY = rect.top + rect.height / 2;
+            const mX = event.clientX;
+            const mY = event.clientY;
+            const distance = math.distance(cX, cY, mX, mY);
 
             if (distance < 100) {
-                var angle = math.angle(cX, cY, mX, mY);
-                var degrees = math.degrees(angle) + 90;
+                const angle = math.angle(cX, cY, mX, mY);
+                let degrees = math.degrees(angle) + 90;
 
                 while (degrees < 0) {
                     degrees = degrees + 360;
@@ -334,7 +368,7 @@
 
                 value = math.clamp(value, min, max);
 
-                var transform = 'rotate(' + lastDeg.toFixed(1) + 'deg)';
+                const transform = 'rotate(' + lastDeg.toFixed(1) + 'deg)';
                 wheelEl.style.webkitTransform = transform;
                 wheelEl.style.transform = transform;
 
@@ -360,13 +394,13 @@
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
 
-        return { destroy: destroy };
+        return {destroy: destroy};
     }
 
     window.ui = {
-        createPlayer: createPlayer,
-        createControl: createControl,
-        createToggle: createToggle,
-        createTrigger: createTrigger
+        createPlayer,
+        createControl,
+        createToggle,
+        createTrigger
     };
-})();
+}());

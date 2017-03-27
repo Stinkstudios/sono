@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
         <title>sono - examples - video</title>
         <link href="css/styles.css" rel="stylesheet">
-        <link href="css/paraiso.light.css" rel="stylesheet">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
     </head>
 
     <body>
@@ -40,17 +40,9 @@
 
         </section>
 
-        <script>
-            if (window.location.search.slice(1) === 'nowebaudio') {
-                window.AudioContext = window.webkitAudioContext = undefined;
-            }
-        </script>
-        <script src="js/highlight.pack.js"></script>
-        <script>
-            hljs.initHighlightingOnLoad();
-        </script>
+        <script src="js/disable.js"></script>
         <script src="../dist/sono.js"></script>
-        <script src="js/ui.min.js"></script>
+        <script src="js/ui.js"></script>
         <script>
             (function() {
                 'use strict';
@@ -182,6 +174,8 @@
 
             }());
         </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
     </body>
 
 </html>

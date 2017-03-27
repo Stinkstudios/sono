@@ -59,7 +59,7 @@ pre {
 code {
   border-radius: 8px;
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 800px;
   min-width: 300px;
   width: 80%;
 }
@@ -86,4 +86,8 @@ nav a {
 
 * {
     box-sizing: border-box;
+}
+
+.dg select {
+    color: black;
 }

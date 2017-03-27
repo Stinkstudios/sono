@@ -18,9 +18,9 @@
     "start": "rollup -c -w | karma start",
     "lint": "eslint 'src/**/*.js'; exit 0",
     "examples": "browser-sync start -s --files 'examples/**/*.js, examples/**/*.css' --no-notify",
-    "ui": "babel examples/js/ui.js | uglifyjs -m -c warnings=false > examples/js/ui.min.js",
-    "css": "postcss examples/css/index.css --use postcss-import postcss-custom-media postcss-custom-properties postcss-calc autoprefixer -o examples/css/styles.css",
-    "build:examples": "npm run ui && npm run css",
+    "examples:js": "babel examples/js/src --out-dir examples/js/",
+    "examples:css": "postcss examples/css/index.css --use postcss-import postcss-custom-media postcss-custom-properties postcss-calc autoprefixer -o examples/css/styles.css",
+    "build:examples": "npm run examples:js && npm run examples:css",
     "lib": "rimraf core effects utils && babel src --out-dir ./"
   },
   "repository": {
