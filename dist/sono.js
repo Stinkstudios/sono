@@ -4971,9 +4971,6 @@ var Panner = function (_AbstractEffect) {
     function Panner() {
         var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-        var x = _ref.x;
-        var y = _ref.y;
-        var z = _ref.z;
         var panningModel = _ref.panningModel;
         var distanceModel = _ref.distanceModel;
         var refDistance = _ref.refDistance;
@@ -4999,10 +4996,10 @@ var Panner = function (_AbstractEffect) {
         _this._node.coneOuterAngle = isDefined(coneOuterAngle) ? coneOuterAngle : pannerDefaults.coneOuterAngle;
         _this._node.coneOuterGain = isDefined(coneOuterGain) ? coneOuterGain : pannerDefaults.coneOuterGain;
         // set to defaults (needed in Firefox)
-        _this._node.setPosition(0, 0, 1);
-        _this._node.setOrientation(0, 0, 0);
+        _this._node.setPosition(0, 0, 0);
+        _this._node.setOrientation(1, 0, 0);
 
-        _this.update({ x: x, y: y, z: z });
+        _this.set(0);
         return _this;
     }
 

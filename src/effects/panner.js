@@ -97,7 +97,7 @@ function setNodePosition(nodeOrListener, vec) {
 }
 
 class Panner extends AbstractEffect {
-    constructor({x, y, z, panningModel, distanceModel, refDistance, maxDistance, rolloffFactor, coneInnerAngle, coneOuterAngle, coneOuterGain} = {}) {
+    constructor({panningModel, distanceModel, refDistance, maxDistance, rolloffFactor, coneInnerAngle, coneOuterAngle, coneOuterGain} = {}) {
         super(sono.context.createPanner());
 
         // Default for stereo is 'HRTF' can also be 'equalpower'
@@ -113,10 +113,10 @@ class Panner extends AbstractEffect {
         this._node.coneOuterAngle = isDefined(coneOuterAngle) ? coneOuterAngle : pannerDefaults.coneOuterAngle;
         this._node.coneOuterGain = isDefined(coneOuterGain) ? coneOuterGain : pannerDefaults.coneOuterGain;
         // set to defaults (needed in Firefox)
-        this._node.setPosition(0, 0, 1);
-        this._node.setOrientation(0, 0, 0);
+        this._node.setPosition(0, 0, 0);
+        this._node.setOrientation(1, 0, 0);
 
-        this.update({x, y, z});
+        this.set(0);
     }
 
     update({x, y, z}) {
