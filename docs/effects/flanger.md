@@ -1,6 +1,6 @@
 # Flanger
 
-[View source code](../effects/flanger.js)
+[View source code](../../src/effects/flanger.js)
 
 Creates a sweeping filter effect
 
@@ -10,11 +10,11 @@ import flanger from 'sono/effects/flanger';
 const sound = sono.create('boom.mp3');
 
 const flange = sound.effects.add(flanger({
-	stereo: true,
-	delay: 0.005,
-	feedback: 0.5,
-	frequency: 0.025,
-	gain: 0.002
+    stereo: true,
+    delay: 0.005,
+    feedback: 0.5,
+    frequency: 0.025,
+    gain: 0.002
 }));
 ```
 
@@ -26,10 +26,10 @@ import {stereoFlanger} from 'sono/effects/flanger';
 const sound = sono.create('boom.mp3');
 
 const flange = sound.effects.add(stereoFlanger({
-	delay: 0.005,
-	feedback: 0.5,
-	frequency: 0.025,
-	gain: 0.002
+    delay: 0.005,
+    feedback: 0.5,
+    frequency: 0.025,
+    gain: 0.002
 }));
 ```
 
@@ -41,9 +41,9 @@ import {monoFlanger} from 'sono/effects/flanger';
 const sound = sono.create('boom.mp3');
 
 const flange = sound.effects.add(monoFlanger({
-	delay: 0.005,
-	feedback: 0.5,
-	frequency: 0.025,
-	gain: 0.002
+    delay: 0.005,
+    feedback: 0.5,
+    frequency: 0.025,
+    gain: 0.002
 }));
 ```

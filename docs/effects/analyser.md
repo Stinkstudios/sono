@@ -1,6 +1,6 @@
 # Analyser
 
-[View source code](../effects/analyser.js)
+[View source code](../../src/effects/analyser.js)
 
 Get real-time frequency and waveform information.
 

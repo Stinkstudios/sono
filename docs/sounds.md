@@ -1,6 +1,6 @@
 # Sound
 
-[View source code](../core/sound.js)
+[View source code](../src/core/sound.js)
 
 ## Create
 

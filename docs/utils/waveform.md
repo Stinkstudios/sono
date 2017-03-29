@@ -1,5 +1,7 @@
 # Waveform
 
+[View source code](../../src/utils/waveform.js)
+
 ```javascript
 import sono from 'sono';
 import 'sono/utils/waveform';

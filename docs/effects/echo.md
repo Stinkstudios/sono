@@ -1,6 +1,6 @@
 # Echo
 
-[View source code](../effects/echo.js)
+[View source code](../../src/effects/echo.js)
 
 ```javascript
 import echo from 'sono/effects/echo';

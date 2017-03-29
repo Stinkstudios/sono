@@ -1,6 +1,6 @@
 # Compressor
 
-[View source code](../effects/compressor.js)
+[View source code](../../src/effects/compressor.js)
 
 Compression lowers the volume of the loudest parts of the signal and raises the volume of the softest parts.
 

@@ -1,6 +1,6 @@
 # Convolver
 
-[View source code](../effects/convolver.js)
+[View source code](../../src/effects/convolver.js)
 
 Creates a reverb effect by applying the characteristics of one sound to another.
 

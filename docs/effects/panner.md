@@ -1,6 +1,6 @@
 # Panner
 
-[View source code](../effects/panner.js)
+[View source code](../../src/effects/panner.js)
 
 ## Pan left/right
 

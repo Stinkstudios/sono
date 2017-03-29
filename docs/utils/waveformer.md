@@ -1,5 +1,7 @@
 # Waveformer
 
+[View source code](../../src/utils/waveformer.js)
+
 ## Get a sound's waveform and draw it to a canvas element:
 
 ```javascript
@@ -13,22 +15,13 @@ const wave = sono.utils.waveformer({
 document.body.appendChild(wave.canvas);
 ```
 
-## Update the waveformer as the sound progresses
-```javascript
-function update() {
-	window.requestAnimationFrame(update);
-	waveformer();
-}
-update();
-```
-
 ## Supply your own canvas el
 
 ```javascript
 const canvasEl = document.querySelector('canvas');
 const wave = sono.utils.waveformer({
     waveform: sound.waveform(canvasEl.width),
-    canvas: document.querySelector('canvas'),
+    canvas: canvasEl,
     color: 'green'
 });
 ```
@@ -39,9 +32,9 @@ const wave = sono.utils.waveformer({
 const waveformer = sono.utils.waveformer({
     waveform: sound.waveform(canvasEl.width),
     canvas: canvasEl,
-		color: (position, length) => {
-			return position / length < sound.progress ? 'red' : 'yellow';
-		}
+	color: (position, length) => {
+		return position / length < sound.progress ? 'red' : 'yellow';
+	}
 });
 ```
 
@@ -62,21 +55,20 @@ const waveformer = sono.utils.waveformer({
 const sound = sono.create('foo.ogg');
 const analyser = sound.effects.add(sono.analyser({
 	fftSize: 512,
-	smoothingTimeConstant: 0.7
+	smoothing: 0.7
 }));
 
 const waveformer = sono.utils.waveformer({
     waveform: analyser.getFrequencies(),
     canvas: document.querySelector('canvas'),
-		color: (position, length) => {
-			const hue = (position / length) * 360;
-			return `hsl(${hue}, 100%, 40%)`;
-		},
-		transform: (value) => {
-            // normalise the value from the analyser
-			return value / 256;
-		}
+	color: (position, length) => {
+		const hue = (position / length) * 360;
+		return `hsl(${hue}, 100%, 40%)`;
+	},
+    // normalise the value from the analyser
+	transform: value => value / 256
 });
+
 // update the waveform
 function update() {
 	window.requestAnimationFrame(update);

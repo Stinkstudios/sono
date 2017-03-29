@@ -1,6 +1,6 @@
 # Effects
 
-[View source code](../core/effects.js)
+[View source code](../src/core/effects.js)
 
 ## Add effects
 

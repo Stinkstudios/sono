@@ -1,6 +1,6 @@
 # Filter
 
-[View source code](../effects/filter.js)
+[View source code](../../src/effects/filter.js)
 
 ## Let only low frequencies pass
 

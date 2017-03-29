@@ -1,6 +1,6 @@
 # Microphone
 
-[View source code](../utils/microphone.js)
+[View source code](../../src/utils/microphone.js)
 
 ```javascript
 import microphone from 'sono/utils';

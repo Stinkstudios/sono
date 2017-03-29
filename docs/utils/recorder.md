@@ -1,6 +1,6 @@
 # Recorder
 
-[View source code](../utils/recorder.js)
+[View source code](../../src/utils/recorder.js)
 
 ## Record audio from the mix or microphone to a new audio buffer
 

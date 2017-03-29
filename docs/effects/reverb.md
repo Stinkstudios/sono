@@ -1,6 +1,6 @@
 # Reverb
 
-[View source code](../effects/reverb.js)
+[View source code](../../src/effects/reverb.js)
 
 ```javascript
 import reverb from 'sono/effects/reverb';

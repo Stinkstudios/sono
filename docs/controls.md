@@ -1,6 +1,6 @@
 # Controls
 
-[View source code](../core/sono.js)
+[View source code](../src/core/sono.js)
 
 ## Master volume
 
