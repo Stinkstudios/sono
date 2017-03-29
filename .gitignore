@@ -46,11 +46,15 @@ dploy.yaml
 
 # FOLDERS
 
-!examples/audio/*.mp3
-!examples/audio/*.ogg
-examples/audio/other
-examples/temp.html
+!/test/audio/*.ogg
+!/examples/audio/*.mp3
+!/examples/audio/*.ogg
+/examples/audio/other
+/examples/temp.html
 node_modules/
 bower_components/
 .sass-cache/
-labs/
+/labs/
+/core/
+/effects/
+/utils/

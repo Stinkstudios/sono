@@ -1,23 +1,19 @@
-window.ui = (function() {
-    'use strict';
+'use strict';
 
+(function () {
     var sono = window.sono;
 
-    /*
-     * Player
-     */
-
     function createPlayer(options) {
-        var sound = options.sound,
-            el = options.el,
-            analyser = options.analyser,
-            inner = el.querySelector('[data-js="inner"]'),
-            elProgressBarA = el.querySelector('[data-js="progressA"]'),
-            elProgressBarB = el.querySelector('[data-js="progressB"]'),
-            canvas = el.querySelector('canvas'),
-            waveformer;
+        var sound = options.sound;
+        var el = options.el;
+        var analyser = options.analyser;
+        var inner = el.querySelector('[data-inner]');
+        var elProgressBarA = el.querySelector('[data-progressA]');
+        var elProgressBarB = el.querySelector('[data-progressB]');
+        var canvas = el.querySelector('canvas');
+        var waveformer = void 0;
 
-        var togglePlay = function(event) {
+        function togglePlay(event) {
             if (event.type === 'touchstart') {
                 inner.removeEventListener('mousedown', togglePlay);
             }
@@ -26,43 +22,35 @@ window.ui = (function() {
             } else {
                 sound.play();
             }
-        };
+        }
 
-        var updateState = function() {
+        function updateState() {
             el.classList.toggle('is-playing', sound.playing);
             if (sound.playing) {
                 update();
-            } else {
-                draw(0);
             }
-        };
+        }
 
-        var setRotation = function(el, deg) {
+        function setRotation(elem, deg) {
             var transform = 'rotate(' + deg + 'deg)';
-            el.style.webkitTransform = transform;
-            el.style.transform = transform;
-        };
+            elem.style.webkitTransform = transform;
+            elem.style.transform = transform;
+        }
 
-        var draw = function(progress) {
+        function draw(progress) {
             if (elProgressBarA) {
                 var rotation = progress * 360;
                 setRotation(elProgressBarA, Math.min(rotation, 180));
                 setRotation(elProgressBarB, Math.max(rotation - 180, 0));
-                // waveformer(analyser.getWaveform(false));
-                // waveformer(analyser.getFrequencies(true));
                 waveformer();
             } else if (analyser) {
                 waveformer(analyser.getFrequencies(false));
             } else {
                 waveformer();
             }
-        };
+        }
 
-        var update = function() {
-            // if(sound.playing) {
-            //   window.requestAnimationFrame(update);
-            // }
-
+        function update() {
             if (!el.classList.contains('is-active')) {
                 return;
             }
@@ -70,9 +58,9 @@ window.ui = (function() {
             if (sound.data) {
                 draw(sound.progress);
             }
-        };
+        }
 
-        var init = function() {
+        function init() {
             if (elProgressBarA) {
                 waveformer = sono.utils.waveformer({
                     shape: 'circular',
@@ -81,33 +69,21 @@ window.ui = (function() {
                     canvas: canvas,
                     innerRadius: 180,
                     lineWidth: 1.5,
-                    color: function(position, length) {
+                    color: function color(position, length) {
                         return position / length < sound.progress ? '#bbcccc' : '#dddddd';
                     }
                 });
-                // waveformer = sono.utils.waveformer({
-                //   shape: 'circular',
-                //   style: 'line',
-                //   canvas: canvas,
-                //   innerRadius: 180,
-                //   lineWidth: 2.5,
-                //   color: 0,
-                //   transform: function(value) {
-                //     // return value / 256;
-                //     return Math.abs(value / 200);
-                //   }
-                // });
             } else if (analyser) {
                 waveformer = sono.utils.waveformer({
                     shape: 'linear',
                     style: 'fill',
                     lineWidth: 2,
                     canvas: canvas,
-                    color: function(position, length) {
-                        var hue = (position / length) * 360;
+                    color: function color(position, length) {
+                        var hue = position / length * 360;
                         return 'hsl(' + hue + ', 100%, 50%)';
                     },
-                    transform: function(value) {
+                    transform: function transform(value) {
                         return value / 256;
                     }
                 });
@@ -118,7 +94,7 @@ window.ui = (function() {
                     style: 'fill',
                     lineWidth: 2,
                     canvas: canvas,
-                    color: function(position, length) {
+                    color: function color(position, length) {
                         return position / length < sound.progress ? '#bbcccc' : '#dddddd';
                     }
                 });
@@ -128,16 +104,13 @@ window.ui = (function() {
 
             inner.addEventListener('touchstart', togglePlay);
             inner.addEventListener('mousedown', togglePlay);
-        };
+        }
 
-        sound.on('ready', init)
-            .on('ended', updateState)
-            .on('play', updateState)
-            .on('pause', updateState);
+        sound.on('ready', init).on('ended', updateState).on('play', updateState).on('pause', updateState);
 
         update.el = el;
 
-        update.destroy = function(destroySound) {
+        update.destroy = function (destroySound) {
             if (destroySound) {
                 sound.destroy();
             }
@@ -159,28 +132,29 @@ window.ui = (function() {
      */
 
     function createToggle(options, fn) {
-        var el = options.el,
-            nameEl = el.querySelector('[data-js="name"]'),
-            iconEl = el.querySelector('[data-js="icon"]'),
-            outputEl = el.querySelector('[data-js="output"]'),
-            name = options.name || '',
-            value = !!options.value,
-            labelOn = options.labelOn !== undefined ? options.labelOn : 'on',
-            labelOff = options.labelOff !== undefined ? options.labelOff : 'off',
-            callback = fn;
+        var name = options.name || '';
+        var labelOn = options.labelOn || 'on';
+        var labelOff = options.labelOff || 'off';
+        var value = !!options.value;
 
-        var updateState = function(value) {
-            if (value) {
+        var el = document.createElement('div');
+        el.innerHTML = '\n        <div class="Control" data-toggle>\n          <h3 class="Control-name" data-name>' + name + '</h3>\n          <div class="Control-inner">\n            <div class="Control-circle">\n              <div class="Control-mark Control-mark--cross" data-icon></div>\n            </div>\n          </div>\n          <output class="Control-output" data-output></output>\n        </div>\n        ';
+        options.el.appendChild(el);
+        var iconEl = el.querySelector('[data-icon]');
+        var outputEl = el.querySelector('[data-output]');
+
+        function updateState(val) {
+            if (val) {
                 iconEl.classList.remove('Control-mark--cross');
                 iconEl.classList.add('Control-mark--tick');
             } else {
                 iconEl.classList.remove('Control-mark--tick');
                 iconEl.classList.add('Control-mark--cross');
             }
-            setLabel(value ? labelOn : labelOff);
-        };
+            setLabel(val ? labelOn : labelOff);
+        }
 
-        var onDown = function(event) {
+        function onDown(event) {
             if (event.type === 'touchstart') {
                 el.removeEventListener('mousedown', onDown);
             }
@@ -189,75 +163,57 @@ window.ui = (function() {
 
             updateState(value);
 
-            if (callback) {
-                callback(value);
+            if (fn) {
+                fn(value);
             }
-        };
+        }
 
-        var setName = function(value) {
-            nameEl.innerHTML = value;
-        };
+        function setLabel(v) {
+            outputEl.value = v;
+        }
 
-        var setLabel = function(value) {
-            outputEl.value = value;
-        };
-
-        var destroy = function() {
+        function destroy() {
             el.removeEventListener('mousedown', onDown);
             el.removeEventListener('touchstart', onDown);
-        };
+        }
 
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
-        setName(name);
         updateState(value);
 
-        return {
-            setName: setName,
-            setLabel: setLabel,
-            destroy: destroy
-        };
+        return { setLabel: setLabel, destroy: destroy };
     }
-	
-	/*
+
+    /*
      * Trigger control
      */
 
     function createTrigger(options, fn) {
-        var el = options.el,
-            nameEl = el.querySelector('[data-js="name"]'),
-            iconEl = el.querySelector('[data-js="icon"]'),
-            outputEl = el.querySelector('[data-js="output"]'),
-            name = options.name || '',
-            callback = fn;
+        var name = options.name || '';
 
-        var onDown = function(event) {
+        var el = document.createElement('div');
+        el.innerHTML = '\n        <div class="Control" data-trigger>\n            <h3 class="Control-name" data-name>' + name + '</h3>\n            <div class="Control-inner">\n                <div class="Control-circle">\n                    <div class="Control-mark Control-mark--play" data-icon></div>\n                </div>\n            </div>\n            <output class="Control-output" data-output>&nbsp;</output>\n        </div>\n        ';
+        options.el.appendChild(el);
+
+        function onDown(event) {
             if (event.type === 'touchstart') {
                 el.removeEventListener('mousedown', onDown);
             }
 
-            if (callback) {
-                callback();
+            if (fn) {
+                fn();
             }
-        };
+        }
 
-        var setName = function(value) {
-            nameEl.innerHTML = value;
-        };
-
-        var destroy = function() {
+        function destroy() {
             el.removeEventListener('mousedown', onDown);
             el.removeEventListener('touchstart', onDown);
-        };
+        }
 
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
-        setName(name);
 
-        return {
-            setName: setName,
-            destroy: destroy
-        };
+        return { destroy: destroy };
     }
 
     /*
@@ -265,58 +221,58 @@ window.ui = (function() {
      */
 
     function createControl(options, fn) {
-        var el = options.el,
-            nameEl = el.querySelector('[data-js="name"]'),
-            wheelEl = el.querySelector('[data-js="wheel"]'),
-            minEl = el.querySelector('[data-js="min"]'),
-            maxEl = el.querySelector('[data-js="max"]'),
-            outputEl = el.querySelector('[data-js="output"]'),
-            name = options.name || '',
-            value = options.value || 0,
-            places = typeof options.places === 'number' ? options.places : 4,
-            min = options.min || 0,
-            max = options.max || 0,
-            range = max - min,
-            callback = fn,
-            lastDeg = 0,
-            delta = 0;
+        var name = options.name || '';
+        var places = typeof options.places === 'number' ? options.places : 4;
+        var min = options.min || 0;
+        var max = options.max || 0;
+        var range = max - min;
+
+        var value = options.value || 0;
+        var lastDeg = 0;
+        var delta = 0;
+
+        var el = document.createElement('div');
+        el.innerHTML = '\n        <div class="Control" data-control>\n            <h3 class="Control-name" data-name>' + name + '</h3>\n            <div class="Control-inner">\n                <div class="Control-circle" data-wheel>\n                    <div class="Control-mark Control-mark--line"></div>\n                </div>\n            </div>\n            <div class="Control-inner">\n                <div class="Control-bound" data-min>' + min.toFixed(places) + '</div>\n                <output class="Control-output" data-output>' + value.toFixed(places) + '</output>\n                <div class="Control-bound" data-max>' + max.toFixed(places) + '</div>\n            </div>\n        </div>\n        ';
+        options.el.appendChild(el);
+        var wheelEl = el.querySelector('[data-wheel]');
+        var outputEl = el.querySelector('[data-output]');
 
         var math = {
             DEG: 180 / Math.PI,
-            angle: function(x1, y1, x2, y2) {
+            angle: function angle(x1, y1, x2, y2) {
                 var dx = x2 - x1;
                 var dy = y2 - y1;
                 return Math.atan2(dy, dx);
             },
-            clamp: function(value, min, max) {
-                if (min > max) {
-                    var a = min;
-                    min = max;
-                    max = a;
+            clamp: function clamp(val, mn, mx) {
+                if (mn > mx) {
+                    var a = mn;
+                    mn = mx;
+                    mx = a;
                 }
-                if (value < min) {
+                if (val < mn) {
                     return min;
                 }
-                if (value > max) {
-                    return max;
+                if (val > mx) {
+                    return mx;
                 }
-                return value;
+                return val;
             },
-            degrees: function(radians) {
+            degrees: function degrees(radians) {
                 return radians * this.DEG;
             },
-            distance: function(x1, y1, x2, y2) {
+            distance: function distance(x1, y1, x2, y2) {
                 var sq = math.distanceSQ(x1, y1, x2, y2);
                 return Math.sqrt(sq);
             },
-            distanceSQ: function(x1, y1, x2, y2) {
+            distanceSQ: function distanceSQ(x1, y1, x2, y2) {
                 var dx = x1 - x2;
                 var dy = y1 - y2;
                 return dx * dx + dy * dy;
             }
         };
 
-        var onDown = function(event) {
+        function onDown(event) {
             event.preventDefault();
             if (event.type === 'touchstart') {
                 el.removeEventListener('mousedown', onDown);
@@ -327,17 +283,17 @@ window.ui = (function() {
                 document.body.addEventListener('mouseup', onUp);
             }
             onMove(event);
-        };
+        }
 
-        var onUp = function(event) {
+        function onUp(event) {
             event.preventDefault();
             document.body.removeEventListener('mousemove', onMove);
             document.body.removeEventListener('touchmove', onMove);
             document.body.removeEventListener('mouseup', onUp);
             document.body.removeEventListener('touchend', onUp);
-        };
+        }
 
-        var onMove = function(event) {
+        function onMove(event) {
             event.preventDefault();
             if (event.touches) {
                 event = event.touches[0];
@@ -386,38 +342,31 @@ window.ui = (function() {
                     outputEl.value = value.toFixed(places);
                 }
 
-                if (callback) {
-                    callback(value, delta);
+                if (fn) {
+                    fn(value, delta);
                 }
             }
-        };
+        }
 
-        var destroy = function() {
+        function destroy() {
             document.body.removeEventListener('mousemove', onMove);
             document.body.removeEventListener('touchmove', onMove);
             document.body.removeEventListener('mouseup', onUp);
             document.body.removeEventListener('touchend', onUp);
             el.removeEventListener('mousedown', onDown);
             el.removeEventListener('touchstart', onDown);
-        };
+        }
 
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
-        nameEl.innerHTML = name;
-        minEl.innerHTML = min.toFixed(places);
-        maxEl.innerHTML = max.toFixed(places);
-        outputEl.value = value.toFixed(places);
 
-        return {
-            destroy: destroy
-        };
+        return { destroy: destroy };
     }
 
-    return {
+    window.ui = {
         createPlayer: createPlayer,
         createControl: createControl,
         createToggle: createToggle,
         createTrigger: createTrigger
     };
-
-}());
+})();

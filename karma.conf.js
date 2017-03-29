@@ -1,5 +1,19 @@
 module.exports = function(config) {
+
+    const files = [];
+
+    if (process.env.WA === 'no') {
+        files.push('test/kill-wa.js');
+    }
+
+    if (process.env.TRAVIS) {
+        files.push('test/is-travis.js');
+    }
+
     config.set({
+
+        // How long to wait for a message from a browser before disconnecting
+        browserNoActivityTimeout: 30000,
 
         // base path, that will be used to resolve files and exclude
         basePath: '',
@@ -15,16 +29,16 @@ module.exports = function(config) {
         frameworks: ['mocha', 'chai'],
 
         // list of files / patterns to load in the browser
-        files: [
-            'dist/sono.js',
+        files: files.concat([
+            {pattern: 'test/audio/*.ogg', watched: false, included: false, served: true, nocache: false},
             'test/helper.js',
+            'dist/sono.js',
             'test/**/*.js'
-        ],
+        ]),
 
         // list of files to exclude
         exclude: [
-            // 'test/source.spec.js'
-            'test/playback.spec.js'
+            // 'test/playback.spec.js'
         ],
 
         // test results reporter to use

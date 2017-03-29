@@ -83,7 +83,7 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 20px;
+  width: 90px;
 }
 
 .Player.is-playing .Player-play {
@@ -183,7 +183,7 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 8px;
+  width: 30px;
 }
 
 .PlayerTop.is-playing .PlayerTop-play {

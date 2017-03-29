@@ -1,15 +1,15 @@
 describe('sono loader', function() {
-    this.timeout(5000);
+    this.timeout(10000);
 
-    describe('single', function() {
-        var sound,
+    describe('single', () => {
+        let sound,
             progress = 0;
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
             sono.load({
                 url: [
-                    window.baseURL + 'hit.ogg',
-                    window.baseURL + 'hit.mp3'
+                    '/base/test/audio/blip.ogg',
+                    '/base/test/audio/blip.mp3'
                 ],
                 onComplete: function(loadedSound) {
                     sound = loadedSound;
@@ -22,43 +22,37 @@ describe('sono loader', function() {
             });
         });
 
-        it('should have loaded sound', function() {
-            expect(sound)
-                .to.exist;
-            expect(progress)
-                .to.eql(1);
-            expect(sono.getSound(sound.id))
-                .to.exist;
-            expect(sound.loader)
-                .to.exist;
-            expect(sound.loader.data)
-                .to.exist;
-            expect(sound.play)
-                .to.be.a('function');
-            sono.destroySound(sound);
-            expect(sono.getSound(sound.id))
-                .to.not.exist;
+        it('should have loaded sound', () => {
+            expect(sound).to.exist;
+            expect(progress).to.eql(1);
+            expect(sono.getSound(sound.id)).to.exist;
+            expect(sound.loader).to.exist;
+            expect(sound.loader.data).to.exist;
+            expect(sound.play).to.be.a('function');
+            sono.destroy(sound);
+            expect(sono.getSound(sound.id)).to.not.exist;
         });
     });
 
-    describe('multiple', function() {
-        var sounds,
-            progress = 0,
-            multiple = [{
-                id: 'bullet',
-                url: [
-                    window.baseURL + 'bullet.ogg',
-                    window.baseURL + 'bullet.mp3'
-                ]
-            }, {
-                id: 'collect',
-                url: [
-                    window.baseURL + 'collect.ogg',
-                    window.baseURL + 'collect.mp3'
-                ]
-            }];
+    describe('multiple', () => {
+        let sounds,
+            progress = 0;
 
-        beforeEach(function(done) {
+        const multiple = [{
+            id: 'bullet',
+            url: [
+                '/base/test/audio/blip.ogg',
+                '/base/test/audio/blip.mp3'
+            ]
+        }, {
+            id: 'collect',
+            url: [
+                '/base/test/audio/bloop.ogg',
+                '/base/test/audio/bloop.mp3'
+            ]
+        }];
+
+        beforeEach((done) => {
             sono.load({
                 url: multiple,
                 onComplete: function(loadedSounds) {
@@ -71,35 +65,28 @@ describe('sono loader', function() {
             });
         });
 
-        it('should have loaded sound', function() {
-            expect(sounds)
-                .to.exist;
-            expect(progress)
-                .to.eql(1);
-            expect(sounds.length)
-                .to.eql(2);
-            expect(sono.getSound(multiple[0].id)
-                    .id)
-                .to.eql(multiple[0].id);
-            expect(sono.getSound(multiple[1].id)
-                    .id)
-                .to.eql(multiple[1].id);
-            expect(sounds[0].play)
-                .to.be.a('function');
-            sono.destroySound(sounds[0]);
-            sono.destroySound(sounds[1]);
+        it('should have loaded sound', () => {
+            expect(sounds).to.exist;
+            expect(progress).to.eql(1);
+            expect(sounds.length).to.eql(2);
+            expect(sono.getSound(multiple[0].id).id).to.eql(multiple[0].id);
+            expect(sono.getSound(multiple[1].id).id).to.eql(multiple[1].id);
+            expect(sounds[0].play).to.be.a('function');
+            sono.destroy(sounds[0]);
+            sono.destroy(sounds[1]);
         });
     });
 
-    describe('audio element', function() {
-        var sound,
-            progress = 0,
-            el = [
-                window.baseURL + 'select.ogg',
-                window.baseURL + 'select.mp3'
-            ];
+    describe('audio element', () => {
+        let sound,
+            progress = 0;
 
-        beforeEach(function(done) {
+        const el = [
+            '/base/test/audio/blip.ogg',
+            '/base/test/audio/blip.mp3'
+        ];
+
+        beforeEach((done) => {
             sono.load({
                 url: el,
                 onComplete: function(loadedSound) {
@@ -114,37 +101,29 @@ describe('sono loader', function() {
             });
         });
 
-        it('should have loaded sound', function() {
-            expect(sound)
-                .to.exist;
-            expect(progress)
-                .to.eql(1);
-            expect(sono.getSound(sound.id))
-                .to.exist;
-            expect(sound.loader)
-                .to.exist;
-            expect(sound.loader.data)
-                .to.exist;
-            expect(sound.play)
-                .to.be.a('function');
-            expect(sound.data)
-                .to.be.an.instanceof(window.HTMLMediaElement);
-            sono.destroySound(sound);
-            expect(sono.getSound(sound.id))
-                .to.not.exist;
+        it('should have loaded sound', () => {
+            expect(sound).to.exist;
+            expect(progress).to.eql(1);
+            expect(sono.get(sound.id)).to.exist;
+            expect(sound.loader).to.exist;
+            expect(sound.loader.data).to.exist;
+            expect(sound.play).to.be.a('function');
+            expect(sound.data).to.be.an.instanceof(window.HTMLMediaElement);
+            sono.destroy(sound);
+            expect(sono.getSound(sound.id)).to.not.exist;
         });
     });
 
-    describe('audio config', function() {
-        var sound,
+    describe('audio config', () => {
+        let sound,
             progress = 0;
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
             sono.load({
                 id: 'hit',
                 url: [
-                    window.baseURL + 'hit.ogg',
-                    window.baseURL + 'hit.mp3'
+                    '/base/test/audio/blip.ogg',
+                    '/base/test/audio/blip.mp3'
                 ],
                 loop: true,
                 volume: 0.5,
@@ -158,28 +137,21 @@ describe('sono loader', function() {
             });
         });
 
-        it('should have loaded sound', function() {
-            expect(sound)
-                .to.exist;
-            expect(progress)
-                .to.eql(1);
-            expect(sono.getSound(sound.id))
-                .to.exist;
-            expect(sound.id)
-                .to.eql('hit');
-            expect(sound.loop)
-                .to.be.true;
-            expect(sound.volume)
-                .to.eql(0.5);
-            expect(sound.loader)
-                .to.exist;
-            expect(sound.loader.data)
-                .to.exist;
-            expect(sound.play)
-                .to.be.a('function');
-            sono.destroySound(sound);
-            expect(sono.getSound(sound.id))
-                .to.not.exist;
+        it('should have loaded sound', () => {
+            expect(sound).to.exist;
+            expect(sono.get(sound.id)).to.exist;
+            expect(sound.loader).to.exist;
+            expect(sound.loader.data).to.exist;
+            expect(sound.play).to.be.a('function');
+            sono.destroy(sound);
+            expect(sono.get(sound.id)).to.not.exist;
+        });
+
+        it('should have set properties', () => {
+            expect(progress).to.eql(1);
+            expect(sound.id).to.eql('hit');
+            expect(sound.loop).to.be.true;
+            expect(sound.volume).to.eql(0.5);
         });
     });
 

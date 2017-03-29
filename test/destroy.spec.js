@@ -1,12 +1,12 @@
-describe('Destroy', function() {
+describe('Destroy', () => {
 
-    var sound;
+    let sound;
 
-    beforeEach(function() {
+    beforeEach(() => {
         sono.destroyAll();
     });
 
-    it('should have one sound', function() {
+    it('should have one sound', () => {
         sound = sono.createSound({
             id: 'sine',
             type: 'sine'
@@ -14,7 +14,7 @@ describe('Destroy', function() {
         expect(sono.sounds.length).to.eql(1);
     });
 
-    it('should have zero sounds', function() {
+    it('should have zero sounds', () => {
         sound.destroy();
         expect(sono.sounds.length).to.eql(0);
     });

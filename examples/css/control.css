@@ -3,6 +3,7 @@
     --control-bg: #bbcccc;
     --control-markColor: white;
     --control-markWidth: 10px;
+    --control-diameter: 100px;
 }
 
 .Controls {
@@ -19,7 +20,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-width: 250px;
+  min-width: 200px;
   pointer-events: none;
 }
 
@@ -38,24 +39,24 @@
 .Control-circle {
   background-color: var(--control-bg);
   border-radius: 50%;
-  height: 100px;
+  height: var(--control-diameter);
   padding: 10px;
   pointer-events: all;
-  width: 100px;
+  width: var(--control-diameter);
   text-align: center;
 }
 
 .Control-output {
   display: block;
-  font-size: 18px;
+  font-size: 16px;
   margin: 8px 0;
-  width: 100px;
+  width: calc(var(--control-diameter) - 30px);
   text-align: center;
 }
 
 .Control-bound {
   flex: 1 0;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .Control-mark {
@@ -90,7 +91,7 @@
 .Control-mark--cross {
   background-color: var(--control-markColor);
   height: 60px;
-  margin-top: 20px;
+  margin-top: 10px;
   transform: rotate(45deg);
   width: var(--control-markWidth);
 }
@@ -147,7 +148,7 @@
   border-radius: 8px;
   color: white;
   font-size: 24px;
-  height: 50px;
+  height: 70px;
   line-height: 50px;
   overflow: hidden;
   padding: 10px;

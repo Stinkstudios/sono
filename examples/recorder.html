@@ -1,81 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-  <title>sono - examples - recorder</title>
-  <link href="favicon.ico" rel="shortcut icon">
-  <link href="css/styles.css" rel="stylesheet">
-  <link href="css/paraiso.light.css" rel="stylesheet">
-</head>
-<body>
 
-    <section>
-      <header>
-        <h2>recorder</h2>
-      </header>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <title>sono - examples - recorder</title>
+        <link href="favicon.ico" rel="shortcut icon">
+        <link href="css/styles.css" rel="stylesheet">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
+    </head>
 
-      <p class="Control-warning" data-js="warning">Microphone access is not supported in this browser</p>
+    <body>
 
-      <div class="Controls">
-        <div class="Control" data-js="micToggle">
-          <h3 class="Control-name" data-js="name"></h3>
-          <div class="Control-inner">
-            <div class="Control-circle">
-              <div class="Control-mark Control-mark--cross" data-js="icon"></div>
+        <section>
+            <header>
+                <h2>recorder</h2>
+            </header>
+
+            <p class="Control-warning" data-warning>Microphone access is not supported in this browser</p>
+
+            <div class="Controls" data-micToggle>
             </div>
-          </div>
-          <output class="Control-output" data-js="output"></output>
-        </div>
-      </div>
 
-      <div class="Controls">
-        <canvas class="Control-canvas" data-js="waveform" width="420" height="120"></canvas>
-      </div>
+            <div class="Controls">
+                <canvas class="Control-canvas" data-waveform width="420" height="120"></canvas>
+            </div>
 
-      <div class="PlayerTop" data-js="playerTop">
-        <div class="PlayerTop-control" data-js="inner">
-          <div class="PlayerTop-play"></div>
-          <div class="PlayerTop-pause"></div>
-        </div>
-        <canvas class="PlayerTop-canvas" width="400" height="60" data-js="wave"></canvas>
-      </div>
+            <div class="PlayerTop" data-playerTop>
+                <div class="PlayerTop-control" data-inner>
+                    <div class="PlayerTop-play"></div>
+                    <div class="PlayerTop-pause"></div>
+                </div>
+                <canvas class="PlayerTop-canvas" width="400" height="60" data-wave></canvas>
+            </div>
 
-      <pre><code class="js">
+            <pre><code class="js">
         var passThrough = true,
             sound,
             recorder;
         var onConnect = function(stream) {
           // the sound coming through the micophone
-          sound = sono.createSound(stream);
+          sound = sono.create(stream);
           // start recorder
-          recorder = sound.effect.recorder(passThrough);
-          recorder.start();
+          recorder = sono.utils.recorder(passThrough);
+          recorder.start(sound);
 
           setTimeout(function() {
             // recorder returns recorded sound when stopped
             var recording = recorder.stop();
             // create a new sound object from the recording
-            sono.createSound(recording).play();
+            sono.create(recording).play();
           }, 2000);
         };
         // propmt user to connect their mic
         sono.utils.microphone(onConnect);
       </code></pre>
 
-    </section>
+        </section>
 
-    <script>
-      if (window.location.search.slice(1) === 'nowebaudio') {
-        window.AudioContext = window.webkitAudioContext = undefined;
-      }
-    </script>
-    <script src="js/highlight.pack.js"></script>
-    <script>hljs.initHighlightingOnLoad();</script>
-    <script src="../dist/sono.js"></script>
-    <script src="js/player.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/recorder.js"></script>
-</body>
+        <script src="js/disable.js"></script>
+        <script src="../dist/sono.js"></script>
+        <script src="js/ui.js"></script>
+        <script src="js/recorder.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+    </body>
+
 </html>
