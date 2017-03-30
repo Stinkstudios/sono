@@ -10,7 +10,7 @@
     const volume = 0.4;
     const size = 2000;
     const local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
-    const baseURL = local ? 'audio/other' : 'https://ianmcgregor.co/prototypes/audio/';
+    const baseURL = local ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
 
     const sounds = [
         'pulsar_1',
@@ -132,7 +132,7 @@
             boid: new Boid({
                 bounds: {x: 0 - size / 2, y: 0 - size / 2, width: size, height: size},
                 edgeBehavior: 'bounce',
-                maxSpeed: 2 + 2 * Math.random(),
+                maxSpeed: 2 + 8 * Math.random(),
                 wanderDistance: 10,
                 wanderRadius: 3,
                 wanderAngle: 0,

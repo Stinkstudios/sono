@@ -16,9 +16,11 @@
     var bgColor = 0x000020;
     var volume = 0.4;
     var size = 2000;
+    var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
+    var baseURL = local ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
 
     var sounds = ['pulsar_1', 'pulsar_2', 'pulsar_3', 'pulsar_4'].map(function (name) {
-        return 'audio/other/' + name;
+        return '' + baseURL + name;
     }).map(function (path) {
         return [path + '.ogg', path + '.mp3'];
     });
@@ -117,7 +119,7 @@
             boid: new Boid({
                 bounds: { x: 0 - size / 2, y: 0 - size / 2, width: size, height: size },
                 edgeBehavior: 'bounce',
-                maxSpeed: 2 + 2 * Math.random(),
+                maxSpeed: 2 + 8 * Math.random(),
                 wanderDistance: 10,
                 wanderRadius: 3,
                 wanderAngle: 0,
