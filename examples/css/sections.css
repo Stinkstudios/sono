@@ -1,3 +1,11 @@
+:root {
+  --color-main: #bbcccc;
+  --color-dark: #aabbbb;
+}
+
+@custom-media --narrow (max-width: 760px);
+@custom-media --mobile (max-width: 400px);
+
 html {
   height: 100%;
 }
@@ -51,7 +59,7 @@ pre {
 code {
   border-radius: 8px;
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 800px;
   min-width: 300px;
   width: 80%;
 }
@@ -74,4 +82,12 @@ nav {
 nav a {
   text-decoration: underline;
   font-size: 32px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.dg select {
+    color: black;
 }

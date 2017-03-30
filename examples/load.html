@@ -1,35 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>sono - examples - load</title>
-    <link href="css/styles.css" rel="stylesheet">
-    <link href="css/paraiso.light.css" rel="stylesheet">
-</head>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <title>sono - examples - load</title>
+        <link href="css/styles.css" rel="stylesheet">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
+    </head>
 
-<body>
-    <section>
-        <header>
-            <h2>load &amp; destroy</h2>
-        </header>
+    <body>
+        <section>
+            <header>
+                <h2>load &amp; destroy</h2>
+            </header>
 
 
-        <div class="Controls" style="display: block; text-align: center">
+            <div class="Controls" style="display: block; text-align: center">
 
-            <div data-js="info"></div>
-            <button class="Button" data-js="button-load">Load</button>
-            <button class="Button" data-js="button-defer">Defer load</button>
-            <button class="Button" data-js="button-destroy">Destroy</button>
-            <button class="Button" data-js="button-unload">Unload</button>
-            <button class="Button" data-js="button-reload">Reload</button>
-            <button class="Button" data-js="button-play">Play</button>
+                <div data-info></div>
+                <button class="Button" data-button-load>Load</button>
+                <button class="Button" data-button-defer>Defer load</button>
+                <button class="Button" data-button-destroy>Destroy</button>
+                <button class="Button" data-button-unload>Unload</button>
+                <button class="Button" data-button-reload>Reload</button>
+                <button class="Button" data-button-play>Play</button>
 
-        </div>
+            </div>
 
-    <pre><code class="js">
+            <pre><code class="js">
 // destroy
 sono.destroySound(id);
 sono.destroySound(sound);
@@ -51,155 +51,153 @@ sound.play(); // loads on demand
     </code></pre>
 
 
-    </section>
+        </section>
 
-    <script>
-        if (window.location.search.slice(1) === 'nowebaudio') {
-            window.AudioContext = window.webkitAudioContext = undefined;
-        }
-        if (!Object.assign) {
-  Object.defineProperty(Object, 'assign', {
-    enumerable: false,
-    configurable: true,
-    writable: true,
-    value: function(target, firstSource) {
-      'use strict';
-      if (target === undefined || target === null) {
-        throw new TypeError('Cannot convert first argument to object');
-      }
+        <script src="js/disable.js"></script>
+        <script>
+            if (!Object.assign) {
+                Object.defineProperty(Object, 'assign', {
+                    enumerable: false,
+                    configurable: true,
+                    writable: true,
+                    value: function(target, firstSource) {
+                        'use strict';
+                        if (target === undefined || target === null) {
+                            throw new TypeError('Cannot convert first argument to object');
+                        }
 
-      var to = Object(target);
-      for (var i = 1; i < arguments.length; i++) {
-        var nextSource = arguments[i];
-        if (nextSource === undefined || nextSource === null) {
-          continue;
-        }
+                        var to = Object(target);
+                        for (var i = 1; i < arguments.length; i++) {
+                            var nextSource = arguments[i];
+                            if (nextSource === undefined || nextSource === null) {
+                                continue;
+                            }
 
-        var keysArray = Object.keys(Object(nextSource));
-        for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
-          var nextKey = keysArray[nextIndex];
-          var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
-          if (desc !== undefined && desc.enumerable) {
-            to[nextKey] = nextSource[nextKey];
-          }
-        }
-      }
-      return to;
-    }
-  });
-}
-    </script>
-    <script src="js/highlight.pack.js"></script>
-    <script>
-        hljs.initHighlightingOnLoad();
-    </script>
-    <script src="../dist/sono.js"></script>
-    <script src="js/ui.js"></script>
-    <script>
-        var sono = window.sono;
-        sono.log();
-
-        var info = document.querySelector('[data-js="info"]');
-        var btnLoad = document.querySelector('[data-js="button-load"]');
-        var btnDefer = document.querySelector('[data-js="button-defer"]');
-        var btnDestroy = document.querySelector('[data-js="button-destroy"]');
-        var btnUnload = document.querySelector('[data-js="button-unload"]');
-        var btnReload = document.querySelector('[data-js="button-reload"]');
-        var btnPlay = document.querySelector('[data-js="button-play"]');
-        var baseURL = 'https://dl.dropboxusercontent.com/u/15470024/prototypes/audio/';
-
-        var sounds = [
-            'dnb-loop',
-            'dnb-loop-2',
-            'dnb-loop-3',
-            'ad2027-loop',
-            'bullet',
-            'collect',
-            'hit',
-            'select',
-            'music'
-        ].map(function(id) {
-            return {
-                id: id,
-                url: baseURL + id + (sono.canPlay.ogg ? '.ogg' : '.mp3')
+                            var keysArray = Object.keys(Object(nextSource));
+                            for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+                                var nextKey = keysArray[nextIndex];
+                                var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
+                                if (desc !== undefined && desc.enumerable) {
+                                    to[nextKey] = nextSource[nextKey];
+                                }
+                            }
+                        }
+                        return to;
+                    }
+                });
             }
-        });
+        </script>
+        <script src="../dist/sono.js"></script>
+        <script src="js/ui.js"></script>
+        <script>
+            var sono = window.sono;
+            sono.log();
 
-        var config = {
-            url: sounds,
-            onComplete: function() {
-                btnDestroy.disabled = false;
-                info.insertAdjacentHTML('beforeend', '<p>Sounds loaded: ' + sono.sounds.length + '</p>');
-            },
-            asMediaElement: false
-        };
+            var info = document.querySelector('[data-info]');
+            var btnLoad = document.querySelector('[data-button-load]');
+            var btnDefer = document.querySelector('[data-button-defer]');
+            var btnDestroy = document.querySelector('[data-button-destroy]');
+            var btnUnload = document.querySelector('[data-button-unload]');
+            var btnReload = document.querySelector('[data-button-reload]');
+            var btnPlay = document.querySelector('[data-button-play]');
+            var baseURL = 'https://ianmcgregor.co/prototypes/audio/';
 
-        function load() {
-            sono.load(config);
-        }
+            var sounds = [
+                'dnb-loop',
+                'dnb-loop-2',
+                'dnb-loop-3',
+                'ad2027-loop',
+                'bullet',
+                'collect',
+                'hit',
+                'select',
+                'music'
+            ].map(function(id) {
+                return {
+                    id: id,
+                    url: baseURL + id + (sono.canPlay.ogg ? '.ogg' : '.mp3')
+                }
+            });
 
-        function defer() {
-            var conf = {
-                url: config.url.map(function(s) {
-                    return {
-                        id: s.id,
-                        url: s.url,
-                        deferLoad: true
-                    };
-                })
+            var config = {
+                url: sounds,
+                onComplete: function() {
+                    btnDestroy.disabled = false;
+                    info.insertAdjacentHTML('beforeend', '<p>Sounds loaded: ' + sono.sounds.length + '</p>');
+                },
+                asMediaElement: false
             };
-            sono.load(conf);
-        }
 
-        function destroy() {
-            info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');
-            sono.sounds.forEach(function(sound) {
-                sono.destroySound(sound);
-            });
-            info.insertAdjacentHTML('beforeend', '<p>Destroyed!</p>');
-            info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');
-            sono.sounds.forEach(function(sound) {
-                info.insertAdjacentHTML('beforeend', '<p>Could not destroy: ' + sound.id + '</p>');
-            });
-        }
-        function unload() {
-            sono.sounds.forEach(function(sound) {
-                sound.unload();
-            });
-            info.insertAdjacentHTML('beforeend', '<p>sounds unloaded</p>');
-        }
-
-        function reload() {
-            sono.sounds.forEach(function(sound) {
-                sound.load(null, true);
-            });
-            info.insertAdjacentHTML('beforeend', '<p>sounds reloaded</p>');
-        }
-
-        var index = 0;
-        function play() {
-            if (index > config.url.length - 1) {
-                index = 0;
-                console.log('playback complete');
-                return;
+            function load() {
+                sono.load(config);
             }
-            var id = config.url[index].id;
-            var sound = sono.getSound(id);
-            sound.once('ended', play);
-            sound.play();
-            console.log('playing:', id);
-            info.insertAdjacentHTML('beforeend', '<p>playing ' + id + '</p>');
-            index++;
-        }
 
-        btnDestroy.disabled = true;
-        btnLoad.addEventListener('click', load);
-        btnDefer.addEventListener('click', defer);
-        btnDestroy.addEventListener('click', destroy);
-        btnUnload.addEventListener('click', unload);
-        btnReload.addEventListener('click', reload);
-        btnPlay.addEventListener('click', play);
-    </script>
-</body>
+            function defer() {
+                var conf = {
+                    url: config.url.map(function(s) {
+                        return {
+                            id: s.id,
+                            url: s.url,
+                            deferLoad: true
+                        };
+                    })
+                };
+                sono.load(conf);
+            }
+
+            function destroy() {
+                info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');
+                sono.sounds.forEach(function(sound) {
+                    sono.destroySound(sound);
+                });
+                info.insertAdjacentHTML('beforeend', '<p>Destroyed!</p>');
+                info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');
+                sono.sounds.forEach(function(sound) {
+                    info.insertAdjacentHTML('beforeend', '<p>Could not destroy: ' + sound.id + '</p>');
+                });
+            }
+
+            function unload() {
+                sono.sounds.forEach(function(sound) {
+                    sound.unload();
+                });
+                info.insertAdjacentHTML('beforeend', '<p>sounds unloaded</p>');
+            }
+
+            function reload() {
+                sono.sounds.forEach(function(sound) {
+                    sound.load(null, true);
+                });
+                info.insertAdjacentHTML('beforeend', '<p>sounds reloaded</p>');
+            }
+
+            var index = 0;
+
+            function play() {
+                if (index > config.url.length - 1) {
+                    index = 0;
+                    console.log('playback complete');
+                    return;
+                }
+                var id = config.url[index].id;
+                var sound = sono.get(id);
+                sound.once('ended', play);
+                sound.play();
+                console.log('playing:', id);
+                info.insertAdjacentHTML('beforeend', '<p>playing ' + id + '</p>');
+                index++;
+            }
+
+            btnDestroy.disabled = true;
+            btnLoad.addEventListener('click', load);
+            btnDefer.addEventListener('click', defer);
+            btnDestroy.addEventListener('click', destroy);
+            btnUnload.addEventListener('click', unload);
+            btnReload.addEventListener('click', reload);
+            btnPlay.addEventListener('click', play);
+        </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+    </body>
 
 </html>

@@ -1,5 +1,7 @@
+/* eslint no-var: 0 */
+/* eslint strict: 0 */
+
 (function() {
-    'use strict';
 
     var sono = window.sono;
     var ui = window.ui;
@@ -10,31 +12,34 @@
         sound,
         recorder,
         analyser,
-        canvas = document.querySelector('[data-js="waveform"]'),
+        canvas = document.querySelector('[data-waveform]'),
         context = canvas.getContext('2d');
 
-    var onConnect = function(stream) {
-        sound = sono.createSound(stream);
-        recorder = sound.effect.recorder(true);
-        analyser = sound.effect.analyser(1024);
+    function onConnect(stream) {
+        sound = sono.create(stream);
+        recorder = sono.utils.recorder(false);
+        analyser = sound.effects.add(sono.analyser({fftSize: 1024}));
         analyser.maxDecibels = -60;
-        recorder.start();
+        recorder.start(sound);
         update();
-    };
+    }
+
     var mic = sono.utils.microphone(onConnect);
 
     if (!mic.isSupported) {
-        document.querySelector('[data-js="warning"]')
+        document.querySelector('[data-warning]')
             .classList.add('is-visible');
     }
 
-    var toggle = function() {
+    function toggle() {
         if (recorder && recorder.isRecording) {
             var recording = recorder.stop();
+            console.log(recording);
             createPlayer(recording);
+            mic.disconnect();
         } else {
             if (mic.stream) {
-                recorder.start();
+                //recorder.start(sound);
             } else {
                 mic.connect();
             }
@@ -43,10 +48,10 @@
                 player.el.classList.remove('is-active');
             }
         }
-    };
+    }
 
     var control = ui.createToggle({
-        el: document.querySelector('[data-js="micToggle"]'),
+        el: document.querySelector('[data-micToggle]'),
         name: 'Record',
         value: false
     }, function() {
@@ -56,8 +61,8 @@
     function createPlayer(buffer) {
         console.log('createPlayer');
         player = ui.createPlayer({
-            el: document.querySelector('[data-js="playerTop"]'),
-            sound: sono.createSound(buffer)
+            el: document.querySelector('[data-playerTop]'),
+            sound: sono.create(buffer)
                 .play()
         });
         player.el.classList.add('is-active');

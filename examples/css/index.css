@@ -1,22 +1,4 @@
-:root {
-  /*--color-main: rgba(255, 0, 255, 0.6);
-  --color-dark: rgba(255, 0, 255, 1);*/
-  --color-main: #bbcccc;
-  --color-dark: #aabbbb;
-}
-
-@custom-media --narrow (max-width: 760px);
-@custom-media --mobile (max-width: 400px);
-
-/*! Libraries */
-
 @import "normalize.css";
-
-/*! Sections */
-
 @import "sections.css";
-
-/*! Components */
-
 @import "player.css";
 @import "control.css";

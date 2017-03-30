@@ -7,7 +7,7 @@ import uglify from 'rollup-plugin-uglify';
 const prod = process.env.NODE_ENV === 'production';
 
 export default {
-    entry: 'src/sono.js',
+    entry: 'index.js',
     format: 'umd',
     moduleName: 'sono',
     dest: (prod ? 'dist/sono.min.js' : 'dist/sono.js'),
@@ -19,14 +19,16 @@ export default {
             preferBuiltins: false
         }),
         commonjs({
-            include: 'node_modules/events/*'
+            include: [
+                'node_modules/core-js/**',
+                'node_modules/events/**'
+            ]
         }),
         babel({
             babelrc: false,
             exclude: 'node_modules/**',
             presets: [
-                ['es2015', {loose: true, modules: false}],
-                'stage-0'
+                ['es2015', {loose: true, modules: false}]
             ],
             plugins: [
                 'external-helpers'
