@@ -278,21 +278,9 @@ gui().then(g => {
 
 const upload = document.querySelector('[data-upload]');
 upload.addEventListener('change', event => {
-    sound.pause();
-
+    sound.stop();
     const file = event.currentTarget.files[0];
     const reader = new FileReader();
-    reader.onload = e => {
-        sono.context.decodeAudioData(e.target.result)
-            .then(buffer => {
-                sound.data = buffer;
-                sound.play();
-                amplitude.value = 0;
-                amplitude.norm = 0;
-                amplitude.min = 1;
-                amplitude.max = 0;
-            })
-            .catch(err => console.error(err));
-    };
+    reader.onload = e => sound.load(e.target.result).play();
     reader.readAsArrayBuffer(file);
 });

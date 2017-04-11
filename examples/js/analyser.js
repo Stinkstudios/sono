@@ -287,21 +287,11 @@ gui().then(function (g) {
 
 var upload = document.querySelector('[data-upload]');
 upload.addEventListener('change', function (event) {
-    sound.pause();
-
+    sound.stop();
     var file = event.currentTarget.files[0];
     var reader = new FileReader();
     reader.onload = function (e) {
-        sono.context.decodeAudioData(e.target.result).then(function (buffer) {
-            sound.data = buffer;
-            sound.play();
-            amplitude.value = 0;
-            amplitude.norm = 0;
-            amplitude.min = 1;
-            amplitude.max = 0;
-        }).catch(function (err) {
-            return console.error(err);
-        });
+        return sound.load(e.target.result).play();
     };
     reader.readAsArrayBuffer(file);
 });
