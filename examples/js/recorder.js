@@ -39,7 +39,7 @@
             mic.disconnect();
         } else {
             if (mic.stream) {
-                //recorder.start(sound);
+                // recorder.start(sound);
             } else {
                 mic.connect();
             }

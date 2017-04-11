@@ -31,8 +31,8 @@
 
             <pre><code class="js">
 // destroy
-sono.destroySound(id);
-sono.destroySound(sound);
+sono.destroy(id);
+sono.destroy(sound);
 sound.destroy();
 
 // unload
@@ -148,7 +148,7 @@ sound.play(); // loads on demand
             function destroy() {
                 info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');
                 sono.sounds.forEach(function(sound) {
-                    sono.destroySound(sound);
+                    sono.destroy(sound);
                 });
                 info.insertAdjacentHTML('beforeend', '<p>Destroyed!</p>');
                 info.insertAdjacentHTML('beforeend', '<p>sono.sounds.length: ' + sono.sounds.length + '</p>');

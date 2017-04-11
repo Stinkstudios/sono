@@ -130,7 +130,7 @@ export default function Group(context, destination) {
      */
 
     function load() {
-        sounds.forEach((sound) => sound.load(null, true));
+        sounds.forEach((sound) => sound.load());
     }
 
     /*

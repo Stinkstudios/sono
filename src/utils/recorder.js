@@ -15,8 +15,14 @@ function recorder(passThrough = false) {
     output.gain.value = passThrough ? 1 : 0;
 
     const node = {
-        in: input,
-        out: output
+        _in: input,
+        _out: output,
+        connect(n) {
+            output.connect(n._in || n);
+        },
+        disconnect(...args) {
+            output.disconnect(args);
+        }
     };
 
     function mergeBuffers(buffers, length) {
@@ -89,11 +95,11 @@ function recorder(passThrough = false) {
             startedAt = sono.context.currentTime;
             stoppedAt = 0;
             soundOb = sound;
-            sound.effect.add(node);
+            sound.effects.add(node);
             isRecording = true;
         },
         stop() {
-            soundOb.effect.remove(node);
+            soundOb.effects.remove(node);
             soundOb = null;
             stoppedAt = sono.context.currentTime;
             isRecording = false;
