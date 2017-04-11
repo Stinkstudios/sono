@@ -1185,7 +1185,7 @@ function Group(context, destination) {
 
     function load() {
         sounds.forEach(function (sound) {
-            return sound.load(null, true);
+            return sound.load();
         });
     }
 
@@ -2232,8 +2232,11 @@ function AudioSource(Type, data, context, onEnded) {
     }
 
     function stop() {
-        while (sources.length > 1) {
-            disposeSource(sources.pop());
+        if (sources.length) {
+            sources[0].stop();
+            while (sources.length > 1) {
+                disposeSource(sources.pop());
+            }
         }
     }
 
@@ -2979,7 +2982,7 @@ var Sound = function (_Emitter) {
         return _this;
     }
 
-    Sound.prototype.load = function load() {
+    Sound.prototype.prepare = function prepare() {
         var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
         var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
@@ -2988,20 +2991,32 @@ var Sound = function (_Emitter) {
         if (newConfig) {
             var configSrc = newConfig.src || newConfig.url || newConfig.data || newConfig;
             var src = file.getSupportedFile(configSrc) || this._config.src;
+            console.log('src', src);
             this._config = Object.assign(this._config, newConfig, { src: src });
         }
 
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
         } else {
-            this._loader = this._loader || new Loader(this._config.src, skipLoad);
+            this._loader = new Loader(this._config.src, skipLoad);
             this._loader.audioContext = !!this._config.asMediaElement || this._context.isFake ? null : this._context;
             this._loader.isTouchLocked = this._isTouchLocked;
-            this._loader.off('loaded', this._onLoad);
             this._loader.once('loaded', this._onLoad);
-            this._loader.off('error', this._onLoadError);
             this._loader.on('error', this._onLoadError);
         }
+        return this;
+    };
+
+    Sound.prototype.load = function load() {
+        var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+        this.stop();
+        this._source = null;
+        if (this._loader) {
+            this._loader.destroy();
+        }
+        this.prepare(newConfig, true);
+        this._loader.start();
         return this;
     };
 
@@ -3016,7 +3031,7 @@ var Sound = function (_Emitter) {
             };
             if (!!this._config.deferLoad) {
                 if (!this._loader) {
-                    this._load(null, true);
+                    this.prepare(null, true);
                 }
                 this._loader.start(true);
             }
@@ -3121,28 +3136,6 @@ var Sound = function (_Emitter) {
         this.emit('destroy', this);
         this.off();
     };
-
-    // has(node) {
-    //     return this._effects.has(node);
-    // }
-    //
-    // add(node) {
-    //     return this._effects.add(node);
-    // }
-    //
-    // remove(node) {
-    //     return this._effects.remove(node);
-    // }
-    //
-    // toggle(node, force) {
-    //     this._effects.toggle(node, force);
-    //     return this;
-    // }
-    //
-    // removeAll() {
-    //     this._effects.removeAll();
-    //     return this;
-    // }
 
     Sound.prototype.waveform = function waveform(length) {
         var _this3 = this;
@@ -3562,7 +3555,7 @@ function add$1(config) {
 }
 
 function queue(config, loaderGroup) {
-    var sound = add$1(config).load();
+    var sound = add$1(config).prepare();
 
     if (loaderGroup) {
         loaderGroup.add(sound.loader);
@@ -5402,8 +5395,18 @@ function recorder() {
     output.gain.value = passThrough ? 1 : 0;
 
     var node = {
-        in: input,
-        out: output
+        _in: input,
+        _out: output,
+        connect: function connect(n) {
+            output.connect(n._in || n);
+        },
+        disconnect: function disconnect() {
+            for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+                args[_key] = arguments[_key];
+            }
+
+            output.disconnect(args);
+        }
     };
 
     function mergeBuffers(buffers, length) {
@@ -5474,11 +5477,11 @@ function recorder() {
             startedAt = sono$1.context.currentTime;
             stoppedAt = 0;
             soundOb = sound;
-            sound.effect.add(node);
+            sound.effects.add(node);
             isRecording = true;
         },
         stop: function stop() {
-            soundOb.effect.remove(node);
+            soundOb.effects.remove(node);
             soundOb = null;
             stoppedAt = sono$1.context.currentTime;
             isRecording = false;
