@@ -53,8 +53,11 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function stop() {
-        while (sources.length > 1) {
-            disposeSource(sources.pop());
+        if (sources.length) {
+            sources[0].stop();
+            while (sources.length > 1) {
+                disposeSource(sources.pop());
+            }
         }
     }
 

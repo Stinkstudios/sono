@@ -56,7 +56,7 @@ function add(config) {
 }
 
 function queue(config, loaderGroup) {
-    const sound = add(config).load();
+    const sound = add(config).prepare();
 
     if (loaderGroup) {
         loaderGroup.add(sound.loader);

@@ -40,26 +40,36 @@ export default class Sound extends Emitter {
         this._onLoadError = this._onLoadError.bind(this);
     }
 
-    load(newConfig = null, force = false) {
+    prepare(newConfig = null, force = false) {
         const skipLoad = !force && !this._source && !!this._config.deferLoad;
 
         if (newConfig) {
             const configSrc = newConfig.src || newConfig.url || newConfig.data || newConfig;
             const src = file.getSupportedFile(configSrc) || this._config.src;
+            console.log('src', src);
             this._config = Object.assign(this._config, newConfig, {src});
         }
 
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
         } else {
-            this._loader = this._loader || new Loader(this._config.src, skipLoad);
+            this._loader = new Loader(this._config.src, skipLoad);
             this._loader.audioContext = !!this._config.asMediaElement || this._context.isFake ? null : this._context;
             this._loader.isTouchLocked = this._isTouchLocked;
-            this._loader.off('loaded', this._onLoad);
             this._loader.once('loaded', this._onLoad);
-            this._loader.off('error', this._onLoadError);
             this._loader.on('error', this._onLoadError);
         }
+        return this;
+    }
+
+    load(newConfig = null) {
+        this.stop();
+        this._source = null;
+        if (this._loader) {
+            this._loader.destroy();
+        }
+        this.prepare(newConfig, true);
+        this._loader.start();
         return this;
     }
 
@@ -72,7 +82,7 @@ export default class Sound extends Emitter {
             };
             if (!!this._config.deferLoad) {
                 if (!this._loader) {
-                    this._load(null, true);
+                    this.prepare(null, true);
                 }
                 this._loader.start(true);
             }
@@ -175,28 +185,6 @@ export default class Sound extends Emitter {
         this.emit('destroy', this);
         this.off();
     }
-
-    // has(node) {
-    //     return this._effects.has(node);
-    // }
-    //
-    // add(node) {
-    //     return this._effects.add(node);
-    // }
-    //
-    // remove(node) {
-    //     return this._effects.remove(node);
-    // }
-    //
-    // toggle(node, force) {
-    //     this._effects.toggle(node, force);
-    //     return this;
-    // }
-    //
-    // removeAll() {
-    //     this._effects.removeAll();
-    //     return this;
-    // }
 
     waveform(length) {
         if (!this._wave) {
