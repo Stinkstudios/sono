@@ -10,7 +10,7 @@ import SoundGroup from './utils/sound-group';
 import utils from './utils/utils';
 import log from './utils/log';
 
-const VERSION = '2.0.0';
+const VERSION = '2.0.3';
 const bus = new Group(context, context.destination);
 
 /*

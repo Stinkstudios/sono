@@ -482,6 +482,7 @@ function FakeContext() {
 
     return {
         isFake: true,
+        activeSourceCount: 0,
         createAnalyser: fakeNode,
         createBuffer: fakeNode,
         createBufferSource: fakeNode,
@@ -498,8 +499,10 @@ function FakeContext() {
         createPanner: fakeNode,
         createScriptProcessor: fakeNode,
         createWaveShaper: fakeNode,
+        decodeAudioData: fn,
         destination: fakeNode,
         listener: fakeNode(),
+        sampleRate: 44100,
         state: '',
         get currentTime() {
             return (Date.now() - startTime) / 1000;
@@ -513,6 +516,10 @@ function getContext() {
     var Ctx = window.AudioContext || window.webkitAudioContext || FakeContext;
 
     var ctx = new Ctx();
+
+    if (!ctx) {
+        ctx = new FakeContext();
+    }
 
     // Check if hack is necessary. Only occurs in iOS6+ devices
     // and only when you first boot the iPhone, or play a audio/video
@@ -3507,7 +3514,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.0';
+var VERSION = '2.0.3';
 var bus = new Group(context, context.destination);
 
 /*

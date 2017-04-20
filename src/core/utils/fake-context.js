@@ -89,6 +89,7 @@ export default function FakeContext() {
 
     return {
         isFake: true,
+        activeSourceCount: 0,
         createAnalyser: fakeNode,
         createBuffer: fakeNode,
         createBufferSource: fakeNode,
@@ -105,8 +106,10 @@ export default function FakeContext() {
         createPanner: fakeNode,
         createScriptProcessor: fakeNode,
         createWaveShaper: fakeNode,
+        decodeAudioData: fn,
         destination: fakeNode,
         listener: fakeNode(),
+        sampleRate: 44100,
         state: '',
         get currentTime() {
             return (Date.now() - startTime) / 1000;

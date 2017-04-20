@@ -7,6 +7,10 @@ function getContext() {
 
     let ctx = new Ctx();
 
+    if (!ctx) {
+        ctx = new FakeContext();
+    }
+
 	// Check if hack is necessary. Only occurs in iOS6+ devices
 	// and only when you first boot the iPhone, or play a audio/video
 	// with a different sample rate
