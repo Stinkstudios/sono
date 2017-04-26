@@ -3515,7 +3515,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.4';
+var VERSION = '2.0.5';
 var bus = new Group(context, context.destination);
 
 /*
