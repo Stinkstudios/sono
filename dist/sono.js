@@ -2090,14 +2090,16 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  */
 
 function cloneBuffer(buffer) {
+    var offset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+    var length = arguments.length <= 2 || arguments[2] === undefined ? buffer.length : arguments[2];
+
     if (!context || context.isFake) {
         return buffer;
     }
-
-    var numChannels = buffer.numberOfChannels,
-        cloned = context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+    var numChannels = buffer.numberOfChannels;
+    var cloned = sono.context.createBuffer(numChannels, length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
-        cloned.getChannelData(i).set(buffer.getChannelData(i));
+        cloned.getChannelData(i).set(buffer.getChannelData(i).slice(offset, offset + length));
     }
     return cloned;
 }
@@ -2213,7 +2215,7 @@ function AudioSource(Type, data, context, onEnded) {
     }
 
     function getSource() {
-        if (sources.length && (singlePlay || sources[0].paused)) {
+        if (sources.length && (singlePlay || !sources[0].playing)) {
             return sources[0];
         }
         if (pool.length > 0) {
@@ -2262,9 +2264,11 @@ function AudioSource(Type, data, context, onEnded) {
     }
 
     function fade(volume, duration) {
-        sources.forEach(function (src) {
-            return src.fade(volume, duration);
-        });
+        if (sources[0] && typeof sources[0].fade === 'function') {
+            sources.forEach(function (src) {
+                return src.fade(volume, duration);
+            });
+        }
     }
 
     function destroy() {
@@ -2379,9 +2383,11 @@ function AudioSource(Type, data, context, onEnded) {
                 return sources[0] && sources[0].volume;
             },
             set: function set(value) {
-                sources.forEach(function (src) {
-                    return src.volume = value;
-                });
+                if (sources[0] && sources[0].hasOwnProperty('volume')) {
+                    sources.forEach(function (src) {
+                        return src.volume = value;
+                    });
+                }
             }
         },
         groupVolume: {
@@ -2542,7 +2548,7 @@ function MediaSource(el, context, onEnded) {
      */
 
     function fade(toVolume, duration) {
-        if (context) {
+        if (context && !context.isFake) {
             return api;
         }
 
@@ -2979,6 +2985,7 @@ var Sound = function (_Emitter) {
         _this._playWhenReady = null;
         _this._source = null;
         _this._wave = null;
+        _this._userData = {};
 
         _this._effects.setDestination(_this._gain);
         _this._gain.connect(_this._destination);
@@ -2998,7 +3005,6 @@ var Sound = function (_Emitter) {
         if (newConfig) {
             var configSrc = newConfig.src || newConfig.url || newConfig.data || newConfig;
             var src = file.getSupportedFile(configSrc) || this._config.src;
-            console.log('src', src);
             this._config = Object.assign(this._config, newConfig, { src: src });
         }
 
@@ -3047,12 +3053,11 @@ var Sound = function (_Emitter) {
         this._playWhenReady = null;
         this._effects.setSource(this._source.sourceNode);
 
-        // update volume needed for no webaudio
-        if (this._context.isFake) {
-            this.volume = this._gain.gain.value;
-        }
-
         this._source.play(delay, offset);
+
+        if (this._source.hasOwnProperty('volume')) {
+            this._source.volume = this._gain.gain.value;
+        }
 
         if (this._source.hasOwnProperty('loop')) {
             this._source.loop = this._loop;
@@ -3164,6 +3169,7 @@ var Sound = function (_Emitter) {
             var Fn = isAudioBuffer ? BufferSource : MediaSource;
             this._source = new AudioSource(Fn, data, this._context, this._onEnded);
             this._source.singlePlay = !!this._config.singlePlay;
+            this._source.playbackRate = this._playbackRate;
         } else if (file.isMediaStream(data)) {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType(data && data.type || data)) {
@@ -3366,24 +3372,19 @@ var Sound = function (_Emitter) {
             value = Math.min(Math.max(value, 0), 1);
 
             var param = this._gain.gain;
+            var time = this._context.currentTime;
+            param.cancelScheduledValues(time);
+            param.value = value;
+            param.setValueAtTime(value, time);
 
-            if (this._context && !this._context.isFake) {
-                var time = this._context.currentTime;
-                param.cancelScheduledValues(time);
-                param.value = value;
-                param.setValueAtTime(value, time);
-            } else {
-                param.value = value;
-
-                if (this._source && this._source.hasOwnProperty('volume')) {
-                    this._source.volume = value;
-                }
+            if (this._source && this._source.hasOwnProperty('volume')) {
+                this._source.volume = value;
             }
         }
     }, {
         key: 'userData',
         get: function get() {
-            return {};
+            return this._userData;
         }
     }]);
     return Sound;
@@ -3514,7 +3515,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.3';
+var VERSION = '2.0.4';
 var bus = new Group(context, context.destination);
 
 /*
@@ -3649,12 +3650,12 @@ function destroy$1(soundOrId) {
     bus.find(soundOrId, function (sound) {
         return sound.destroy();
     });
-    return sono$1;
+    return sono$2;
 }
 
 function destroyAll() {
     bus.destroy();
-    return sono$1;
+    return sono$2;
 }
 
 /*
@@ -3663,53 +3664,53 @@ function destroyAll() {
 
 function mute() {
     bus.mute();
-    return sono$1;
+    return sono$2;
 }
 
 function unMute() {
     bus.unMute();
-    return sono$1;
+    return sono$2;
 }
 
 function fade$1(volume, duration) {
     bus.fade(volume, duration);
-    return sono$1;
+    return sono$2;
 }
 
 function pauseAll() {
     bus.pause();
-    return sono$1;
+    return sono$2;
 }
 
 function resumeAll() {
     bus.resume();
-    return sono$1;
+    return sono$2;
 }
 
 function stopAll() {
     bus.stop();
-    return sono$1;
+    return sono$2;
 }
 
 function play$1(id, delay, offset) {
     bus.find(id, function (sound) {
         return sound.play(delay, offset);
     });
-    return sono$1;
+    return sono$2;
 }
 
 function pause$1(id) {
     bus.find(id, function (sound) {
         return sound.pause();
     });
-    return sono$1;
+    return sono$2;
 }
 
 function stop$1(id) {
     bus.find(id, function (sound) {
         return sound.stop();
     });
-    return sono$1;
+    return sono$2;
 }
 
 /*
@@ -3754,12 +3755,12 @@ function register(name, fn) {
     var attachTo = arguments.length <= 2 || arguments[2] === undefined ? Effects.prototype : arguments[2];
 
     attachTo[name] = fn;
-    sono$1[name] = fn;
+    sono$2[name] = fn;
 
     return fn;
 }
 
-var sono$1 = (_sono = {
+var sono$2 = (_sono = {
     canPlay: file.canPlay,
     context: context,
     create: create,
@@ -3780,7 +3781,7 @@ var sono$1 = (_sono = {
     isSupported: file.extensions.length > 0,
     load: load$1,
     log: function log() {
-        return log$1(sono$1);
+        return log$1(sono$2);
     },
     mute: mute,
     pause: pause$1,
@@ -3916,7 +3917,7 @@ var Analyser = function (_AbstractEffect) {
         var useFloats = _ref$useFloats === undefined ? false : _ref$useFloats;
         classCallCheck(this, Analyser);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createAnalyser()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$2.context.createAnalyser()));
 
         _this._useFloats = !!useFloats;
         _this._waveform = null;
@@ -3999,7 +4000,7 @@ var Analyser = function (_AbstractEffect) {
         var f = new Float32Array(this._node.fftSize);
         f.set(this.getWaveform(true));
         this._pitchWorker.postMessage({
-            sampleRate: sono$1.context.sampleRate,
+            sampleRate: sono$2.context.sampleRate,
             b: f.buffer
         }, [f.buffer]);
     };
@@ -4104,7 +4105,7 @@ var Analyser = function (_AbstractEffect) {
     return Analyser;
 }(AbstractEffect);
 
-sono$1.register('analyser', function (opts) {
+sono$2.register('analyser', function (opts) {
     return new Analyser(opts);
 });
 
@@ -4126,7 +4127,7 @@ var Compressor = function (_AbstractEffect) {
         var threshold = _ref$threshold === undefined ? -24 : _ref$threshold;
         classCallCheck(this, Compressor);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDynamicsCompressor()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$2.context.createDynamicsCompressor()));
 
         _this.update({ threshold: threshold, knee: knee, ratio: ratio, attack: attack, release: release });
         return _this;
@@ -4189,7 +4190,7 @@ var Compressor = function (_AbstractEffect) {
     return Compressor;
 }(AbstractEffect);
 
-sono$1.register('compressor', function (opts) {
+sono$2.register('compressor', function (opts) {
     return new Compressor(opts);
 });
 
@@ -4204,7 +4205,7 @@ var Convolver = function (_AbstractEffect) {
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
 
-        _this._node = sono$1.context.createConvolver();
+        _this._node = sono$2.context.createConvolver();
         _this._in.connect(_this._out);
 
         _this._loader = null;
@@ -4216,14 +4217,14 @@ var Convolver = function (_AbstractEffect) {
     Convolver.prototype._load = function _load(src) {
         var _this2 = this;
 
-        if (sono$1.context.isFake) {
+        if (sono$2.context.isFake) {
             return;
         }
         if (this._loader) {
             this._loader.destroy();
         }
         this._loader = new Loader(src);
-        this._loader.audioContext = sono$1.context;
+        this._loader.audioContext = sono$2.context;
         this._loader.once('complete', function (impulse) {
             return _this2.update({ impulse: impulse });
         });
@@ -4282,7 +4283,7 @@ var Convolver = function (_AbstractEffect) {
     return Convolver;
 }(AbstractEffect);
 
-sono$1.register('convolver', function (opts) {
+sono$2.register('convolver', function (opts) {
     return new Convolver(opts);
 });
 
@@ -4304,7 +4305,7 @@ var Distortion = function (_AbstractEffect) {
         var oversample = _ref$oversample === undefined ? 'none' : _ref$oversample;
         classCallCheck(this, Distortion);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createWaveShaper()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$2.context.createWaveShaper()));
 
         _this._node.oversample = oversample || 'none';
 
@@ -4356,7 +4357,7 @@ var Distortion = function (_AbstractEffect) {
     return Distortion;
 }(AbstractEffect);
 
-sono$1.register('distortion', function (opts) {
+sono$2.register('distortion', function (opts) {
     return new Distortion(opts);
 });
 
@@ -4413,7 +4414,7 @@ var Echo = function (_AbstractEffect) {
     return Echo;
 }(AbstractEffect);
 
-sono$1.register('echo', function (opts) {
+sono$2.register('echo', function (opts) {
     return new Echo(opts);
 });
 
@@ -4437,7 +4438,7 @@ function safeOption() {
 // For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
 // The greater the value is, the greater is the peak
 var minFrequency = 40;
-var maxFrequency = sono$1.context.sampleRate / 2;
+var maxFrequency = sono$2.context.sampleRate / 2;
 
 function getFrequency$1(value) {
     // Logarithm (base 2) to compute how many octaves fall in the range.
@@ -4474,7 +4475,7 @@ var Filter = function (_AbstractEffect) {
         var sharpness = _ref$sharpness === undefined ? 0 : _ref$sharpness;
         classCallCheck(this, Filter);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createBiquadFilter()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$2.context.createBiquadFilter()));
 
         _this._node.type = type;
 
@@ -4581,7 +4582,7 @@ var Filter = function (_AbstractEffect) {
     return Filter;
 }(AbstractEffect);
 
-var lowpass = sono$1.register('lowpass', function () {
+var lowpass = sono$2.register('lowpass', function () {
     var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref3.frequency;
@@ -4591,7 +4592,7 @@ var lowpass = sono$1.register('lowpass', function () {
     return new Filter({ type: 'lowpass', frequency: frequency, peak: peak, q: q });
 });
 
-var highpass = sono$1.register('highpass', function () {
+var highpass = sono$2.register('highpass', function () {
     var _ref4 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref4.frequency;
@@ -4601,7 +4602,7 @@ var highpass = sono$1.register('highpass', function () {
     return new Filter({ type: 'highpass', frequency: frequency, peak: peak, q: q });
 });
 
-var lowshelf = sono$1.register('lowshelf', function () {
+var lowshelf = sono$2.register('lowshelf', function () {
     var _ref5 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref5.frequency;
@@ -4611,7 +4612,7 @@ var lowshelf = sono$1.register('lowshelf', function () {
     return new Filter({ type: 'lowshelf', frequency: frequency, boost: boost, gain: gain, q: 0 });
 });
 
-var highshelf = sono$1.register('highshelf', function () {
+var highshelf = sono$2.register('highshelf', function () {
     var _ref6 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref6.frequency;
@@ -4621,7 +4622,7 @@ var highshelf = sono$1.register('highshelf', function () {
     return new Filter({ type: 'highshelf', frequency: frequency, boost: boost, gain: gain, q: 0 });
 });
 
-var peaking = sono$1.register('peaking', function () {
+var peaking = sono$2.register('peaking', function () {
     var _ref7 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref7.frequency;
@@ -4633,7 +4634,7 @@ var peaking = sono$1.register('peaking', function () {
     return new Filter({ type: 'peaking', frequency: frequency, width: width, boost: boost, gain: gain, q: q });
 });
 
-var bandpass = sono$1.register('bandpass', function () {
+var bandpass = sono$2.register('bandpass', function () {
     var _ref8 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref8.frequency;
@@ -4643,7 +4644,7 @@ var bandpass = sono$1.register('bandpass', function () {
     return new Filter({ type: 'bandpass', frequency: frequency, width: width, q: q });
 });
 
-var notch = sono$1.register('notch', function () {
+var notch = sono$2.register('notch', function () {
     var _ref9 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref9.frequency;
@@ -4654,7 +4655,7 @@ var notch = sono$1.register('notch', function () {
     return new Filter({ type: 'notch', frequency: frequency, width: width, gain: gain, q: q });
 });
 
-var allpass = sono$1.register('allpass', function () {
+var allpass = sono$2.register('allpass', function () {
     var _ref10 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     var frequency = _ref10.frequency;
@@ -4664,7 +4665,7 @@ var allpass = sono$1.register('allpass', function () {
     return new Filter({ type: 'allpass', frequency: frequency, sharpness: sharpness, q: q });
 });
 
-sono$1.register('filter', function (opts) {
+sono$2.register('filter', function (opts) {
     return new Filter(opts);
 });
 
@@ -4686,10 +4687,10 @@ var MonoFlanger = function (_AbstractEffect) {
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
 
-        _this._delay = sono$1.context.createDelay();
-        _this._feedback = sono$1.context.createGain();
-        _this._lfo = sono$1.context.createOscillator();
-        _this._gain = sono$1.context.createGain();
+        _this._delay = sono$2.context.createDelay();
+        _this._feedback = sono$2.context.createGain();
+        _this._lfo = sono$2.context.createOscillator();
+        _this._gain = sono$2.context.createGain();
         _this._lfo.type = 'sine';
 
         _this._in.connect(_this._out);
@@ -4749,7 +4750,7 @@ var MonoFlanger = function (_AbstractEffect) {
     return MonoFlanger;
 }(AbstractEffect);
 
-sono$1.register('monoFlanger', function (opts) {
+sono$2.register('monoFlanger', function (opts) {
     return new MonoFlanger(opts);
 });
 
@@ -4771,15 +4772,15 @@ var StereoFlanger = function (_AbstractEffect2) {
 
         var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this));
 
-        _this2._splitter = sono$1.context.createChannelSplitter(2);
-        _this2._merger = sono$1.context.createChannelMerger(2);
-        _this2._feedbackL = sono$1.context.createGain();
-        _this2._feedbackR = sono$1.context.createGain();
-        _this2._lfo = sono$1.context.createOscillator();
-        _this2._lfoGainL = sono$1.context.createGain();
-        _this2._lfoGainR = sono$1.context.createGain();
-        _this2._delayL = sono$1.context.createDelay();
-        _this2._delayR = sono$1.context.createDelay();
+        _this2._splitter = sono$2.context.createChannelSplitter(2);
+        _this2._merger = sono$2.context.createChannelMerger(2);
+        _this2._feedbackL = sono$2.context.createGain();
+        _this2._feedbackR = sono$2.context.createGain();
+        _this2._lfo = sono$2.context.createOscillator();
+        _this2._lfoGainL = sono$2.context.createGain();
+        _this2._lfoGainR = sono$2.context.createGain();
+        _this2._delayL = sono$2.context.createDelay();
+        _this2._delayR = sono$2.context.createDelay();
 
         _this2._lfo.type = 'sine';
 
@@ -4856,11 +4857,11 @@ var StereoFlanger = function (_AbstractEffect2) {
     return StereoFlanger;
 }(AbstractEffect);
 
-sono$1.register('stereoFlanger', function (opts) {
+sono$2.register('stereoFlanger', function (opts) {
     return new StereoFlanger(opts);
 });
 
-sono$1.register('flanger', function () {
+sono$2.register('flanger', function () {
     var opts = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     return opts.stereo ? new StereoFlanger(opts) : new MonoFlanger(opts);
@@ -4982,7 +4983,7 @@ var Panner = function (_AbstractEffect) {
         classCallCheck(this, Panner);
 
         // Default for stereo is 'HRTF' can also be 'equalpower'
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createPanner()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$2.context.createPanner()));
 
         _this._node.panningModel = panningModel || pannerDefaults.panningModel;
 
@@ -5054,14 +5055,14 @@ var Panner = function (_AbstractEffect) {
 
 
     Panner.prototype.setListenerPosition = function setListenerPosition(x, y, z) {
-        setNodePosition(sono$1.context.listener, vecPool.get(x, y, z));
+        setNodePosition(sono$2.context.listener, vecPool.get(x, y, z));
     };
 
     // set the position of who or what is hearing the audio (could be camera or some character)
 
 
     Panner.prototype.setListenerOrientation = function setListenerOrientation(x, y, z) {
-        setNodeOrientation(sono$1.context.listener, vecPool.get(x, y, z));
+        setNodeOrientation(sono$2.context.listener, vecPool.get(x, y, z));
     };
 
     Panner.prototype.set = function set(x, y, z) {
@@ -5080,7 +5081,7 @@ var Panner = function (_AbstractEffect) {
     return Panner;
 }(AbstractEffect);
 
-var panner = sono$1.register('panner', function (opts) {
+var panner = sono$2.register('panner', function (opts) {
     return new Panner(opts);
 });
 
@@ -5095,12 +5096,12 @@ Object.defineProperties(panner, {
     },
     setListenerPosition: {
         value: function value(x, y, z) {
-            return setNodePosition(sono$1.context.listener, vecPool.get(x, y, z));
+            return setNodePosition(sono$2.context.listener, vecPool.get(x, y, z));
         }
     },
     setListenerOrientation: {
         value: function value(x, y, z) {
-            return setNodeOrientation(sono$1.context.listener, vecPool.get(x, y, z));
+            return setNodeOrientation(sono$2.context.listener, vecPool.get(x, y, z));
         }
     }
 });
@@ -5125,14 +5126,14 @@ var Phaser = function (_AbstractEffect) {
 
         _this._stages = stages || 8;
 
-        _this._feedback = sono$1.context.createGain();
-        _this._lfo = sono$1.context.createOscillator();
-        _this._lfoGain = sono$1.context.createGain();
+        _this._feedback = sono$2.context.createGain();
+        _this._lfo = sono$2.context.createOscillator();
+        _this._lfoGain = sono$2.context.createGain();
         _this._lfo.type = 'sine';
 
         var filters = [];
         for (var i = 0; i < _this._stages; i++) {
-            var filter = sono$1.context.createBiquadFilter();
+            var filter = sono$2.context.createBiquadFilter();
             filter.type = 'allpass';
             filter.frequency.value = 1000 * i;
             //filter.Q.value = 10;
@@ -5197,7 +5198,7 @@ var Phaser = function (_AbstractEffect) {
     return Phaser;
 }(AbstractEffect);
 
-sono$1.register('phaser', function (opts) {
+sono$2.register('phaser', function (opts) {
     return new Phaser(opts);
 });
 
@@ -5207,7 +5208,7 @@ function createImpulseResponse(_ref) {
     var reverse = _ref.reverse;
     var buffer = _ref.buffer;
 
-    var rate = sono$1.context.sampleRate;
+    var rate = sono$2.context.sampleRate;
     var length = Math.floor(rate * time);
 
     var impulseResponse = void 0;
@@ -5215,7 +5216,7 @@ function createImpulseResponse(_ref) {
     if (buffer && buffer.length === length) {
         impulseResponse = buffer;
     } else {
-        impulseResponse = sono$1.context.createBuffer(2, length, rate);
+        impulseResponse = sono$2.context.createBuffer(2, length, rate);
     }
 
     var left = impulseResponse.getChannelData(0);
@@ -5318,7 +5319,7 @@ var Reverb = function (_AbstractEffect) {
     return Reverb;
 }(AbstractEffect);
 
-sono$1.register('reverb', function (opts) {
+sono$2.register('reverb', function (opts) {
     return new Reverb(opts);
 });
 
@@ -5383,7 +5384,7 @@ function microphone(connected, denied, error) {
     });
 }
 
-sono$1.register('microphone', microphone, sono$1.utils);
+sono$2.register('microphone', microphone, sono$2.utils);
 
 function recorder() {
     var passThrough = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
@@ -5397,8 +5398,8 @@ function recorder() {
     var isRecording = false;
     var soundOb = null;
 
-    var input = sono$1.context.createGain();
-    var output = sono$1.context.createGain();
+    var input = sono$2.context.createGain();
+    var output = sono$2.context.createGain();
     output.gain.value = passThrough ? 1 : 0;
 
     var node = {
@@ -5428,10 +5429,10 @@ function recorder() {
 
     function getBuffer() {
         if (!buffersL.length) {
-            return sono$1.context.createBuffer(2, bufferLength, sono$1.context.sampleRate);
+            return sono$2.context.createBuffer(2, bufferLength, sono$2.context.sampleRate);
         }
         var recordingLength = buffersL.length * bufferLength;
-        var buffer = sono$1.context.createBuffer(2, recordingLength, sono$1.context.sampleRate);
+        var buffer = sono$2.context.createBuffer(2, recordingLength, sono$2.context.sampleRate);
         buffer.getChannelData(0).set(mergeBuffers(buffersL, recordingLength));
         buffer.getChannelData(1).set(mergeBuffers(buffersR, recordingLength));
         return buffer;
@@ -5448,10 +5449,10 @@ function recorder() {
     function createScriptProcessor() {
         destroyScriptProcessor();
 
-        script = sono$1.context.createScriptProcessor(bufferLength, 2, 2);
+        script = sono$2.context.createScriptProcessor(bufferLength, 2, 2);
         input.connect(script);
         script.connect(output);
-        script.connect(sono$1.context.destination);
+        script.connect(sono$2.context.destination);
         // output.connect(sono.context.destination);
 
 
@@ -5481,7 +5482,7 @@ function recorder() {
             createScriptProcessor();
             buffersL.length = 0;
             buffersR.length = 0;
-            startedAt = sono$1.context.currentTime;
+            startedAt = sono$2.context.currentTime;
             stoppedAt = 0;
             soundOb = sound;
             sound.effects.add(node);
@@ -5490,7 +5491,7 @@ function recorder() {
         stop: function stop() {
             soundOb.effects.remove(node);
             soundOb = null;
-            stoppedAt = sono$1.context.currentTime;
+            stoppedAt = sono$2.context.currentTime;
             isRecording = false;
             destroyScriptProcessor();
             return getBuffer();
@@ -5499,7 +5500,7 @@ function recorder() {
             if (!isRecording) {
                 return stoppedAt - startedAt;
             }
-            return sono$1.context.currentTime - startedAt;
+            return sono$2.context.currentTime - startedAt;
         },
 
         get isRecording() {
@@ -5508,7 +5509,7 @@ function recorder() {
     };
 }
 
-sono$1.register('recorder', recorder, sono$1.utils);
+sono$2.register('recorder', recorder, sono$2.utils);
 
 function waveform$1() {
     var buffer = void 0,
@@ -5573,7 +5574,7 @@ function waveform$1() {
     };
 }
 
-sono$1.register('waveform', waveform$1, sono$1.utils);
+sono$2.register('waveform', waveform$1, sono$2.utils);
 
 var halfPI = Math.PI / 2;
 var twoPI = Math.PI * 2;
@@ -5756,9 +5757,9 @@ function waveformer(config) {
     return update;
 }
 
-sono$1.register('waveformer', waveformer, sono$1.utils);
+sono$2.register('waveformer', waveformer, sono$2.utils);
 
-return sono$1;
+return sono$2;
 
 })));
 //# sourceMappingURL=sono.js.map
