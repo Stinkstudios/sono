@@ -26,16 +26,15 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  * clone audio buffer
  */
 
-function cloneBuffer(buffer) {
+function cloneBuffer(buffer, offset = 0, length = buffer.length) {
     if (!context || context.isFake) {
         return buffer;
     }
-
-    const numChannels = buffer.numberOfChannels,
-        cloned = context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
+    const numChannels = buffer.numberOfChannels;
+    const cloned = sono.context.createBuffer(numChannels, length, buffer.sampleRate);
     for (let i = 0; i < numChannels; i++) {
         cloned.getChannelData(i)
-			.set(buffer.getChannelData(i));
+            .set(buffer.getChannelData(i).slice(offset, offset + length));
     }
     return cloned;
 }
