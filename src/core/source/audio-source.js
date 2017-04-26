@@ -27,7 +27,7 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function getSource() {
-        if (sources.length && (singlePlay || sources[0].paused)) {
+        if (sources.length && (singlePlay || !sources[0].playing)) {
             return sources[0];
         }
         if (pool.length > 0) {
@@ -74,7 +74,9 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function fade(volume, duration) {
-        sources.forEach((src) => src.fade(volume, duration));
+        if (sources[0] && typeof sources[0].fade === 'function') {
+            sources.forEach((src) => src.fade(volume, duration));
+        }
     }
 
     function destroy() {
@@ -183,7 +185,9 @@ export default function AudioSource(Type, data, context, onEnded) {
                 return sources[0] && sources[0].volume;
             },
             set: function(value) {
-                sources.forEach((src) => (src.volume = value));
+                if (sources[0] && sources[0].hasOwnProperty('volume')) {
+                    sources.forEach(src => (src.volume = value));
+                }
             }
         },
         groupVolume: {

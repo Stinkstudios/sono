@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>sono - examples - testing ground</title>
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+
+<body>
+    <section>
+        <header>
+            <h2>mutliple tracks</h2>
+        </header>
+
+
+        <div class="Controls" style="display: block; text-align: center">
+
+            <button class="Button" data-btn="play">play</button>
+            <button class="Button" data-btn="pause">pause</button>
+            <button class="Button" data-btn="stop">stop</button>
+            <!-- <button class="Button" data-btn="sync">sync</button> -->
+
+            <br>
+            <br>
+
+            <h3>Mute tracks</h3>
+            <div data-mute></div>
+
+            <h3>Info</h3>
+            <div style="text-align:left; width: 800px; margin: 0 auto" data-info>
+                Loading
+            </div>
+        </div>
+
+    </section>
+
+    <script>
+        if (window.location.search.indexOf('nowebaudio') > -1) {
+            window.AudioContext = window.webkitAudioContext = undefined;
+        }
+    </script>
+    <script src="../dist/sono.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        var sono = window.sono;
+        sono.log();
+
+        // var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
+        // var baseURL = local ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
+        var baseURL = 'audio/other/music_loops/';
+        var volume = 0.5;
+
+        var files = [
+            'blaze_bass_01.mp3',
+            'blaze_bass_02.mp3',
+            'blaze_bass_03.mp3',
+            'blaze_bass_04.mp3',
+            'blaze_drum_01.mp3',
+            'blaze_drum_02.mp3',
+            'blaze_drum_03.mp3',
+            'blaze_drum_04.mp3',
+            'blaze_guitar_01.mp3',
+            'blaze_guitar_02.mp3',
+            'blaze_guitar_03.mp3',
+            'blaze_guitar_04.mp3',
+            'blaze_horns_01.mp3',
+            'blaze_horns_02.mp3',
+            'blaze_horns_03.mp3',
+            'blaze_horns_04.mp3'
+        ].map(function(file) {
+            return {
+                id: file,
+                url: baseURL + file,
+                loop: true,
+                volume: volume,
+                singlePlay: window.location.search.indexOf('single') > -1
+            };
+        });
+
+        var loops = null;
+
+        sono.load({
+            url: files,
+            onComplete: function(sounds) {
+                console.log('loaded');
+                loops = sounds;
+                // loops[0].on('ended', function() {
+                //     stop();
+                //     play();
+                // });
+                play();
+            }
+        });
+
+        files.forEach(function(file) {
+            var id = file.id;
+            var input = document.createElement('input');
+            input.type = 'checkbox'
+            input.style.margin = '2px';
+            input.onclick = function() {
+                if (!loops) {return;}
+                var s = sono.get(id);
+                s.volume = s.volume > 0 ? 0 : volume;
+            };
+            document.querySelector('[data-mute]').appendChild(input);
+        });
+
+        function play() {
+            if (!loops) {return;}
+            loops.forEach(function(loop) {
+                loop.play();
+            });
+        }
+
+        function pause() {
+            if (!loops) {return;}
+            loops.forEach(function(loop) {
+                loop.pause();
+            });
+        }
+
+        function stop() {
+            if (!loops) {return;}
+            loops.forEach(function(loop) {
+                loop.stop();
+            });
+        }
+
+        function sync() {
+            if (!loops) {return;}
+            var baseTime = loops[0].data.currentTime;
+            console.log('baseTime', baseTime);
+            loops.forEach(function(loop) {
+                console.log('loop.data.', loop.data);
+                // loop.data.currentTime = baseTime;
+            });
+        }
+
+        document.querySelector('[data-btn="stop"]').addEventListener('click', stop);
+        document.querySelector('[data-btn="play"]').addEventListener('click', play);
+        document.querySelector('[data-btn="pause"]').addEventListener('click', pause);
+        // document.querySelector('[data-btn="sync"]').addEventListener('click', sync);
+
+        var info = document.querySelector('[data-info]');
+
+        function update() {
+            window.requestAnimationFrame(update);
+            if (!loops) {return;}
+
+            var msg = '';
+
+            var baseTime = loops[0].currentTime;
+
+            loops.forEach(function(loop) {
+                msg += '<tr><td style="width: 25%">';
+                msg += loop.id;
+                msg += '</td><td style="width: 25%">';
+                msg += loop.currentTime.toFixed(5);
+                msg += '</td><td style="width: 25%">';
+                msg += (loop.currentTime - baseTime).toFixed(5);
+                msg += '</td><td style="width: 25%">';
+                msg += 'pool ' + loop.sourceInfo.pooled + ' / created ' + loop.sourceInfo.created + ' / active ' + loop.sourceInfo.active;
+                msg += '</td></tr>';
+            });
+
+            info.innerHTML = '<table style="width: 800px;table-layout:auto"><tr><th>id</th><th>time</th><th>offset</th><th>info</th></tr>' + msg + '</table>';
+        }
+        update();
+    </script>
+</body>
+
+</html>

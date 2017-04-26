@@ -31,6 +31,7 @@ export default class Sound extends Emitter {
         this._playWhenReady = null;
         this._source = null;
         this._wave = null;
+        this._userData = {};
 
         this._effects.setDestination(this._gain);
         this._gain.connect(this._destination);
@@ -46,7 +47,6 @@ export default class Sound extends Emitter {
         if (newConfig) {
             const configSrc = newConfig.src || newConfig.url || newConfig.data || newConfig;
             const src = file.getSupportedFile(configSrc) || this._config.src;
-            console.log('src', src);
             this._config = Object.assign(this._config, newConfig, {src});
         }
 
@@ -91,12 +91,11 @@ export default class Sound extends Emitter {
         this._playWhenReady = null;
         this._effects.setSource(this._source.sourceNode);
 
-        // update volume needed for no webaudio
-        if (this._context.isFake) {
-            this.volume = this._gain.gain.value;
-        }
-
         this._source.play(delay, offset);
+
+        if (this._source.hasOwnProperty('volume')) {
+            this._source.volume = this._gain.gain.value;
+        }
 
         if (this._source.hasOwnProperty('loop')) {
             this._source.loop = this._loop;
@@ -352,23 +351,18 @@ export default class Sound extends Emitter {
         value = Math.min(Math.max(value, 0), 1);
 
         const param = this._gain.gain;
+        const time = this._context.currentTime;
+        param.cancelScheduledValues(time);
+        param.value = value;
+        param.setValueAtTime(value, time);
 
-        if (this._context && !this._context.isFake) {
-            const time = this._context.currentTime;
-            param.cancelScheduledValues(time);
-            param.value = value;
-            param.setValueAtTime(value, time);
-        } else {
-            param.value = value;
-
-            if (this._source && this._source.hasOwnProperty('volume')) {
-                this._source.volume = value;
-            }
+        if (this._source && this._source.hasOwnProperty('volume')) {
+            this._source.volume = value;
         }
     }
 
     get userData() {
-        return {};
+        return this._userData;
     }
 
     _createSource(data) {
@@ -377,6 +371,7 @@ export default class Sound extends Emitter {
             const Fn = isAudioBuffer ? BufferSource : MediaSource;
             this._source = new AudioSource(Fn, data, this._context, this._onEnded);
             this._source.singlePlay = !!this._config.singlePlay;
+            this._source.playbackRate = this._playbackRate;
         } else if (file.isMediaStream(data)) {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType((data && data.type) || data)) {

@@ -138,7 +138,7 @@ export default function MediaSource(el, context, onEnded) {
      */
 
     function fade(toVolume, duration) {
-        if (context) {
+        if (context && !context.isFake) {
             return api;
         }
 
