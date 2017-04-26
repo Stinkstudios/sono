@@ -31,7 +31,7 @@ function cloneBuffer(buffer, offset = 0, length = buffer.length) {
         return buffer;
     }
     const numChannels = buffer.numberOfChannels;
-    const cloned = sono.context.createBuffer(numChannels, length, buffer.sampleRate);
+    const cloned = context.createBuffer(numChannels, length, buffer.sampleRate);
     for (let i = 0; i < numChannels; i++) {
         cloned.getChannelData(i)
             .set(buffer.getChannelData(i).slice(offset, offset + length));
