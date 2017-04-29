@@ -1,5 +1,4 @@
-describe('sono playback', function() {
-    this.timeout(20000);
+describe('sono playback', () => {
 
     describe('create', () => {
         const config = {

@@ -18,6 +18,12 @@ module.exports = function(config) {
         // base path, that will be used to resolve files and exclude
         basePath: '',
 
+        client: {
+            mocha: {
+                timeout: 10000
+            }
+        },
+
         plugins: [
             'karma-mocha',
             'karma-chai',
@@ -33,7 +39,7 @@ module.exports = function(config) {
             {pattern: 'test/audio/*.ogg', watched: false, included: false, served: true, nocache: false},
             'test/helper.js',
             'dist/sono.js',
-            'test/**/*.js'
+            'test/**/*.spec.js'
         ]),
 
         // list of files to exclude
