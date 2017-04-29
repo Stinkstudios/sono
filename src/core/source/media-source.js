@@ -199,6 +199,11 @@ export default function MediaSource(el, context, onEnded) {
         currentTime: {
             get: function() {
                 return el ? el.currentTime : 0;
+            },
+            set: function(value) {
+                if (el) {
+                    el.currentTime = value;
+                }
             }
         },
         duration: {

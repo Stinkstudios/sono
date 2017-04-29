@@ -27,6 +27,7 @@ export default class Sound extends Emitter {
         this._isTouchLocked = false;
         this._loader = null;
         this._loop = false;
+        this._offset = 0;
         this._playbackRate = 1;
         this._playWhenReady = null;
         this._source = null;
@@ -91,6 +92,11 @@ export default class Sound extends Emitter {
         this._playWhenReady = null;
         this._effects.setSource(this._source.sourceNode);
 
+        if (this._offset && typeof offset === 'undefined') {
+            offset = this._offset;
+            this._offset = 0;
+        }
+
         this._source.play(delay, offset);
 
         if (this._source.hasOwnProperty('volume')) {
@@ -118,11 +124,8 @@ export default class Sound extends Emitter {
         return this;
     }
 
-    seek(percent) {
-        if (this._source) {
-            this._source.stop();
-            this.play(0, this._source.duration * percent);
-        }
+    seek(value) {
+        this.currentTime = value;
         return this;
     }
 
@@ -195,17 +198,25 @@ export default class Sound extends Emitter {
         return this._wave(this._data, length);
     }
 
-    get currentTime() {
-        return this._source ? this._source.currentTime : 0;
-    }
-
     get context() {
         return this._context;
     }
 
+    get currentTime() {
+        return this._source ? this._source.currentTime : this._offset;
+    }
+
     set currentTime(value) {
-        this._source && this._source.stop();
-        this.play(0, value);
+        if (this._source) {
+            const playing = this._source.playing;
+            this._source.stop();
+            this._source.currentTime = value;
+            if (playing) {
+                this.play(0, value);
+            }
+        } else {
+            this._offset = value;
+        }
     }
 
     get data() {
@@ -372,6 +383,7 @@ export default class Sound extends Emitter {
             this._source = new AudioSource(Fn, data, this._context, this._onEnded);
             this._source.singlePlay = !!this._config.singlePlay;
             this._source.playbackRate = this._playbackRate;
+            this._source.currentTime = this._offset;
         } else if (file.isMediaStream(data)) {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType((data && data.type) || data)) {

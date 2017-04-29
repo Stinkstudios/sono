@@ -1,8 +1,9 @@
 export default function AudioSource(Type, data, context, onEnded) {
-    const sourceNode = context ? context.createGain() : null;
+    const sourceNode = context.createGain();
+    const source = create(data);
     const api = {};
     const pool = [];
-    const sources = [];
+    const clones = [];
     let numCreated = 0;
     let singlePlay = false;
 
@@ -18,70 +19,74 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function onSourceEnded(src) {
-        if (sources.length > 1) {
-            const index = sources.indexOf(src);
-            sources.splice(index, 1);
+        if (clones.length) {
+            const index = clones.indexOf(src);
+            clones.splice(index, 1);
+            disposeSource(src);
         }
-        disposeSource(src);
         onEnded();
     }
 
-    function getSource() {
-        if (sources.length && (singlePlay || !sources[0].playing)) {
-            return sources[0];
-        }
-        if (pool.length > 0) {
-            return pool.pop();
-        } else {
-            numCreated++;
-            if (data.tagName) {
-                return new Type(data.cloneNode(), context, onSourceEnded);
-            }
-            return new Type(data, context, onSourceEnded);
-        }
+    function create(buffer) {
+        return new Type(buffer, context, onSourceEnded);
     }
 
-    function play() {
+    function getSource() {
+        if (singlePlay || !source.playing) {
+            return source;
+        }
+
+        if (pool.length > 0) {
+            return pool.pop();
+        }
+
+        numCreated++;
+        if (data.tagName) {
+            return create(data.cloneNode());
+        }
+        return create(data);
+    }
+
+    function play(delay, offset) {
         const src = getSource();
         if (sourceNode) {
             src.sourceNode.connect(sourceNode);
         }
-        if (src !== sources[0]) {
-            sources.push(src);
+        if (src !== source) {
+            clones.push(src);
         }
-        src.play();
+        src.play(delay, offset);
     }
 
     function stop() {
-        if (sources.length) {
-            sources[0].stop();
-            while (sources.length > 1) {
-                disposeSource(sources.pop());
-            }
+        source.stop();
+        while (clones.length) {
+            disposeSource(clones.pop());
         }
     }
 
     function pause() {
-        sources.forEach((src) => src.pause());
+        source.pause();
+        clones.forEach(src => src.pause());
     }
 
     function load(url) {
         stop();
         pool.length = 0;
-        if (sources.length) {
-            sources[0].load(url);
-        }
+        source.load(url);
     }
 
     function fade(volume, duration) {
-        if (sources[0] && typeof sources[0].fade === 'function') {
-            sources.forEach((src) => src.fade(volume, duration));
+        if (typeof source.fade === 'function') {
+            source.fade(volume, duration);
+            clones.forEach(src => src.fade(volume, duration));
         }
     }
 
     function destroy() {
-        while (sources.length) {
-            sources.pop().destroy();
+        source.destroy();
+        while (clones.length) {
+            clones.pop().destroy();
         }
         while (pool.length) {
             pool.pop().destroy();
@@ -114,57 +119,63 @@ export default function AudioSource(Type, data, context, onEnded) {
         },
         currentTime: {
             get: function() {
-                return (sources[0] && sources[0].currentTime) || 0;
+                return source.currentTime || 0;
+            },
+            set: function(value) {
+                source.currentTime = value;
+                clones.forEach(src => (src.currentTime = value));
             }
         },
         duration: {
             get: function() {
-                return (sources[0] && sources[0].duration) || 0;
+                return source.duration || 0;
             }
         },
         ended: {
             get: function() {
-                return sources.every((src) => src.ended);
+                return source.ended && clones.every(src => src.ended);
             }
         },
         info: {
             get: function() {
                 return {
                     pooled: pool.length,
-                    active: sources.length,
-                    created: numCreated
+                    active: clones.length + 1,
+                    created: numCreated + 1
                 };
             }
         },
         loop: {
             get: function() {
-                return sources[0] && sources[0].loop;
+                return source.loop;
             },
             set: function(value) {
-                sources.forEach((src) => (src.loop = !!value));
+                source.loop = !!value;
+                clones.forEach(src => (src.loop = !!value));
             }
         },
         paused: {
             get: function() {
-                return sources[0] && sources[0].paused;
+                return source.paused;
             }
         },
         playbackRate: {
             get: function() {
-                return sources[0] && sources[0].playbackRate;
+                return source.playbackRate;
             },
             set: function(value) {
-                sources.forEach((src) => (src.playbackRate = value));
+                source.playbackRate = value;
+                clones.forEach(src => (src.playbackRate = value));
             }
         },
         playing: {
             get: function() {
-                return sources[0] && sources[0].playing;
+                return source.playing;
             }
         },
         progress: {
             get: function() {
-                return sources[0] && sources[0].progress;
+                return source.progress;
             }
         },
         singlePlay: {
@@ -182,23 +193,25 @@ export default function AudioSource(Type, data, context, onEnded) {
         },
         volume: {
             get: function() {
-                return sources[0] && sources[0].volume;
+                return source.volume;
             },
             set: function(value) {
-                if (sources[0] && sources[0].hasOwnProperty('volume')) {
-                    sources.forEach(src => (src.volume = value));
+                if (source.hasOwnProperty('volume')) {
+                    source.volume = value;
+                    clones.forEach(src => (src.volume = value));
                 }
             }
         },
         groupVolume: {
             get: function() {
-                return sources[0] && sources[0].groupVolume;
+                return source.groupVolume;
             },
             set: function(value) {
-                if (sources[0] && !sources[0].hasOwnProperty('groupVolume')) {
+                if (!source.hasOwnProperty('groupVolume')) {
                     return;
                 }
-                sources.forEach((src) => (src.groupVolume = value));
+                source.groupVolume = value;
+                clones.forEach(src => (src.groupVolume = value));
             }
         }
     });
