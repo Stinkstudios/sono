@@ -1,12 +1,13 @@
 describe('Sound', () => {
     const sound = new sono.__test.Sound({
-        context: sono.context
+        context: sono.context,
+        deferLoad: true
     });
 
     it('should have id property', () => {
         expect(sound).to.have.property('id');
-        sound.id = 'foo';
-        expect(sound.id).to.eql('foo');
+        sound.id = 'some-id';
+        expect(sound.id).to.eql('some-id');
     });
 
     it('should have data property', () => {
@@ -42,7 +43,7 @@ describe('Sound', () => {
     it('should have chainable methods', () => {
         const a = sound.play()
             .pause()
-            .load({})
+            .load()
             .stop()
             .fade(1)
             .play();

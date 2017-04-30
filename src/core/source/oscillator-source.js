@@ -1,7 +1,7 @@
 export default function OscillatorSource(type, context) {
     let ended = false,
         paused = false,
-        pausedAt = 0,
+        cuedAt = 0,
         playing = false,
         sourceNode = null, // OscillatorSourceNode
         startedAt = 0,
@@ -30,8 +30,8 @@ export default function OscillatorSource(type, context) {
         createSourceNode();
         sourceNode.start(delay);
 
-        if (pausedAt) {
-            startedAt = context.currentTime - pausedAt;
+        if (cuedAt) {
+            startedAt = context.currentTime - cuedAt;
         } else {
             startedAt = context.currentTime;
         }
@@ -39,7 +39,7 @@ export default function OscillatorSource(type, context) {
         ended = false;
         playing = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
     }
 
     function stop() {
@@ -51,7 +51,7 @@ export default function OscillatorSource(type, context) {
         }
         ended = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = false;
         startedAt = 0;
     }
@@ -59,7 +59,7 @@ export default function OscillatorSource(type, context) {
     function pause() {
         const elapsed = context.currentTime - startedAt;
         stop();
-        pausedAt = elapsed;
+        cuedAt = elapsed;
         playing = false;
         paused = true;
     }
@@ -92,13 +92,16 @@ export default function OscillatorSource(type, context) {
     Object.defineProperties(api, {
         currentTime: {
             get: function() {
-                if (pausedAt) {
-                    return pausedAt;
+                if (cuedAt) {
+                    return cuedAt;
                 }
                 if (startedAt) {
                     return context.currentTime - startedAt;
                 }
                 return 0;
+            },
+            set: function(value) {
+                cuedAt = value;
             }
         },
         duration: {

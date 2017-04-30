@@ -1,7 +1,7 @@
 export default function MicrophoneSource(stream, context) {
     let ended = false,
         paused = false,
-        pausedAt = 0,
+        cuedAt = 0,
         playing = false,
         sourceNode = null, // MicrophoneSourceNode
         startedAt = 0;
@@ -28,11 +28,11 @@ export default function MicrophoneSource(stream, context) {
         createSourceNode();
         sourceNode.start(delay);
 
-        startedAt = context.currentTime - pausedAt;
+        startedAt = context.currentTime - cuedAt;
         ended = false;
         playing = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
     }
 
     function stop() {
@@ -44,7 +44,7 @@ export default function MicrophoneSource(stream, context) {
         }
         ended = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = false;
         startedAt = 0;
     }
@@ -52,7 +52,7 @@ export default function MicrophoneSource(stream, context) {
     function pause() {
         const elapsed = context.currentTime - startedAt;
         stop();
-        pausedAt = elapsed;
+        cuedAt = elapsed;
         playing = false;
         paused = true;
     }
@@ -90,13 +90,16 @@ export default function MicrophoneSource(stream, context) {
     Object.defineProperties(api, {
         currentTime: {
             get: function() {
-                if (pausedAt) {
-                    return pausedAt;
+                if (cuedAt) {
+                    return cuedAt;
                 }
                 if (startedAt) {
                     return context.currentTime - startedAt;
                 }
                 return 0;
+            },
+            set: function(value) {
+                cuedAt = value;
             }
         },
         ended: {

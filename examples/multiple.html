@@ -21,8 +21,12 @@
             <button class="Button" data-btn="play">play</button>
             <button class="Button" data-btn="pause">pause</button>
             <button class="Button" data-btn="stop">stop</button>
-            <!-- <button class="Button" data-btn="sync">sync</button> -->
-
+            <button class="Button" data-btn="sync">sync</button>
+            <br>
+            <br>
+            <input style="width:600px" type="range" value="0" data-progress>
+            <br>
+            <input style="width:600px" type="range" value="0" data-track>
             <br>
             <br>
 
@@ -87,11 +91,7 @@
             onComplete: function(sounds) {
                 console.log('loaded');
                 loops = sounds;
-                // loops[0].on('ended', function() {
-                //     stop();
-                //     play();
-                // });
-                play();
+                // play();
             }
         });
 
@@ -131,18 +131,33 @@
 
         function sync() {
             if (!loops) {return;}
-            var baseTime = loops[0].data.currentTime;
-            console.log('baseTime', baseTime);
+            var baseTime = loops[0].currentTime;
+            // console.log('baseTime', baseTime);
             loops.forEach(function(loop) {
-                console.log('loop.data.', loop.data);
-                // loop.data.currentTime = baseTime;
+                // console.log('loop.data.', loop.data);
+                loop.currentTime = baseTime;
+            });
+        }
+
+        function seek() {
+            if (!loops) {return;}
+            var value = track.value / 100;
+            var duration = loops[0].duration;
+            var time = duration * value;
+            loops.forEach(function(loop) {
+                // console.log('loop.data.', loop.data);
+                loop.currentTime = time;
             });
         }
 
         document.querySelector('[data-btn="stop"]').addEventListener('click', stop);
         document.querySelector('[data-btn="play"]').addEventListener('click', play);
         document.querySelector('[data-btn="pause"]').addEventListener('click', pause);
-        // document.querySelector('[data-btn="sync"]').addEventListener('click', sync);
+        document.querySelector('[data-btn="sync"]').addEventListener('click', sync);
+
+        var progress = document.querySelector('[data-progress]');
+        var track = document.querySelector('[data-track]');
+        track.addEventListener('change', seek);
 
         var info = document.querySelector('[data-info]');
 
@@ -153,6 +168,7 @@
             var msg = '';
 
             var baseTime = loops[0].currentTime;
+            var duration = loops[0].duration;
 
             loops.forEach(function(loop) {
                 msg += '<tr><td style="width: 25%">';
@@ -167,6 +183,8 @@
             });
 
             info.innerHTML = '<table style="width: 800px;table-layout:auto"><tr><th>id</th><th>time</th><th>offset</th><th>info</th></tr>' + msg + '</table>';
+
+            progress.value = Math.floor(baseTime / duration * 100);
         }
         update();
     </script>

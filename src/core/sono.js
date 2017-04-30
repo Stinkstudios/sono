@@ -1,16 +1,17 @@
 import 'core-js/fn/object/assign';
 import context from './context';
-import browser from './utils/browser';
+import Effects from './effects';
 import file from './utils/file';
 import Group from './group';
 import Loader from './utils/loader';
-import Effects from './effects';
+import log from './utils/log';
+import pageVisibility from './utils/pageVisibility';
 import Sound from './sound';
 import SoundGroup from './utils/sound-group';
+import touchLock from './utils/touchLock';
 import utils from './utils/utils';
-import log from './utils/log';
 
-const VERSION = '2.0.5';
+const VERSION = '2.0.6';
 const bus = new Group(context, context.destination);
 
 /*
@@ -197,38 +198,35 @@ function stop(id) {
 * Mobile touch lock
 */
 
-let isTouchLocked = browser.handleTouchLock(context, function() {
+let isTouchLocked = touchLock(context, () => {
     isTouchLocked = false;
-    bus.sounds.forEach((sound) => (sound.isTouchLocked = false));
+    bus.sounds.forEach(sound => (sound.isTouchLocked = false));
 });
 
 /*
 * Page visibility events
 */
 
-(function() {
-    const pageHiddenPaused = [];
+const pageHiddenPaused = [];
 
-    // pause currently playing sounds and store refs
-    function onHidden() {
-        bus.sounds.forEach(function(sound) {
-            if (sound.playing) {
-                sound.pause();
-                pageHiddenPaused.push(sound);
-            }
-        });
-    }
-
-    // play sounds that got paused when page was hidden
-    function onShown() {
-        while (pageHiddenPaused.length) {
-            pageHiddenPaused.pop()
-            .play();
+// pause currently playing sounds and store refs
+function onHidden() {
+    bus.sounds.forEach(sound => {
+        if (sound.playing) {
+            sound.pause();
+            pageHiddenPaused.push(sound);
         }
-    }
+    });
+}
 
-    browser.handlePageVisibility(onHidden, onShown);
-}());
+// play sounds that got paused when page was hidden
+function onShown() {
+    while (pageHiddenPaused.length) {
+        pageHiddenPaused.pop().play();
+    }
+}
+
+pageVisibility(onHidden, onShown);
 
 function register(name, fn, attachTo = Effects.prototype) {
     attachTo[name] = fn;

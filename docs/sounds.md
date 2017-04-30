@@ -50,7 +50,7 @@ sound.play(0.2);
 sound.volume = 0.5;
 // fade out volume to 0 over 2 seconds
 sound.fade(0, 2);
-// seek to half way through sound
+// seek to 0.5 seconds
 sound.seek(0.5);
 // play sound at double speed
 sound.playbackRate = 2;
@@ -123,7 +123,7 @@ sono.create('boom.ogg')
 sound.play(delay, offset)
 sound.pause()
 sound.stop()
-sound.seek(percent)
+sound.seek(time)
 sound.fade(volume, duration)
 sound.unload()
 sound.reload()

@@ -24,9 +24,8 @@ var _isObject = function(it){
   return typeof it === 'object' ? it !== null : typeof it === 'function';
 };
 
-var isObject = _isObject;
 var _anObject = function(it){
-  if(!isObject(it))throw TypeError(it + ' is not an object!');
+  if(!_isObject(it))throw TypeError(it + ' is not an object!');
   return it;
 };
 
@@ -43,9 +42,8 @@ var _descriptors = !_fails(function(){
   return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
 });
 
-var isObject$1 = _isObject;
 var document$1 = _global.document;
-var is = isObject$1(document$1) && isObject$1(document$1.createElement);
+var is = _isObject(document$1) && _isObject(document$1.createElement);
 var _domCreate = function(it){
   return is ? document$1.createElement(it) : {};
 };
@@ -55,29 +53,26 @@ var _ie8DomDefine = !_descriptors && !_fails(function(){
 });
 
 // 7.1.1 ToPrimitive(input [, PreferredType])
-var isObject$2 = _isObject;
+
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
 var _toPrimitive = function(it, S){
-  if(!isObject$2(it))return it;
+  if(!_isObject(it))return it;
   var fn, val;
-  if(S && typeof (fn = it.toString) == 'function' && !isObject$2(val = fn.call(it)))return val;
-  if(typeof (fn = it.valueOf) == 'function' && !isObject$2(val = fn.call(it)))return val;
-  if(!S && typeof (fn = it.toString) == 'function' && !isObject$2(val = fn.call(it)))return val;
+  if(S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it)))return val;
+  if(typeof (fn = it.valueOf) == 'function' && !_isObject(val = fn.call(it)))return val;
+  if(!S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it)))return val;
   throw TypeError("Can't convert object to primitive value");
 };
 
-var anObject       = _anObject;
-var IE8_DOM_DEFINE = _ie8DomDefine;
-var toPrimitive    = _toPrimitive;
-var dP$1             = Object.defineProperty;
+var dP             = Object.defineProperty;
 
 var f = _descriptors ? Object.defineProperty : function defineProperty(O, P, Attributes){
-  anObject(O);
-  P = toPrimitive(P, true);
-  anObject(Attributes);
-  if(IE8_DOM_DEFINE)try {
-    return dP$1(O, P, Attributes);
+  _anObject(O);
+  P = _toPrimitive(P, true);
+  _anObject(Attributes);
+  if(_ie8DomDefine)try {
+    return dP(O, P, Attributes);
   } catch(e){ /* empty */ }
   if('get' in Attributes || 'set' in Attributes)throw TypeError('Accessors not supported!');
   if('value' in Attributes)O[P] = Attributes.value;
@@ -97,10 +92,8 @@ var _propertyDesc = function(bitmap, value){
   };
 };
 
-var dP         = _objectDp;
-var createDesc = _propertyDesc;
 var _hide = _descriptors ? function(object, key, value){
-  return dP.f(object, key, createDesc(1, value));
+  return _objectDp.f(object, key, _propertyDesc(1, value));
 } : function(object, key, value){
   object[key] = value;
   return object;
@@ -118,10 +111,7 @@ var _uid = function(key){
 };
 
 var _redefine = createCommonjsModule(function (module) {
-var global    = _global
-  , hide      = _hide
-  , has       = _has
-  , SRC       = _uid('src')
+var SRC       = _uid('src')
   , TO_STRING = 'toString'
   , $toString = Function[TO_STRING]
   , TPL       = ('' + $toString).split(TO_STRING);
@@ -132,18 +122,18 @@ _core.inspectSource = function(it){
 
 (module.exports = function(O, key, val, safe){
   var isFunction = typeof val == 'function';
-  if(isFunction)has(val, 'name') || hide(val, 'name', key);
+  if(isFunction)_has(val, 'name') || _hide(val, 'name', key);
   if(O[key] === val)return;
-  if(isFunction)has(val, SRC) || hide(val, SRC, O[key] ? '' + O[key] : TPL.join(String(key)));
-  if(O === global){
+  if(isFunction)_has(val, SRC) || _hide(val, SRC, O[key] ? '' + O[key] : TPL.join(String(key)));
+  if(O === _global){
     O[key] = val;
   } else {
     if(!safe){
       delete O[key];
-      hide(O, key, val);
+      _hide(O, key, val);
     } else {
       if(O[key])O[key] = val;
-      else hide(O, key, val);
+      else _hide(O, key, val);
     }
   }
 // add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
@@ -158,9 +148,9 @@ var _aFunction = function(it){
 };
 
 // optional / simple context binding
-var aFunction = _aFunction;
+
 var _ctx = function(fn, that, length){
-  aFunction(fn);
+  _aFunction(fn);
   if(that === undefined)return fn;
   switch(length){
     case 1: return function(a){
@@ -178,21 +168,16 @@ var _ctx = function(fn, that, length){
   };
 };
 
-var global$1    = _global;
-var core      = _core;
-var hide      = _hide;
-var redefine  = _redefine;
-var ctx       = _ctx;
 var PROTOTYPE = 'prototype';
 
-var $export$1 = function(type, name, source){
-  var IS_FORCED = type & $export$1.F
-    , IS_GLOBAL = type & $export$1.G
-    , IS_STATIC = type & $export$1.S
-    , IS_PROTO  = type & $export$1.P
-    , IS_BIND   = type & $export$1.B
-    , target    = IS_GLOBAL ? global$1 : IS_STATIC ? global$1[name] || (global$1[name] = {}) : (global$1[name] || {})[PROTOTYPE]
-    , exports   = IS_GLOBAL ? core : core[name] || (core[name] = {})
+var $export = function(type, name, source){
+  var IS_FORCED = type & $export.F
+    , IS_GLOBAL = type & $export.G
+    , IS_STATIC = type & $export.S
+    , IS_PROTO  = type & $export.P
+    , IS_BIND   = type & $export.B
+    , target    = IS_GLOBAL ? _global : IS_STATIC ? _global[name] || (_global[name] = {}) : (_global[name] || {})[PROTOTYPE]
+    , exports   = IS_GLOBAL ? _core : _core[name] || (_core[name] = {})
     , expProto  = exports[PROTOTYPE] || (exports[PROTOTYPE] = {})
     , key, own, out, exp;
   if(IS_GLOBAL)source = name;
@@ -202,36 +187,36 @@ var $export$1 = function(type, name, source){
     // export native or passed
     out = (own ? target : source)[key];
     // bind timers to global for call from export context
-    exp = IS_BIND && own ? ctx(out, global$1) : IS_PROTO && typeof out == 'function' ? ctx(Function.call, out) : out;
+    exp = IS_BIND && own ? _ctx(out, _global) : IS_PROTO && typeof out == 'function' ? _ctx(Function.call, out) : out;
     // extend global
-    if(target)redefine(target, key, out, type & $export$1.U);
+    if(target)_redefine(target, key, out, type & $export.U);
     // export
-    if(exports[key] != out)hide(exports, key, exp);
+    if(exports[key] != out)_hide(exports, key, exp);
     if(IS_PROTO && expProto[key] != out)expProto[key] = out;
   }
 };
-global$1.core = core;
+_global.core = _core;
 // type bitmap
-$export$1.F = 1;   // forced
-$export$1.G = 2;   // global
-$export$1.S = 4;   // static
-$export$1.P = 8;   // proto
-$export$1.B = 16;  // bind
-$export$1.W = 32;  // wrap
-$export$1.U = 64;  // safe
-$export$1.R = 128; // real proto method for `library` 
-var _export = $export$1;
+$export.F = 1;   // forced
+$export.G = 2;   // global
+$export.S = 4;   // static
+$export.P = 8;   // proto
+$export.B = 16;  // bind
+$export.W = 32;  // wrap
+$export.U = 64;  // safe
+$export.R = 128; // real proto method for `library` 
+var _export = $export;
 
-var toString$1 = {}.toString;
+var toString = {}.toString;
 
 var _cof = function(it){
-  return toString$1.call(it).slice(8, -1);
+  return toString.call(it).slice(8, -1);
 };
 
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
-var cof = _cof;
+
 var _iobject = Object('z').propertyIsEnumerable(0) ? Object : function(it){
-  return cof(it) == 'String' ? it.split('') : Object(it);
+  return _cof(it) == 'String' ? it.split('') : Object(it);
 };
 
 // 7.2.1 RequireObjectCoercible(argument)
@@ -241,10 +226,9 @@ var _defined = function(it){
 };
 
 // to indexed object, toObject with fallback for non-array-like ES3 strings
-var IObject$1 = _iobject;
-var defined = _defined;
+
 var _toIobject = function(it){
-  return IObject$1(defined(it));
+  return _iobject(_defined(it));
 };
 
 // 7.1.4 ToInteger
@@ -255,30 +239,26 @@ var _toInteger = function(it){
 };
 
 // 7.1.15 ToLength
-var toInteger = _toInteger;
 var min       = Math.min;
 var _toLength = function(it){
-  return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
+  return it > 0 ? min(_toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
 };
 
-var toInteger$1 = _toInteger;
 var max       = Math.max;
 var min$1       = Math.min;
 var _toIndex = function(index, length){
-  index = toInteger$1(index);
+  index = _toInteger(index);
   return index < 0 ? max(index + length, 0) : min$1(index, length);
 };
 
 // false -> Array#indexOf
 // true  -> Array#includes
-var toIObject$1 = _toIobject;
-var toLength  = _toLength;
-var toIndex   = _toIndex;
+
 var _arrayIncludes = function(IS_INCLUDES){
   return function($this, el, fromIndex){
-    var O      = toIObject$1($this)
-      , length = toLength(O.length)
-      , index  = toIndex(fromIndex, length)
+    var O      = _toIobject($this)
+      , length = _toLength(O.length)
+      , index  = _toIndex(fromIndex, length)
       , value;
     // Array#includes uses SameValueZero equality algorithm
     if(IS_INCLUDES && el != el)while(length > index){
@@ -291,32 +271,28 @@ var _arrayIncludes = function(IS_INCLUDES){
   };
 };
 
-var global$2 = _global;
 var SHARED = '__core-js_shared__';
-var store  = global$2[SHARED] || (global$2[SHARED] = {});
+var store  = _global[SHARED] || (_global[SHARED] = {});
 var _shared = function(key){
   return store[key] || (store[key] = {});
 };
 
 var shared = _shared('keys');
-var uid    = _uid;
 var _sharedKey = function(key){
-  return shared[key] || (shared[key] = uid(key));
+  return shared[key] || (shared[key] = _uid(key));
 };
 
-var has$1          = _has;
-var toIObject    = _toIobject;
 var arrayIndexOf = _arrayIncludes(false);
 var IE_PROTO     = _sharedKey('IE_PROTO');
 
 var _objectKeysInternal = function(object, names){
-  var O      = toIObject(object)
+  var O      = _toIobject(object)
     , i      = 0
     , result = []
     , key;
-  for(key in O)if(key != IE_PROTO)has$1(O, key) && result.push(key);
+  for(key in O)if(key != IE_PROTO)_has(O, key) && result.push(key);
   // Don't enum bug & hidden keys
-  while(names.length > i)if(has$1(O, key = names[i++])){
+  while(names.length > i)if(_has(O, key = names[i++])){
     ~arrayIndexOf(result, key) || result.push(key);
   }
   return result;
@@ -328,11 +304,10 @@ var _enumBugKeys = (
 ).split(',');
 
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
-var $keys       = _objectKeysInternal;
-var enumBugKeys = _enumBugKeys;
+
 
 var _objectKeys = Object.keys || function keys(O){
-  return $keys(O, enumBugKeys);
+  return _objectKeysInternal(O, _enumBugKeys);
 };
 
 var f$1 = Object.getOwnPropertySymbols;
@@ -348,17 +323,12 @@ var _objectPie = {
 };
 
 // 7.1.13 ToObject(argument)
-var defined$1 = _defined;
+
 var _toObject = function(it){
-  return Object(defined$1(it));
+  return Object(_defined(it));
 };
 
 // 19.1.2.1 Object.assign(target, source, ...)
-var getKeys  = _objectKeys;
-var gOPS     = _objectGops;
-var pIE      = _objectPie;
-var toObject = _toObject;
-var IObject  = _iobject;
 var $assign  = Object.assign;
 
 // should work with symbols and should have deterministic property order (V8 bug)
@@ -371,14 +341,14 @@ var _objectAssign = !$assign || _fails(function(){
   K.split('').forEach(function(k){ B[k] = k; });
   return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
 }) ? function assign(target, source){ // eslint-disable-line no-unused-vars
-  var T     = toObject(target)
+  var T     = _toObject(target)
     , aLen  = arguments.length
     , index = 1
-    , getSymbols = gOPS.f
-    , isEnum     = pIE.f;
+    , getSymbols = _objectGops.f
+    , isEnum     = _objectPie.f;
   while(aLen > index){
-    var S      = IObject(arguments[index++])
-      , keys   = getSymbols ? getKeys(S).concat(getSymbols(S)) : getKeys(S)
+    var S      = _iobject(arguments[index++])
+      , keys   = getSymbols ? _objectKeys(S).concat(getSymbols(S)) : _objectKeys(S)
       , length = keys.length
       , j      = 0
       , key;
@@ -387,9 +357,19 @@ var _objectAssign = !$assign || _fails(function(){
 } : $assign;
 
 // 19.1.3.1 Object.assign(target, source)
-var $export = _export;
 
-$export($export.S + $export.F, 'Object', {assign: _objectAssign});
+
+_export(_export.S + _export.F, 'Object', {assign: _objectAssign});
+
+function dummy(context) {
+    var buffer = context.createBuffer(1, 1, context.sampleRate);
+    var source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+    source.start(0);
+    source.stop(0);
+    source.disconnect();
+}
 
 function FakeContext() {
 
@@ -510,117 +490,48 @@ function FakeContext() {
     };
 }
 
-function getContext() {
-    var desiredSampleRate = 44100;
+var iOS = navigator && /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
 
-    var Ctx = window.AudioContext || window.webkitAudioContext || FakeContext;
+var desiredSampleRate = 44100;
 
-    var ctx = new Ctx();
+var Ctx = window.AudioContext || window.webkitAudioContext || FakeContext;
 
-    if (!ctx) {
-        ctx = new FakeContext();
-    }
+var context = new Ctx();
 
-    // Check if hack is necessary. Only occurs in iOS6+ devices
-    // and only when you first boot the iPhone, or play a audio/video
-    // with a different sample rate
-    // https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
-    if (/(iPhone|iPad)/i.test(navigator.userAgent) && ctx.sampleRate !== desiredSampleRate) {
-        var buffer = ctx.createBuffer(1, 1, desiredSampleRate);
-        var dummy = ctx.createBufferSource();
-        dummy.buffer = buffer;
-        dummy.connect(ctx.destination);
-        dummy.start(0);
-        dummy.disconnect();
-
-        ctx.close(); // dispose old context
-        ctx = new Ctx();
-    }
-
-    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
-
-    var isSuspended = ctx.state === 'suspended';
-
-    if (isSuspended && typeof ctx.resume === 'function') {
-        window.setTimeout(function () {
-            ctx.resume();
-        }, 1000);
-    }
-
-    return ctx;
+if (!context) {
+    context = new FakeContext();
 }
 
-var context = getContext();
+// Check if hack is necessary. Only occurs in iOS6+ devices
+// and only when you first boot the iPhone, or play a audio/video
+// with a different sample rate
+// https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
+if (iOS && context.sampleRate !== desiredSampleRate) {
+    dummy(context);
+    context.close(); // dispose old context
+    context = new Ctx();
+}
 
-var browser = {};
+// Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+if (context.state === 'suspended' && typeof context.resume === 'function') {
+    window.setTimeout(function () {
+        return context.resume();
+    }, 1000);
+}
 
-browser.handlePageVisibility = function (onHidden, onShown) {
-    var hidden = void 0,
-        visibilityChange = void 0;
-
-    if (typeof document.hidden !== 'undefined') {
-        hidden = 'hidden';
-        visibilityChange = 'visibilitychange';
-    } else if (typeof document.mozHidden !== 'undefined') {
-        hidden = 'mozHidden';
-        visibilityChange = 'mozvisibilitychange';
-    } else if (typeof document.msHidden !== 'undefined') {
-        hidden = 'msHidden';
-        visibilityChange = 'msvisibilitychange';
-    } else if (typeof document.webkitHidden !== 'undefined') {
-        hidden = 'webkitHidden';
-        visibilityChange = 'webkitvisibilitychange';
-    }
-
-    function onChange() {
-        if (document[hidden]) {
-            onHidden();
-        } else {
-            onShown();
-        }
-    }
-
-    if (typeof visibilityChange !== 'undefined') {
-        document.addEventListener(visibilityChange, onChange, false);
-    }
-};
-
-browser.handleTouchLock = function (context, onUnlock) {
-    var ua = navigator.userAgent,
-        locked = !!ua.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|SymbianOS/i);
-
-    function unlock() {
-        if (context && context.state === 'suspended') {
-            context.resume().then(function () {
-                var buffer = context.createBuffer(1, 1, 44100);
-                var source = context.createBufferSource();
-                source.buffer = buffer;
-                source.connect(context.destination);
-                source.start(0);
-                source.stop(0);
-                source.disconnect();
-
-                document.body.removeEventListener('touchend', unlock);
-                onUnlock();
-            });
-        } else {
-            document.body.removeEventListener('touchend', unlock);
-            onUnlock();
-        }
-    }
-
-    if (locked) {
-        document.body.addEventListener('touchend', unlock, false);
-    }
-
-    return locked;
-};
+var context$1 = context;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
 };
+
+
+
+
+
+
 
 
 
@@ -665,30 +576,7 @@ var defineEnumerableProperties = function (obj, descs) {
 
 
 
-var get$2 = function get$2(object, property, receiver) {
-  if (object === null) object = Function.prototype;
-  var desc = Object.getOwnPropertyDescriptor(object, property);
 
-  if (desc === undefined) {
-    var parent = Object.getPrototypeOf(object);
-
-    if (parent === null) {
-      return undefined;
-    } else {
-      return get$2(parent, property, receiver);
-    }
-  } else if ("value" in desc) {
-    return desc.value;
-  } else {
-    var getter = desc.get;
-
-    if (getter === undefined) {
-      return undefined;
-    }
-
-    return getter.call(receiver);
-  }
-};
 
 var inherits = function (subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
@@ -722,170 +610,6 @@ var possibleConstructorReturn = function (self, call) {
   }
 
   return call && (typeof call === "object" || typeof call === "function") ? call : self;
-};
-
-
-
-var set$1 = function set$1(object, property, value, receiver) {
-  var desc = Object.getOwnPropertyDescriptor(object, property);
-
-  if (desc === undefined) {
-    var parent = Object.getPrototypeOf(object);
-
-    if (parent !== null) {
-      set$1(parent, property, value, receiver);
-    }
-  } else if ("value" in desc && desc.writable) {
-    desc.value = value;
-  } else {
-    var setter = desc.set;
-
-    if (setter !== undefined) {
-      setter.call(receiver, value);
-    }
-  }
-
-  return value;
-};
-
-var extensions = [];
-var canPlay = {};
-
-/*
- * Initial tests
- */
-
-var tests = [{
-    ext: 'ogg',
-    type: 'audio/ogg; codecs="vorbis"'
-}, {
-    ext: 'mp3',
-    type: 'audio/mpeg;'
-}, {
-    ext: 'opus',
-    type: 'audio/ogg; codecs="opus"'
-}, {
-    ext: 'wav',
-    type: 'audio/wav; codecs="1"'
-}, {
-    ext: 'm4a',
-    type: 'audio/x-m4a;'
-}, {
-    ext: 'm4a',
-    type: 'audio/aac;'
-}];
-
-var el = document.createElement('audio');
-if (el) {
-    tests.forEach(function (test) {
-        var canPlayType = !!el.canPlayType(test.type);
-        if (canPlayType && extensions.indexOf(test.ext) === -1) {
-            extensions.push(test.ext);
-        }
-        canPlay[test.ext] = canPlayType;
-    });
-    el = null;
-}
-
-/*
- * find a supported file
- */
-
-function getFileExtension(url) {
-    if (typeof url !== 'string') {
-        return '';
-    }
-    // from DataURL
-    if (url.slice(0, 5) === 'data:') {
-        var match = url.match(/data:audio\/(ogg|mp3|opus|wav|m4a)/i);
-        if (match && match.length > 1) {
-            return match[1].toLowerCase();
-        }
-    }
-    // from Standard URL
-    url = url.split('?')[0];
-    url = url.slice(url.lastIndexOf('/') + 1);
-
-    var a = url.split('.');
-    if (a.length === 1 || a[0] === '' && a.length === 2) {
-        return '';
-    }
-    return a.pop().toLowerCase();
-}
-
-function getSupportedFile(fileNames) {
-    var name = void 0;
-
-    if (Array.isArray(fileNames)) {
-        // if array get the first one that works
-        for (var i = 0; i < fileNames.length; i++) {
-            name = fileNames[i];
-            var ext = getFileExtension(name);
-            if (extensions.indexOf(ext) > -1) {
-                break;
-            }
-        }
-    } else if ((typeof fileNames === 'undefined' ? 'undefined' : _typeof(fileNames)) === 'object') {
-        // if not array and is object
-        Object.keys(fileNames).some(function (key) {
-            name = fileNames[key];
-            var ext = getFileExtension(name);
-            return extensions.indexOf(ext) > -1;
-        });
-    }
-    // if string just return
-    return name || fileNames;
-}
-
-/*
- * infer file types
- */
-
-function isAudioBuffer(data) {
-    return !!(data && window.AudioBuffer && data instanceof window.AudioBuffer);
-}
-
-function isArrayBuffer(data) {
-    return !!(data && window.ArrayBuffer && data instanceof window.ArrayBuffer);
-}
-
-function isMediaElement(data) {
-    return !!(data && window.HTMLMediaElement && data instanceof window.HTMLMediaElement);
-}
-
-function isMediaStream(data) {
-    return !!(data && typeof data.getAudioTracks === 'function' && data.getAudioTracks().length && window.MediaStreamTrack && data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
-}
-
-function isOscillatorType(data) {
-    return !!(data && typeof data === 'string' && (data === 'sine' || data === 'square' || data === 'sawtooth' || data === 'triangle'));
-}
-
-function isURL(data) {
-    return !!(data && typeof data === 'string' && (data.indexOf('.') > -1 || data.slice(0, 5) === 'data:'));
-}
-
-function containsURL(config) {
-    if (!config || isMediaElement(config)) {
-        return false;
-    }
-    // string, array or object with src/url/data property that is string, array or arraybuffer
-    var src = config.src || config.url || config.data || config;
-    return isURL(src) || isArrayBuffer(src) || Array.isArray(src) && isURL(src[0]);
-}
-
-var file = {
-    canPlay: canPlay,
-    containsURL: containsURL,
-    extensions: extensions,
-    getFileExtension: getFileExtension,
-    getSupportedFile: getSupportedFile,
-    isAudioBuffer: isAudioBuffer,
-    isArrayBuffer: isArrayBuffer,
-    isMediaElement: isMediaElement,
-    isMediaStream: isMediaStream,
-    isOscillatorType: isOscillatorType,
-    isURL: isURL
 };
 
 var Effects = function () {
@@ -1050,6 +774,146 @@ var Effects = function () {
 
     return Effects;
 }();
+
+var extensions = [];
+var canPlay = {};
+
+/*
+ * Initial tests
+ */
+
+var tests = [{
+    ext: 'ogg',
+    type: 'audio/ogg; codecs="vorbis"'
+}, {
+    ext: 'mp3',
+    type: 'audio/mpeg;'
+}, {
+    ext: 'opus',
+    type: 'audio/ogg; codecs="opus"'
+}, {
+    ext: 'wav',
+    type: 'audio/wav; codecs="1"'
+}, {
+    ext: 'm4a',
+    type: 'audio/x-m4a;'
+}, {
+    ext: 'm4a',
+    type: 'audio/aac;'
+}];
+
+var el = document.createElement('audio');
+if (el) {
+    tests.forEach(function (test) {
+        var canPlayType = !!el.canPlayType(test.type);
+        if (canPlayType && extensions.indexOf(test.ext) === -1) {
+            extensions.push(test.ext);
+        }
+        canPlay[test.ext] = canPlayType;
+    });
+    el = null;
+}
+
+/*
+ * find a supported file
+ */
+
+function getFileExtension(url) {
+    if (typeof url !== 'string') {
+        return '';
+    }
+    // from DataURL
+    if (url.slice(0, 5) === 'data:') {
+        var match = url.match(/data:audio\/(ogg|mp3|opus|wav|m4a)/i);
+        if (match && match.length > 1) {
+            return match[1].toLowerCase();
+        }
+    }
+    // from Standard URL
+    url = url.split('?')[0];
+    url = url.slice(url.lastIndexOf('/') + 1);
+
+    var a = url.split('.');
+    if (a.length === 1 || a[0] === '' && a.length === 2) {
+        return '';
+    }
+    return a.pop().toLowerCase();
+}
+
+function getSupportedFile(fileNames) {
+    var name = void 0;
+
+    if (Array.isArray(fileNames)) {
+        // if array get the first one that works
+        for (var i = 0; i < fileNames.length; i++) {
+            name = fileNames[i];
+            var ext = getFileExtension(name);
+            if (extensions.indexOf(ext) > -1) {
+                break;
+            }
+        }
+    } else if ((typeof fileNames === 'undefined' ? 'undefined' : _typeof(fileNames)) === 'object') {
+        // if not array and is object
+        Object.keys(fileNames).some(function (key) {
+            name = fileNames[key];
+            var ext = getFileExtension(name);
+            return extensions.indexOf(ext) > -1;
+        });
+    }
+    // if string just return
+    return name || fileNames;
+}
+
+/*
+ * infer file types
+ */
+
+function isAudioBuffer(data) {
+    return !!(data && window.AudioBuffer && data instanceof window.AudioBuffer);
+}
+
+function isArrayBuffer(data) {
+    return !!(data && window.ArrayBuffer && data instanceof window.ArrayBuffer);
+}
+
+function isMediaElement(data) {
+    return !!(data && window.HTMLMediaElement && data instanceof window.HTMLMediaElement);
+}
+
+function isMediaStream(data) {
+    return !!(data && typeof data.getAudioTracks === 'function' && data.getAudioTracks().length && window.MediaStreamTrack && data.getAudioTracks()[0] instanceof window.MediaStreamTrack);
+}
+
+function isOscillatorType(data) {
+    return !!(data && typeof data === 'string' && (data === 'sine' || data === 'square' || data === 'sawtooth' || data === 'triangle'));
+}
+
+function isURL(data) {
+    return !!(data && typeof data === 'string' && (data.indexOf('.') > -1 || data.slice(0, 5) === 'data:'));
+}
+
+function containsURL(config) {
+    if (!config || isMediaElement(config)) {
+        return false;
+    }
+    // string, array or object with src/url/data property that is string, array or arraybuffer
+    var src = config.src || config.url || config.data || config;
+    return isURL(src) || isArrayBuffer(src) || Array.isArray(src) && isURL(src[0]);
+}
+
+var file = {
+    canPlay: canPlay,
+    containsURL: containsURL,
+    extensions: extensions,
+    getFileExtension: getFileExtension,
+    getSupportedFile: getSupportedFile,
+    isAudioBuffer: isAudioBuffer,
+    isArrayBuffer: isArrayBuffer,
+    isMediaElement: isMediaElement,
+    isMediaStream: isMediaStream,
+    isOscillatorType: isOscillatorType,
+    isURL: isURL
+};
 
 function Group(context, destination) {
     var sounds = [];
@@ -1337,7 +1201,7 @@ EventEmitter$1.prototype.emit = function(type) {
   // If there is no 'error' event listener then throw.
   if (type === 'error') {
     if (!this._events.error ||
-        (isObject$3(this._events.error) && !this._events.error.length)) {
+        (isObject$1(this._events.error) && !this._events.error.length)) {
       er = arguments[1];
       if (er instanceof Error) {
         throw er; // Unhandled 'error' event
@@ -1372,7 +1236,7 @@ EventEmitter$1.prototype.emit = function(type) {
         args = Array.prototype.slice.call(arguments, 1);
         handler.apply(this, args);
     }
-  } else if (isObject$3(handler)) {
+  } else if (isObject$1(handler)) {
     args = Array.prototype.slice.call(arguments, 1);
     listeners = handler.slice();
     len = listeners.length;
@@ -1402,7 +1266,7 @@ EventEmitter$1.prototype.addListener = function(type, listener) {
   if (!this._events[type])
     // Optimize the case of one listener. Don't need the extra array object.
     this._events[type] = listener;
-  else if (isObject$3(this._events[type]))
+  else if (isObject$1(this._events[type]))
     // If we've already got an array, just append.
     this._events[type].push(listener);
   else
@@ -1410,7 +1274,7 @@ EventEmitter$1.prototype.addListener = function(type, listener) {
     this._events[type] = [this._events[type], listener];
 
   // Check for listener leak
-  if (isObject$3(this._events[type]) && !this._events[type].warned) {
+  if (isObject$1(this._events[type]) && !this._events[type].warned) {
     if (!isUndefined(this._maxListeners)) {
       m = this._maxListeners;
     } else {
@@ -1476,7 +1340,7 @@ EventEmitter$1.prototype.removeListener = function(type, listener) {
     if (this._events.removeListener)
       this.emit('removeListener', type, listener);
 
-  } else if (isObject$3(list)) {
+  } else if (isObject$1(list)) {
     for (i = length; i-- > 0;) {
       if (list[i] === listener ||
           (list[i].listener && list[i].listener === listener)) {
@@ -1577,7 +1441,7 @@ function isNumber(arg) {
   return typeof arg === 'number';
 }
 
-function isObject$3(arg) {
+function isObject$1(arg) {
   return typeof arg === 'object' && arg !== null;
 }
 
@@ -1754,9 +1618,9 @@ function Loader(url, deferLoad) {
     }
 
     function start() {
-        var force = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+        var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
-        if (deferLoad && !force) {
+        if (!url || deferLoad && !force) {
             return;
         }
         if (audioContext) {
@@ -1802,6 +1666,11 @@ function Loader(url, deferLoad) {
         isTouchLocked: {
             set: function set(value) {
                 isTouchLocked = value;
+            }
+        },
+        url: {
+            get: function get() {
+                return url;
             }
         }
     });
@@ -1875,17 +1744,59 @@ Loader.Group = function () {
     });
 };
 
-function BufferSource(buffer, context, onEnded) {
+function log(api) {
+    var title = 'sono ' + api.VERSION,
+        info = 'Supported:' + api.isSupported + ' WebAudioAPI:' + api.hasWebAudio + ' TouchLocked:' + api.isTouchLocked + ' State:' + (api.context && api.context.state) + ' Extensions:' + api.file.extensions;
+
+    if (navigator.userAgent.indexOf('Chrome') > -1) {
+        var args = ['%c ♫ ' + title + ' ♫ %c ' + info + ' ', 'color: #FFFFFF; background: #379F7A', 'color: #1F1C0D; background: #E0FBAC'];
+        console.log.apply(console, args);
+    } else if (window.console && window.console.log.call) {
+        console.log.call(console, title + ' ' + info);
+    }
+}
+
+function pageVisibility(onHidden, onShown) {
+    var hidden = null;
+    var visibilityChange = null;
+
+    if (typeof document.hidden !== 'undefined') {
+        hidden = 'hidden';
+        visibilityChange = 'visibilitychange';
+    } else if (typeof document.mozHidden !== 'undefined') {
+        hidden = 'mozHidden';
+        visibilityChange = 'mozvisibilitychange';
+    } else if (typeof document.msHidden !== 'undefined') {
+        hidden = 'msHidden';
+        visibilityChange = 'msvisibilitychange';
+    } else if (typeof document.webkitHidden !== 'undefined') {
+        hidden = 'webkitHidden';
+        visibilityChange = 'webkitvisibilitychange';
+    }
+
+    function onChange() {
+        if (document[hidden]) {
+            onHidden();
+        } else {
+            onShown();
+        }
+    }
+
+    if (typeof visibilityChange !== 'undefined') {
+        document.addEventListener(visibilityChange, onChange, false);
+    }
+}
+
+function BufferSource(buffer, context, endedCallback) {
     var api = {};
-    var ended = false,
-        endedCallback = onEnded,
-        loop = false,
-        paused = false,
-        pausedAt = 0,
-        playbackRate = 1,
-        playing = false,
-        sourceNode = null,
-        startedAt = 0;
+    var ended = false;
+    var loop = false;
+    var paused = false;
+    var cuedAt = 0;
+    var playbackRate = 1;
+    var playing = false;
+    var sourceNode = null;
+    var startedAt = 0;
 
     function createSourceNode() {
         if (!sourceNode && context) {
@@ -1910,7 +1821,7 @@ function BufferSource(buffer, context, onEnded) {
         }
 
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = false;
         startedAt = 0;
     }
@@ -1918,7 +1829,7 @@ function BufferSource(buffer, context, onEnded) {
     function pause() {
         var elapsed = context.currentTime - startedAt;
         stop();
-        pausedAt = elapsed;
+        cuedAt = elapsed;
         playing = false;
         paused = true;
     }
@@ -1931,20 +1842,24 @@ function BufferSource(buffer, context, onEnded) {
         }
     }
 
-    function play(delay) {
-        var offset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+    function play() {
+        var delay = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+        var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
         if (playing) {
             return;
         }
 
         delay = delay ? context.currentTime + delay : 0;
+
         if (offset) {
-            pausedAt = 0;
+            cuedAt = 0;
         }
-        if (pausedAt) {
-            offset = pausedAt;
+
+        if (cuedAt) {
+            offset = cuedAt;
         }
+
         while (offset > api.duration) {
             offset = offset % api.duration;
         }
@@ -1959,7 +1874,7 @@ function BufferSource(buffer, context, onEnded) {
         startedAt = context.currentTime - offset;
         ended = false;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = true;
     }
 
@@ -1994,17 +1909,16 @@ function BufferSource(buffer, context, onEnded) {
         },
         currentTime: {
             get: function get() {
-                if (pausedAt) {
-                    return pausedAt;
+                if (cuedAt) {
+                    return cuedAt;
                 }
                 if (startedAt) {
-                    var time = context.currentTime - startedAt;
-                    if (time > api.duration) {
-                        time = time % api.duration;
-                    }
-                    return time;
+                    return context.currentTime - startedAt;
                 }
                 return 0;
+            },
+            set: function set(value) {
+                cuedAt = value;
             }
         },
         duration: {
@@ -2090,14 +2004,14 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  */
 
 function cloneBuffer(buffer) {
-    var offset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
-    var length = arguments.length <= 2 || arguments[2] === undefined ? buffer.length : arguments[2];
+    var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    var length = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : buffer.length;
 
-    if (!context || context.isFake) {
+    if (!context$1 || context$1.isFake) {
         return buffer;
     }
     var numChannels = buffer.numberOfChannels;
-    var cloned = context.createBuffer(numChannels, length, buffer.sampleRate);
+    var cloned = context$1.createBuffer(numChannels, length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i).slice(offset, offset + length));
     }
@@ -2121,16 +2035,16 @@ function reverseBuffer(buffer) {
  */
 
 function ramp(param, fromValue, toValue, duration, linear) {
-    if (context.isFake) {
+    if (context$1.isFake) {
         return;
     }
 
-    param.setValueAtTime(fromValue, context.currentTime);
+    param.setValueAtTime(fromValue, context$1.currentTime);
 
     if (linear) {
-        param.linearRampToValueAtTime(toValue, context.currentTime + duration);
+        param.linearRampToValueAtTime(toValue, context$1.currentTime + duration);
     } else {
-        param.exponentialRampToValueAtTime(toValue, context.currentTime + duration);
+        param.exponentialRampToValueAtTime(toValue, context$1.currentTime + duration);
     }
 }
 
@@ -2139,14 +2053,14 @@ function ramp(param, fromValue, toValue, duration, linear) {
  */
 
 function getFrequency(value) {
-    if (context.isFake) {
+    if (context$1.isFake) {
         return 0;
     }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     var minValue = 40;
-    var maxValue = context.sampleRate / 2;
+    var maxValue = context$1.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -2160,7 +2074,7 @@ function getFrequency(value) {
  */
 
 function timeCode(seconds) {
-    var delim = arguments.length <= 1 || arguments[1] === undefined ? ':' : arguments[1];
+    var delim = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ':';
 
     // const h = Math.floor(seconds / 3600);
     // const m = Math.floor((seconds % 3600) / 60);
@@ -2187,10 +2101,11 @@ function isSafeNumber(value) {
 }
 
 function AudioSource(Type, data, context, onEnded) {
-    var sourceNode = context ? context.createGain() : null;
+    var sourceNode = context.createGain();
+    var source = create(data);
     var api = {};
     var pool = [];
-    var sources = [];
+    var clones = [];
     var numCreated = 0;
     var singlePlay = false;
 
@@ -2206,51 +2121,55 @@ function AudioSource(Type, data, context, onEnded) {
     }
 
     function onSourceEnded(src) {
-        if (sources.length > 1) {
-            var index = sources.indexOf(src);
-            sources.splice(index, 1);
+        if (clones.length) {
+            var index = clones.indexOf(src);
+            clones.splice(index, 1);
+            disposeSource(src);
         }
-        disposeSource(src);
         onEnded();
     }
 
-    function getSource() {
-        if (sources.length && (singlePlay || !sources[0].playing)) {
-            return sources[0];
-        }
-        if (pool.length > 0) {
-            return pool.pop();
-        } else {
-            numCreated++;
-            if (data.tagName) {
-                return new Type(data.cloneNode(), context, onSourceEnded);
-            }
-            return new Type(data, context, onSourceEnded);
-        }
+    function create(buffer) {
+        return new Type(buffer, context, onSourceEnded);
     }
 
-    function play() {
+    function getSource() {
+        if (singlePlay || !source.playing) {
+            return source;
+        }
+
+        if (pool.length > 0) {
+            return pool.pop();
+        }
+
+        numCreated++;
+        if (data.tagName) {
+            return create(data.cloneNode());
+        }
+        return create(data);
+    }
+
+    function play(delay, offset) {
         var src = getSource();
         if (sourceNode) {
             src.sourceNode.connect(sourceNode);
         }
-        if (src !== sources[0]) {
-            sources.push(src);
+        if (src !== source) {
+            clones.push(src);
         }
-        src.play();
+        src.play(delay, offset);
     }
 
     function stop() {
-        if (sources.length) {
-            sources[0].stop();
-            while (sources.length > 1) {
-                disposeSource(sources.pop());
-            }
+        source.stop();
+        while (clones.length) {
+            disposeSource(clones.pop());
         }
     }
 
     function pause() {
-        sources.forEach(function (src) {
+        source.pause();
+        clones.forEach(function (src) {
             return src.pause();
         });
     }
@@ -2258,22 +2177,22 @@ function AudioSource(Type, data, context, onEnded) {
     function load(url) {
         stop();
         pool.length = 0;
-        if (sources.length) {
-            sources[0].load(url);
-        }
+        source.load(url);
     }
 
     function fade(volume, duration) {
-        if (sources[0] && typeof sources[0].fade === 'function') {
-            sources.forEach(function (src) {
+        if (typeof source.fade === 'function') {
+            source.fade(volume, duration);
+            clones.forEach(function (src) {
                 return src.fade(volume, duration);
             });
         }
     }
 
     function destroy() {
-        while (sources.length) {
-            sources.pop().destroy();
+        source.destroy();
+        while (clones.length) {
+            clones.pop().destroy();
         }
         while (pool.length) {
             pool.pop().destroy();
@@ -2306,17 +2225,23 @@ function AudioSource(Type, data, context, onEnded) {
         },
         currentTime: {
             get: function get() {
-                return sources[0] && sources[0].currentTime || 0;
+                return source.currentTime || 0;
+            },
+            set: function set(value) {
+                source.currentTime = value;
+                clones.forEach(function (src) {
+                    return src.currentTime = value;
+                });
             }
         },
         duration: {
             get: function get() {
-                return sources[0] && sources[0].duration || 0;
+                return source.duration || 0;
             }
         },
         ended: {
             get: function get() {
-                return sources.every(function (src) {
+                return source.ended && clones.every(function (src) {
                     return src.ended;
                 });
             }
@@ -2325,44 +2250,46 @@ function AudioSource(Type, data, context, onEnded) {
             get: function get() {
                 return {
                     pooled: pool.length,
-                    active: sources.length,
-                    created: numCreated
+                    active: clones.length + 1,
+                    created: numCreated + 1
                 };
             }
         },
         loop: {
             get: function get() {
-                return sources[0] && sources[0].loop;
+                return source.loop;
             },
             set: function set(value) {
-                sources.forEach(function (src) {
+                source.loop = !!value;
+                clones.forEach(function (src) {
                     return src.loop = !!value;
                 });
             }
         },
         paused: {
             get: function get() {
-                return sources[0] && sources[0].paused;
+                return source.paused;
             }
         },
         playbackRate: {
             get: function get() {
-                return sources[0] && sources[0].playbackRate;
+                return source.playbackRate;
             },
             set: function set(value) {
-                sources.forEach(function (src) {
+                source.playbackRate = value;
+                clones.forEach(function (src) {
                     return src.playbackRate = value;
                 });
             }
         },
         playing: {
             get: function get() {
-                return sources[0] && sources[0].playing;
+                return source.playing;
             }
         },
         progress: {
             get: function get() {
-                return sources[0] && sources[0].progress;
+                return source.progress;
             }
         },
         singlePlay: {
@@ -2380,11 +2307,12 @@ function AudioSource(Type, data, context, onEnded) {
         },
         volume: {
             get: function get() {
-                return sources[0] && sources[0].volume;
+                return source.volume;
             },
             set: function set(value) {
-                if (sources[0] && sources[0].hasOwnProperty('volume')) {
-                    sources.forEach(function (src) {
+                if (source.hasOwnProperty('volume')) {
+                    source.volume = value;
+                    clones.forEach(function (src) {
                         return src.volume = value;
                     });
                 }
@@ -2392,13 +2320,14 @@ function AudioSource(Type, data, context, onEnded) {
         },
         groupVolume: {
             get: function get() {
-                return sources[0] && sources[0].groupVolume;
+                return source.groupVolume;
             },
             set: function set(value) {
-                if (sources[0] && !sources[0].hasOwnProperty('groupVolume')) {
+                if (!source.hasOwnProperty('groupVolume')) {
                     return;
                 }
-                sources.forEach(function (src) {
+                source.groupVolume = value;
+                clones.forEach(function (src) {
                     return src.groupVolume = value;
                 });
             }
@@ -2609,6 +2538,11 @@ function MediaSource(el, context, onEnded) {
         currentTime: {
             get: function get() {
                 return el ? el.currentTime : 0;
+            },
+            set: function set(value) {
+                if (el) {
+                    el.currentTime = value;
+                }
             }
         },
         duration: {
@@ -2691,7 +2625,7 @@ function MediaSource(el, context, onEnded) {
 function MicrophoneSource(stream, context) {
     var ended = false,
         paused = false,
-        pausedAt = 0,
+        cuedAt = 0,
         playing = false,
         sourceNode = null,
         // MicrophoneSourceNode
@@ -2719,11 +2653,11 @@ function MicrophoneSource(stream, context) {
         createSourceNode();
         sourceNode.start(delay);
 
-        startedAt = context.currentTime - pausedAt;
+        startedAt = context.currentTime - cuedAt;
         ended = false;
         playing = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
     }
 
     function stop() {
@@ -2735,7 +2669,7 @@ function MicrophoneSource(stream, context) {
         }
         ended = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = false;
         startedAt = 0;
     }
@@ -2743,7 +2677,7 @@ function MicrophoneSource(stream, context) {
     function pause() {
         var elapsed = context.currentTime - startedAt;
         stop();
-        pausedAt = elapsed;
+        cuedAt = elapsed;
         playing = false;
         paused = true;
     }
@@ -2781,13 +2715,16 @@ function MicrophoneSource(stream, context) {
     Object.defineProperties(api, {
         currentTime: {
             get: function get() {
-                if (pausedAt) {
-                    return pausedAt;
+                if (cuedAt) {
+                    return cuedAt;
                 }
                 if (startedAt) {
                     return context.currentTime - startedAt;
                 }
                 return 0;
+            },
+            set: function set(value) {
+                cuedAt = value;
             }
         },
         ended: {
@@ -2818,7 +2755,7 @@ function MicrophoneSource(stream, context) {
 function OscillatorSource(type, context) {
     var ended = false,
         paused = false,
-        pausedAt = 0,
+        cuedAt = 0,
         playing = false,
         sourceNode = null,
         // OscillatorSourceNode
@@ -2848,8 +2785,8 @@ function OscillatorSource(type, context) {
         createSourceNode();
         sourceNode.start(delay);
 
-        if (pausedAt) {
-            startedAt = context.currentTime - pausedAt;
+        if (cuedAt) {
+            startedAt = context.currentTime - cuedAt;
         } else {
             startedAt = context.currentTime;
         }
@@ -2857,7 +2794,7 @@ function OscillatorSource(type, context) {
         ended = false;
         playing = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
     }
 
     function stop() {
@@ -2869,7 +2806,7 @@ function OscillatorSource(type, context) {
         }
         ended = true;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = false;
         startedAt = 0;
     }
@@ -2877,7 +2814,7 @@ function OscillatorSource(type, context) {
     function pause() {
         var elapsed = context.currentTime - startedAt;
         stop();
-        pausedAt = elapsed;
+        cuedAt = elapsed;
         playing = false;
         paused = true;
     }
@@ -2910,13 +2847,16 @@ function OscillatorSource(type, context) {
     Object.defineProperties(api, {
         currentTime: {
             get: function get() {
-                if (pausedAt) {
-                    return pausedAt;
+                if (cuedAt) {
+                    return cuedAt;
                 }
                 if (startedAt) {
                     return context.currentTime - startedAt;
                 }
                 return 0;
+            },
+            set: function set(value) {
+                cuedAt = value;
             }
         },
         duration: {
@@ -2971,7 +2911,7 @@ var Sound = function (_Emitter) {
 
         _this.id = config.id || null;
 
-        _this._context = config.context || context;
+        _this._context = config.context || context$1;
         _this._destination = config.destination || _this._context.destination;
         _this._effects = new Effects(_this._context);
         _this._gain = _this._context.createGain();
@@ -2981,6 +2921,7 @@ var Sound = function (_Emitter) {
         _this._isTouchLocked = false;
         _this._loader = null;
         _this._loop = false;
+        _this._offset = 0;
         _this._playbackRate = 1;
         _this._playWhenReady = null;
         _this._source = null;
@@ -2997,8 +2938,8 @@ var Sound = function (_Emitter) {
     }
 
     Sound.prototype.prepare = function prepare() {
-        var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
-        var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+        var newConfig = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+        var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         var skipLoad = !force && !this._source && !!this._config.deferLoad;
 
@@ -3007,6 +2948,8 @@ var Sound = function (_Emitter) {
             var src = file.getSupportedFile(configSrc) || this._config.src;
             this._config = Object.assign(this._config, newConfig, { src: src });
         }
+
+        console.log('prepare', this.id, this._config.src);
 
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
@@ -3021,7 +2964,7 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype.load = function load() {
-        var newConfig = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+        var newConfig = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
         this.stop();
         this._source = null;
@@ -3036,6 +2979,7 @@ var Sound = function (_Emitter) {
     Sound.prototype.play = function play(delay, offset) {
         var _this2 = this;
 
+        console.log('play', this.id, this._source);
         if (!this._source || this._isTouchLocked) {
             this._playWhenReady = function () {
                 if (_this2._source) {
@@ -3052,6 +2996,11 @@ var Sound = function (_Emitter) {
         }
         this._playWhenReady = null;
         this._effects.setSource(this._source.sourceNode);
+
+        if (this._offset && typeof offset === 'undefined') {
+            offset = this._offset;
+            this._offset = 0;
+        }
 
         this._source.play(delay, offset);
 
@@ -3080,16 +3029,13 @@ var Sound = function (_Emitter) {
         return this;
     };
 
-    Sound.prototype.seek = function seek(percent) {
-        if (this._source) {
-            this._source.stop();
-            this.play(0, this._source.duration * percent);
-        }
+    Sound.prototype.seek = function seek(value) {
+        this.currentTime = value;
         return this;
     };
 
     Sound.prototype.fade = function fade(volume) {
-        var duration = arguments.length <= 1 || arguments[1] === undefined ? 1 : arguments[1];
+        var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 
         if (!this._source) {
             return this;
@@ -3164,12 +3110,14 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype._createSource = function _createSource(data) {
+        console.log('_createSource', this.id, data);
         var isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             var Fn = isAudioBuffer ? BufferSource : MediaSource;
             this._source = new AudioSource(Fn, data, this._context, this._onEnded);
             this._source.singlePlay = !!this._config.singlePlay;
             this._source.playbackRate = this._playbackRate;
+            this._source.currentTime = this._offset;
         } else if (file.isMediaStream(data)) {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType(data && data.type || data)) {
@@ -3198,29 +3146,40 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype._onLoadError = function _onLoadError(err) {
+        if (!this.listenerCount('error')) {
+            console.error('Sound load error', this.id, this._loader.url);
+        }
         this.emit('error', this, err);
     };
 
     createClass(Sound, [{
-        key: 'currentTime',
-        get: function get() {
-            return this._source ? this._source.currentTime : 0;
-        },
-        set: function set(value) {
-            this._source && this._source.stop();
-            this.play(0, value);
-        }
-    }, {
         key: 'context',
-        get: function get() {
+        get: function get$$1() {
             return this._context;
         }
     }, {
+        key: 'currentTime',
+        get: function get$$1() {
+            return this._source ? this._source.currentTime : this._offset;
+        },
+        set: function set$$1(value) {
+            if (this._source) {
+                var playing = this._source.playing;
+                this._source.stop();
+                this._source.currentTime = value;
+                if (playing) {
+                    this.play(0, value);
+                }
+            } else {
+                this._offset = value;
+            }
+        }
+    }, {
         key: 'data',
-        get: function get() {
+        get: function get$$1() {
             return this._data;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (!value) {
                 return;
             }
@@ -3229,43 +3188,43 @@ var Sound = function (_Emitter) {
         }
     }, {
         key: 'duration',
-        get: function get() {
+        get: function get$$1() {
             return this._source ? this._source.duration : 0;
         }
     }, {
         key: 'effects',
-        get: function get() {
+        get: function get$$1() {
             return this._effects._nodes;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this._effects.removeAll().add(value);
         }
     }, {
         key: 'fx',
-        get: function get() {
+        get: function get$$1() {
             return this.effects;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.effects = value;
         }
     }, {
         key: 'ended',
-        get: function get() {
+        get: function get$$1() {
             return !!this._source && this._source.ended;
         }
     }, {
         key: 'frequency',
-        get: function get() {
+        get: function get$$1() {
             return this._source ? this._source.frequency : 0;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (this._source && this._source.hasOwnProperty('frequency')) {
                 this._source.frequency = value;
             }
         }
     }, {
         key: 'gain',
-        get: function get() {
+        get: function get$$1() {
             return this._gain;
         }
 
@@ -3273,17 +3232,17 @@ var Sound = function (_Emitter) {
 
     }, {
         key: 'groupVolume',
-        get: function get() {
+        get: function get$$1() {
             return this._source.groupVolume;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (this._source && this._source.hasOwnProperty('groupVolume')) {
                 this._source.groupVolume = value;
             }
         }
     }, {
         key: 'isTouchLocked',
-        set: function set(value) {
+        set: function set$$1(value) {
             this._isTouchLocked = value;
             if (this._loader) {
                 this._loader.isTouchLocked = value;
@@ -3294,15 +3253,15 @@ var Sound = function (_Emitter) {
         }
     }, {
         key: 'loader',
-        get: function get() {
+        get: function get$$1() {
             return this._loader;
         }
     }, {
         key: 'loop',
-        get: function get() {
+        get: function get$$1() {
             return this._loop;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this._loop = !!value;
 
             if (this._source && this._source.hasOwnProperty('loop') && this._source.loop !== this._loop) {
@@ -3311,34 +3270,34 @@ var Sound = function (_Emitter) {
         }
     }, {
         key: 'singlePlay',
-        get: function get() {
+        get: function get$$1() {
             return this._config.singlePlay;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this._config.singlePlay = value;
             this._source.singlePlay = value;
         }
     }, {
         key: 'config',
-        get: function get() {
+        get: function get$$1() {
             return this._config;
         }
     }, {
         key: 'paused',
-        get: function get() {
+        get: function get$$1() {
             return !!this._source && this._source.paused;
         }
     }, {
         key: 'playing',
-        get: function get() {
+        get: function get$$1() {
             return !!this._source && this._source.playing;
         }
     }, {
         key: 'playbackRate',
-        get: function get() {
+        get: function get$$1() {
             return this._playbackRate;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this._playbackRate = value;
             if (this._source) {
                 this._source.playbackRate = value;
@@ -3346,25 +3305,25 @@ var Sound = function (_Emitter) {
         }
     }, {
         key: 'progress',
-        get: function get() {
+        get: function get$$1() {
             return this._source ? this._source.progress || 0 : 0;
         }
     }, {
         key: 'sourceInfo',
-        get: function get() {
+        get: function get$$1() {
             return this._source && this._source.info ? this._source.info : {};
         }
     }, {
         key: 'sourceNode',
-        get: function get() {
+        get: function get$$1() {
             return this._source ? this._source.sourceNode : null;
         }
     }, {
         key: 'volume',
-        get: function get() {
+        get: function get$$1() {
             return this._gain.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (!isSafeNumber(value)) {
                 return;
             }
@@ -3383,7 +3342,7 @@ var Sound = function (_Emitter) {
         }
     }, {
         key: 'userData',
-        get: function get() {
+        get: function get$$1() {
             return this._userData;
         }
     }]);
@@ -3492,16 +3451,32 @@ function SoundGroup(context, destination) {
     return group;
 }
 
-function log$1(api) {
-    var title = 'sono ' + api.VERSION,
-        info = 'Supported:' + api.isSupported + ' WebAudioAPI:' + api.hasWebAudio + ' TouchLocked:' + api.isTouchLocked + ' State:' + (api.context && api.context.state) + ' Extensions:' + api.file.extensions;
+function touchLock(context, callback) {
+    var locked = iOS;
 
-    if (navigator.userAgent.indexOf('Chrome') > -1) {
-        var args = ['%c ♫ ' + title + ' ♫ %c ' + info + ' ', 'color: #FFFFFF; background: #379F7A', 'color: #1F1C0D; background: #E0FBAC'];
-        console.log.apply(console, args);
-    } else if (window.console && window.console.log.call) {
-        console.log.call(console, title + ' ' + info);
+    function unlock() {
+        if (context && context.state === 'suspended') {
+            context.resume().then(function () {
+                dummy(context);
+                unlocked();
+            });
+        } else {
+            unlocked();
+        }
     }
+
+    function unlocked() {
+        document.body.removeEventListener('touchstart', unlock);
+        document.body.removeEventListener('touchend', unlock);
+        callback();
+    }
+
+    if (locked) {
+        document.body.addEventListener('touchstart', unlock, false);
+        document.body.addEventListener('touchend', unlock, false);
+    }
+
+    return locked;
 }
 
 var _effects;
@@ -3515,14 +3490,14 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.5';
-var bus = new Group(context, context.destination);
+var VERSION = '2.0.6';
+var bus = new Group(context$1, context$1.destination);
 
 /*
 * Get Sound by id
 */
 
-function get$1(id) {
+function get$$1(id) {
     return bus.find(id);
 }
 
@@ -3531,7 +3506,7 @@ function get$1(id) {
 */
 
 function group(sounds) {
-    var soundGroup = new SoundGroup(context, bus.gain);
+    var soundGroup = new SoundGroup(context$1, bus.gain);
     if (sounds) {
         sounds.forEach(function (sound) {
             return soundGroup.add(sound);
@@ -3544,11 +3519,11 @@ function group(sounds) {
 * Loading
 */
 
-function add$1(config) {
+function add(config) {
     var src = file.getSupportedFile(config.src || config.url || config.data || config);
     var sound = new Sound(Object.assign({}, config || {}, {
         src: src,
-        context: context,
+        context: context$1,
         destination: bus.gain
     }));
     sound.isTouchLocked = isTouchLocked;
@@ -3563,7 +3538,7 @@ function add$1(config) {
 }
 
 function queue(config, loaderGroup) {
-    var sound = add$1(config).prepare();
+    var sound = add(config).prepare();
 
     if (loaderGroup) {
         loaderGroup.add(sound.loader);
@@ -3571,7 +3546,7 @@ function queue(config, loaderGroup) {
     return sound;
 }
 
-function load$1(config) {
+function load(config) {
     var src = config.src || config.url || config.data || config;
     var sound = void 0,
         loader = void 0;
@@ -3633,10 +3608,10 @@ function load$1(config) {
 function create(config) {
     // try to load if config contains URLs
     if (file.containsURL(config)) {
-        return load$1(config);
+        return load(config);
     }
 
-    var sound = add$1(config);
+    var sound = add(config);
     sound.data = config.data || config;
 
     return sound;
@@ -3646,7 +3621,7 @@ function create(config) {
 * Destroy
 */
 
-function destroy$1(soundOrId) {
+function destroy(soundOrId) {
     bus.find(soundOrId, function (sound) {
         return sound.destroy();
     });
@@ -3672,7 +3647,7 @@ function unMute() {
     return sono$1;
 }
 
-function fade$1(volume, duration) {
+function fade(volume, duration) {
     bus.fade(volume, duration);
     return sono$1;
 }
@@ -3692,21 +3667,21 @@ function stopAll() {
     return sono$1;
 }
 
-function play$1(id, delay, offset) {
+function play(id, delay, offset) {
     bus.find(id, function (sound) {
         return sound.play(delay, offset);
     });
     return sono$1;
 }
 
-function pause$1(id) {
+function pause(id) {
     bus.find(id, function (sound) {
         return sound.pause();
     });
     return sono$1;
 }
 
-function stop$1(id) {
+function stop(id) {
     bus.find(id, function (sound) {
         return sound.stop();
     });
@@ -3717,7 +3692,7 @@ function stop$1(id) {
 * Mobile touch lock
 */
 
-var isTouchLocked = browser.handleTouchLock(context, function () {
+var isTouchLocked = touchLock(context$1, function () {
     isTouchLocked = false;
     bus.sounds.forEach(function (sound) {
         return sound.isTouchLocked = false;
@@ -3728,31 +3703,29 @@ var isTouchLocked = browser.handleTouchLock(context, function () {
 * Page visibility events
 */
 
-(function () {
-    var pageHiddenPaused = [];
+var pageHiddenPaused = [];
 
-    // pause currently playing sounds and store refs
-    function onHidden() {
-        bus.sounds.forEach(function (sound) {
-            if (sound.playing) {
-                sound.pause();
-                pageHiddenPaused.push(sound);
-            }
-        });
-    }
-
-    // play sounds that got paused when page was hidden
-    function onShown() {
-        while (pageHiddenPaused.length) {
-            pageHiddenPaused.pop().play();
+// pause currently playing sounds and store refs
+function onHidden() {
+    bus.sounds.forEach(function (sound) {
+        if (sound.playing) {
+            sound.pause();
+            pageHiddenPaused.push(sound);
         }
-    }
+    });
+}
 
-    browser.handlePageVisibility(onHidden, onShown);
-})();
+// play sounds that got paused when page was hidden
+function onShown() {
+    while (pageHiddenPaused.length) {
+        pageHiddenPaused.pop().play();
+    }
+}
+
+pageVisibility(onHidden, onShown);
 
 function register(name, fn) {
-    var attachTo = arguments.length <= 2 || arguments[2] === undefined ? Effects.prototype : arguments[2];
+    var attachTo = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : Effects.prototype;
 
     attachTo[name] = fn;
     sono$1[name] = fn;
@@ -3762,34 +3735,34 @@ function register(name, fn) {
 
 var sono$1 = (_sono = {
     canPlay: file.canPlay,
-    context: context,
+    context: context$1,
     create: create,
     createGroup: group,
     createSound: create,
     destroyAll: destroyAll,
-    destroy: destroy$1,
+    destroy: destroy,
     effects: bus.effects,
     extensions: file.extensions,
-    fade: fade$1,
+    fade: fade,
     file: file,
     gain: bus.gain,
     getOfflineContext: utils.getOfflineContext,
-    get: get$1,
-    getSound: get$1,
+    get: get$$1,
+    getSound: get$$1,
     group: group,
-    hasWebAudio: !context.isFake,
+    hasWebAudio: !context$1.isFake,
     isSupported: file.extensions.length > 0,
-    load: load$1,
-    log: function log() {
-        return log$1(sono$1);
+    load: load,
+    log: function log$$1() {
+        return log(sono$1);
     },
     mute: mute,
-    pause: pause$1,
+    pause: pause,
     pauseAll: pauseAll,
-    play: play$1,
+    play: play,
     register: register,
     resumeAll: resumeAll,
-    stop: stop$1,
+    stop: stop,
     stopAll: stopAll,
     unMute: unMute,
     utils: utils,
@@ -3818,7 +3791,7 @@ var sono$1 = (_sono = {
 
 var AbstractEffect = function () {
     function AbstractEffect() {
-        var node = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+        var node = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
         classCallCheck(this, AbstractEffect);
 
         this._in = node || this.context.createGain();
@@ -3854,32 +3827,32 @@ var AbstractEffect = function () {
 
     createClass(AbstractEffect, [{
         key: 'context',
-        get: function get() {
-            return context;
+        get: function get$$1() {
+            return context$1;
         }
     }, {
         key: 'numberOfInputs',
-        get: function get() {
+        get: function get$$1() {
             return 1;
         }
     }, {
         key: 'numberOfOutputs',
-        get: function get() {
+        get: function get$$1() {
             return 1;
         }
     }, {
         key: 'channelCount',
-        get: function get() {
+        get: function get$$1() {
             return 1;
         }
     }, {
         key: 'channelCountMode',
-        get: function get() {
+        get: function get$$1() {
             return 'max';
         }
     }, {
         key: 'channelInterpretation',
-        get: function get() {
+        get: function get$$1() {
             return 'speakers';
         }
     }]);
@@ -3903,18 +3876,18 @@ var Analyser = function (_AbstractEffect) {
     inherits(Analyser, _AbstractEffect);
 
     function Analyser() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$fftSize = _ref.fftSize,
+            fftSize = _ref$fftSize === undefined ? 2048 : _ref$fftSize,
+            _ref$minDecibels = _ref.minDecibels,
+            minDecibels = _ref$minDecibels === undefined ? -100 : _ref$minDecibels,
+            _ref$maxDecibels = _ref.maxDecibels,
+            maxDecibels = _ref$maxDecibels === undefined ? -30 : _ref$maxDecibels,
+            _ref$smoothing = _ref.smoothing,
+            smoothing = _ref$smoothing === undefined ? 0.9 : _ref$smoothing,
+            _ref$useFloats = _ref.useFloats,
+            useFloats = _ref$useFloats === undefined ? false : _ref$useFloats;
 
-        var _ref$fftSize = _ref.fftSize;
-        var fftSize = _ref$fftSize === undefined ? 2048 : _ref$fftSize;
-        var _ref$minDecibels = _ref.minDecibels;
-        var minDecibels = _ref$minDecibels === undefined ? -100 : _ref$minDecibels;
-        var _ref$maxDecibels = _ref.maxDecibels;
-        var maxDecibels = _ref$maxDecibels === undefined ? -30 : _ref$maxDecibels;
-        var _ref$smoothing = _ref.smoothing;
-        var smoothing = _ref$smoothing === undefined ? 0.9 : _ref$smoothing;
-        var _ref$useFloats = _ref.useFloats;
-        var useFloats = _ref$useFloats === undefined ? false : _ref$useFloats;
         classCallCheck(this, Analyser);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createAnalyser()));
@@ -3930,9 +3903,9 @@ var Analyser = function (_AbstractEffect) {
     }
 
     Analyser.prototype.update = function update(_ref2) {
-        var minDecibels = _ref2.minDecibels;
-        var maxDecibels = _ref2.maxDecibels;
-        var smoothing = _ref2.smoothing;
+        var minDecibels = _ref2.minDecibels,
+            maxDecibels = _ref2.maxDecibels,
+            smoothing = _ref2.smoothing;
 
         if (isSafeNumber(smoothing)) {
             this._node.smoothingTimeConstant = smoothing;
@@ -4068,35 +4041,35 @@ var Analyser = function (_AbstractEffect) {
 
     createClass(Analyser, [{
         key: 'frequencyBinCount',
-        get: function get() {
+        get: function get$$1() {
             return this._node.frequencyBinCount;
         }
     }, {
         key: 'maxDecibels',
-        get: function get() {
+        get: function get$$1() {
             return this._node.maxDecibels;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (isSafeNumber(value)) {
                 this._node.maxDecibels = value;
             }
         }
     }, {
         key: 'minDecibels',
-        get: function get() {
+        get: function get$$1() {
             return this._node.minDecibels;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (isSafeNumber(value)) {
                 this._node.minDecibels = value;
             }
         }
     }, {
         key: 'smoothing',
-        get: function get() {
+        get: function get$$1() {
             return this._node.smoothingTimeConstant;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (isSafeNumber(value)) {
                 this._node.smoothingTimeConstant = value;
             }
@@ -4113,18 +4086,18 @@ var Compressor = function (_AbstractEffect) {
     inherits(Compressor, _AbstractEffect);
 
     function Compressor() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$attack = _ref.attack,
+            attack = _ref$attack === undefined ? 0.003 : _ref$attack,
+            _ref$knee = _ref.knee,
+            knee = _ref$knee === undefined ? 30 : _ref$knee,
+            _ref$ratio = _ref.ratio,
+            ratio = _ref$ratio === undefined ? 12 : _ref$ratio,
+            _ref$release = _ref.release,
+            release = _ref$release === undefined ? 0.25 : _ref$release,
+            _ref$threshold = _ref.threshold,
+            threshold = _ref$threshold === undefined ? -24 : _ref$threshold;
 
-        var _ref$attack = _ref.attack;
-        var attack = _ref$attack === undefined ? 0.003 : _ref$attack;
-        var _ref$knee = _ref.knee;
-        var knee = _ref$knee === undefined ? 30 : _ref$knee;
-        var _ref$ratio = _ref.ratio;
-        var ratio = _ref$ratio === undefined ? 12 : _ref$ratio;
-        var _ref$release = _ref.release;
-        var release = _ref$release === undefined ? 0.25 : _ref$release;
-        var _ref$threshold = _ref.threshold;
-        var threshold = _ref$threshold === undefined ? -24 : _ref$threshold;
         classCallCheck(this, Compressor);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDynamicsCompressor()));
@@ -4148,42 +4121,42 @@ var Compressor = function (_AbstractEffect) {
 
     createClass(Compressor, [{
         key: 'threshold',
-        get: function get() {
+        get: function get$$1() {
             return this._node.threshold.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.threshold, value);
         }
     }, {
         key: 'knee',
-        get: function get() {
+        get: function get$$1() {
             return this._node.knee.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.knee, value);
         }
     }, {
         key: 'ratio',
-        get: function get() {
+        get: function get$$1() {
             return this._node.ratio.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.ratio, value);
         }
     }, {
         key: 'attack',
-        get: function get() {
+        get: function get$$1() {
             return this._node.attack.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.attack, value);
         }
     }, {
         key: 'release',
-        get: function get() {
+        get: function get$$1() {
             return this._node.release.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.release, value);
         }
     }]);
@@ -4198,9 +4171,9 @@ var Convolver = function (_AbstractEffect) {
     inherits(Convolver, _AbstractEffect);
 
     function Convolver() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            impulse = _ref.impulse;
 
-        var impulse = _ref.impulse;
         classCallCheck(this, Convolver);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
@@ -4273,10 +4246,10 @@ var Convolver = function (_AbstractEffect) {
 
     createClass(Convolver, [{
         key: 'impulse',
-        get: function get() {
+        get: function get$$1() {
             return this._node.buffer;
         },
-        set: function set(impulse) {
+        set: function set$$1(impulse) {
             this.update({ impulse: impulse });
         }
     }]);
@@ -4295,14 +4268,14 @@ var Distortion = function (_AbstractEffect) {
     inherits(Distortion, _AbstractEffect);
 
     function Distortion() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$level = _ref.level,
+            level = _ref$level === undefined ? 1 : _ref$level,
+            _ref$samples = _ref.samples,
+            samples = _ref$samples === undefined ? 22050 : _ref$samples,
+            _ref$oversample = _ref.oversample,
+            oversample = _ref$oversample === undefined ? 'none' : _ref$oversample;
 
-        var _ref$level = _ref.level;
-        var level = _ref$level === undefined ? 1 : _ref$level;
-        var _ref$samples = _ref.samples;
-        var samples = _ref$samples === undefined ? 22050 : _ref$samples;
-        var _ref$oversample = _ref.oversample;
-        var oversample = _ref$oversample === undefined ? 'none' : _ref$oversample;
         classCallCheck(this, Distortion);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createWaveShaper()));
@@ -4347,10 +4320,10 @@ var Distortion = function (_AbstractEffect) {
 
     createClass(Distortion, [{
         key: 'level',
-        get: function get() {
+        get: function get$$1() {
             return this._level;
         },
-        set: function set(level) {
+        set: function set$$1(level) {
             this.update({ level: level });
         }
     }]);
@@ -4365,12 +4338,12 @@ var Echo = function (_AbstractEffect) {
     inherits(Echo, _AbstractEffect);
 
     function Echo() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$delay = _ref.delay,
+            delay = _ref$delay === undefined ? 0.5 : _ref$delay,
+            _ref$feedback = _ref.feedback,
+            feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
 
-        var _ref$delay = _ref.delay;
-        var delay = _ref$delay === undefined ? 0.5 : _ref$delay;
-        var _ref$feedback = _ref.feedback;
-        var feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
         classCallCheck(this, Echo);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
@@ -4396,18 +4369,18 @@ var Echo = function (_AbstractEffect) {
 
     createClass(Echo, [{
         key: 'delay',
-        get: function get() {
+        get: function get$$1() {
             return this._delay.delayTime.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._delay.delayTime, value);
         }
     }, {
         key: 'feedback',
-        get: function get() {
+        get: function get$$1() {
             return this._feedback.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._feedback.gain, value);
         }
     }]);
@@ -4453,26 +4426,26 @@ var Filter = function (_AbstractEffect) {
     inherits(Filter, _AbstractEffect);
 
     function Filter() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$type = _ref.type,
+            type = _ref$type === undefined ? 'lowpass' : _ref$type,
+            _ref$frequency = _ref.frequency,
+            frequency = _ref$frequency === undefined ? 1000 : _ref$frequency,
+            _ref$detune = _ref.detune,
+            detune = _ref$detune === undefined ? 0 : _ref$detune,
+            _ref$q = _ref.q,
+            q = _ref$q === undefined ? 0 : _ref$q,
+            _ref$gain = _ref.gain,
+            gain = _ref$gain === undefined ? 1 : _ref$gain,
+            _ref$peak = _ref.peak,
+            peak = _ref$peak === undefined ? 0 : _ref$peak,
+            _ref$boost = _ref.boost,
+            boost = _ref$boost === undefined ? 0 : _ref$boost,
+            _ref$width = _ref.width,
+            width = _ref$width === undefined ? 100 : _ref$width,
+            _ref$sharpness = _ref.sharpness,
+            sharpness = _ref$sharpness === undefined ? 0 : _ref$sharpness;
 
-        var _ref$type = _ref.type;
-        var type = _ref$type === undefined ? 'lowpass' : _ref$type;
-        var _ref$frequency = _ref.frequency;
-        var frequency = _ref$frequency === undefined ? 1000 : _ref$frequency;
-        var _ref$detune = _ref.detune;
-        var detune = _ref$detune === undefined ? 0 : _ref$detune;
-        var _ref$q = _ref.q;
-        var q = _ref$q === undefined ? 0 : _ref$q;
-        var _ref$gain = _ref.gain;
-        var gain = _ref$gain === undefined ? 1 : _ref$gain;
-        var _ref$peak = _ref.peak;
-        var peak = _ref$peak === undefined ? 0 : _ref$peak;
-        var _ref$boost = _ref.boost;
-        var boost = _ref$boost === undefined ? 0 : _ref$boost;
-        var _ref$width = _ref.width;
-        var width = _ref$width === undefined ? 100 : _ref$width;
-        var _ref$sharpness = _ref.sharpness;
-        var sharpness = _ref$sharpness === undefined ? 0 : _ref$sharpness;
         classCallCheck(this, Filter);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createBiquadFilter()));
@@ -4493,8 +4466,8 @@ var Filter = function (_AbstractEffect) {
     };
 
     Filter.prototype.setByPercent = function setByPercent(_ref2) {
-        var _ref2$percent = _ref2.percent;
-        var percent = _ref2$percent === undefined ? 0.5 : _ref2$percent;
+        var _ref2$percent = _ref2.percent,
+            percent = _ref2$percent === undefined ? 0.5 : _ref2$percent;
 
         this.update({
             frequency: getFrequency$1(percent)
@@ -4503,79 +4476,79 @@ var Filter = function (_AbstractEffect) {
 
     createClass(Filter, [{
         key: 'type',
-        get: function get() {
+        get: function get$$1() {
             return this._node.type;
         }
     }, {
         key: 'frequency',
-        get: function get() {
+        get: function get$$1() {
             return this._node.frequency.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.frequency, value);
         }
     }, {
         key: 'q',
-        get: function get() {
+        get: function get$$1() {
             return this._node.Q.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.Q, value);
         }
     }, {
         key: 'Q',
-        get: function get() {
+        get: function get$$1() {
             return this.q;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.q = value;
         }
     }, {
         key: 'peak',
-        get: function get() {
+        get: function get$$1() {
             return this.q;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.q = value;
         }
     }, {
         key: 'boost',
-        get: function get() {
+        get: function get$$1() {
             return this.q;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.q = value;
         }
     }, {
         key: 'width',
-        get: function get() {
+        get: function get$$1() {
             return this.q;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.q = value;
         }
     }, {
         key: 'sharpness',
-        get: function get() {
+        get: function get$$1() {
             return this.q;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.q = value;
         }
     }, {
         key: 'gain',
-        get: function get() {
+        get: function get$$1() {
             return this._node.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.gain, value);
         }
     }, {
         key: 'detune',
-        get: function get() {
+        get: function get$$1() {
             return this._node.detune.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._node.detune, value);
         }
     }]);
@@ -4583,84 +4556,76 @@ var Filter = function (_AbstractEffect) {
 }(AbstractEffect);
 
 var lowpass = sono$1.register('lowpass', function () {
-    var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref3.frequency;
-    var peak = _ref3.peak;
-    var q = _ref3.q;
+    var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref3.frequency,
+        peak = _ref3.peak,
+        q = _ref3.q;
 
     return new Filter({ type: 'lowpass', frequency: frequency, peak: peak, q: q });
 });
 
 var highpass = sono$1.register('highpass', function () {
-    var _ref4 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref4.frequency;
-    var peak = _ref4.peak;
-    var q = _ref4.q;
+    var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref4.frequency,
+        peak = _ref4.peak,
+        q = _ref4.q;
 
     return new Filter({ type: 'highpass', frequency: frequency, peak: peak, q: q });
 });
 
 var lowshelf = sono$1.register('lowshelf', function () {
-    var _ref5 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref5.frequency;
-    var boost = _ref5.boost;
-    var gain = _ref5.gain;
+    var _ref5 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref5.frequency,
+        boost = _ref5.boost,
+        gain = _ref5.gain;
 
     return new Filter({ type: 'lowshelf', frequency: frequency, boost: boost, gain: gain, q: 0 });
 });
 
 var highshelf = sono$1.register('highshelf', function () {
-    var _ref6 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref6.frequency;
-    var boost = _ref6.boost;
-    var gain = _ref6.gain;
+    var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref6.frequency,
+        boost = _ref6.boost,
+        gain = _ref6.gain;
 
     return new Filter({ type: 'highshelf', frequency: frequency, boost: boost, gain: gain, q: 0 });
 });
 
 var peaking = sono$1.register('peaking', function () {
-    var _ref7 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref7.frequency;
-    var width = _ref7.width;
-    var boost = _ref7.boost;
-    var gain = _ref7.gain;
-    var q = _ref7.q;
+    var _ref7 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref7.frequency,
+        width = _ref7.width,
+        boost = _ref7.boost,
+        gain = _ref7.gain,
+        q = _ref7.q;
 
     return new Filter({ type: 'peaking', frequency: frequency, width: width, boost: boost, gain: gain, q: q });
 });
 
 var bandpass = sono$1.register('bandpass', function () {
-    var _ref8 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref8.frequency;
-    var width = _ref8.width;
-    var q = _ref8.q;
+    var _ref8 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref8.frequency,
+        width = _ref8.width,
+        q = _ref8.q;
 
     return new Filter({ type: 'bandpass', frequency: frequency, width: width, q: q });
 });
 
 var notch = sono$1.register('notch', function () {
-    var _ref9 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref9.frequency;
-    var width = _ref9.width;
-    var gain = _ref9.gain;
-    var q = _ref9.q;
+    var _ref9 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref9.frequency,
+        width = _ref9.width,
+        gain = _ref9.gain,
+        q = _ref9.q;
 
     return new Filter({ type: 'notch', frequency: frequency, width: width, gain: gain, q: q });
 });
 
 var allpass = sono$1.register('allpass', function () {
-    var _ref10 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var frequency = _ref10.frequency;
-    var sharpness = _ref10.sharpness;
-    var q = _ref10.q;
+    var _ref10 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        frequency = _ref10.frequency,
+        sharpness = _ref10.sharpness,
+        q = _ref10.q;
 
     return new Filter({ type: 'allpass', frequency: frequency, sharpness: sharpness, q: q });
 });
@@ -4673,16 +4638,16 @@ var MonoFlanger = function (_AbstractEffect) {
     inherits(MonoFlanger, _AbstractEffect);
 
     function MonoFlanger() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$delay = _ref.delay,
+            delay = _ref$delay === undefined ? 0.005 : _ref$delay,
+            _ref$feedback = _ref.feedback,
+            feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback,
+            _ref$frequency = _ref.frequency,
+            frequency = _ref$frequency === undefined ? 0.002 : _ref$frequency,
+            _ref$gain = _ref.gain,
+            gain = _ref$gain === undefined ? 0.25 : _ref$gain;
 
-        var _ref$delay = _ref.delay;
-        var delay = _ref$delay === undefined ? 0.005 : _ref$delay;
-        var _ref$feedback = _ref.feedback;
-        var feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
-        var _ref$frequency = _ref.frequency;
-        var frequency = _ref$frequency === undefined ? 0.002 : _ref$frequency;
-        var _ref$gain = _ref.gain;
-        var gain = _ref$gain === undefined ? 0.25 : _ref$gain;
         classCallCheck(this, MonoFlanger);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
@@ -4716,34 +4681,34 @@ var MonoFlanger = function (_AbstractEffect) {
 
     createClass(MonoFlanger, [{
         key: 'delay',
-        get: function get() {
+        get: function get$$1() {
             return this._delay.delayTime.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._delay.delayTime, value);
         }
     }, {
         key: 'frequency',
-        get: function get() {
+        get: function get$$1() {
             return this._lfo.frequency.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._lfo.frequency, value);
         }
     }, {
         key: 'gain',
-        get: function get() {
+        get: function get$$1() {
             return this._gain.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._gain.gain, value);
         }
     }, {
         key: 'feedback',
-        get: function get() {
+        get: function get$$1() {
             return this._feedback.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._feedback.gain, value);
         }
     }]);
@@ -4758,16 +4723,16 @@ var StereoFlanger = function (_AbstractEffect2) {
     inherits(StereoFlanger, _AbstractEffect2);
 
     function StereoFlanger() {
-        var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref2$delay = _ref2.delay,
+            delay = _ref2$delay === undefined ? 0.003 : _ref2$delay,
+            _ref2$feedback = _ref2.feedback,
+            feedback = _ref2$feedback === undefined ? 0.5 : _ref2$feedback,
+            _ref2$frequency = _ref2.frequency,
+            frequency = _ref2$frequency === undefined ? 0.5 : _ref2$frequency,
+            _ref2$gain = _ref2.gain,
+            gain = _ref2$gain === undefined ? 0.005 : _ref2$gain;
 
-        var _ref2$delay = _ref2.delay;
-        var delay = _ref2$delay === undefined ? 0.003 : _ref2$delay;
-        var _ref2$feedback = _ref2.feedback;
-        var feedback = _ref2$feedback === undefined ? 0.5 : _ref2$feedback;
-        var _ref2$frequency = _ref2.frequency;
-        var frequency = _ref2$frequency === undefined ? 0.5 : _ref2$frequency;
-        var _ref2$gain = _ref2.gain;
-        var gain = _ref2$gain === undefined ? 0.005 : _ref2$gain;
         classCallCheck(this, StereoFlanger);
 
         var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this));
@@ -4820,36 +4785,36 @@ var StereoFlanger = function (_AbstractEffect2) {
 
     createClass(StereoFlanger, [{
         key: 'delay',
-        get: function get() {
+        get: function get$$1() {
             return this._delayL.delayTime.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._delayL.delayTime, value);
             this._delayR.delayTime.value = this._delayL.delayTime.value;
         }
     }, {
         key: 'frequency',
-        get: function get() {
+        get: function get$$1() {
             return this._lfo.frequency.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._lfo.frequency, value);
         }
     }, {
         key: 'gain',
-        get: function get() {
+        get: function get$$1() {
             return this._lfoGainL.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._lfoGainL.gain, value);
             this._lfoGainR.gain.value = 0 - this._lfoGainL.gain.value;
         }
     }, {
         key: 'feedback',
-        get: function get() {
+        get: function get$$1() {
             return this._feedbackL.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._feedbackL.gain, value);
             this._feedbackR.gain.value = this._feedbackL.gain.value;
         }
@@ -4862,7 +4827,7 @@ sono$1.register('stereoFlanger', function (opts) {
 });
 
 sono$1.register('flanger', function () {
-    var opts = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
     return opts.stereo ? new StereoFlanger(opts) : new MonoFlanger(opts);
 });
@@ -4883,7 +4848,7 @@ var pannerDefaults = {
 };
 
 function safeNumber(x) {
-    var y = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+    var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
     if (isSafeNumber(x)) {
         return x;
@@ -4919,7 +4884,7 @@ function normalize(vec3) {
 
 var vecPool = {
     pool: [],
-    get: function get(x, y, z) {
+    get: function get$$1(x, y, z) {
         var v = this.pool.length ? this.pool.pop() : {
             x: 0,
             y: 0,
@@ -4970,16 +4935,16 @@ var Panner = function (_AbstractEffect) {
     inherits(Panner, _AbstractEffect);
 
     function Panner() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            panningModel = _ref.panningModel,
+            distanceModel = _ref.distanceModel,
+            refDistance = _ref.refDistance,
+            maxDistance = _ref.maxDistance,
+            rolloffFactor = _ref.rolloffFactor,
+            coneInnerAngle = _ref.coneInnerAngle,
+            coneOuterAngle = _ref.coneOuterAngle,
+            coneOuterGain = _ref.coneOuterGain;
 
-        var panningModel = _ref.panningModel;
-        var distanceModel = _ref.distanceModel;
-        var refDistance = _ref.refDistance;
-        var maxDistance = _ref.maxDistance;
-        var rolloffFactor = _ref.rolloffFactor;
-        var coneInnerAngle = _ref.coneInnerAngle;
-        var coneOuterAngle = _ref.coneOuterAngle;
-        var coneOuterGain = _ref.coneOuterGain;
         classCallCheck(this, Panner);
 
         // Default for stereo is 'HRTF' can also be 'equalpower'
@@ -5005,9 +4970,9 @@ var Panner = function (_AbstractEffect) {
     }
 
     Panner.prototype.update = function update(_ref2) {
-        var x = _ref2.x;
-        var y = _ref2.y;
-        var z = _ref2.z;
+        var x = _ref2.x,
+            y = _ref2.y,
+            z = _ref2.z;
 
         var v = vecPool.get(x, y, z);
 
@@ -5065,16 +5030,16 @@ var Panner = function (_AbstractEffect) {
         setNodeOrientation(sono$1.context.listener, vecPool.get(x, y, z));
     };
 
-    Panner.prototype.set = function set(x, y, z) {
+    Panner.prototype.set = function set$$1(x, y, z) {
         return this.update({ x: x, y: y, z: z });
     };
 
     createClass(Panner, [{
         key: 'defaults',
-        get: function get() {
+        get: function get$$1() {
             return pannerDefaults;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             Object.assign(pannerDefaults, value);
         }
     }]);
@@ -5087,10 +5052,10 @@ var panner = sono$1.register('panner', function (opts) {
 
 Object.defineProperties(panner, {
     defaults: {
-        get: function get() {
+        get: function get$$1() {
             return pannerDefaults;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             return Object.assign(pannerDefaults, value);
         }
     },
@@ -5110,16 +5075,16 @@ var Phaser = function (_AbstractEffect) {
     inherits(Phaser, _AbstractEffect);
 
     function Phaser() {
-        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$stages = _ref.stages,
+            stages = _ref$stages === undefined ? 8 : _ref$stages,
+            _ref$feedback = _ref.feedback,
+            feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback,
+            _ref$frequency = _ref.frequency,
+            frequency = _ref$frequency === undefined ? 0.5 : _ref$frequency,
+            _ref$gain = _ref.gain,
+            gain = _ref$gain === undefined ? 300 : _ref$gain;
 
-        var _ref$stages = _ref.stages;
-        var stages = _ref$stages === undefined ? 8 : _ref$stages;
-        var _ref$feedback = _ref.feedback;
-        var feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
-        var _ref$frequency = _ref.frequency;
-        var frequency = _ref$frequency === undefined ? 0.5 : _ref$frequency;
-        var _ref$gain = _ref.gain;
-        var gain = _ref$gain === undefined ? 300 : _ref$gain;
         classCallCheck(this, Phaser);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
@@ -5167,31 +5132,31 @@ var Phaser = function (_AbstractEffect) {
 
     createClass(Phaser, [{
         key: 'stages',
-        get: function get() {
+        get: function get$$1() {
             return this._stages;
         }
     }, {
         key: 'frequency',
-        get: function get() {
+        get: function get$$1() {
             return this._lfo.frequency.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._lfo.frequency, value);
         }
     }, {
         key: 'gain',
-        get: function get() {
+        get: function get$$1() {
             return this._lfoGain.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._lfoGain.gain, value);
         }
     }, {
         key: 'feedback',
-        get: function get() {
+        get: function get$$1() {
             return this._feedback.gain.value;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.setSafeParamValue(this._feedback.gain, value);
         }
     }]);
@@ -5203,10 +5168,10 @@ sono$1.register('phaser', function (opts) {
 });
 
 function createImpulseResponse(_ref) {
-    var time = _ref.time;
-    var decay = _ref.decay;
-    var reverse = _ref.reverse;
-    var buffer = _ref.buffer;
+    var time = _ref.time,
+        decay = _ref.decay,
+        reverse = _ref.reverse,
+        buffer = _ref.buffer;
 
     var rate = sono$1.context.sampleRate;
     var length = Math.floor(rate * time);
@@ -5238,14 +5203,14 @@ var Reverb = function (_AbstractEffect) {
     inherits(Reverb, _AbstractEffect);
 
     function Reverb() {
-        var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref2$time = _ref2.time,
+            time = _ref2$time === undefined ? 1 : _ref2$time,
+            _ref2$decay = _ref2.decay,
+            decay = _ref2$decay === undefined ? 5 : _ref2$decay,
+            _ref2$reverse = _ref2.reverse,
+            reverse = _ref2$reverse === undefined ? false : _ref2$reverse;
 
-        var _ref2$time = _ref2.time;
-        var time = _ref2$time === undefined ? 1 : _ref2$time;
-        var _ref2$decay = _ref2.decay;
-        var decay = _ref2$decay === undefined ? 5 : _ref2$decay;
-        var _ref2$reverse = _ref2.reverse;
-        var reverse = _ref2$reverse === undefined ? false : _ref2$reverse;
         classCallCheck(this, Reverb);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
@@ -5266,9 +5231,9 @@ var Reverb = function (_AbstractEffect) {
     }
 
     Reverb.prototype.update = function update(_ref3) {
-        var time = _ref3.time;
-        var decay = _ref3.decay;
-        var reverse = _ref3.reverse;
+        var time = _ref3.time,
+            decay = _ref3.decay,
+            reverse = _ref3.reverse;
 
         var changed = false;
         if (time !== this._opts.time && isSafeNumber(time)) {
@@ -5293,26 +5258,26 @@ var Reverb = function (_AbstractEffect) {
 
     createClass(Reverb, [{
         key: 'time',
-        get: function get() {
+        get: function get$$1() {
             return this._opts.time;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.update({ time: value });
         }
     }, {
         key: 'decay',
-        get: function get() {
+        get: function get$$1() {
             return this._opts.decay;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.update({ decay: value });
         }
     }, {
         key: 'reverse',
-        get: function get() {
+        get: function get$$1() {
             return this._opts.reverse;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             this.update({ reverse: value });
         }
     }]);
@@ -5387,7 +5352,7 @@ function microphone(connected, denied, error) {
 sono$1.register('microphone', microphone, sono$1.utils);
 
 function recorder() {
-    var passThrough = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+    var passThrough = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
     var bufferLength = 4096;
     var buffersL = [];
@@ -5511,7 +5476,7 @@ function recorder() {
 
 sono$1.register('recorder', recorder, sono$1.utils);
 
-function waveform$1() {
+function waveform() {
     var buffer = void 0,
         wave = void 0;
 
@@ -5574,7 +5539,7 @@ function waveform$1() {
     };
 }
 
-sono$1.register('waveform', waveform$1, sono$1.utils);
+sono$1.register('waveform', waveform, sono$1.utils);
 
 var halfPI = Math.PI / 2;
 var twoPI = Math.PI * 2;

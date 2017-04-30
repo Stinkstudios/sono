@@ -1,14 +1,13 @@
-export default function BufferSource(buffer, context, onEnded) {
+export default function BufferSource(buffer, context, endedCallback) {
     const api = {};
-    let ended = false,
-        endedCallback = onEnded,
-        loop = false,
-        paused = false,
-        pausedAt = 0,
-        playbackRate = 1,
-        playing = false,
-        sourceNode = null,
-        startedAt = 0;
+    let ended = false;
+    let loop = false;
+    let paused = false;
+    let cuedAt = 0;
+    let playbackRate = 1;
+    let playing = false;
+    let sourceNode = null;
+    let startedAt = 0;
 
     function createSourceNode() {
         if (!sourceNode && context) {
@@ -33,7 +32,7 @@ export default function BufferSource(buffer, context, onEnded) {
         }
 
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = false;
         startedAt = 0;
     }
@@ -41,7 +40,7 @@ export default function BufferSource(buffer, context, onEnded) {
     function pause() {
         const elapsed = context.currentTime - startedAt;
         stop();
-        pausedAt = elapsed;
+        cuedAt = elapsed;
         playing = false;
         paused = true;
     }
@@ -54,18 +53,21 @@ export default function BufferSource(buffer, context, onEnded) {
         }
     }
 
-    function play(delay, offset = 0) {
+    function play(delay = 0, offset = 0) {
         if (playing) {
             return;
         }
 
         delay = delay ? context.currentTime + delay : 0;
+
         if (offset) {
-            pausedAt = 0;
+            cuedAt = 0;
         }
-        if (pausedAt) {
-            offset = pausedAt;
+
+        if (cuedAt) {
+            offset = cuedAt;
         }
+
         while (offset > api.duration) {
             offset = offset % api.duration;
         }
@@ -80,7 +82,7 @@ export default function BufferSource(buffer, context, onEnded) {
         startedAt = context.currentTime - offset;
         ended = false;
         paused = false;
-        pausedAt = 0;
+        cuedAt = 0;
         playing = true;
     }
 
@@ -116,17 +118,16 @@ export default function BufferSource(buffer, context, onEnded) {
         },
         currentTime: {
             get: function() {
-                if (pausedAt) {
-                    return pausedAt;
+                if (cuedAt) {
+                    return cuedAt;
                 }
                 if (startedAt) {
-                    let time = context.currentTime - startedAt;
-                    if (time > api.duration) {
-                        time = time % api.duration;
-                    }
-                    return time;
+                    return context.currentTime - startedAt;
                 }
                 return 0;
+            },
+            set: function(value) {
+                cuedAt = value;
             }
         },
         duration: {

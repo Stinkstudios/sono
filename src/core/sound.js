@@ -27,6 +27,7 @@ export default class Sound extends Emitter {
         this._isTouchLocked = false;
         this._loader = null;
         this._loop = false;
+        this._offset = 0;
         this._playbackRate = 1;
         this._playWhenReady = null;
         this._source = null;
@@ -49,6 +50,8 @@ export default class Sound extends Emitter {
             const src = file.getSupportedFile(configSrc) || this._config.src;
             this._config = Object.assign(this._config, newConfig, {src});
         }
+
+        console.log('prepare', this.id, this._config.src);
 
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
@@ -74,6 +77,7 @@ export default class Sound extends Emitter {
     }
 
     play(delay, offset) {
+        console.log('play', this.id, this._source);
         if (!this._source || this._isTouchLocked) {
             this._playWhenReady = () => {
                 if (this._source) {
@@ -90,6 +94,11 @@ export default class Sound extends Emitter {
         }
         this._playWhenReady = null;
         this._effects.setSource(this._source.sourceNode);
+
+        if (this._offset && typeof offset === 'undefined') {
+            offset = this._offset;
+            this._offset = 0;
+        }
 
         this._source.play(delay, offset);
 
@@ -118,11 +127,8 @@ export default class Sound extends Emitter {
         return this;
     }
 
-    seek(percent) {
-        if (this._source) {
-            this._source.stop();
-            this.play(0, this._source.duration * percent);
-        }
+    seek(value) {
+        this.currentTime = value;
         return this;
     }
 
@@ -195,17 +201,25 @@ export default class Sound extends Emitter {
         return this._wave(this._data, length);
     }
 
-    get currentTime() {
-        return this._source ? this._source.currentTime : 0;
-    }
-
     get context() {
         return this._context;
     }
 
+    get currentTime() {
+        return this._source ? this._source.currentTime : this._offset;
+    }
+
     set currentTime(value) {
-        this._source && this._source.stop();
-        this.play(0, value);
+        if (this._source) {
+            const playing = this._source.playing;
+            this._source.stop();
+            this._source.currentTime = value;
+            if (playing) {
+                this.play(0, value);
+            }
+        } else {
+            this._offset = value;
+        }
     }
 
     get data() {
@@ -366,12 +380,14 @@ export default class Sound extends Emitter {
     }
 
     _createSource(data) {
+        console.log('_createSource', this.id, data);
         const isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             const Fn = isAudioBuffer ? BufferSource : MediaSource;
             this._source = new AudioSource(Fn, data, this._context, this._onEnded);
             this._source.singlePlay = !!this._config.singlePlay;
             this._source.playbackRate = this._playbackRate;
+            this._source.currentTime = this._offset;
         } else if (file.isMediaStream(data)) {
             this._source = new MicrophoneSource(data, this._context);
         } else if (file.isOscillatorType((data && data.type) || data)) {
@@ -400,6 +416,9 @@ export default class Sound extends Emitter {
     }
 
     _onLoadError(err) {
+        if (!this.listenerCount('error')) {
+            console.error('Sound load error', this.id, this._loader.url);
+        }
         this.emit('error', this, err);
     }
 }

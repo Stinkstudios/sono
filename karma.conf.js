@@ -10,13 +10,19 @@ module.exports = function(config) {
         files.push('test/is-travis.js');
     }
 
-    config.set({
+    const configuration = {
 
         // How long to wait for a message from a browser before disconnecting
         browserNoActivityTimeout: 30000,
 
         // base path, that will be used to resolve files and exclude
         basePath: '',
+
+        client: {
+            mocha: {
+                timeout: 20000
+            }
+        },
 
         plugins: [
             'karma-mocha',
@@ -33,7 +39,7 @@ module.exports = function(config) {
             {pattern: 'test/audio/*.ogg', watched: false, included: false, served: true, nocache: false},
             'test/helper.js',
             'dist/sono.js',
-            'test/**/*.js'
+            'test/**/*.spec.js'
         ]),
 
         // list of files to exclude
@@ -65,11 +71,25 @@ module.exports = function(config) {
             'Firefox'
         ],
 
+        // For Travis
+        customLaunchers: {
+            Chrome_travis_ci: {
+                base: 'Chrome',
+                flags: ['--no-sandbox']
+            }
+        },
+
         // If browser does not capture in given timeout [ms], kill it
         captureTimeout: 60000,
 
         // Continuous Integration mode
         // if true, it capture browsers, run tests and exit
         singleRun: false
-    });
+    };
+
+    if (process.env.TRAVIS) {
+        configuration.browsers = ['Chrome_travis_ci'];
+    }
+
+    config.set(configuration);
 };
