@@ -51,6 +51,8 @@ export default class Sound extends Emitter {
             this._config = Object.assign(this._config, newConfig, {src});
         }
 
+        console.log('prepare', this.id, this._config.src);
+
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
         } else {
@@ -75,6 +77,7 @@ export default class Sound extends Emitter {
     }
 
     play(delay, offset) {
+        console.log('play', this.id, this._source);
         if (!this._source || this._isTouchLocked) {
             this._playWhenReady = () => {
                 if (this._source) {
@@ -377,6 +380,7 @@ export default class Sound extends Emitter {
     }
 
     _createSource(data) {
+        console.log('_createSource', this.id, data);
         const isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             const Fn = isAudioBuffer ? BufferSource : MediaSource;
@@ -412,6 +416,9 @@ export default class Sound extends Emitter {
     }
 
     _onLoadError(err) {
+        if (!this.listenerCount('error')) {
+            console.error('Sound load error', this.id, this._loader.url);
+        }
         this.emit('error', this, err);
     }
 }

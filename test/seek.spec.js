@@ -4,7 +4,7 @@ describe('seek', () => {
 
     describe('after load', () => {
         const config = {
-            id: 'foo',
+            id: 'seek-after',
             url: '/base/test/audio/long.ogg'
         };
         beforeEach((done) => {
@@ -48,7 +48,7 @@ describe('seek', () => {
             sound.currentTime = 1;
             setTimeout(() => {
                 expect(sound.playing).to.be.true;
-                expect(sound.currentTime).to.be.above(1);
+                expect(sound.currentTime).to.be.at.least(1);
                 done();
             }, 500);
         });
@@ -56,7 +56,7 @@ describe('seek', () => {
 
     describe('before load', () => {
         const config = {
-            id: 'foo',
+            id: 'seek-before',
             url: '/base/test/audio/long.ogg',
             deferLoad: true
         };

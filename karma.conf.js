@@ -10,7 +10,7 @@ module.exports = function(config) {
         files.push('test/is-travis.js');
     }
 
-    config.set({
+    const configuration = {
 
         // How long to wait for a message from a browser before disconnecting
         browserNoActivityTimeout: 30000,
@@ -20,7 +20,7 @@ module.exports = function(config) {
 
         client: {
             mocha: {
-                timeout: 10000
+                timeout: 20000
             }
         },
 
@@ -71,11 +71,25 @@ module.exports = function(config) {
             'Firefox'
         ],
 
+        // For Travis
+        customLaunchers: {
+            Chrome_travis_ci: {
+                base: 'Chrome',
+                flags: ['--no-sandbox']
+            }
+        },
+
         // If browser does not capture in given timeout [ms], kill it
         captureTimeout: 60000,
 
         // Continuous Integration mode
         // if true, it capture browsers, run tests and exit
         singleRun: false
-    });
+    };
+
+    if (process.env.TRAVIS) {
+        configuration.browsers = ['Chrome_travis_ci'];
+    }
+
+    config.set(configuration);
 };

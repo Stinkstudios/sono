@@ -2,7 +2,7 @@ describe('sono playback', () => {
 
     describe('create', () => {
         const config = {
-            id: 'foo',
+            id: 'playback-create',
             url: [
                 '/base/test/audio/blip.ogg',
                 '/base/test/audio/blip.mp3'
@@ -12,20 +12,13 @@ describe('sono playback', () => {
         let sound;
 
         beforeEach((done) => {
-            sound = sono.create(config);
-            sound
+            sound = sono.create(config)
                 .on('error', (s, err) => console.error('error', err, s))
                 .on('loaded', () => console.log('loaded'))
                 .on('ready', () => console.log('ready'))
                 .on('play', () => console.log('play'))
-                .on('ended', () => {
-                    done();
-                });
+                .on('ended', () => done());
             sound.play();
-
-            if (window.isTravis) {
-                done();
-            }
         });
 
         afterEach(() => {
@@ -43,8 +36,7 @@ describe('sono playback', () => {
 
         beforeEach((done) => {
             function onComplete(loadedSound) {
-                sound = loadedSound;
-                sound
+                sound = loadedSound
                     .on('error', (s, err) => console.error('error', err, s))
                     .on('loaded', () => console.log('loaded'))
                     .on('ready', () => console.log('ready'))
@@ -54,11 +46,6 @@ describe('sono playback', () => {
                         done();
                     });
                 sound.play();
-
-                if (window.isTravis) {
-                    ended = true;
-                    done();
-                }
             }
             sono.load({
                 url: [
@@ -102,11 +89,6 @@ describe('sono playback', () => {
                 done();
             })
             .play(0.1, 0.1);
-
-            if (window.isTravis) {
-                ended = true;
-                done();
-            }
         });
 
         afterEach(() => {

@@ -1,6 +1,4 @@
-describe('sono loader', function() {
-    this.timeout(10000);
-
+describe('sono loader', () => {
     describe('single', () => {
         let sound,
             progress = 0;

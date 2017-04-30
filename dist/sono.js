@@ -1620,7 +1620,7 @@ function Loader(url, deferLoad) {
     function start() {
         var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
-        if (deferLoad && !force) {
+        if (!url || deferLoad && !force) {
             return;
         }
         if (audioContext) {
@@ -1666,6 +1666,11 @@ function Loader(url, deferLoad) {
         isTouchLocked: {
             set: function set(value) {
                 isTouchLocked = value;
+            }
+        },
+        url: {
+            get: function get() {
+                return url;
             }
         }
     });
@@ -2944,6 +2949,8 @@ var Sound = function (_Emitter) {
             this._config = Object.assign(this._config, newConfig, { src: src });
         }
 
+        console.log('prepare', this.id, this._config.src);
+
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
         } else {
@@ -2972,6 +2979,7 @@ var Sound = function (_Emitter) {
     Sound.prototype.play = function play(delay, offset) {
         var _this2 = this;
 
+        console.log('play', this.id, this._source);
         if (!this._source || this._isTouchLocked) {
             this._playWhenReady = function () {
                 if (_this2._source) {
@@ -3102,6 +3110,7 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype._createSource = function _createSource(data) {
+        console.log('_createSource', this.id, data);
         var isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             var Fn = isAudioBuffer ? BufferSource : MediaSource;
@@ -3137,6 +3146,9 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype._onLoadError = function _onLoadError(err) {
+        if (!this.listenerCount('error')) {
+            console.error('Sound load error', this.id, this._loader.url);
+        }
         this.emit('error', this, err);
     };
 

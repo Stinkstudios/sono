@@ -148,7 +148,7 @@ export default function Loader(url, deferLoad) {
     }
 
     function start(force = false) {
-        if (deferLoad && !force) {
+        if (!url || (deferLoad && !force)) {
             return;
         }
         if (audioContext) {
@@ -194,6 +194,11 @@ export default function Loader(url, deferLoad) {
         isTouchLocked: {
             set: function(value) {
                 isTouchLocked = value;
+            }
+        },
+        url: {
+            get: function() {
+                return url;
             }
         }
     });
