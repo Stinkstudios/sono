@@ -46,12 +46,10 @@ export default class Sound extends Emitter {
         const skipLoad = !force && !this._source && !!this._config.deferLoad;
 
         if (newConfig) {
-            const configSrc = newConfig.src || newConfig.url || newConfig.data || newConfig;
+            const configSrc = file.getSrc(newConfig);
             const src = file.getSupportedFile(configSrc) || this._config.src;
             this._config = Object.assign(this._config, newConfig, {src});
         }
-
-        console.log('prepare', this.id, this._config.src);
 
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
@@ -65,19 +63,24 @@ export default class Sound extends Emitter {
         return this;
     }
 
-    load(newConfig = null) {
+    load(config = null) {
         this.stop();
         this._source = null;
-        if (this._loader) {
-            this._loader.destroy();
+
+        if (!config || file.containsURL(config)) {
+            if (this._loader) {
+                this._loader.destroy();
+            }
+            this.prepare(config, true);
+            this._loader.start();
+        } else {
+            this.data = config.data || config;
         }
-        this.prepare(newConfig, true);
-        this._loader.start();
+
         return this;
     }
 
     play(delay, offset) {
-        console.log('play', this.id, this._source);
         if (!this._source || this._isTouchLocked) {
             this._playWhenReady = () => {
                 if (this._source) {
@@ -380,7 +383,6 @@ export default class Sound extends Emitter {
     }
 
     _createSource(data) {
-        console.log('_createSource', this.id, data);
         const isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             const Fn = isAudioBuffer ? BufferSource : MediaSource;

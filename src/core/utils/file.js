@@ -136,8 +136,12 @@ function containsURL(config) {
         return false;
     }
     // string, array or object with src/url/data property that is string, array or arraybuffer
-    const src = config.src || config.url || config.data || config;
+    const src = getSrc(config);
     return isURL(src) || isArrayBuffer(src) || (Array.isArray(src) && isURL(src[0]));
+}
+
+function getSrc(config) {
+    return config.src || config.url || config.data || config;
 }
 
 export default {
@@ -145,6 +149,7 @@ export default {
     containsURL,
     extensions,
     getFileExtension,
+    getSrc,
     getSupportedFile,
     isAudioBuffer,
     isArrayBuffer,
