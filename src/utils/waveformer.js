@@ -26,7 +26,7 @@ function waveformer(config) {
         canvas = document.createElement('canvas');
         width = width || canvas.width;
         height = height || canvas.height;
-        canvas.width = height;
+        canvas.width = width;
         canvas.height = height;
     }
 

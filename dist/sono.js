@@ -897,8 +897,12 @@ function containsURL(config) {
         return false;
     }
     // string, array or object with src/url/data property that is string, array or arraybuffer
-    var src = config.src || config.url || config.data || config;
+    var src = getSrc(config);
     return isURL(src) || isArrayBuffer(src) || Array.isArray(src) && isURL(src[0]);
+}
+
+function getSrc(config) {
+    return config.src || config.url || config.data || config;
 }
 
 var file = {
@@ -906,6 +910,7 @@ var file = {
     containsURL: containsURL,
     extensions: extensions,
     getFileExtension: getFileExtension,
+    getSrc: getSrc,
     getSupportedFile: getSupportedFile,
     isAudioBuffer: isAudioBuffer,
     isArrayBuffer: isArrayBuffer,
@@ -2944,12 +2949,10 @@ var Sound = function (_Emitter) {
         var skipLoad = !force && !this._source && !!this._config.deferLoad;
 
         if (newConfig) {
-            var configSrc = newConfig.src || newConfig.url || newConfig.data || newConfig;
+            var configSrc = file.getSrc(newConfig);
             var src = file.getSupportedFile(configSrc) || this._config.src;
             this._config = Object.assign(this._config, newConfig, { src: src });
         }
-
-        console.log('prepare', this.id, this._config.src);
 
         if (this._source && this._data && this._data.tagName) {
             this._source.load(this._config.src);
@@ -2964,22 +2967,27 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype.load = function load() {
-        var newConfig = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+        var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
         this.stop();
         this._source = null;
-        if (this._loader) {
-            this._loader.destroy();
+
+        if (!config || file.containsURL(config)) {
+            if (this._loader) {
+                this._loader.destroy();
+            }
+            this.prepare(config, true);
+            this._loader.start();
+        } else {
+            this.data = config.data || config;
         }
-        this.prepare(newConfig, true);
-        this._loader.start();
+
         return this;
     };
 
     Sound.prototype.play = function play(delay, offset) {
         var _this2 = this;
 
-        console.log('play', this.id, this._source);
         if (!this._source || this._isTouchLocked) {
             this._playWhenReady = function () {
                 if (_this2._source) {
@@ -3110,7 +3118,6 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype._createSource = function _createSource(data) {
-        console.log('_createSource', this.id, data);
         var isAudioBuffer = file.isAudioBuffer(data);
         if (isAudioBuffer || file.isMediaElement(data)) {
             var Fn = isAudioBuffer ? BufferSource : MediaSource;
@@ -3490,7 +3497,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.6';
+var VERSION = '2.0.7';
 var bus = new Group(context$1, context$1.destination);
 
 /*
@@ -5576,7 +5583,7 @@ function waveformer(config) {
         canvas = document.createElement('canvas');
         width = width || canvas.width;
         height = height || canvas.height;
-        canvas.width = height;
+        canvas.width = width;
         canvas.height = height;
     }
 
