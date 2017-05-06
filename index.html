@@ -53,6 +53,8 @@
         </div>
         <pre>
             <code class="js">
+    import sono from 'sono';
+
     const sound = sono.create({
         src: [ 'dnb-loop-3.ogg', 'dnb-loop-3.mp3' ],
         loop: true,
@@ -112,11 +114,13 @@
 
         <pre>
             <code class="js">
-    // add an echo effect to the sound
+    import echo from 'sono/effects/echo';
+
     const echo = sound.effects.add(echo({
         delay: 0,
         feedback: 0
     }));
+
     // change delay time and feedback amount
     echo.delay = 1;
     echo.feedback = 1;
@@ -136,10 +140,12 @@
 
         <pre>
             <code class="js">
-    // add a distortion effect to the sound
+    import distortion from 'sono/effects/distortion';
+
     const distortion = sound.effects.add(distortion({
         level: 0.5
     }));
+
     // change amount of distortion
     distortion.level = 1;
             </code>
@@ -158,10 +164,13 @@
 
         <pre>
             <code class="js">
+    import reverb from 'sono/effects/reverb';
+
     const reverb = sound.effects.add(reverb({
         time: 1,
         decay: 5
     }));
+
     // update values
     reverb.update({
         time: 2,
@@ -184,10 +193,13 @@
 
         <pre>
             <code class="js">
+    import flanger from 'sono/effects/flanger';
+
     const flanger = sound.effects.add(flanger({
         stereo: true,
         delay: 0.003
     }));
+
     // update values
     flanger.delay = 0.003;
     flanger.gain = 0.005;
@@ -229,6 +241,8 @@
 
         <pre>
             <code class="js">
+    import 'sono/effects';
+
     const highpass = sound.effects.add(sono.highpass());
     highpass.frequency = 400;
     highpass.peak = 20;
@@ -250,6 +264,8 @@
         <pre>
             <code class="js">
     // bass boost
+    import lowshelf from 'sono/effects/filter';
+
     const lowshelf = sound.effects.add(lowshelf());
     lowshelf.frequency = 80;
     lowshelf.boost = 20;
@@ -272,12 +288,15 @@
 
         <pre>
             <code class="js">
+    import analyser from 'sono/effects/analyser';
+    import waveformer from 'sono/utils/waveformer';
+
     const analyser = sound.effects.add(analyser({
         fftSize: 256,
         smoothing: 0.7
     }));
 
-    const waveformer = sono.utils.waveformer({
+    const waveform = waveformer({
         x: 0,
         y: 0,
         width: 250,
@@ -298,7 +317,7 @@
     function update() {
         window.requestAnimationFrame(update);
         analyser.getFrequencies();
-        waveformer();
+        waveform();
     }
 
     update();
