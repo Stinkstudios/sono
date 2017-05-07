@@ -1,26 +1,25 @@
 import Emitter from './emitter';
 
-export default function Loader(url, deferLoad) {
-    const ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
-    const emitter = new Emitter();
-    let progress = 0,
-        audioContext,
-        isTouchLocked,
-        request,
-        timeout,
-        data;
+const ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
 
-    // clean up
+export default function Loader(url, deferLoad) {
+    const emitter = new Emitter();
+
+    let audioContext = null;
+    let data = null;
+    let isTouchLocked = false;
+    let progress = 0;
+    let request = null;
+    let timeout = null;
 
     function removeListeners() {
-        emitter.off('error');
-        emitter.off('progress');
-        emitter.off('complete');
-        emitter.off('loaded');
+        emitter.off();
 
         if (data && typeof data.removeEventListener === 'function') {
+            data.removeEventListener('load', readyHandler);
             data.removeEventListener('canplaythrough', readyHandler);
             data.removeEventListener('error', errorHandler);
+            data.onerror = null;
         }
 
         if (request) {
@@ -45,24 +44,26 @@ export default function Loader(url, deferLoad) {
         }
     }
 
-    // error
+    function errorHandler() {
+        cancelTimeout();
 
-    function errorHandler(event) {
-        window.clearTimeout(timeout);
-
-        let message = event;
-
-        if (data && data.error) {
-            message = 'Media Error: ' + ERROR_STATE[data.error.code] + ' ' + url;
-        }
+        let status = '';
 
         if (request) {
-            message = 'XHR Error: ' + request.status + ' ' + request.statusText + ' ' + url;
+            status = `${request.status} ${request.statusText}`;
+        } else if (data && data.error) {
+            status = ERROR_STATE[data.error.code];
         }
 
-        emitter.emit('error', message);
+        if (emitter.listenerCount('error')) {
+            emitter.emit('error', new Error(`Load Error: ${status} ${url}`));
+        }
 
         removeListeners();
+    }
+
+    function cancelTimeout() {
+        window.clearTimeout(timeout);
     }
 
     function decodeArrayBuffer(arraybuffer) {
@@ -77,12 +78,20 @@ export default function Loader(url, deferLoad) {
     }
 
     function loadHandler() {
+        if (request.status >= 400) {
+            errorHandler();
+            return;
+        }
         decodeArrayBuffer(request.response);
     }
 
     function readyHandler() {
-        window.clearTimeout(timeout);
+        cancelTimeout();
         if (!data) {
+            return;
+        }
+        if (!data.readyState) {
+            errorHandler();
             return;
         }
         progress = 1;
@@ -90,14 +99,13 @@ export default function Loader(url, deferLoad) {
     }
 
     function cancel() {
+        cancelTimeout();
         removeListeners();
 
         if (request && request.readyState !== 4) {
             request.abort();
         }
         request = null;
-
-        window.clearTimeout(timeout);
     }
 
     function destroy() {
@@ -131,14 +139,15 @@ export default function Loader(url, deferLoad) {
         }
 
         if (!isTouchLocked) {
-            // timeout because sometimes canplaythrough doesn't fire
-            window.clearTimeout(timeout);
-            timeout = window.setTimeout(readyHandler, 2000);
+            cancelTimeout();
+            timeout = window.setTimeout(readyHandler, 3000);
             data.addEventListener('canplaythrough', readyHandler, false);
+            data.addEventListener('load', readyHandler, false);
         }
 
         data.addEventListener('error', errorHandler, false);
         data.preload = 'auto';
+        data.onerror = errorHandler;
         data.src = url;
         data.load();
 
@@ -209,9 +218,9 @@ export default function Loader(url, deferLoad) {
 Loader.Group = function() {
     const emitter = new Emitter();
     const queue = [];
-    let numLoaded = 0,
-        numTotal = 0,
-        currentLoader;
+    let numLoaded = 0;
+    let numTotal = 0;
+    let currentLoader = null;
 
     function progressHandler(progress) {
         const loaded = numLoaded + progress;
@@ -226,9 +235,10 @@ Loader.Group = function() {
     }
 
     function errorHandler(e) {
-        console.error(e);
         removeListeners();
-        emitter.emit('error', e);
+        if (emitter.listenerCount('error')) {
+            emitter.emit('error', e);
+        }
         next();
     }
 
