@@ -58,7 +58,7 @@ export default class Sound extends Emitter {
             this._loader.audioContext = !!this._config.asMediaElement || this._context.isFake ? null : this._context;
             this._loader.isTouchLocked = this._isTouchLocked;
             this._loader.once('loaded', this._onLoad);
-            this._loader.on('error', this._onLoadError);
+            this._loader.once('error', this._onLoadError);
         }
         return this;
     }
@@ -418,10 +418,11 @@ export default class Sound extends Emitter {
     }
 
     _onLoadError(err) {
-        if (!this.listenerCount('error')) {
-            console.error('Sound load error', this.id, this._loader.url);
+        if (this.listenerCount('error')) {
+            this.emit('error', this, err);
+            return;
         }
-        this.emit('error', this, err);
+        console.error('Sound load error', this._loader.url);
     }
 }
 
