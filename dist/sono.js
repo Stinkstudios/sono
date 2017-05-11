@@ -1928,7 +1928,11 @@ function BufferSource(buffer, context, endedCallback) {
                     return cuedAt;
                 }
                 if (startedAt) {
-                    return context.currentTime - startedAt;
+                    var time = context.currentTime - startedAt;
+                    while (time > api.duration) {
+                        time = time % api.duration;
+                    }
+                    return time;
                 }
                 return 0;
             },
@@ -3508,7 +3512,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.8';
+var VERSION = '2.0.9';
 var bus = new Group(context$1, context$1.destination);
 
 /*

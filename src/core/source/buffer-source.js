@@ -122,7 +122,11 @@ export default function BufferSource(buffer, context, endedCallback) {
                     return cuedAt;
                 }
                 if (startedAt) {
-                    return context.currentTime - startedAt;
+                    let time = context.currentTime - startedAt;
+                    while (time > api.duration) {
+                        time = time % api.duration;
+                    }
+                    return time;
                 }
                 return 0;
             },
