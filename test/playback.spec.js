@@ -101,4 +101,43 @@ describe('sono playback', () => {
         });
     });
 
+    describe('currentTime and duration', () => {
+        let sound = null;
+        let ended = false;
+
+        beforeEach((done) => {
+            sound = sono.create({
+                url: [
+                    '/base/test/audio/blip.ogg',
+                    '/base/test/audio/blip.mp3'
+                ],
+                loop: true
+            })
+            .on('error', (s, err) => console.error('error', err, s))
+            .on('loaded', () => console.log('loaded'))
+            .on('ready', () => console.log('ready'))
+            .on('play', () => {
+                window.setTimeout(() => done(), 1000);
+            })
+            .on('ended', () => {
+                ended = true;
+            })
+            .play();
+        });
+
+        afterEach(() => {
+            sono.destroy(sound);
+        });
+
+        it('should get duration above 0 and currentTime below duration', () => {
+            expect(sound).to.exist;
+            expect(sound.playing).to.be.true;
+            expect(ended).to.be.false;
+            expect(sound.currentTime).to.be.a('number');
+            expect(sound.duration).to.be.a('number');
+            expect(sound.duration).to.be.above(0);
+            expect(sound.currentTime).to.be.below(sound.duration + 0.01);
+        });
+    });
+
 });

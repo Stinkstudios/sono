@@ -11,7 +11,7 @@ import SoundGroup from './utils/sound-group';
 import touchLock from './utils/touchLock';
 import utils from './utils/utils';
 
-const VERSION = '2.0.7';
+const VERSION = '2.0.9';
 const bus = new Group(context, context.destination);
 
 /*
@@ -99,7 +99,7 @@ function load(config) {
         if (config.onError) {
             config.onError(err);
         } else {
-            console.error('[ERROR] sono.load: ' + err);
+            console.error(err);
         }
     });
     loader.start();

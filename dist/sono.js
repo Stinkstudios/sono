@@ -1477,27 +1477,26 @@ var Emitter = function (_EventEmitter) {
     return Emitter;
 }(EventEmitter);
 
-function Loader(url, deferLoad) {
-    var ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
-    var emitter = new Emitter();
-    var progress = 0,
-        audioContext = void 0,
-        isTouchLocked = void 0,
-        request = void 0,
-        timeout = void 0,
-        data = void 0;
+var ERROR_STATE = ['', 'ABORTED', 'NETWORK', 'DECODE', 'SRC_NOT_SUPPORTED'];
 
-    // clean up
+function Loader(url, deferLoad) {
+    var emitter = new Emitter();
+
+    var audioContext = null;
+    var data = null;
+    var isTouchLocked = false;
+    var progress = 0;
+    var request = null;
+    var timeout = null;
 
     function removeListeners() {
-        emitter.off('error');
-        emitter.off('progress');
-        emitter.off('complete');
-        emitter.off('loaded');
+        emitter.off();
 
         if (data && typeof data.removeEventListener === 'function') {
+            data.removeEventListener('load', readyHandler);
             data.removeEventListener('canplaythrough', readyHandler);
             data.removeEventListener('error', errorHandler);
+            data.onerror = null;
         }
 
         if (request) {
@@ -1522,24 +1521,26 @@ function Loader(url, deferLoad) {
         }
     }
 
-    // error
+    function errorHandler() {
+        cancelTimeout();
 
-    function errorHandler(event) {
-        window.clearTimeout(timeout);
-
-        var message = event;
-
-        if (data && data.error) {
-            message = 'Media Error: ' + ERROR_STATE[data.error.code] + ' ' + url;
-        }
+        var status = '';
 
         if (request) {
-            message = 'XHR Error: ' + request.status + ' ' + request.statusText + ' ' + url;
+            status = request.status + ' ' + request.statusText;
+        } else if (data && data.error) {
+            status = ERROR_STATE[data.error.code];
         }
 
-        emitter.emit('error', message);
+        if (emitter.listenerCount('error')) {
+            emitter.emit('error', new Error('Load Error: ' + status + ' ' + url));
+        }
 
         removeListeners();
+    }
+
+    function cancelTimeout() {
+        window.clearTimeout(timeout);
     }
 
     function decodeArrayBuffer(arraybuffer) {
@@ -1552,12 +1553,20 @@ function Loader(url, deferLoad) {
     }
 
     function loadHandler() {
+        if (request.status >= 400) {
+            errorHandler();
+            return;
+        }
         decodeArrayBuffer(request.response);
     }
 
     function readyHandler() {
-        window.clearTimeout(timeout);
+        cancelTimeout();
         if (!data) {
+            return;
+        }
+        if (!data.readyState) {
+            errorHandler();
             return;
         }
         progress = 1;
@@ -1565,14 +1574,13 @@ function Loader(url, deferLoad) {
     }
 
     function cancel() {
+        cancelTimeout();
         removeListeners();
 
         if (request && request.readyState !== 4) {
             request.abort();
         }
         request = null;
-
-        window.clearTimeout(timeout);
     }
 
     function destroy() {
@@ -1606,14 +1614,15 @@ function Loader(url, deferLoad) {
         }
 
         if (!isTouchLocked) {
-            // timeout because sometimes canplaythrough doesn't fire
-            window.clearTimeout(timeout);
-            timeout = window.setTimeout(readyHandler, 2000);
+            cancelTimeout();
+            timeout = window.setTimeout(readyHandler, 3000);
             data.addEventListener('canplaythrough', readyHandler, false);
+            data.addEventListener('load', readyHandler, false);
         }
 
         data.addEventListener('error', errorHandler, false);
         data.preload = 'auto';
+        data.onerror = errorHandler;
         data.src = url;
         data.load();
 
@@ -1686,9 +1695,9 @@ function Loader(url, deferLoad) {
 Loader.Group = function () {
     var emitter = new Emitter();
     var queue = [];
-    var numLoaded = 0,
-        numTotal = 0,
-        currentLoader = void 0;
+    var numLoaded = 0;
+    var numTotal = 0;
+    var currentLoader = null;
 
     function progressHandler(progress) {
         var loaded = numLoaded + progress;
@@ -1703,9 +1712,10 @@ Loader.Group = function () {
     }
 
     function errorHandler(e) {
-        console.error(e);
         removeListeners();
-        emitter.emit('error', e);
+        if (emitter.listenerCount('error')) {
+            emitter.emit('error', e);
+        }
         next();
     }
 
@@ -1918,7 +1928,11 @@ function BufferSource(buffer, context, endedCallback) {
                     return cuedAt;
                 }
                 if (startedAt) {
-                    return context.currentTime - startedAt;
+                    var time = context.currentTime - startedAt;
+                    while (time > api.duration) {
+                        time = time % api.duration;
+                    }
+                    return time;
                 }
                 return 0;
             },
@@ -2961,7 +2975,7 @@ var Sound = function (_Emitter) {
             this._loader.audioContext = !!this._config.asMediaElement || this._context.isFake ? null : this._context;
             this._loader.isTouchLocked = this._isTouchLocked;
             this._loader.once('loaded', this._onLoad);
-            this._loader.on('error', this._onLoadError);
+            this._loader.once('error', this._onLoadError);
         }
         return this;
     };
@@ -3153,10 +3167,11 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype._onLoadError = function _onLoadError(err) {
-        if (!this.listenerCount('error')) {
-            console.error('Sound load error', this.id, this._loader.url);
+        if (this.listenerCount('error')) {
+            this.emit('error', this, err);
+            return;
         }
-        this.emit('error', this, err);
+        console.error('Sound load error', this._loader.url);
     };
 
     createClass(Sound, [{
@@ -3497,7 +3512,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.7';
+var VERSION = '2.0.9';
 var bus = new Group(context$1, context$1.destination);
 
 /*
@@ -3592,7 +3607,7 @@ function load(config) {
         if (config.onError) {
             config.onError(err);
         } else {
-            console.error('[ERROR] sono.load: ' + err);
+            console.error(err);
         }
     });
     loader.start();
