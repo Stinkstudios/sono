@@ -12,111 +12,109 @@
 </head>
 
 <body>
+    <div>
+        <!-- minimized player -->
 
-    <!-- minimized player -->
-
-    <div class="PlayerTop" data-playerTop>
-        <div class="PlayerTop-control" data-inner>
-            <div class="PlayerTop-play"></div>
-            <div class="PlayerTop-pause"></div>
-        </div>
-        <canvas class="PlayerTop-canvas" width="400" height="60" data-wave></canvas>
-    </div>
-
-    <!-- title player -->
-
-    <section>
-        <header>
-            <h1>sono</h1>
-        </header>
-        <div class="Player is-active" data-player>
-            <div class="Player-inner">
-                <div class="Player-control" data-inner>
-                    <div class="Player-play"></div>
-                    <div class="Player-pause"></div>
-                </div>
-                <div class="Player-mask Player-maskA">
-                    <div class="Player-half Player-halfA" data-progressA></div>
-                </div>
-                <div class="Player-mask Player-maskB">
-                    <div class="Player-half Player-halfB" data-progressB></div>
-                </div>
+        <div class="PlayerTop" data-playerTop>
+            <div class="PlayerTop-control" data-inner>
+                <div class="PlayerTop-play"></div>
+                <div class="PlayerTop-pause"></div>
             </div>
-            <canvas class="Player-canvas" width="760" height="760"></canvas>
+            <canvas class="PlayerTop-canvas" width="400" height="60" data-wave></canvas>
         </div>
-        <!-- upload -->
-        <div class="Controls">
-            <span class="Upload">
-                <span data-upload-text>upload file</span>
-                <input type="file" accept="audio/*" data-upload>
-            </span>
-        </div>
-        <pre>
-            <code class="js">
+
+        <!-- title player -->
+
+        <section>
+            <header>
+                <h1>sono</h1>
+            </header>
+            <div class="Player is-active" data-player>
+                <div class="Player-inner">
+                    <div class="Player-control" data-inner>
+                        <div class="Player-play"></div>
+                        <div class="Player-pause"></div>
+                    </div>
+                    <div class="Player-mask Player-maskA">
+                        <div class="Player-half Player-halfA" data-progressA></div>
+                    </div>
+                    <div class="Player-mask Player-maskB">
+                        <div class="Player-half Player-halfB" data-progressB></div>
+                    </div>
+                </div>
+                <canvas class="Player-canvas" width="760" height="760"></canvas>
+            </div>
+            <!-- upload -->
+            <div class="Controls">
+                <span class="Upload">
+                    <span data-upload-text>upload file</span>
+                    <input type="file" accept="audio/*" data-upload>
+                </span>
+            </div>
+<pre><code class="js">
     import sono from 'sono';
 
     const sound = sono.create({
-        src: [ 'dnb-loop-3.ogg', 'dnb-loop-3.mp3' ],
+        src: ['dnb-loop-3.ogg', 'dnb-loop-3.mp3'],
         loop: true,
         volume: 1
     });
-            </code>
-        </pre>
-    </section>
 
-    <!-- browser -->
+</code></pre>
+        </section>
 
-    <section class="Info">
-        <header>
-            <h2>current browser</h2>
-        </header>
-        <pre>
-            <code class="js">
-                <ul data-info></ul>
-            </code>
-        </pre>
-    </section>
+        <!-- browser -->
 
-    <!-- controls -->
+        <section class="Info">
+            <header>
+                <h2>current browser</h2>
+            </header>
+<pre><code class="js">
+<ul data-info></ul>
+</code></pre>
+        </section>
 
-    <section>
-        <header>
-            <h2>controls</h2>
-        </header>
+        <!-- controls -->
 
-        <div class="Controls" data-controls></div>
+        <section>
+            <header>
+                <h2>controls</h2>
+            </header>
 
-        <pre><code class="js">
+            <div class="Controls" data-controls></div>
+
+<pre><code class="js">
     // set volume to 50%
     sound.volume = 0.5;
     // add panning control to the sound
-    const panner = sound.effects.add(panner());
+    import panner from 'sono/effects/panner';
+    const pan = sound.effects.add(panner());
     // pan fully left
-    panner.set(-1);
+    pan.set(-1);
     // set playback rate to 50%
     sound.playbackRate = 0.5;
     // toggle loop
     sound.loop = true;
     // reverse the sound
     sono.utils.reverseBuffer(sound.data);
-        </code></pre>
 
-    </section>
+</code></pre>
 
-    <!-- echo -->
+        </section>
 
-    <section>
-        <header>
-            <h2>echo</h2>
-        </header>
+        <!-- echo -->
 
-        <div class="Controls" data-echo></div>
+        <section>
+            <header>
+                <h2>echo</h2>
+            </header>
 
-        <pre>
-            <code class="js">
-    import echo from 'sono/effects/echo';
+            <div class="Controls" data-echo></div>
 
-    const echo = sound.effects.add(echo({
+<pre><code class="js">
+    import 'sono/effects';
+
+    const echo = sound.effects.add(sono.echo({
         delay: 0,
         feedback: 0
     }));
@@ -124,49 +122,53 @@
     // change delay time and feedback amount
     echo.delay = 1;
     echo.feedback = 1;
-            </code>
-        </pre>
 
-    </section>
+    // change both at once
+    echo.update({
+        delay: 1,
+        feedback: 1
+    });
 
-    <!-- distortion -->
+</code></pre>
 
-    <section>
-        <header>
-            <h2>distortion</h2>
-        </header>
+        </section>
 
-        <div class="Controls" data-distortion></div>
+        <!-- distortion -->
 
-        <pre>
-            <code class="js">
+        <section>
+            <header>
+                <h2>distortion</h2>
+            </header>
+
+            <div class="Controls" data-distortion></div>
+
+<pre><code class="js">
     import distortion from 'sono/effects/distortion';
 
-    const distortion = sound.effects.add(distortion({
+    const distort = sound.effects.add(distortion({
         level: 0.5
     }));
 
     // change amount of distortion
-    distortion.level = 1;
-            </code>
-        </pre>
+    distort.level = 1;
 
-    </section>
+</code></pre>
 
-    <!-- reverb -->
+        </section>
 
-    <section>
-        <header>
-            <h2>reverb</h2>
-        </header>
+        <!-- reverb -->
 
-        <div class="Controls" data-reverb></div>
+        <section>
+            <header>
+                <h2>reverb</h2>
+            </header>
 
-        <pre>
-            <code class="js">
-    import reverb from 'sono/effects/reverb';
+            <div class="Controls" data-reverb></div>
 
-    const reverb = sound.effects.add(reverb({
+<pre><code class="js">
+    import 'sono/effects';
+
+    const reverb = sound.effects.add(sono.reverb({
         time: 1,
         decay: 5
     }));
@@ -176,122 +178,117 @@
         time: 2,
         decay: 6,
         reverse: true
-    })
-            </code>
-        </pre>
+    });
 
-    </section>
+</code></pre>
 
-    <!-- flanger -->
+        </section>
 
-    <section>
-        <header>
-            <h2>flanger</h2>
-        </header>
+        <!-- flanger -->
 
-        <div class="Controls" data-flanger></div>
+        <section>
+            <header>
+                <h2>flanger</h2>
+            </header>
 
-        <pre>
-            <code class="js">
+            <div class="Controls" data-flanger></div>
+
+<pre><code class="js">
     import flanger from 'sono/effects/flanger';
 
-    const flanger = sound.effects.add(flanger({
+    const flange = sound.effects.add(flanger({
         stereo: true,
         delay: 0.003
     }));
 
     // update values
-    flanger.delay = 0.003;
-    flanger.gain = 0.005;
-    flanger.frequency = 0.5;
-    flanger.feedback = 0.5;
-            </code>
-        </pre>
+    flange.delay = 0.003;
+    flange.gain = 0.005;
+    flange.frequency = 0.5;
+    flange.feedback = 0.5;
 
-    </section>
+</code></pre>
 
-    <!-- fade -->
+        </section>
 
-    <section>
-        <header>
-            <h2>fade</h2>
-        </header>
+        <!-- fade -->
 
-        <div class="Controls" data-fade></div>
+        <section>
+            <header>
+                <h2>fade</h2>
+            </header>
 
-        <pre>
-            <code class="js">
+            <div class="Controls" data-fade></div>
+
+<pre><code class="js">
     // fade sound volume to 0 over 1 second
     sound.fade(0, 1);
     // fade master volume to 0 over 1 second
     sono.fade(0, 1);
-            </code>
-        </pre>
 
-    </section>
+</code></pre>
 
-    <!-- highpass filter -->
+        </section>
 
-    <section>
-        <header>
-            <h2>highpass filter</h2>
-        </header>
+        <!-- highpass filter -->
 
-        <div class="Controls" data-highpass></div>
+        <section>
+            <header>
+                <h2>highpass filter</h2>
+            </header>
 
-        <pre>
-            <code class="js">
+            <div class="Controls" data-highpass></div>
+
+<pre><code class="js">
     import 'sono/effects';
 
     const highpass = sound.effects.add(sono.highpass());
     highpass.frequency = 400;
     highpass.peak = 20;
     highpass.detune = 100;
-            </code>
-        </pre>
 
-    </section>
+</code></pre>
 
-    <!-- lowshelf filter -->
+        </section>
 
-    <section>
-        <header>
-            <h2>lowshelf filter</h2>
-        </header>
+        <!-- lowshelf filter -->
 
-        <div class="Controls" data-lowshelf></div>
+        <section>
+            <header>
+                <h2>lowshelf filter</h2>
+            </header>
 
-        <pre>
-            <code class="js">
+            <div class="Controls" data-lowshelf></div>
+
+<pre><code class="js">
     // bass boost
-    import lowshelf from 'sono/effects/filter';
+    import 'sono/effects';
 
-    const lowshelf = sound.effects.add(lowshelf());
+    const lowshelf = sound.effects.add(sono.lowshelf());
     lowshelf.frequency = 80;
     lowshelf.boost = 20;
     lowshelf.gain = 10;
-            </code>
-        </pre>
 
-    </section>
+</code></pre>
 
-    <!-- waveformer -->
+        </section>
 
-    <section>
-        <header>
-            <h2>waveformer</h2>
-        </header>
+        <!-- waveformer -->
 
-        <div class="Controls" data-waveforms>
-            <canvas width="500" height="500"></canvas>
-        </div>
+        <section>
+            <header>
+                <h2>waveformer</h2>
+            </header>
 
-        <pre>
-            <code class="js">
+            <div class="Controls" data-waveforms>
+                <canvas width="500" height="500"></canvas>
+            </div>
+
+<pre><code class="js">
     import analyser from 'sono/effects/analyser';
     import waveformer from 'sono/utils/waveformer';
 
-    const analyser = sound.effects.add(analyser({
+    const analyse = sound.effects.add(analyser({
         fftSize: 256,
         smoothing: 0.7
     }));
@@ -304,58 +301,59 @@
         shape: 'circular',
         style: 'fill',
         lineWidth: 1.5,
-        waveform: analyser.getFrequencies(false),
-        color: function(position, length) {
+        waveform: analyse.getFrequencies(false),
+        color: (position, length) => {
             const hue = (position / length) * 360;
-            return 'hsl(' + hue + ', 100%, 40%)';
+            return `hsl(${hue}, 100%, 40%)`;
         },
-        transform: function(value) {
+        transform: value => {
             return 0.4 + value / 256 * 0.4;
         }
     });
 
     function update() {
         window.requestAnimationFrame(update);
-        analyser.getFrequencies();
+        analyse.getFrequencies();
         waveform();
     }
 
     update();
-            </code>
-        </pre>
 
-    </section>
+</code></pre>
 
-    <!-- more -->
+        </section>
 
-    <section>
-        <header>
-            <h2>more examples</h2>
-        </header>
-        <nav>
-            <ul>
-                <li><a href="examples/analyser.html">Analyser</a></li>
-                <li><a href="examples/pixi.html">PixiJS</a></li>
-                <li><a href="examples/three.html">THREE.js</a></li>
-                <li><a href="examples/oscillator.html">Oscillator</a></li>
-            </ul>
-        </nav>
-    </section>
+        <!-- more -->
 
-    <!-- links -->
+        <section>
+            <header>
+                <h2>more examples</h2>
+            </header>
+            <nav>
+                <ul>
+                    <li><a href="examples/analyser.html">Analyser visualisation</a></li>
+                    <li><a href="examples/three.html">3d Panning / THREE.js</a></li>
+                    <li><a href="examples/pixi.html">PixiJS</a></li>
+                    <li><a href="examples/oscillator.html">Oscillator</a></li>
+                </ul>
+            </nav>
+        </section>
 
-    <section>
-        <header>
-            <h2>links</h2>
-        </header>
-        <nav>
-            <ul>
-                <li><a href="https://github.com/Stinkdigital/sono">github</a></li>
-                <li><a href="https://github.com/Stinkdigital/sono/blob/master/docs/Sono.md">docs</a></li>
-                <li><a href="https://www.npmjs.com/package/sono">npm</a></li>
-            </ul>
-        </nav>
-    </section>
+        <!-- links -->
+
+        <section>
+            <header>
+                <h2>links</h2>
+            </header>
+            <nav>
+                <ul>
+                    <li><a href="https://github.com/Stinkdigital/sono">github</a></li>
+                    <li><a href="https://github.com/Stinkdigital/sono/blob/master/docs/Sono.md">docs</a></li>
+                    <li><a href="https://www.npmjs.com/package/sono">npm</a></li>
+                </ul>
+            </nav>
+        </section>
+    </div>
 
     <script src="examples/js/disable.js"></script>
     <script src="dist/sono.js"></script>
