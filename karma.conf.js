@@ -28,7 +28,8 @@ module.exports = function(config) {
             'karma-mocha',
             'karma-chai',
             'karma-chrome-launcher',
-            'karma-firefox-launcher'
+            'karma-firefox-launcher',
+            'karma-safari-launcher'
         ],
 
         // frameworks to use
@@ -36,7 +37,7 @@ module.exports = function(config) {
 
         // list of files / patterns to load in the browser
         files: files.concat([
-            {pattern: 'test/audio/*.ogg', watched: false, included: false, served: true, nocache: false},
+            {pattern: 'test/audio/*.{ogg,mp3}', watched: false, included: false, served: true, nocache: false},
             'test/helper.js',
             'dist/sono.js',
             'test/**/*.spec.js'
@@ -68,7 +69,8 @@ module.exports = function(config) {
         // Start these browsers, currently available:
         browsers: [
             'Chrome',
-            'Firefox'
+            'Firefox',
+            'Safari'
         ],
 
         // For Travis
