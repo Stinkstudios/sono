@@ -3494,8 +3494,10 @@ function touchLock(context, callback) {
     }
 
     if (locked) {
-        document.body.addEventListener('touchstart', unlock, false);
-        document.body.addEventListener('touchend', unlock, false);
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.addEventListener('touchstart', unlock, false);
+            document.body.addEventListener('touchend', unlock, false);
+        });
     }
 
     return locked;
@@ -3512,7 +3514,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.9';
+var VERSION = '2.0.11';
 var bus = new Group(context$1, context$1.destination);
 
 /*
@@ -4300,7 +4302,10 @@ var Distortion = function (_AbstractEffect) {
 
         classCallCheck(this, Distortion);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createWaveShaper()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+
+        _this._node = sono$1.context.createWaveShaper();
+        _this._in.connect(_this._out);
 
         _this._node.oversample = oversample || 'none';
 
@@ -4310,9 +4315,29 @@ var Distortion = function (_AbstractEffect) {
 
         _this._level;
 
+        _this._enabled = false;
+
         _this.update({ level: level });
         return _this;
     }
+
+    Distortion.prototype.enable = function enable(b) {
+        if (b === this._enabled) {
+            return;
+        }
+
+        this._enabled = b;
+
+        if (b) {
+            this._in.disconnect();
+            this._in.connect(this._node);
+            this._node.connect(this._out);
+        } else {
+            this._node.disconnect();
+            this._in.disconnect();
+            this._in.connect(this._out);
+        }
+    };
 
     Distortion.prototype.update = function update(_ref2) {
         var level = _ref2.level;
@@ -4321,8 +4346,9 @@ var Distortion = function (_AbstractEffect) {
             return;
         }
 
-        if (level <= 0) {
-            this._node.curve = null;
+        this.enable(level > 0);
+
+        if (!this._enabled) {
             return;
         }
 

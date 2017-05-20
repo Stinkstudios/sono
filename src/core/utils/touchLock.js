@@ -23,8 +23,10 @@ export default function touchLock(context, callback) {
     }
 
     if (locked) {
-        document.body.addEventListener('touchstart', unlock, false);
-        document.body.addEventListener('touchend', unlock, false);
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener('touchstart', unlock, false);
+            document.body.addEventListener('touchend', unlock, false);
+        });
     }
 
     return locked;

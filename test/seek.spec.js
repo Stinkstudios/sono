@@ -5,7 +5,10 @@ describe('seek', () => {
     describe('after load', () => {
         const config = {
             id: 'seek-after',
-            url: '/base/test/audio/long.ogg'
+            url: [
+                '/base/test/audio/long.ogg',
+                '/base/test/audio/long.mp3'
+            ]
         };
         beforeEach((done) => {
             sound = sono.create(config)
@@ -57,7 +60,10 @@ describe('seek', () => {
     describe('before load', () => {
         const config = {
             id: 'seek-before',
-            url: '/base/test/audio/long.ogg',
+            url: [
+                '/base/test/audio/long.ogg',
+                '/base/test/audio/long.mp3'
+            ],
             deferLoad: true
         };
         beforeEach((done) => {
