@@ -8,7 +8,10 @@ import sono from '../core/sono';
 
 class Distortion extends AbstractEffect {
     constructor({level = 1, samples = 22050, oversample = 'none'} = {}) {
-        super(sono.context.createWaveShaper());
+        super();
+
+        this._node = sono.context.createWaveShaper();
+        this._in.connect(this._out);
 
         this._node.oversample = oversample || 'none';
 
@@ -18,7 +21,27 @@ class Distortion extends AbstractEffect {
 
         this._level;
 
+        this._enabled = false;
+
         this.update({level});
+    }
+
+    enable(b) {
+        if (b === this._enabled) {
+            return;
+        }
+
+        this._enabled = b;
+
+        if (b) {
+            this._in.disconnect();
+            this._in.connect(this._node);
+            this._node.connect(this._out);
+        } else {
+            this._node.disconnect();
+            this._in.disconnect();
+            this._in.connect(this._out);
+        }
     }
 
     update({level}) {
@@ -26,8 +49,9 @@ class Distortion extends AbstractEffect {
             return;
         }
 
-        if (level <= 0) {
-            this._node.curve = null;
+        this.enable(level > 0);
+
+        if (!this._enabled) {
             return;
         }
 

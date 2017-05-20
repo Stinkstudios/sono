@@ -12,19 +12,20 @@
     </head>
 
     <body>
-        <section>
-            <header>
-                <h2>3d Panning</h2>
-            </header>
+        <div>
+            <section>
+                <header>
+                    <h2>3d Panning</h2>
+                </header>
 
 
-            <div class="Controls">
-                <p>Use the arrow keys to move around.</p>
-            </div>
+                <div class="Controls">
+                    <p>Use the arrow keys to move around.</p>
+                </div>
 
-            <div class="Controls" data-container></div>
+                <div class="Controls" data-container></div>
 
-        <pre><code class="js">
+            <pre><code class="js">
     import sono from 'sono';
     import 'sono/effects';
 
@@ -51,9 +52,10 @@
         sono.panner.setListenerOrientation(forward.normalize());
     }
     update();
-        </code></pre>
+            </code></pre>
 
-        </section>
+            </section>
+        </div>
 
         <script src="js/disable.js"></script>
         <script src="../dist/sono.js"></script>

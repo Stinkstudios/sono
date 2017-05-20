@@ -3,193 +3,196 @@
  */
 
 :root {
-  --player-height: 760px;
-  --player-width: 760px;
-  --radius: 180px;
-  --diameter: calc(var(--radius) * 2);
-  --margin: calc((var(--player-width) - var(--diameter)) / 2);
+    --player-height: 760px;
+    --player-width: 760px;
+    --radius: 180px;
+    --diameter: calc(var(--radius) * 2);
+    --margin: calc((var(--player-width) - var(--diameter)) / 2);
 }
 
 .Player {
-  height: var(--player-height);
-  width: var(--player-width);
-  position: relative;
-  margin: 0 auto;
-  z-index: 1;
+    height: var(--player-height);
+    width: var(--player-width);
+    position: relative;
+    margin: 0 auto;
+    z-index: 1;
 }
 
 @media (--narrow) {
-  .Player {
-    height: calc(var(--player-height) * 0.6);
-    width: calc(var(--player-width) * 0.6);
-    transform: scale(0.6) translate(-40%, -40%);
-  }
+    .Player {
+        height: calc(var(--player-height) * 0.6);
+        width: calc(var(--player-width) * 0.6);
+        transform: scale(0.6) translate(-40%, -40%);
+    }
 }
 
 @media (--mobile) {
-  .Player {
-    height: calc(var(--player-height) * 0.4);
-    width: calc(var(--player-width) * 0.4);
-    transform: scale(0.4) translate(-80%, -80%);
-  }
+    .Player {
+        height: calc(var(--player-height) * 0.4);
+        width: calc(var(--player-width) * 0.4);
+        transform: scale(0.4) translate(-80%, -80%);
+    }
 }
 
 .Player-inner {
-  border-radius: 50%;
-  box-shadow: inset 1px 1px 8px #aaa;
-  height: var(--diameter);
-  position: relative;
-  width: var(--diameter);
-  top: var(--margin);
-  left: var(--margin);
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 8px #aaa;
+    height: var(--diameter);
+    position: relative;
+    width: var(--diameter);
+    top: var(--margin);
+    left: var(--margin);
 }
 
 .Player-canvas {
-  left: 0;
-  position: absolute;
-  top: 0;
-  z-index: 0;
+    left: 0;
+    position: absolute;
+    top: 0;
+    z-index: 0;
 }
 
 .Player-control {
-  background: #fff;
-  border-radius: 50%;
-  height: calc(100% - 10px);
-  left: 5px;
-  position: absolute;
-  top: 5px;
-  width: calc(100% - 10px);
-  z-index: 1;
+    background: #fff;
+    border-radius: 50%;
+    height: calc(100% - 10px);
+    left: 5px;
+    position: absolute;
+    top: 5px;
+    width: calc(100% - 10px);
+    z-index: 1;
 }
 
 .Player-play {
-  width: 0;
-  height: 0;
-  border-top: 60px solid transparent;
-  border-bottom: 60px solid transparent;
-  border-left: 80px solid var(--color-main);
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-40%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 60px solid transparent;
+    border-bottom: 60px solid transparent;
+    border-left: 80px solid var(--color-main);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-40%, -50%);
 }
 
 .Player-pause {
-  border-left: 36px solid var(--color-main);
-  border-right: 36px solid var(--color-main);
-  display: none;
-  height: 100px;
-  left: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 90px;
+    border-left: 36px solid var(--color-main);
+    border-right: 36px solid var(--color-main);
+    display: none;
+    height: 100px;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
 }
 
 .Player.is-playing .Player-play {
-  display: none;
+    display: none;
 }
 
 .Player.is-playing .Player-pause {
-  display: block;
+    display: block;
 }
 
 .Player-mask {
-  height: 100%;
-  position: absolute;
-  width: 50%;
-  overflow: hidden;
+    height: 100%;
+    position: absolute;
+    width: 50%;
+    overflow: hidden;
 }
 
 .Player-maskA {
-  left: 50%;
+    left: 50%;
 }
 
 .Player-half {
-  background-color: var(--color-dark);
-  height: 100%;
-  position: absolute;
-  width: 100%;
+    background-color: var(--color-dark);
+    height: 100%;
+    position: absolute;
+    width: 100%;
 }
 
 .Player-halfA {
-  border-radius: 100% / 50%;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  left: -100%;
-  transform-origin: right center;
-  transform: rotate(0deg);
+    border-radius: 100% / 50%;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    left: -100%;
+    transform-origin: right center;
+    transform: rotate(0deg);
 }
 
 .Player-halfB {
-  border-radius: 100% / 50%;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  left: 100%;
-  transform-origin: left center;
-  transform: rotate(0deg);
+    border-radius: 100% / 50%;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    left: 100%;
+    transform-origin: left center;
+    transform: rotate(0deg);
 }
+
 
 /*
  * player top
  */
 
 .PlayerTop {
-  background-color: #e7e9db;
-  border-bottom: 1px solid white;
-  display: flex;
-  height: 60px;
-  position: fixed;
-  top: 0;
-  transform: translateY(-100%);
-  transition: transform 0.3s ease-out;
-  width: 100%;
-  z-index: 2;
+    background-color: #e7e9db;
+    border-bottom: 1px solid white;
+    display: flex;
+    height: 60px;
+    left: 0;
+    position: fixed;
+    top: 0;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-out;
+    width: 100%;
+    z-index: 2;
 }
 
 .PlayerTop.is-active {
-  transform: translateY(0);
+    transform: translateY(0);
 }
 
 .PlayerTop-control {
-  height: 100%;
-  position: relative;
-  width: 80px;
+    flex: none;
+    height: 100%;
+    position: relative;
+    width: 80px;
 }
 
 .PlayerTop-canvas {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 .PlayerTop-play {
-  width: 0;
-  height: 0;
-  border-top: 20px solid transparent;
-  border-bottom: 20px solid transparent;
-  border-left: 30px solid var(--color-main);
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-40%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+    border-left: 30px solid var(--color-main);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-40%, -50%);
 }
 
 .PlayerTop-pause {
-  display: none;
-  border-left: 12px solid var(--color-main);
-  border-right: 12px solid var(--color-main);
-  height: 36px;
-  left: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
+    display: none;
+    border-left: 12px solid var(--color-main);
+    border-right: 12px solid var(--color-main);
+    height: 36px;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
 }
 
 .PlayerTop.is-playing .PlayerTop-play {
-  display: none;
+    display: none;
 }
 
 .PlayerTop.is-playing .PlayerTop-pause {
-  display: block;
+    display: block;
 }

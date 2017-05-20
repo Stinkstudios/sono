@@ -18,6 +18,12 @@ body {
   height: 100%;
   line-height: 1.5;
   margin: 0;
+  width: 100%;
+}
+
+body>div {
+    overflow-x: hidden;
+    width: 100%;
 }
 
 h1,
@@ -56,11 +62,17 @@ pre {
   width: 100%;
 }
 
+@media (--mobile) {
+    pre {
+      padding: 0;
+    }
+}
+
 code {
   border-radius: 8px;
   margin: 0 auto;
   max-width: 800px;
-  min-width: 300px;
+  min-width: 320px;
   width: 80%;
 }
 
