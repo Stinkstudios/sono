@@ -55,7 +55,7 @@
     }));
 
     var analyser = sono.effects.add(sono.analyser({
-        fftSize: 1024,
+        fftSize: 2048,
         smoothing: 0.7,
         float: true
     }));

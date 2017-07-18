@@ -25,35 +25,35 @@
 // import gui from 'usfl/gui';
 // import FPS from 'usfl/fps';
 
-var _window = window;
-var sono = _window.sono;
-var THREE = _window.THREE;
-var POSTPROCESSING = _window.POSTPROCESSING;
-var usfl = _window.usfl;
-var Clock = THREE.Clock;
-var Color = THREE.Color;
-var Geometry = THREE.Geometry;
-var Line = THREE.Line;
-var LineBasicMaterial = THREE.LineBasicMaterial;
-var Matrix4 = THREE.Matrix4;
-var PerspectiveCamera = THREE.PerspectiveCamera;
-var Scene = THREE.Scene;
-var Vector3 = THREE.Vector3;
-var WebGLRenderer = THREE.WebGLRenderer;
-var BloomPass = POSTPROCESSING.BloomPass;
-var EffectComposer = POSTPROCESSING.EffectComposer;
-var RenderPass = POSTPROCESSING.RenderPass;
-var _usfl$default = usfl.default;
-var fps = _usfl$default.fps;
-var gui = _usfl$default.gui;
+var _window = window,
+    sono = _window.sono,
+    THREE = _window.THREE,
+    POSTPROCESSING = _window.POSTPROCESSING,
+    usfl = _window.usfl;
+var Clock = THREE.Clock,
+    Color = THREE.Color,
+    Geometry = THREE.Geometry,
+    Line = THREE.Line,
+    LineBasicMaterial = THREE.LineBasicMaterial,
+    Matrix4 = THREE.Matrix4,
+    PerspectiveCamera = THREE.PerspectiveCamera,
+    Scene = THREE.Scene,
+    Vector3 = THREE.Vector3,
+    WebGLRenderer = THREE.WebGLRenderer;
+var BloomPass = POSTPROCESSING.BloomPass,
+    EffectComposer = POSTPROCESSING.EffectComposer,
+    RenderPass = POSTPROCESSING.RenderPass;
+var _usfl$default = usfl.default,
+    fps = _usfl$default.fps,
+    gui = _usfl$default.gui;
 
 
 sono.log();
 
 var stats = fps();
-var cos = Math.cos;
-var PI = Math.PI;
-var sin = Math.sin;
+var cos = Math.cos,
+    PI = Math.PI,
+    sin = Math.sin;
 
 var PI2 = PI * 2;
 var W = window.innerWidth;

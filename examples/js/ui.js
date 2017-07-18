@@ -3,6 +3,44 @@
 (function () {
     var sono = window.sono;
 
+    var math = {
+        DEG: 180 / Math.PI,
+        angle: function angle(x1, y1, x2, y2) {
+            var dx = x2 - x1;
+            var dy = y2 - y1;
+            return Math.atan2(dy, dx);
+        },
+        clamp: function clamp(val, mn, mx) {
+            if (mn > mx) {
+                var a = mn;
+                mn = mx;
+                mx = a;
+            }
+            if (val < mn) {
+                return mn;
+            }
+            if (val > mx) {
+                return mx;
+            }
+            return val;
+        },
+        degrees: function degrees(radians) {
+            return radians * this.DEG;
+        },
+        distance: function distance(x1, y1, x2, y2) {
+            var sq = math.distanceSQ(x1, y1, x2, y2);
+            return Math.sqrt(sq);
+        },
+        distanceSQ: function distanceSQ(x1, y1, x2, y2) {
+            var dx = x1 - x2;
+            var dy = y1 - y2;
+            return dx * dx + dy * dy;
+        },
+        normalize: function normalize(value, min, max) {
+            return (value - min) / (max - min);
+        }
+    };
+
     function createPlayer(options) {
         var sound = options.sound;
         var el = options.el;
@@ -237,41 +275,6 @@
         var wheelEl = el.querySelector('[data-wheel]');
         var outputEl = el.querySelector('[data-output]');
 
-        var math = {
-            DEG: 180 / Math.PI,
-            angle: function angle(x1, y1, x2, y2) {
-                var dx = x2 - x1;
-                var dy = y2 - y1;
-                return Math.atan2(dy, dx);
-            },
-            clamp: function clamp(val, mn, mx) {
-                if (mn > mx) {
-                    var a = mn;
-                    mn = mx;
-                    mx = a;
-                }
-                if (val < mn) {
-                    return min;
-                }
-                if (val > mx) {
-                    return mx;
-                }
-                return val;
-            },
-            degrees: function degrees(radians) {
-                return radians * this.DEG;
-            },
-            distance: function distance(x1, y1, x2, y2) {
-                var sq = math.distanceSQ(x1, y1, x2, y2);
-                return Math.sqrt(sq);
-            },
-            distanceSQ: function distanceSQ(x1, y1, x2, y2) {
-                var dx = x1 - x2;
-                var dy = y1 - y2;
-                return dx * dx + dy * dy;
-            }
-        };
-
         function onDown(event) {
             event.preventDefault();
             if (event.type === 'touchstart') {
@@ -363,10 +366,122 @@
         return { destroy: destroy };
     }
 
+    /*
+     * Fader
+     */
+
+    function mouseLeftWindow(fn) {
+        function handler(event) {
+            var from = event.relatedTarget || event.toElement;
+            if (!from || from.nodeName === 'HTML') {
+                fn(event);
+            }
+        }
+
+        document.addEventListener('mouseout', handler, false);
+
+        return {
+            destroy: function destroy() {
+                document.removeEventListener('mouseout', handler);
+            }
+        };
+    }
+
+    function createFader(options, fn) {
+        var name = options.name || '';
+        var places = typeof options.places === 'number' ? options.places : 4;
+        var min = options.min || 0;
+        var max = options.max || 0;
+        var range = max - min;
+
+        var value = options.value || 0;
+        var delta = 0;
+
+        var el = document.createElement('div');
+        el.innerHTML = '\n        <div class="Fader Control" data-control>\n            <h3 class="Control-name" data-name>' + name + '</h3>\n            <div class="Fader-inner" data-inner>\n                <div class="Fader-handle" data-handle></div>\n            </div>\n            <div class="Control-inner">\n                <div class="Control-bound" data-min>' + min.toFixed(places) + '</div>\n                <output class="Control-output" data-output>' + value.toFixed(places) + '</output>\n                <div class="Control-bound" data-max>' + max.toFixed(places) + '</div>\n            </div>\n        </div>\n        ';
+        options.el.appendChild(el);
+
+        var innerEl = el.querySelector('[data-inner]');
+        var handleEl = el.querySelector('[data-handle]');
+        var outputEl = el.querySelector('[data-output]');
+
+        setValue(value);
+
+        function onDown(event) {
+            event.preventDefault();
+            if (event.type === 'touchstart') {
+                el.removeEventListener('mousedown', onDown);
+                document.body.addEventListener('touchmove', onMove);
+                document.body.addEventListener('touchend', onUp);
+            } else {
+                document.body.addEventListener('mousemove', onMove);
+                document.body.addEventListener('mouseup', onUp);
+            }
+            onMove(event);
+        }
+
+        function onUp(event) {
+            event.preventDefault();
+            document.body.removeEventListener('mousemove', onMove);
+            document.body.removeEventListener('touchmove', onMove);
+            document.body.removeEventListener('mouseup', onUp);
+            document.body.removeEventListener('touchend', onUp);
+        }
+
+        function setValue(val) {
+            var norm = math.normalize(val, min, max);
+            var transform = 'translateY(' + ((1 - norm) * 200).toFixed(1) + 'px)';
+            handleEl.style.webkitTransform = transform;
+            handleEl.style.transform = transform;
+
+            if (outputEl) {
+                outputEl.value = val.toFixed(places);
+            }
+        }
+
+        function onMove(event) {
+            event.preventDefault();
+            if (event.touches) {
+                event = event.touches[0];
+            }
+            var rect = innerEl.getBoundingClientRect();
+            var h = 200;
+            var moveY = event.clientY - rect.top - 13;
+
+            var pY = math.clamp(moveY, 0, h);
+
+            value = min + range * (1 - pY / 200);
+
+            value = math.clamp(value, min, max);
+
+            setValue(value);
+
+            if (fn) {
+                fn(value, delta);
+            }
+        }
+
+        function destroy() {
+            document.body.removeEventListener('mousemove', onMove);
+            document.body.removeEventListener('touchmove', onMove);
+            document.body.removeEventListener('mouseup', onUp);
+            document.body.removeEventListener('touchend', onUp);
+            el.removeEventListener('mousedown', onDown);
+            el.removeEventListener('touchstart', onDown);
+        }
+
+        el.addEventListener('mousedown', onDown);
+        el.addEventListener('touchstart', onDown);
+        mouseLeftWindow(onUp);
+
+        return { destroy: destroy };
+    }
+
     window.ui = {
         createPlayer: createPlayer,
         createControl: createControl,
         createToggle: createToggle,
-        createTrigger: createTrigger
+        createTrigger: createTrigger,
+        createFader: createFader
     };
 })();

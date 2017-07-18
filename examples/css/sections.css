@@ -21,7 +21,7 @@ body {
   width: 100%;
 }
 
-body>div {
+main {
     overflow-x: hidden;
     width: 100%;
 }

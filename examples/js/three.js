@@ -1,11 +1,11 @@
 'use strict';
 
 (function () {
-    var _window = window;
-    var sono = _window.sono;
-    var dat = _window.dat;
-    var THREE = _window.THREE;
-    var Boid = _window.Boid;
+    var _window = window,
+        sono = _window.sono,
+        dat = _window.dat,
+        THREE = _window.THREE,
+        Boid = _window.Boid;
 
 
     sono.log();
@@ -232,9 +232,9 @@
 
         for (var i = 0; i < things.length; i++) {
             var thing = things[i];
-            var boid = thing.boid;
-            var mesh = thing.mesh;
-            var sound = thing.sound;
+            var boid = thing.boid,
+                mesh = thing.mesh,
+                sound = thing.sound;
 
             mesh.rotation.x += 0.5 * delta;
             mesh.rotation.y += 0.2 * delta;

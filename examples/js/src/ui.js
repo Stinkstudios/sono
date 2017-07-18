@@ -1,6 +1,44 @@
 (function() {
     const sono = window.sono;
 
+    const math = {
+        DEG: 180 / Math.PI,
+        angle: function(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            return Math.atan2(dy, dx);
+        },
+        clamp: function(val, mn, mx) {
+            if (mn > mx) {
+                const a = mn;
+                mn = mx;
+                mx = a;
+            }
+            if (val < mn) {
+                return mn;
+            }
+            if (val > mx) {
+                return mx;
+            }
+            return val;
+        },
+        degrees: function(radians) {
+            return radians * this.DEG;
+        },
+        distance: function(x1, y1, x2, y2) {
+            const sq = math.distanceSQ(x1, y1, x2, y2);
+            return Math.sqrt(sq);
+        },
+        distanceSQ: function(x1, y1, x2, y2) {
+            const dx = x1 - x2;
+            const dy = y1 - y2;
+            return dx * dx + dy * dy;
+        },
+        normalize(value, min, max) {
+            return (value - min) / (max - min);
+        }
+    };
+
     function createPlayer(options) {
         const sound = options.sound;
         const el = options.el;
@@ -67,10 +105,8 @@
                     canvas: canvas,
                     innerRadius: 180,
                     lineWidth: 1.5,
-                    color: function(position, length) {
-                        return position / length < sound.progress
-                        ? '#bbcccc'
-                        : '#dddddd';
+                    color: (position, length) => {
+                        return position / length < sound.progress ? '#bbcccc' : '#dddddd';
                     }
                 });
             } else if (analyser) {
@@ -79,13 +115,11 @@
                     style: 'fill',
                     lineWidth: 2,
                     canvas: canvas,
-                    color: function(position, length) {
+                    color: (position, length) => {
                         const hue = (position / length) * 360;
                         return 'hsl(' + hue + ', 100%, 50%)';
                     },
-                    transform: function(value) {
-                        return value / 256;
-                    }
+                    transform: value => value / 256
                 });
             } else {
                 waveformer = sono.utils.waveformer({
@@ -94,7 +128,7 @@
                     style: 'fill',
                     lineWidth: 2,
                     canvas: canvas,
-                    color: function(position, length) {
+                    color: (position, length) => {
                         return position / length < sound.progress ? '#bbcccc' : '#dddddd';
                     }
                 });
@@ -127,9 +161,9 @@
         return update;
     }
 
-/*
- * Toggle control
- */
+    /*
+     * Toggle control
+     */
 
     function createToggle(options, fn) {
         const name = options.name || '';
@@ -194,9 +228,9 @@
         return {setLabel, destroy};
     }
 
-/*
- * Trigger control
- */
+    /*
+     * Trigger control
+     */
 
     function createTrigger(options, fn) {
         const name = options.name || '';
@@ -236,9 +270,9 @@
         return {destroy};
     }
 
-/*
- * Radial control
- */
+    /*
+     * Radial control
+     */
 
     function createControl(options, fn) {
         const name = options.name || '';
@@ -271,40 +305,7 @@
         const wheelEl = el.querySelector('[data-wheel]');
         const outputEl = el.querySelector('[data-output]');
 
-        const math = {
-            DEG: 180 / Math.PI,
-            angle: function(x1, y1, x2, y2) {
-                const dx = x2 - x1;
-                const dy = y2 - y1;
-                return Math.atan2(dy, dx);
-            },
-            clamp: function(val, mn, mx) {
-                if (mn > mx) {
-                    const a = mn;
-                    mn = mx;
-                    mx = a;
-                }
-                if (val < mn) {
-                    return min;
-                }
-                if (val > mx) {
-                    return mx;
-                }
-                return val;
-            },
-            degrees: function(radians) {
-                return radians * this.DEG;
-            },
-            distance: function(x1, y1, x2, y2) {
-                const sq = math.distanceSQ(x1, y1, x2, y2);
-                return Math.sqrt(sq);
-            },
-            distanceSQ: function(x1, y1, x2, y2) {
-                const dx = x1 - x2;
-                const dy = y1 - y2;
-                return dx * dx + dy * dy;
-            }
-        };
+
 
         function onDown(event) {
             event.preventDefault();
@@ -394,13 +395,138 @@
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
 
-        return {destroy: destroy};
+        return {destroy};
+    }
+
+    /*
+     * Fader
+     */
+
+    function mouseLeftWindow(fn) {
+        function handler(event) {
+            const from = event.relatedTarget || event.toElement;
+            if (!from || from.nodeName === 'HTML') {
+                fn(event);
+            }
+        }
+
+        document.addEventListener('mouseout', handler, false);
+
+        return {
+            destroy () {
+                document.removeEventListener('mouseout', handler);
+            }
+        };
+    }
+
+
+    function createFader(options, fn) {
+        const name = options.name || '';
+        const places = typeof options.places === 'number' ? options.places : 4;
+        const min = options.min || 0;
+        const max = options.max || 0;
+        const range = max - min;
+
+        let value = options.value || 0;
+        const delta = 0;
+
+        const el = document.createElement('div');
+        el.innerHTML = `
+        <div class="Fader Control" data-control>
+            <h3 class="Control-name" data-name>${name}</h3>
+            <div class="Fader-inner" data-inner>
+                <div class="Fader-handle" data-handle></div>
+            </div>
+            <div class="Control-inner">
+                <div class="Control-bound" data-min>${min.toFixed(places)}</div>
+                <output class="Control-output" data-output>${value.toFixed(places)}</output>
+                <div class="Control-bound" data-max>${max.toFixed(places)}</div>
+            </div>
+        </div>
+        `;
+        options.el.appendChild(el);
+
+        const innerEl = el.querySelector('[data-inner]');
+        const handleEl = el.querySelector('[data-handle]');
+        const outputEl = el.querySelector('[data-output]');
+
+        setValue(value);
+
+        function onDown(event) {
+            event.preventDefault();
+            if (event.type === 'touchstart') {
+                el.removeEventListener('mousedown', onDown);
+                document.body.addEventListener('touchmove', onMove);
+                document.body.addEventListener('touchend', onUp);
+            } else {
+                document.body.addEventListener('mousemove', onMove);
+                document.body.addEventListener('mouseup', onUp);
+            }
+            onMove(event);
+        }
+
+        function onUp(event) {
+            event.preventDefault();
+            document.body.removeEventListener('mousemove', onMove);
+            document.body.removeEventListener('touchmove', onMove);
+            document.body.removeEventListener('mouseup', onUp);
+            document.body.removeEventListener('touchend', onUp);
+        }
+
+        function setValue(val) {
+            const norm = math.normalize(val, min, max);
+            const transform = 'translateY(' + ((1 - norm) * 200).toFixed(1) + 'px)';
+            handleEl.style.webkitTransform = transform;
+            handleEl.style.transform = transform;
+
+            if (outputEl) {
+                outputEl.value = val.toFixed(places);
+            }
+        }
+
+        function onMove(event) {
+            event.preventDefault();
+            if (event.touches) {
+                event = event.touches[0];
+            }
+            const rect = innerEl.getBoundingClientRect();
+            const h = 200;
+            const moveY = event.clientY - rect.top - 13;
+
+            const pY = math.clamp(moveY, 0, h);
+
+            value = min + range * (1 - pY / 200);
+
+            value = math.clamp(value, min, max);
+
+            setValue(value);
+
+            if (fn) {
+                fn(value, delta);
+            }
+        }
+
+        function destroy() {
+            document.body.removeEventListener('mousemove', onMove);
+            document.body.removeEventListener('touchmove', onMove);
+            document.body.removeEventListener('mouseup', onUp);
+            document.body.removeEventListener('touchend', onUp);
+            el.removeEventListener('mousedown', onDown);
+            el.removeEventListener('touchstart', onDown);
+        }
+
+        el.addEventListener('mousedown', onDown);
+        el.addEventListener('touchstart', onDown);
+        mouseLeftWindow(onUp);
+
+        return {destroy};
     }
 
     window.ui = {
         createPlayer,
         createControl,
         createToggle,
-        createTrigger
+        createTrigger,
+        createFader
     };
 }());
