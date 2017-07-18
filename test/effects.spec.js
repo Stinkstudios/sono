@@ -99,6 +99,19 @@ describe('Effects (' + (sono.hasWebAudio ? 'Web Audio' : 'No Web Audio') + ')', 
                 expect(effects._nodes).to.not.include(eff);
             });
 
+            if (name !== 'analyser' && name !== 'panner') {
+                it('should have wet and dry getters', () => {
+                    expect(instance.wet).to.be.a('number');
+                    expect(instance.dry).to.be.a('number');
+                });
+
+                it('should have wet and dry setters', () => {
+                    instance.wet = 0.5;
+                    expect(instance.wet).to.eql(0.5);
+                    instance.dry = 0.5;
+                    expect(instance.dry).to.eql(0.5);
+                });
+            }
         });
     }
 

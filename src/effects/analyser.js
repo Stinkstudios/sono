@@ -1,4 +1,4 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractDirectEffect from './abstract-direct-effect';
 import isSafeNumber from '../core/utils/isSafeNumber';
 import sono from '../core/sono';
 
@@ -15,7 +15,7 @@ function centsOffFromPitch(frequency, note) {
     return Math.floor(1200 * Math.log(frequency / frequencyFromNoteNumber(note)) * Math.LOG2E);
 }
 
-class Analyser extends AbstractEffect {
+class Analyser extends AbstractDirectEffect {
     constructor({fftSize = 2048, minDecibels = -100, maxDecibels = -30, smoothing = 0.9, useFloats = false} = {}) {
         super(sono.context.createAnalyser());
 

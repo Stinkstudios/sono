@@ -1,21 +1,19 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 
 class Echo extends AbstractEffect {
-    constructor({delay = 0.5, feedback = 0.5} = {}) {
-        super();
+    constructor({delay = 0.5, feedback = 0.5, wet = 1, dry = 1} = {}) {
+        super(sono.context.createDelay(), sono.context.createGain());
 
-        this._delay = this.context.createDelay();
-        this._feedback = this.context.createGain();
+        this._delay = this._node;
+        this._feedback = this._nodeOut;
 
-        this._in.connect(this._delay);
-        this._in.connect(this._out);
         this._delay.connect(this._feedback);
         this._feedback.connect(this._delay);
-        this._feedback.connect(this._out);
 
-        this.delay = delay;
-        this.feedback = feedback;
+        this.wet = wet;
+        this.dry = dry;
+        this.update({delay, feedback});
     }
 
     update(options) {

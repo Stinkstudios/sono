@@ -1,4 +1,4 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 import isSafeNumber from '../core/utils/isSafeNumber';
 
@@ -29,11 +29,25 @@ function getFrequency(value) {
 }
 
 class Filter extends AbstractEffect {
-    constructor({type = 'lowpass', frequency = 1000, detune = 0, q = 0, gain = 1, peak = 0, boost = 0, width = 100, sharpness = 0} = {}) {
+    constructor({
+        type = 'lowpass',
+        frequency = 1000,
+        detune = 0,
+        q = 0,
+        gain = 1,
+        peak = 0,
+        boost = 0,
+        width = 100,
+        sharpness = 0,
+        wet = 1,
+        dry = 1
+    } = {}) {
         super(sono.context.createBiquadFilter());
 
         this._node.type = type;
 
+        this.wet = wet;
+        this.dry = dry;
         this.update({frequency, gain, detune, q, peak, boost, width, sharpness});
     }
 

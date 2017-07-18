@@ -1,10 +1,12 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 
 class Compressor extends AbstractEffect {
-    constructor({attack = 0.003, knee = 30, ratio = 12, release = 0.25, threshold = -24} = {}) {
+    constructor({attack = 0.003, knee = 30, ratio = 12, release = 0.25, threshold = -24, wet = 1, dry = 1} = {}) {
         super(sono.context.createDynamicsCompressor());
 
+        this.wet = wet;
+        this.dry = dry;
         this.update({threshold, knee, ratio, attack, release});
     }
 
