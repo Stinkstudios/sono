@@ -77,16 +77,16 @@ function getFrequency(value) {
     if (context.isFake) {
         return 0;
     }
-	// get frequency by passing number from 0 to 1
-	// Clamp the frequency between the minimum value (40 Hz) and half of the
-	// sampling rate.
+    // get frequency by passing number from 0 to 1
+    // Clamp the frequency between the minimum value (40 Hz) and half of the
+    // sampling rate.
     const minValue = 40;
     const maxValue = context.sampleRate / 2;
-	// Logarithm (base 2) to compute how many octaves fall in the range.
+    // Logarithm (base 2) to compute how many octaves fall in the range.
     const numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-	// Compute a multiplier from 0 to 1 based on an exponential scale.
+    // Compute a multiplier from 0 to 1 based on an exponential scale.
     const multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-	// Get back to the frequency value between min and max.
+    // Get back to the frequency value between min and max.
     return maxValue * multiplier;
 }
 
@@ -95,14 +95,14 @@ function getFrequency(value) {
  */
 
 function timeCode(seconds, delim = ':') {
-	// const h = Math.floor(seconds / 3600);
-	// const m = Math.floor((seconds % 3600) / 60);
+    // const h = Math.floor(seconds / 3600);
+    // const m = Math.floor((seconds % 3600) / 60);
     const m = Math.floor(seconds / 60);
     const s = Math.floor((seconds % 3600) % 60);
-	// const hr = (h < 10 ? '0' + h + delim : h + delim);
+    // const hr = (h < 10 ? '0' + h + delim : h + delim);
     const mn = (m < 10 ? '0' + m : m) + delim;
     const sc = (s < 10 ? '0' + s : s);
-	// return hr + mn + sc;
+    // return hr + mn + sc;
     return mn + sc;
 }
 

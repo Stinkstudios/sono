@@ -3514,7 +3514,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.0.11';
+var VERSION = '2.1.0';
 var bus = new Group(context$1, context$1.destination);
 
 /*
@@ -3813,43 +3813,30 @@ var sono$1 = (_sono = {
     Sound: Sound
 }, defineEnumerableProperties(_sono, _mutatorMap), _sono);
 
-var AbstractEffect = function () {
-    function AbstractEffect() {
-        var node = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-        classCallCheck(this, AbstractEffect);
+var AbstractDirectEffect = function () {
+    function AbstractDirectEffect(node) {
+        classCallCheck(this, AbstractDirectEffect);
 
-        this._in = node || this.context.createGain();
-        this._out = node || this.context.createGain();
-        if (node) {
-            this._node = node;
-        }
+        this._node = this._in = this._out = node;
     }
 
-    AbstractEffect.prototype.connect = function connect(node) {
-        this._out.connect(node._in || node);
+    AbstractDirectEffect.prototype.connect = function connect(node) {
+        this._node.connect(node._in || node);
     };
 
-    AbstractEffect.prototype.disconnect = function disconnect() {
+    AbstractDirectEffect.prototype.disconnect = function disconnect() {
         for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
             args[_key] = arguments[_key];
         }
 
-        this._out.disconnect(args);
+        this._node.disconnect(args);
     };
 
-    AbstractEffect.prototype.setSafeParamValue = function setSafeParamValue(param, value) {
-        if (!isSafeNumber(value)) {
-            console.warn(this, 'Attempt to set invalid value ' + value + ' on AudioParam');
-            return;
-        }
-        param.value = value;
-    };
-
-    AbstractEffect.prototype.update = function update() {
+    AbstractDirectEffect.prototype.update = function update() {
         throw new Error('update must be overridden');
     };
 
-    createClass(AbstractEffect, [{
+    createClass(AbstractDirectEffect, [{
         key: 'context',
         get: function get$$1() {
             return context$1;
@@ -3880,7 +3867,7 @@ var AbstractEffect = function () {
             return 'speakers';
         }
     }]);
-    return AbstractEffect;
+    return AbstractDirectEffect;
 }();
 
 function noteFromPitch(frequency) {
@@ -3896,8 +3883,8 @@ function centsOffFromPitch(frequency, note) {
     return Math.floor(1200 * Math.log(frequency / frequencyFromNoteNumber(note)) * Math.LOG2E);
 }
 
-var Analyser = function (_AbstractEffect) {
-    inherits(Analyser, _AbstractEffect);
+var Analyser = function (_AbstractDirectEffect) {
+    inherits(Analyser, _AbstractDirectEffect);
 
     function Analyser() {
         var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
@@ -3914,7 +3901,7 @@ var Analyser = function (_AbstractEffect) {
 
         classCallCheck(this, Analyser);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createAnalyser()));
+        var _this = possibleConstructorReturn(this, _AbstractDirectEffect.call(this, sono$1.context.createAnalyser()));
 
         _this._useFloats = !!useFloats;
         _this._waveform = null;
@@ -4100,11 +4087,127 @@ var Analyser = function (_AbstractEffect) {
         }
     }]);
     return Analyser;
-}(AbstractEffect);
+}(AbstractDirectEffect);
 
 sono$1.register('analyser', function (opts) {
     return new Analyser(opts);
 });
+
+var AbstractEffect = function () {
+    function AbstractEffect() {
+        var node = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+        var nodeOut = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var enabled = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+        classCallCheck(this, AbstractEffect);
+
+        this._node = node;
+        this._nodeOut = nodeOut || node;
+        this._enabled;
+
+        this._in = this.context.createGain();
+        this._out = this.context.createGain();
+        this._wet = this.context.createGain();
+        this._dry = this.context.createGain();
+
+        this._in.connect(this._dry);
+        this._wet.connect(this._out);
+        this._dry.connect(this._out);
+
+        this.enable(enabled);
+    }
+
+    AbstractEffect.prototype.enable = function enable(b) {
+        if (b === this._enabled) {
+            return;
+        }
+
+        this._enabled = b;
+
+        this._in.disconnect();
+
+        if (b) {
+            this._in.connect(this._dry);
+            this._in.connect(this._node);
+            this._nodeOut.connect(this._wet);
+        } else {
+            this._nodeOut.disconnect();
+            this._in.connect(this._out);
+        }
+    };
+
+    AbstractEffect.prototype.connect = function connect(node) {
+        this._out.connect(node._in || node);
+    };
+
+    AbstractEffect.prototype.disconnect = function disconnect() {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        this._out.disconnect(args);
+    };
+
+    AbstractEffect.prototype.setSafeParamValue = function setSafeParamValue(param, value) {
+        if (!isSafeNumber(value)) {
+            console.warn(this, 'Attempt to set invalid value ' + value + ' on AudioParam');
+            return;
+        }
+        param.value = value;
+    };
+
+    AbstractEffect.prototype.update = function update() {
+        throw new Error('update must be overridden');
+    };
+
+    createClass(AbstractEffect, [{
+        key: 'wet',
+        get: function get$$1() {
+            return this._wet.gain.value;
+        },
+        set: function set$$1(value) {
+            this.setSafeParamValue(this._wet.gain, value);
+        }
+    }, {
+        key: 'dry',
+        get: function get$$1() {
+            return this._dry.gain.value;
+        },
+        set: function set$$1(value) {
+            this.setSafeParamValue(this._dry.gain, value);
+        }
+    }, {
+        key: 'context',
+        get: function get$$1() {
+            return context$1;
+        }
+    }, {
+        key: 'numberOfInputs',
+        get: function get$$1() {
+            return 1;
+        }
+    }, {
+        key: 'numberOfOutputs',
+        get: function get$$1() {
+            return 1;
+        }
+    }, {
+        key: 'channelCount',
+        get: function get$$1() {
+            return 1;
+        }
+    }, {
+        key: 'channelCountMode',
+        get: function get$$1() {
+            return 'max';
+        }
+    }, {
+        key: 'channelInterpretation',
+        get: function get$$1() {
+            return 'speakers';
+        }
+    }]);
+    return AbstractEffect;
+}();
 
 var Compressor = function (_AbstractEffect) {
     inherits(Compressor, _AbstractEffect);
@@ -4120,12 +4223,18 @@ var Compressor = function (_AbstractEffect) {
             _ref$release = _ref.release,
             release = _ref$release === undefined ? 0.25 : _ref$release,
             _ref$threshold = _ref.threshold,
-            threshold = _ref$threshold === undefined ? -24 : _ref$threshold;
+            threshold = _ref$threshold === undefined ? -24 : _ref$threshold,
+            _ref$wet = _ref.wet,
+            wet = _ref$wet === undefined ? 1 : _ref$wet,
+            _ref$dry = _ref.dry,
+            dry = _ref$dry === undefined ? 1 : _ref$dry;
 
         classCallCheck(this, Compressor);
 
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDynamicsCompressor()));
 
+        _this.wet = wet;
+        _this.dry = dry;
         _this.update({ threshold: threshold, knee: knee, ratio: ratio, attack: attack, release: release });
         return _this;
     }
@@ -4196,17 +4305,20 @@ var Convolver = function (_AbstractEffect) {
 
     function Convolver() {
         var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            impulse = _ref.impulse;
+            impulse = _ref.impulse,
+            _ref$wet = _ref.wet,
+            wet = _ref$wet === undefined ? 1 : _ref$wet,
+            _ref$dry = _ref.dry,
+            dry = _ref$dry === undefined ? 1 : _ref$dry;
 
         classCallCheck(this, Convolver);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
-
-        _this._node = sono$1.context.createConvolver();
-        _this._in.connect(_this._out);
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createConvolver(), null, false));
 
         _this._loader = null;
 
+        _this.wet = wet;
+        _this.dry = dry;
         _this.update({ impulse: impulse });
         return _this;
     }
@@ -4242,9 +4354,7 @@ var Convolver = function (_AbstractEffect) {
 
         if (file.isAudioBuffer(impulse)) {
             this._node.buffer = impulse;
-            this._in.disconnect();
-            this._in.connect(this._node);
-            this._node.connect(this._out);
+            this.enable(true);
             return this;
         }
 
@@ -4261,8 +4371,13 @@ var Convolver = function (_AbstractEffect) {
             return this;
         }
 
-        if (file.isURL(impulse) || file.isArrayBuffer(impulse)) {
+        if (file.isArrayBuffer(impulse)) {
             this._load(impulse);
+            return this;
+        }
+
+        if (file.isURL(file.getSupportedFile(impulse))) {
+            this._load(file.getSupportedFile(impulse));
         }
 
         return this;
@@ -4298,14 +4413,15 @@ var Distortion = function (_AbstractEffect) {
             _ref$samples = _ref.samples,
             samples = _ref$samples === undefined ? 22050 : _ref$samples,
             _ref$oversample = _ref.oversample,
-            oversample = _ref$oversample === undefined ? 'none' : _ref$oversample;
+            oversample = _ref$oversample === undefined ? 'none' : _ref$oversample,
+            _ref$wet = _ref.wet,
+            wet = _ref$wet === undefined ? 1 : _ref$wet,
+            _ref$dry = _ref.dry,
+            dry = _ref$dry === undefined ? 0 : _ref$dry;
 
         classCallCheck(this, Distortion);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
-
-        _this._node = sono$1.context.createWaveShaper();
-        _this._in.connect(_this._out);
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createWaveShaper(), null, false));
 
         _this._node.oversample = oversample || 'none';
 
@@ -4317,27 +4433,11 @@ var Distortion = function (_AbstractEffect) {
 
         _this._enabled = false;
 
+        _this.wet = wet;
+        _this.dry = dry;
         _this.update({ level: level });
         return _this;
     }
-
-    Distortion.prototype.enable = function enable(b) {
-        if (b === this._enabled) {
-            return;
-        }
-
-        this._enabled = b;
-
-        if (b) {
-            this._in.disconnect();
-            this._in.connect(this._node);
-            this._node.connect(this._out);
-        } else {
-            this._node.disconnect();
-            this._in.disconnect();
-            this._in.connect(this._out);
-        }
-    };
 
     Distortion.prototype.update = function update(_ref2) {
         var level = _ref2.level;
@@ -4390,25 +4490,35 @@ var Echo = function (_AbstractEffect) {
             _ref$delay = _ref.delay,
             delay = _ref$delay === undefined ? 0.5 : _ref$delay,
             _ref$feedback = _ref.feedback,
-            feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback;
+            feedback = _ref$feedback === undefined ? 0.5 : _ref$feedback,
+            _ref$wet = _ref.wet,
+            wet = _ref$wet === undefined ? 1 : _ref$wet,
+            _ref$dry = _ref.dry,
+            dry = _ref$dry === undefined ? 1 : _ref$dry;
 
         classCallCheck(this, Echo);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDelay(), sono$1.context.createGain()));
 
-        _this._delay = _this.context.createDelay();
-        _this._feedback = _this.context.createGain();
+        _this._delay = _this._node;
+        _this._feedback = _this._nodeOut;
 
-        _this._in.connect(_this._delay);
-        _this._in.connect(_this._out);
         _this._delay.connect(_this._feedback);
         _this._feedback.connect(_this._delay);
-        _this._feedback.connect(_this._out);
 
-        _this.delay = delay;
-        _this.feedback = feedback;
+        _this.wet = wet;
+        _this.dry = dry;
+        _this.update({ delay: delay, feedback: feedback });
         return _this;
     }
+
+    Echo.prototype.enable = function enable(value) {
+        _AbstractEffect.prototype.enable.call(this, value);
+
+        if (this._feedback && value) {
+            this._feedback.connect(this._delay);
+        }
+    };
 
     Echo.prototype.update = function update(options) {
         this.delay = options.delay;
@@ -4492,7 +4602,11 @@ var Filter = function (_AbstractEffect) {
             _ref$width = _ref.width,
             width = _ref$width === undefined ? 100 : _ref$width,
             _ref$sharpness = _ref.sharpness,
-            sharpness = _ref$sharpness === undefined ? 0 : _ref$sharpness;
+            sharpness = _ref$sharpness === undefined ? 0 : _ref$sharpness,
+            _ref$wet = _ref.wet,
+            wet = _ref$wet === undefined ? 1 : _ref$wet,
+            _ref$dry = _ref.dry,
+            dry = _ref$dry === undefined ? 0 : _ref$dry;
 
         classCallCheck(this, Filter);
 
@@ -4500,6 +4614,8 @@ var Filter = function (_AbstractEffect) {
 
         _this._node.type = type;
 
+        _this.wet = wet;
+        _this.dry = dry;
         _this.update({ frequency: frequency, gain: gain, detune: detune, q: q, peak: peak, boost: boost, width: width, sharpness: sharpness });
         return _this;
     }
@@ -4526,6 +4642,9 @@ var Filter = function (_AbstractEffect) {
         key: 'type',
         get: function get$$1() {
             return this._node.type;
+        },
+        set: function set$$1(value) {
+            this._node.type = value;
         }
     }, {
         key: 'frequency',
@@ -4560,20 +4679,16 @@ var Filter = function (_AbstractEffect) {
             this.q = value;
         }
     }, {
-        key: 'boost',
-        get: function get$$1() {
-            return this.q;
-        },
-        set: function set$$1(value) {
-            this.q = value;
-        }
-    }, {
         key: 'width',
         get: function get$$1() {
-            return this.q;
+            return this._node.frequency.value / this._node.Q.value;
         },
         set: function set$$1(value) {
-            this.q = value;
+            if (value <= 0) {
+                this.q = 0;
+                return;
+            }
+            this.q = this._node.frequency.value / value;
         }
     }, {
         key: 'sharpness',
@@ -4584,12 +4699,20 @@ var Filter = function (_AbstractEffect) {
             this.q = value;
         }
     }, {
-        key: 'gain',
+        key: 'boost',
         get: function get$$1() {
             return this._node.gain.value;
         },
         set: function set$$1(value) {
             this.setSafeParamValue(this._node.gain, value);
+        }
+    }, {
+        key: 'gain',
+        get: function get$$1() {
+            return this.boost;
+        },
+        set: function set$$1(value) {
+            this.boost = value;
         }
     }, {
         key: 'detune',
@@ -4598,6 +4721,11 @@ var Filter = function (_AbstractEffect) {
         },
         set: function set$$1(value) {
             this.setSafeParamValue(this._node.detune, value);
+        }
+    }, {
+        key: 'maxFrequency',
+        get: function get$$1() {
+            return sono$1.context.sampleRate / 2;
         }
     }]);
     return Filter;
@@ -4694,21 +4822,22 @@ var MonoFlanger = function (_AbstractEffect) {
             _ref$frequency = _ref.frequency,
             frequency = _ref$frequency === undefined ? 0.002 : _ref$frequency,
             _ref$gain = _ref.gain,
-            gain = _ref$gain === undefined ? 0.25 : _ref$gain;
+            gain = _ref$gain === undefined ? 0.25 : _ref$gain,
+            _ref$wet = _ref.wet,
+            wet = _ref$wet === undefined ? 1 : _ref$wet,
+            _ref$dry = _ref.dry,
+            dry = _ref$dry === undefined ? 1 : _ref$dry;
 
         classCallCheck(this, MonoFlanger);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDelay()));
 
-        _this._delay = sono$1.context.createDelay();
+        _this._delay = _this._node;
         _this._feedback = sono$1.context.createGain();
         _this._lfo = sono$1.context.createOscillator();
         _this._gain = sono$1.context.createGain();
         _this._lfo.type = 'sine';
 
-        _this._in.connect(_this._out);
-        _this._in.connect(_this._delay);
-        _this._delay.connect(_this._out);
         _this._delay.connect(_this._feedback);
         _this._feedback.connect(_this._in);
 
@@ -4716,6 +4845,8 @@ var MonoFlanger = function (_AbstractEffect) {
         _this._gain.connect(_this._delay.delayTime);
         _this._lfo.start(0);
 
+        _this.wet = wet;
+        _this.dry = dry;
         _this.update({ delay: delay, feedback: feedback, frequency: frequency, gain: gain });
         return _this;
     }
@@ -4779,14 +4910,18 @@ var StereoFlanger = function (_AbstractEffect2) {
             _ref2$frequency = _ref2.frequency,
             frequency = _ref2$frequency === undefined ? 0.5 : _ref2$frequency,
             _ref2$gain = _ref2.gain,
-            gain = _ref2$gain === undefined ? 0.005 : _ref2$gain;
+            gain = _ref2$gain === undefined ? 0.005 : _ref2$gain,
+            _ref2$wet = _ref2.wet,
+            wet = _ref2$wet === undefined ? 1 : _ref2$wet,
+            _ref2$dry = _ref2.dry,
+            dry = _ref2$dry === undefined ? 1 : _ref2$dry;
 
         classCallCheck(this, StereoFlanger);
 
-        var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this));
+        var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this, sono$1.context.createChannelSplitter(2), sono$1.context.createChannelMerger(2)));
 
-        _this2._splitter = sono$1.context.createChannelSplitter(2);
-        _this2._merger = sono$1.context.createChannelMerger(2);
+        _this2._splitter = _this2._node;
+        _this2._merger = _this2._nodeOut;
         _this2._feedbackL = sono$1.context.createGain();
         _this2._feedbackR = sono$1.context.createGain();
         _this2._lfo = sono$1.context.createOscillator();
@@ -4796,8 +4931,6 @@ var StereoFlanger = function (_AbstractEffect2) {
         _this2._delayR = sono$1.context.createDelay();
 
         _this2._lfo.type = 'sine';
-
-        _this2._in.connect(_this2._splitter);
 
         _this2._splitter.connect(_this2._delayL, 0);
         _this2._splitter.connect(_this2._delayR, 1);
@@ -4811,15 +4944,14 @@ var StereoFlanger = function (_AbstractEffect2) {
         _this2._delayL.connect(_this2._merger, 0, 0);
         _this2._delayR.connect(_this2._merger, 0, 1);
 
-        _this2._merger.connect(_this2._out);
-        _this2._in.connect(_this2._out);
-
         _this2._lfo.connect(_this2._lfoGainL);
         _this2._lfo.connect(_this2._lfoGainR);
         _this2._lfoGainL.connect(_this2._delayL.delayTime);
         _this2._lfoGainR.connect(_this2._delayR.delayTime);
         _this2._lfo.start(0);
 
+        _this2.wet = wet;
+        _this2.dry = dry;
         _this2.update({ delay: delay, feedback: feedback, frequency: frequency, gain: gain });
         return _this2;
     }
@@ -4979,8 +5111,8 @@ function setNodePosition(nodeOrListener, vec) {
     vecPool.dispose(vec);
 }
 
-var Panner = function (_AbstractEffect) {
-    inherits(Panner, _AbstractEffect);
+var Panner = function (_AbstractDirectEffect) {
+    inherits(Panner, _AbstractDirectEffect);
 
     function Panner() {
         var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
@@ -4996,7 +5128,7 @@ var Panner = function (_AbstractEffect) {
         classCallCheck(this, Panner);
 
         // Default for stereo is 'HRTF' can also be 'equalpower'
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createPanner()));
+        var _this = possibleConstructorReturn(this, _AbstractDirectEffect.call(this, sono$1.context.createPanner()));
 
         _this._node.panningModel = panningModel || pannerDefaults.panningModel;
 
@@ -5092,7 +5224,7 @@ var Panner = function (_AbstractEffect) {
         }
     }]);
     return Panner;
-}(AbstractEffect);
+}(AbstractDirectEffect);
 
 var panner = sono$1.register('panner', function (opts) {
     return new Panner(opts);
@@ -5131,46 +5263,68 @@ var Phaser = function (_AbstractEffect) {
             _ref$frequency = _ref.frequency,
             frequency = _ref$frequency === undefined ? 0.5 : _ref$frequency,
             _ref$gain = _ref.gain,
-            gain = _ref$gain === undefined ? 300 : _ref$gain;
+            gain = _ref$gain === undefined ? 300 : _ref$gain,
+            _ref$wet = _ref.wet,
+            wet = _ref$wet === undefined ? 0.8 : _ref$wet,
+            _ref$dry = _ref.dry,
+            dry = _ref$dry === undefined ? 0.8 : _ref$dry;
 
         classCallCheck(this, Phaser);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
-
-        _this._stages = stages || 8;
-
-        _this._feedback = sono$1.context.createGain();
-        _this._lfo = sono$1.context.createOscillator();
-        _this._lfoGain = sono$1.context.createGain();
-        _this._lfo.type = 'sine';
+        stages = stages || 8;
 
         var filters = [];
-        for (var i = 0; i < _this._stages; i++) {
-            var filter = sono$1.context.createBiquadFilter();
-            filter.type = 'allpass';
-            filter.frequency.value = 1000 * i;
-            //filter.Q.value = 10;
-            if (i > 0) {
-                filters[i - 1].connect(filter);
-            }
-            _this._lfoGain.connect(filter.frequency);
-            filters.push(filter);
+        for (var i = 0; i < stages; i++) {
+            filters.push(sono$1.context.createBiquadFilter());
         }
 
         var first = filters[0];
         var last = filters[filters.length - 1];
 
-        _this._in.connect(first);
-        _this._in.connect(_this._out);
-        last.connect(_this._out);
-        last.connect(_this._feedback);
-        _this._feedback.connect(first);
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, first, last));
+
+        _this._stages = stages;
+        _this._feedback = sono$1.context.createGain();
+        _this._lfo = sono$1.context.createOscillator();
+        _this._lfoGain = sono$1.context.createGain();
+        _this._lfo.type = 'sine';
+
+        for (var _i = 0; _i < filters.length; _i++) {
+            var filter = filters[_i];
+            filter.type = 'allpass';
+            filter.frequency.value = 1000 * _i;
+            _this._lfoGain.connect(filter.frequency);
+            // filter.Q.value = 10;
+
+            if (_i > 0) {
+                filters[_i - 1].connect(filter);
+            }
+        }
+
         _this._lfo.connect(_this._lfoGain);
         _this._lfo.start(0);
 
+        _this._nodeOut.connect(_this._feedback);
+        _this._feedback.connect(_this._node);
+
+        _this.wet = wet;
+        _this.dry = dry;
         _this.update({ frequency: frequency, gain: gain, feedback: feedback });
         return _this;
     }
+
+    Phaser.prototype.enable = function enable(value) {
+        _AbstractEffect.prototype.enable.call(this, value);
+
+        if (this._feedback) {
+            this._feedback.disconnect();
+        }
+
+        if (value && this._feedback) {
+            this._nodeOut.connect(this._feedback);
+            this._feedback.connect(this._node);
+        }
+    };
 
     Phaser.prototype.update = function update(options) {
         this.frequency = options.frequency;
@@ -5257,23 +5411,24 @@ var Reverb = function (_AbstractEffect) {
             _ref2$decay = _ref2.decay,
             decay = _ref2$decay === undefined ? 5 : _ref2$decay,
             _ref2$reverse = _ref2.reverse,
-            reverse = _ref2$reverse === undefined ? false : _ref2$reverse;
+            reverse = _ref2$reverse === undefined ? false : _ref2$reverse,
+            _ref2$wet = _ref2.wet,
+            wet = _ref2$wet === undefined ? 1 : _ref2$wet,
+            _ref2$dry = _ref2.dry,
+            dry = _ref2$dry === undefined ? 1 : _ref2$dry;
 
         classCallCheck(this, Reverb);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createConvolver()));
+
+        _this._convolver = _this._node;
 
         _this._length = 0;
         _this._impulseResponse = null;
-
-        _this._convolver = _this.context.createConvolver();
-
-        _this._in.connect(_this._convolver);
-        _this._in.connect(_this._out);
-        _this._convolver.connect(_this._out);
-
         _this._opts = {};
 
+        _this.wet = wet;
+        _this.dry = dry;
         _this.update({ time: time, decay: decay, reverse: reverse });
         return _this;
     }
@@ -5539,9 +5694,7 @@ function waveform() {
             return wave;
         }
 
-        if (!wave || wave.length !== length) {
-            wave = new Float32Array(length);
-        }
+        wave = new Float32Array(length);
 
         if (!audioBuffer) {
             return wave;
@@ -5735,8 +5888,10 @@ function waveformer(config) {
         } else {
 
             var _waveform = getWaveform(wave, width);
-            var _length = Math.min(_waveform.length, width - lineWidth / 2);
+            var maxX = width - lineWidth / 2;
+            var _length = Math.min(_waveform.length, maxX);
             _length = Math.floor(_length * percent);
+            var stepX = maxX / _length;
 
             for (i = 0; i < _length; i++) {
                 var _value = getValue(_waveform[i], i, _length);
@@ -5746,11 +5901,12 @@ function waveformer(config) {
                     ctx.lineTo(x, y);
                 }
 
-                x = originX + i;
+                x = originX + i * stepX;
                 y = originY + height - Math.round(height * _value);
                 y = Math.floor(Math.min(y, originY + height - lineWidth / 2));
 
                 if (style === 'fill') {
+                    x = Math.ceil(x + lineWidth / 2);
                     ctx.moveTo(x, y);
                     ctx.lineTo(x, originY + height);
                 } else {

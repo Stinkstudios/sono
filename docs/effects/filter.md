@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/filter.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/filter.html)
+
 ## Let only low frequencies pass
 
 ```javascript

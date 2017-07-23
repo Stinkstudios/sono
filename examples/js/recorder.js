@@ -51,7 +51,7 @@
     }
 
     var control = ui.createToggle({
-        el: document.querySelector('[data-micToggle]'),
+        el: document.querySelector('[data-mic-toggle]'),
         name: 'Record',
         value: false
     }, function() {
@@ -61,7 +61,7 @@
     function createPlayer(buffer) {
         console.log('createPlayer');
         player = ui.createPlayer({
-            el: document.querySelector('[data-playerTop]'),
+            el: document.querySelector('[data-player-top]'),
             sound: sono.create(buffer)
                 .play()
         });

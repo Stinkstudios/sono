@@ -2,7 +2,7 @@
     --control-bg: #bbcccc;
     --control-markColor: white;
     --control-markWidth: 10px;
-    --control-diameter: 100px;
+    --control-diameter: 122px;
 }
 
 .Controls {
@@ -10,16 +10,40 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    margin-bottom: 40px;
+    text-align: center;
     width: 100%;
 }
 
+.Controls--viz {
+    max-width: 666px;
+    justify-content: space-between;
+}
+
+/*.Controls > * {
+    border: 1px dashed red;
+}*/
+
+.Controls > *.is-disabled,
+.Controls > *.is-disabled * {
+    opacity: 0.8;
+    pointer-events: none;
+    user-select: none;
+    filter: grayscale();
+}
+
+@media (--mobile) {
+    .Controls {
+        margin-bottom: 20px;
+    }
+}
+
 .Control {
-    /*border: 1px dashed red;*/
     align-items: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 200px;
+    min-width: 222px;
     pointer-events: none;
 }
 
@@ -87,7 +111,7 @@
     border-bottom: var(--control-markWidth) solid var(--control-markColor);
     border-right: var(--control-markWidth) solid var(--control-markColor);
     height: 40px;
-    margin-top: 18px;
+    margin-top: 28px;
     transform: rotate(45deg);
     width: 20px;
 }
@@ -95,7 +119,7 @@
 .Control-mark--cross {
     background-color: var(--control-markColor);
     height: 60px;
-    margin-top: 10px;
+    margin-top: 20px;
     transform: rotate(45deg);
     width: var(--control-markWidth);
 }
@@ -143,23 +167,23 @@
     }
 }
 
-.Upload {
+.Upload,
+.Button {
     background-color: var(--control-bg);
     border-radius: 8px;
     color: white;
-    font-size: 24px;
-    height: 70px;
-    line-height: 50px;
+    font-size: 20px;
+    height: 50px;
     overflow: hidden;
-    padding: 10px;
+    padding: 10px 20px;
     pointer-events: all;
     position: relative;
     text-align: center;
-    width: 200px;
 }
 
 @media (--mobile) {
-    .Upload {
+    .Upload,
+    .Upload-title {
         display: none;
     }
 }
@@ -180,8 +204,67 @@
     top: 0;
 }
 
-.Button {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 5px 10px;
+.Button:focus,
+.Select:focus {
+    outline: 0;
+}
+
+.Button,
+.Select,
+.Upload {
+    margin: 0 30px;
+    min-width: 162px;
+}
+
+.Fader-inner {
+    background-color: var(--control-bg);
+    border-radius: 8px;
+    width: 94px;
+    height: 122px;
+}
+
+.Fader-handle {
+    background-color: var(--control-markColor);
+    border-radius: 8px;
+    width: 86px;
+    height: 14px;
+    margin: 4px;
+}
+
+.Select {
+    appearance: none;
+    background-color: var(--control-bg);
+    background-image: url("data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxMSI+PHBhdGggZmlsbD0iI0ZGRiIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNy45IDEwLjIxM0wxLjQxMyAzLjcyOGMtLjc4LS43OC0uNzgtMi4wNDcgMC0yLjgzLjM3NS0uMzc0Ljg4NC0uNTg0IDEuNDE0LS41ODRIMTUuOGMxLjEwNCAwIDIgLjg5NSAyIDIgMCAuNTMtLjIxMiAxLjA0LS41ODcgMS40MTRsLTYuNDg1IDYuNDg1Yy0uNzguNzgtMi4wNDcuNzgtMi44MyAweiIvPjwvc3ZnPg==");
+    background-position: right 14px top 20px;
+    background-repeat: no-repeat;
+    background-size: 18px 11px;
+    border: 0;
+    border-radius: 8px;
+    color: white;
+    font-size: 20px;
+    padding: 10px 46px 10px 20px;
+
+    &:focus {
+        border-color: rgba(0, 0, 0, 0.5);
+        outline: none;
+    }
+}
+
+.Select::-ms-expand {
+    display: none;
+}
+
+.Visualizer {
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    width: 320px;
+    height: 100px;
+    margin-top: 20px;
+}
+
+.Visualizer > canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
 }

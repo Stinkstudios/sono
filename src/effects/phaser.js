@@ -1,42 +1,60 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 
 class Phaser extends AbstractEffect {
-    constructor({stages = 8, feedback = 0.5, frequency = 0.5, gain = 300} = {}) {
-        super();
-
-        this._stages = stages || 8;
-
-        this._feedback = sono.context.createGain();
-        this._lfo = sono.context.createOscillator();
-        this._lfoGain = sono.context.createGain();
-        this._lfo.type = 'sine';
+    constructor({stages = 8, feedback = 0.5, frequency = 0.5, gain = 300, wet = 0.8, dry = 0.8} = {}) {
+        stages = stages || 8;
 
         const filters = [];
-        for (let i = 0; i < this._stages; i++) {
-            const filter = sono.context.createBiquadFilter();
-            filter.type = 'allpass';
-            filter.frequency.value = 1000 * i;
-            //filter.Q.value = 10;
-            if (i > 0) {
-                filters[i - 1].connect(filter);
-            }
-            this._lfoGain.connect(filter.frequency);
-            filters.push(filter);
+        for (let i = 0; i < stages; i++) {
+            filters.push(sono.context.createBiquadFilter());
         }
 
         const first = filters[0];
         const last = filters[filters.length - 1];
 
-        this._in.connect(first);
-        this._in.connect(this._out);
-        last.connect(this._out);
-        last.connect(this._feedback);
-        this._feedback.connect(first);
+        super(first, last);
+
+        this._stages = stages;
+        this._feedback = sono.context.createGain();
+        this._lfo = sono.context.createOscillator();
+        this._lfoGain = sono.context.createGain();
+        this._lfo.type = 'sine';
+
+        for (let i = 0; i < filters.length; i++) {
+            const filter = filters[i];
+            filter.type = 'allpass';
+            filter.frequency.value = 1000 * i;
+            this._lfoGain.connect(filter.frequency);
+            // filter.Q.value = 10;
+
+            if (i > 0) {
+                filters[i - 1].connect(filter);
+            }
+        }
+
         this._lfo.connect(this._lfoGain);
         this._lfo.start(0);
 
+        this._nodeOut.connect(this._feedback);
+        this._feedback.connect(this._node);
+
+        this.wet = wet;
+        this.dry = dry;
         this.update({frequency, gain, feedback});
+    }
+
+    enable(value) {
+        super.enable(value);
+
+        if (this._feedback) {
+            this._feedback.disconnect();
+        }
+
+        if (value && this._feedback) {
+            this._nodeOut.connect(this._feedback);
+            this._feedback.connect(this._node);
+        }
     }
 
     update(options) {

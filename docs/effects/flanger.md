@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/flanger.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/flanger.html)
+
 Creates a sweeping filter effect
 
 ```javascript

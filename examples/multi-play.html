@@ -37,8 +37,10 @@ sono.create({
 
         <script src="js/disable.js"></script>
         <script src="../dist/sono.js"></script>
+        <script src="js/base-url.js"></script>
         <script src="js/ui.js"></script>
         <script>
+            var baseURL = window.baseURL;
             var sono = window.sono;
             sono.log();
 
@@ -46,9 +48,7 @@ sono.create({
 
             var info = document.querySelector('[data-info]');
             var output = document.querySelector('output');
-            var base = 'https://ianmcgregor.co/prototypes/audio/';
-            // const url = 'select.mp3';
-            var url = base + 'hit.mp3';
+            var url = baseURL + 'hit.mp3';
 
             function init() {
                 var sound = sono.get('sound');
