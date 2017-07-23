@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <title>sono - examples - wet / dry</title>
     <link href="css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
     <script src="../dist/sono.js"></script>
 </head>
 
@@ -27,21 +28,18 @@
 
     </section>
 
-    <script>
-        if (window.location.search.slice(1) === 'nowebaudio') {
-            window.AudioContext = window.webkitAudioContext = undefined;
-        }
-    </script>
-
+    <script src="js/base-url.js"></script>
     <script src="js/ui.js"></script>
     <script>
+        var baseURL = window.baseURL;
         var sono = window.sono;
         sono.log();
 
-        var baseURL = 'audio/other/';
-
         var s = sono.create({
-            url: baseURL + 'ooze.mp3',
+            url: [
+                baseURL + 'ooze.ogg',
+                baseURL + 'ooze.mp3'
+            ],
             loop: true
         });
 
@@ -51,10 +49,14 @@
             })),
             convolver: s.effects.add(sono.convolver({
                 wet: 0,
-                impulse: baseURL + '1a_marble_hall.mp3'
+                impulse: [
+                    baseURL + '1a_marble_hall.ogg',
+                    baseURL + '1a_marble_hall.mp3'
+                ]
             })),
             distortion: s.effects.add(sono.distortion({
                 wet: 0,
+                dry: 1,
                 level: 1
             })),
             echo: s.effects.add(sono.echo({
@@ -64,6 +66,7 @@
             })),
             filter: s.effects.add(sono.filter({
                 wet: 0,
+                dry: 1,
                 type: 'lowpass'
             })),
             flanger: s.effects.add(sono.flanger({

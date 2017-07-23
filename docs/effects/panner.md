@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/panner.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/three.html)
+
 ## Pan left/right
 
 ```javascript

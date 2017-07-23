@@ -18,9 +18,11 @@
     "start": "rollup -c -w",
     "start:test": "rollup -c -w | karma start",
     "lint": "eslint 'src/**/*.js'; exit 0",
-    "examples": "browser-sync start -s --files 'examples/**/*.html, examples/**/*.js, examples/**/*.css' --no-notify",
+    "examples": "browser-sync start -s --files 'index.html, examples/**/*.html, examples/**/*.js, examples/**/*.css' --no-notify",
     "examples:js": "babel examples/js/src --out-dir examples/js/",
     "examples:css": "postcss examples/css/index.css --use postcss-import postcss-custom-media postcss-custom-properties postcss-calc autoprefixer -o examples/css/styles.css",
+    "examples:watch:css": "onchange 'examples/**/*.css' -e 'examples/css/styles.css' -- npm run examples:css",
+    "examples:watch:js": "onchange 'examples/js/src/*.js' -- npm run examples:js",
     "build:examples": "npm run examples:js && npm run examples:css",
     "lib": "rimraf core effects utils && babel src --out-dir ./"
   },

@@ -30,7 +30,7 @@ import {distortion, filter} from 'sono/effects';
 const sound = sono.create({
 	url: 'boom.mp3',
 	effects: [
-		distortion({level: 0.2}),
+		distortion({level: 0.2, wet: 1, dry: 0}),
 		filter({type: 'lowpass', frequency: 400}),
 	]
 });
@@ -59,6 +59,26 @@ sound.effects = [sono.phaser(), sono.reverb()];
 sound.play();
 ```
 
+## Balance wet and dry signals
+
+```javascript
+import {echo, reverb} from 'sono/effects';
+
+const sound = sono.create('boom.mp3');
+// all sound passing through the effect is distorted:
+const fullDistortion = sound.effects.add(distortion({
+	level: 0.8, wet: 1, dry: 0
+}));
+// distorted version is added to the clean version:
+const addDistortion = sound.effects.add(distortion({
+	level: 0.8, wet: 1, dry: 1
+}));
+// small amount of distorted signal is added to the clean version:
+const littleDistortion = sound.effects.add(distortion({
+	level: 0.8, wet: 0.2, dry: 1
+}));
+sound.play();
+```
 
 ## Update effects
 
@@ -68,11 +88,12 @@ import {echo, reverb} from 'sono/effects';
 
 const sound = sono.create('boom.mp3');
 const distortion = sound.effects.add(distortion({level: 0.8}));
-const echo = sound.effects.add(echo());
+const echo = sound.effects.add(echo({wet: 0.5}));
 sound.play();
 
 distortion.level = 0.3;
 echo.delay = 0.8;
+echo.wet = 1;
 ```
 
 Access by index:
@@ -84,6 +105,8 @@ sound.effects = [distortion(), echo()];
 sound.play();
 
 sound.effects[0].level = 0.3;
+sound.effects[0].dry = 0;
+
 sound.effects[1].delay = 0.8;
 ```
 
@@ -143,6 +166,21 @@ lfo.connect(gain);
 lfo.start(0);
 
 sound.effects.add(filter);
+```
+
+## Bypass effect (enable/disable)
+
+```javascript
+import distortion from 'sono/effects/distortion';
+
+const sound = sono.create('boom.mp3');
+const distort = sound.effects.add(distortion({
+	level: 0.8
+}));
+
+distort.enable(false); // bypass
+distort.enable(true); // re-enable
+
 ```
 
 ## Remove/Toggle

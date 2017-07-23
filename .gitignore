@@ -48,8 +48,8 @@ dploy.yaml
 
 !/test/audio/*.ogg
 !/test/audio/*.mp3
-!/examples/audio/*.mp3
-!/examples/audio/*.ogg
+/examples/audio/*.mp3
+/examples/audio/*.ogg
 /examples/audio/other
 /examples/temp.html
 node_modules/

@@ -26,10 +26,12 @@
 // import FPS from 'usfl/fps';
 
 var _window = window,
+    baseURL = _window.baseURL,
     sono = _window.sono,
     THREE = _window.THREE,
     POSTPROCESSING = _window.POSTPROCESSING,
-    usfl = _window.usfl;
+    usfl = _window.usfl,
+    ui = _window.ui;
 var Clock = THREE.Clock,
     Color = THREE.Color,
     Geometry = THREE.Geometry,
@@ -58,8 +60,6 @@ var cos = Math.cos,
 var PI2 = PI * 2;
 var W = window.innerWidth;
 var H = window.innerHeight;
-
-var baseURL = gui.isLocalHost() ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
 
 var sound = sono.create({
     url: [baseURL + 'ad2027-loop.ogg', baseURL + 'ad2027-loop.mp3'],
@@ -285,13 +285,7 @@ gui().then(function (g) {
     }
 });
 
-var upload = document.querySelector('[data-upload]');
-upload.addEventListener('change', function (event) {
-    sound.stop();
-    var file = event.currentTarget.files[0];
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        return sound.load(e.target.result).play();
-    };
-    reader.readAsArrayBuffer(file);
+ui.createUpload({
+    el: document.querySelector('[data-upload]'),
+    sound: sound
 });

@@ -15,12 +15,12 @@
     <main>
         <!-- minimized player -->
 
-        <div class="PlayerTop" data-playerTop>
+        <div class="PlayerTop" data-player-top>
             <div class="PlayerTop-control" data-inner>
                 <div class="PlayerTop-play"></div>
                 <div class="PlayerTop-pause"></div>
             </div>
-            <canvas class="PlayerTop-canvas" width="1024" height="60" data-wave></canvas>
+            <canvas class="PlayerTop-canvas" width="2048" height="60" data-wave></canvas>
         </div>
 
         <!-- title player -->
@@ -28,6 +28,14 @@
         <section>
             <header>
                 <h1>sono</h1>
+                <nav>
+                    <ul>
+                        <li><a href="#examples">examples</a></li>
+                        <li><a href="https://github.com/Stinkdigital/sono/blob/master/docs/getting-started.md">docs</a></li>
+                        <li><a href="https://www.npmjs.com/package/sono">npm</a></li>
+                        <li><a href="https://github.com/Stinkdigital/sono">github</a></li>
+                    </ul>
+                </nav>
             </header>
             <div class="Player is-active" data-player>
                 <div class="Player-inner">
@@ -36,21 +44,16 @@
                         <div class="Player-pause"></div>
                     </div>
                     <div class="Player-mask Player-maskA">
-                        <div class="Player-half Player-halfA" data-progressA></div>
+                        <div class="Player-half Player-halfA" data-progress-a></div>
                     </div>
                     <div class="Player-mask Player-maskB">
-                        <div class="Player-half Player-halfB" data-progressB></div>
+                        <div class="Player-half Player-halfB" data-progress-b></div>
                     </div>
                 </div>
                 <canvas class="Player-canvas" width="760" height="760"></canvas>
             </div>
             <!-- upload -->
-            <div class="Controls">
-                <span class="Upload">
-                    <span data-upload-text>upload file</span>
-                    <input type="file" accept="audio/*" data-upload>
-                </span>
-            </div>
+            <div class="Controls" data-upload></div>
 <pre><code class="js">
     import sono from 'sono';
 
@@ -280,8 +283,8 @@
                 <h2>waveformer</h2>
             </header>
 
-            <div class="Controls" data-waveforms>
-                <canvas width="500" height="500"></canvas>
+            <div class="Controls">
+                <div class="Controls Controls--viz" data-waveforms></div>
             </div>
 
 <pre><code class="js">
@@ -294,8 +297,6 @@
     }));
 
     const waveform = waveformer({
-        x: 0,
-        y: 0,
         width: 250,
         height: 250,
         shape: 'circular',
@@ -306,9 +307,7 @@
             const hue = (position / length) * 360;
             return `hsl(${hue}, 100%, 40%)`;
         },
-        transform: value => {
-            return 0.4 + value / 256 * 0.4;
-        }
+        transform: value => value / 256
     });
 
     function update() {
@@ -325,9 +324,9 @@
 
         <!-- more -->
 
-        <section>
+        <section id="examples">
             <header>
-                <h2>more examples</h2>
+                <h2>examples</h2>
             </header>
             <nav>
                 <ul>
@@ -335,6 +334,25 @@
                     <li><a href="examples/three.html">3d Panning / THREE.js</a></li>
                     <li><a href="examples/pixi.html">PixiJS</a></li>
                     <li><a href="examples/oscillator.html">Oscillator</a></li>
+                </ul>
+            </nav>
+        </section>
+
+        <!-- effects -->
+
+        <section>
+            <header>
+                <h2>effects examples</h2>
+            </header>
+            <nav>
+                <ul>
+                    <li><a href="examples/convolver.html">convolver</a></li>
+                    <li><a href="examples/distortion.html">distortion</a></li>
+                    <li><a href="examples/echo.html">echo</a></li>
+                    <li><a href="examples/filter.html">filter</a></li>
+                    <li><a href="examples/flanger.html">flanger</a></li>
+                    <li><a href="examples/phaser.html">phaser</a></li>
+                    <li><a href="examples/reverb.html">reverb</a></li>
                 </ul>
             </nav>
         </section>
@@ -347,8 +365,8 @@
             </header>
             <nav>
                 <ul>
+                    <li><a href="https://github.com/Stinkdigital/sono/blob/master/docs/getting-started.md">docs</a></li>
                     <li><a href="https://github.com/Stinkdigital/sono">github</a></li>
-                    <li><a href="https://github.com/Stinkdigital/sono/blob/master/docs/Sono.md">docs</a></li>
                     <li><a href="https://www.npmjs.com/package/sono">npm</a></li>
                 </ul>
             </nav>
@@ -357,6 +375,7 @@
 
     <script src="examples/js/disable.js"></script>
     <script src="dist/sono.js"></script>
+    <script src="examples/js/base-url.js"></script>
     <script src="examples/js/ui.js"></script>
     <script src="examples/js/example.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>

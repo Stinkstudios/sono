@@ -2,6 +2,7 @@
 
 (function () {
     var _window = window,
+        baseURL = _window.baseURL,
         sono = _window.sono,
         dat = _window.dat,
         THREE = _window.THREE,
@@ -11,13 +12,11 @@
     sono.log();
 
     var container = document.querySelector('[data-container]');
-    var width = 960;
-    var height = 540;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
     var bgColor = 0x000020;
     var volume = 0.4;
     var size = 2000;
-    var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
-    var baseURL = local ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
 
     var sounds = ['pulsar_1', 'pulsar_2', 'pulsar_3', 'pulsar_4'].map(function (name) {
         return '' + baseURL + name;

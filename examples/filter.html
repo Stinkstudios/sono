@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>sono - examples - phaser</title>
+    <title>sono - examples - filter</title>
     <link href="css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
 </head>
@@ -13,7 +13,7 @@
 <body>
     <section>
         <header>
-            <h1>phaser</h1>
+            <h1>filter</h1>
         </header>
 
         <div class="Controls">
@@ -30,12 +30,12 @@
     const sound = sono.create({
         url: 'hit.mp3',
         loop: true,
-        effects: [sono.phaser({
-            frequency: 0.7,
-            gain: 300,
-            feedback: 0.3,
-            wet: 0.8,
-            dry: 0.8
+        effects: [sono.filter({
+            type: 'lowpass',
+            frequency: 400,
+            peak: 20,
+            wet: 1,
+            dry: 0
         })]
     });
         </code></pre>
@@ -55,24 +55,68 @@
 
         var sound = sono.create({
             url: [
-                baseURL + 'dnb-loop.ogg',
-                baseURL + 'dnb-loop.mp3'
+                baseURL + 'ooze.ogg',
+                baseURL + 'ooze.mp3'
             ],
             loop: true
         });
 
-        var effect = sound.effects.add(sono.phaser({
-            frequency: 0.7,
-            gain: 300,
-            feedback: 0.3,
-            dry: 0.8,
-            wet: 0.8
+        var effect = sound.effects.add(sono.filter({
+            type: 'lowpass',
+            frequency: 400,
+            peak: 20,
+            dry: 0,
+            wet: 1
         }));
 
         var controlsA = document.querySelector('[data-controls-a]');
         var controlsB = document.querySelector('[data-controls-b]');
         var controlsC = document.querySelector('[data-controls-c]');
         var controlsD = document.querySelector('[data-controls-d]');
+
+        function updateUI(value) {
+            peak.setValue(0);
+            boost.setValue(0);
+            effect.peak = 0;
+            effect.boost = 0;
+            peak.setRange(0, 4800);
+
+            switch (value) {
+                case 'lowpass':
+                case 'highpass':
+                    boost.enable(false);
+                    peak.enable(true);
+                    peak.setLabel('Peak');
+                    peak.setRange(0, 40);
+                    break;
+                case 'bandpass':
+                    boost.enable(false);
+                    peak.enable(true);
+                    peak.setLabel('Width');
+                    break;
+                case 'lowshelf':
+                case 'highshelf':
+                    boost.enable(true);
+                    peak.enable(false);
+                    break;
+                case 'peaking':
+                    boost.enable(true);
+                    peak.enable(true);
+                    peak.setLabel('Width');
+                    break;
+                case 'notch':
+                    boost.enable(false);
+                    peak.enable(true);
+                    peak.setLabel('Width');
+                    break;
+                case 'allpass':
+                    boost.enable(false);
+                    peak.enable(true);
+                    peak.setLabel('Sharpness');
+                    peak.setRange(0, 40);
+                default:
+            }
+        }
 
         ui.createPlayButton({
             el: controlsA,
@@ -81,19 +125,40 @@
 
         ui.createSelect({
             el: controlsA,
+            name: 'Type',
+            options: [
+                'lowpass',
+                'highpass',
+                'bandpass',
+                'lowshelf',
+                'highshelf',
+                'peaking',
+                'notch',
+                'allpass'
+            ].map(type => ({
+                text: type,
+                value: type
+            }))
+        }, function(value) {
+            effect.type = value;
+            updateUI(value);
+        });
+
+        ui.createSelect({
+            el: controlsA,
             name: 'Select audio',
             options: [{
-                text: 'dnb loop',
-                value: 'dnb-loop'
-            }, {
-                text: 'music loop',
-                value: 'space-shooter'
-            }, {
                 text: 'ooze',
                 value: 'ooze'
             }, {
                 text: 'pulsar',
                 value: 'pulsar_2'
+            }, {
+                text: 'music loop',
+                value: 'space-shooter'
+            }, {
+                text: 'dnb loop',
+                value: 'dnb-loop'
             }]
         }, function(value) {
             var playing = sound.playing;
@@ -114,32 +179,53 @@
 
         ui.createControl({
             el: controlsB,
-            name: 'LFO Frequency',
-            min: 0.05,
-            max: 20.0,
-            value: effect.frequency
+            name: 'Frequency',
+            min: 20,
+            max: effect.maxFrequency,
+            value: effect.frequency,
+            places: 0
         }, function(value) {
             effect.frequency = value;
         });
 
-        ui.createControl({
+        var peak = ui.createControl({
             el: controlsB,
-            name: 'LFO Gain',
-            min: 0.0005,
-            max: 1000,
-            value: effect.gain
+            name: 'Peak',
+            min: 0.0001,
+            max: 1200,
+            value: effect.peak
         }, function(value) {
-            effect.gain = value;
+            switch (effect.type) {
+                case 'bandpass':
+                case 'peaking':
+                case 'notch':
+                    effect.width = value;
+                    break;
+                default:
+                    effect.Q = value;
+            }
         });
 
         ui.createControl({
             el: controlsB,
-            name: 'Feedback',
-            min: 0.0,
-            max: 0.99,
-            value: effect.feedback
+            name: 'Detune',
+            min: -1200,
+            max: 1200,
+            places: 2,
+            value: effect.detune
         }, function(value) {
-            effect.feedback = value;
+            effect.detune = value;
+        });
+
+        var boost = ui.createControl({
+            el: controlsB,
+            name: 'Boost',
+            min: -30,
+            max: 30,
+            places: 2,
+            value: effect.boost
+        }, function(value) {
+            effect.boost = value;
         });
 
         ui.createToggle({
@@ -179,6 +265,10 @@
         }, function(value) {
             sound.loop = value;
         });
+
+        updateUI(effect.type);
+        peak.setValue(20);
+        effect.peak = 20;
 
         sound.once('ready', function() {
             ui.createWaveform({

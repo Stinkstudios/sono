@@ -46,8 +46,8 @@
         var el = options.el;
         var analyser = options.analyser;
         var inner = el.querySelector('[data-inner]');
-        var elProgressBarA = el.querySelector('[data-progressA]');
-        var elProgressBarB = el.querySelector('[data-progressB]');
+        var elProgressBarA = el.querySelector('[data-progress-a]');
+        var elProgressBarB = el.querySelector('[data-progress-b]');
         var canvas = el.querySelector('canvas');
         var waveformer = void 0;
 
@@ -115,12 +115,11 @@
                 waveformer = sono.utils.waveformer({
                     shape: 'linear',
                     style: 'fill',
-                    lineWidth: 2,
+                    width: 2048,
+                    lineWidth: 10,
                     canvas: canvas,
-                    color: function color(position, length) {
-                        var hue = position / length * 360;
-                        return 'hsl(' + hue + ', 100%, 50%)';
-                    },
+                    color: '#bbcccc',
+                    bgColor: '#ffffff',
                     transform: function transform(value) {
                         return value / 256;
                     }
@@ -210,6 +209,11 @@
             outputEl.value = v;
         }
 
+        function toggle(val) {
+            value = val;
+            updateState(val);
+        }
+
         function destroy() {
             el.removeEventListener('mousedown', onDown);
             el.removeEventListener('touchstart', onDown);
@@ -219,7 +223,7 @@
         el.addEventListener('touchstart', onDown);
         updateState(value);
 
-        return { setLabel: setLabel, destroy: destroy };
+        return { setLabel: setLabel, toggle: toggle, destroy: destroy };
     }
 
     /*
@@ -263,7 +267,6 @@
         var places = typeof options.places === 'number' ? options.places : 4;
         var min = options.min || 0;
         var max = options.max || 0;
-        var range = max - min;
 
         var value = options.value || 0;
         var lastDeg = 0;
@@ -272,8 +275,11 @@
         var el = document.createElement('div');
         el.innerHTML = '\n        <div class="Control" data-control>\n            <h3 class="Control-name" data-name>' + name + '</h3>\n            <div class="Control-inner">\n                <div class="Control-circle" data-wheel>\n                    <div class="Control-mark Control-mark--line"></div>\n                </div>\n            </div>\n            <div class="Control-inner">\n                <div class="Control-bound" data-min>' + min.toFixed(places) + '</div>\n                <output class="Control-output" data-output>' + value.toFixed(places) + '</output>\n                <div class="Control-bound" data-max>' + max.toFixed(places) + '</div>\n            </div>\n        </div>\n        ';
         options.el.appendChild(el);
+        var nameEl = el.querySelector('[data-name]');
         var wheelEl = el.querySelector('[data-wheel]');
         var outputEl = el.querySelector('[data-output]');
+        var minEl = el.querySelector('[data-min]');
+        var maxEl = el.querySelector('[data-max]');
 
         function onDown(event) {
             event.preventDefault();
@@ -294,6 +300,18 @@
             document.body.removeEventListener('touchmove', onMove);
             document.body.removeEventListener('mouseup', onUp);
             document.body.removeEventListener('touchend', onUp);
+        }
+
+        function update(val) {
+            value = math.clamp(val, min, max);
+
+            var transform = 'rotate(' + lastDeg.toFixed(1) + 'deg)';
+            wheelEl.style.webkitTransform = transform;
+            wheelEl.style.transform = transform;
+
+            if (outputEl) {
+                outputEl.value = value.toFixed(places);
+            }
         }
 
         function onMove(event) {
@@ -331,19 +349,11 @@
                 }
 
                 delta /= 360;
-                delta *= Math.min(range, 1000);
+                delta *= Math.min(max - min, 1000);
                 value += delta;
                 lastDeg = degrees;
 
-                value = math.clamp(value, min, max);
-
-                var transform = 'rotate(' + lastDeg.toFixed(1) + 'deg)';
-                wheelEl.style.webkitTransform = transform;
-                wheelEl.style.transform = transform;
-
-                if (outputEl) {
-                    outputEl.value = value.toFixed(places);
-                }
+                update(value);
 
                 if (fn) {
                     fn(value, delta);
@@ -360,10 +370,32 @@
             el.removeEventListener('touchstart', onDown);
         }
 
+        function enable(val) {
+            el.classList.toggle('is-disabled', !val);
+        }
+
+        function setLabel(val) {
+            nameEl.innerText = val;
+        }
+
+        function setValue(val) {
+            lastDeg = 0;
+            delta = 0;
+            update(val);
+        }
+
+        function setRange(mn, mx) {
+            min = mn;
+            max = mx;
+            minEl.innerText = min.toFixed(places);
+            maxEl.innerText = max.toFixed(places);
+            update(value);
+        }
+
         el.addEventListener('mousedown', onDown);
         el.addEventListener('touchstart', onDown);
 
-        return { destroy: destroy };
+        return { enable: enable, setLabel: setLabel, setValue: setValue, setRange: setRange, destroy: destroy };
     }
 
     /*
@@ -393,9 +425,10 @@
         var min = options.min || 0;
         var max = options.max || 0;
         var range = max - min;
+        var delta = 0;
+        var h = 100;
 
         var value = options.value || 0;
-        var delta = 0;
 
         var el = document.createElement('div');
         el.innerHTML = '\n        <div class="Fader Control" data-control>\n            <h3 class="Control-name" data-name>' + name + '</h3>\n            <div class="Fader-inner" data-inner>\n                <div class="Fader-handle" data-handle></div>\n            </div>\n            <div class="Control-inner">\n                <div class="Control-bound" data-min>' + min.toFixed(places) + '</div>\n                <output class="Control-output" data-output>' + value.toFixed(places) + '</output>\n                <div class="Control-bound" data-max>' + max.toFixed(places) + '</div>\n            </div>\n        </div>\n        ';
@@ -430,7 +463,7 @@
 
         function setValue(val) {
             var norm = math.normalize(val, min, max);
-            var transform = 'translateY(' + ((1 - norm) * 200).toFixed(1) + 'px)';
+            var transform = 'translateY(' + ((1 - norm) * h).toFixed(1) + 'px)';
             handleEl.style.webkitTransform = transform;
             handleEl.style.transform = transform;
 
@@ -445,12 +478,12 @@
                 event = event.touches[0];
             }
             var rect = innerEl.getBoundingClientRect();
-            var h = 200;
+
             var moveY = event.clientY - rect.top - 13;
 
             var pY = math.clamp(moveY, 0, h);
 
-            value = min + range * (1 - pY / 200);
+            value = min + range * (1 - pY / h);
 
             value = math.clamp(value, min, max);
 
@@ -477,11 +510,176 @@
         return { destroy: destroy };
     }
 
+    function createPlayButton(options) {
+        var el = document.createElement('div');
+        el.innerHTML = '\n        <h3 class="Control-name">Play/pause</h3>\n        <button class="Button" data-btn>play</button>\n        ';
+        options.el.appendChild(el);
+
+        var btn = el.querySelector('[data-btn]');
+
+        function toggle() {
+            if (options.sound.playing) {
+                btn.innerText = 'pause';
+            } else {
+                btn.innerText = 'play';
+            }
+        }
+
+        options.sound.on('play', toggle).on('pause', toggle).on('stop', toggle).on('ended', toggle);
+
+        btn.addEventListener('click', function () {
+            if (options.sound.playing) {
+                options.sound.pause();
+            } else {
+                options.sound.play();
+            }
+        });
+    }
+
+    function createSelect(options, fn) {
+        var el = document.createElement('div');
+        el.innerHTML = '\n        <h3 class="Control-name">' + options.name + '</h3>\n        <select class="Select" data-select>\n            ' + options.options.map(function (item) {
+            return '\n                <option value="' + item.value + '">' + item.text + '</option>\n            ';
+        }) + '\n        </select>\n        ';
+        options.el.appendChild(el);
+
+        var select = el.querySelector('[data-select]');
+
+        select.addEventListener('change', function () {
+            return fn(select.value);
+        });
+    }
+
+    function createUpload(options, fn) {
+        var el = document.createElement('div');
+        el.innerHTML = '\n        <h3 class="Control-name Upload-title">' + (options.name || '') + '</h3>\n        <div class="Upload">\n            <span data-upload-text>upload file</span>\n            <input type="file" accept="audio/*" data-upload>\n        </div>\n        ';
+        options.el.appendChild(el);
+        var upload = el.querySelector('[data-upload]');
+        var uploadText = el.querySelector('[data-upload-text]');
+        upload.addEventListener('change', function (event) {
+            var playing = false;
+            if (options.sound) {
+                playing = options.sound.playing;
+                options.sound.stop();
+            }
+            uploadText.innerHTML = 'loading...';
+
+            var file = event.currentTarget.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                //console.log(event.target.result);
+                sono.context.decodeAudioData(e.target.result, function (buffer) {
+                    if (options.sound) {
+                        options.sound.data = buffer;
+                        if (playing) {
+                            options.sound.play();
+                        }
+                    }
+                    if (typeof fn === 'function') {
+                        fn(buffer);
+                    }
+                    uploadText.innerHTML = 'upload file';
+                }, function (err) {
+                    console.error('ERROR: context.decodeAudioData:', err);
+                    uploadText.innerHTML = 'error';
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function createVisualizer(options) {
+        var analyser = options.sound.effects.add(sono.analyser({
+            fftSize: 512,
+            smoothing: 0.7,
+            maxDecibels: -10
+        }));
+        var el = document.createElement('div');
+        el.className = 'Visualizer';
+        options.el.appendChild(el);
+        var waveform = sono.utils.waveformer({
+            waveform: analyser.getWaveform(),
+            shape: 'linear',
+            style: 'line',
+            lineWidth: 2,
+            width: 320,
+            height: 200,
+            bgColor: '#2b2b2b',
+            color: function color(position, length) {
+                var hue = position / length * 360;
+                return 'hsl(' + hue + ', 100%, 50%)';
+            },
+            transform: function transform(value) {
+                return value / 256;
+            }
+        });
+        waveform.canvas.style.top = '-50px';
+        el.appendChild(waveform.canvas);
+
+        var frequency = sono.utils.waveformer({
+            waveform: analyser.getFrequencies(),
+            shape: 'linear',
+            style: 'fill',
+            lineWidth: 1,
+            width: 320,
+            height: 100,
+            color: function color(position, length) {
+                var hue = position / length * 360;
+                return 'hsl(' + hue + ', 80%, 40%)';
+            },
+            transform: function transform(value) {
+                return value / 256;
+            }
+        });
+        el.appendChild(frequency.canvas);
+
+        function update() {
+            window.requestAnimationFrame(update);
+            analyser.getWaveform();
+            waveform();
+            analyser.getFrequencies();
+            frequency();
+        }
+        update();
+    }
+
+    function createWaveform(options) {
+        var l = 320;
+        var el = document.createElement('div');
+        el.className = 'Visualizer';
+        options.el.appendChild(el);
+        var waveformer = sono.utils.waveformer({
+            waveform: options.sound.waveform(l),
+            style: 'line',
+            lineWidth: 1,
+            width: l,
+            height: 100,
+            bgColor: '#2b2b2b',
+            color: function color(position, length) {
+                var hue = position / length * 360;
+                var sat = position / length < options.sound.progress ? 100 : 50;
+                var lum = position / length < options.sound.progress ? 50 : 30;
+                return 'hsl(' + hue + ', ' + sat + '%, ' + lum + '%)';
+            }
+        });
+        el.appendChild(waveformer.canvas);
+        function update() {
+            window.requestAnimationFrame(update);
+            waveformer(options.sound.waveform(l));
+        }
+        update();
+    }
+
     window.ui = {
         createPlayer: createPlayer,
         createControl: createControl,
         createToggle: createToggle,
         createTrigger: createTrigger,
-        createFader: createFader
+        createFader: createFader,
+        createPlayButton: createPlayButton,
+        createSelect: createSelect,
+        createUpload: createUpload,
+        createVisualizer: createVisualizer,
+        createWaveform: createWaveform
     };
 })();

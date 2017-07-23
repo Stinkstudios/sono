@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/echo.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/echo.html)
+
 ```javascript
 import echo from 'sono/effects/echo';
 

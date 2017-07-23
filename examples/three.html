@@ -14,13 +14,15 @@
     <body>
         <div>
             <section>
-                <header>
-                    <h2>3d Panning</h2>
-                </header>
+                <div style="position: absolute; top: 0; left: 0; width: 100%; color: white; z-index: 1; pointer-events: none;">
+                    <header>
+                        <h2 style="color: white">3d Panning</h2>
+                    </header>
 
 
-                <div class="Controls">
-                    <p>Use the arrow keys to move around.</p>
+                    <div class="Controls">
+                        <p>Use the arrow keys to move around.</p>
+                    </div>
                 </div>
 
                 <div class="Controls" data-container></div>
@@ -59,6 +61,7 @@
 
         <script src="js/disable.js"></script>
         <script src="../dist/sono.js"></script>
+        <script src="js/base-url.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.3/dat.gui.min.js"></script>
         <script src="//threejs.org/examples/js/controls/TrackballControls.js"></script>
