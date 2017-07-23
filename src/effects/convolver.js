@@ -1,18 +1,17 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 import file from '../core/utils/file';
 import Loader from '../core/utils/loader';
 import Sound from '../core/sound';
 
 class Convolver extends AbstractEffect {
-    constructor({impulse} = {}) {
-        super();
-
-        this._node = sono.context.createConvolver();
-        this._in.connect(this._out);
+    constructor({impulse, wet = 1, dry = 1} = {}) {
+        super(sono.context.createConvolver(), null, false);
 
         this._loader = null;
 
+        this.wet = wet;
+        this.dry = dry;
         this.update({impulse});
     }
 
@@ -37,9 +36,7 @@ class Convolver extends AbstractEffect {
 
         if (file.isAudioBuffer(impulse)) {
             this._node.buffer = impulse;
-            this._in.disconnect();
-            this._in.connect(this._node);
-            this._node.connect(this._out);
+            this.enable(true);
             return this;
         }
 
@@ -54,8 +51,13 @@ class Convolver extends AbstractEffect {
             return this;
         }
 
-        if (file.isURL(impulse) || file.isArrayBuffer(impulse)) {
+        if (file.isArrayBuffer(impulse)) {
             this._load(impulse);
+            return this;
+        }
+
+        if (file.isURL(file.getSupportedFile(impulse))) {
+            this._load(file.getSupportedFile(impulse));
         }
 
         return this;

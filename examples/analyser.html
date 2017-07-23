@@ -9,15 +9,6 @@
         <link href="favicon.ico" rel="shortcut icon">
         <link href="css/styles.css" rel="stylesheet">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
-        <style>
-            input[type=file] {
-                color: white;
-                position: absolute;
-                z-index: 1000;
-                bottom: 10px;
-                left: 10px;
-            }
-        </style>
     </head>
 
     <body>
@@ -73,7 +64,7 @@
     }
     update();
         </code></pre>
-        <input type="file" accept="audio/*" data-upload>
+        <div style="position: absolute; z-index: 1000; bottom: 10px; left: -20px;" data-upload></div>
         </section>
 
         <script src="js/disable.js"></script>
@@ -81,6 +72,8 @@
         <script src="https://cdn.rawgit.com/ianmcgregor/usfl/198a1fc9/dist/usfl.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
         <script src="//cdn.rawgit.com/vanruesc/postprocessing/fe9b507d/build/postprocessing.min.js"></script>
+        <script src="js/base-url.js"></script>
+        <script src="js/ui.js"></script>
         <script src="js/analyser.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>
         <script>hljs.initHighlightingOnLoad();</script>

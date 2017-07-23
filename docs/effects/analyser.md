@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/analyser.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/analyser.html)
+
 Get real-time frequency and waveform information.
 
 ```javascript

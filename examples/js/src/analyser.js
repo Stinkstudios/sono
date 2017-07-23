@@ -23,7 +23,7 @@
 // import gui from 'usfl/gui';
 // import FPS from 'usfl/fps';
 
-const {sono, THREE, POSTPROCESSING, usfl} = window;
+const {baseURL, sono, THREE, POSTPROCESSING, usfl, ui} = window;
 const {
     Clock,
     Color,
@@ -56,14 +56,11 @@ const PI2 = PI * 2;
 const W = window.innerWidth;
 const H = window.innerHeight;
 
-const baseURL = gui.isLocalHost() ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
-
 const sound = sono.create({
     url: [`${baseURL}ad2027-loop.ogg`, `${baseURL}ad2027-loop.mp3`],
     loop: true,
     singlePlay: true
-})
-.play();
+}).play();
 
 const analyser = sound.effects.add(sono.analyser({
     fftSize: 128
@@ -276,11 +273,7 @@ gui().then(g => {
     }
 });
 
-const upload = document.querySelector('[data-upload]');
-upload.addEventListener('change', event => {
-    sound.stop();
-    const file = event.currentTarget.files[0];
-    const reader = new FileReader();
-    reader.onload = e => sound.load(e.target.result).play();
-    reader.readAsArrayBuffer(file);
+ui.createUpload({
+    el: document.querySelector('[data-upload]'),
+    sound
 });

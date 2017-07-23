@@ -1,4 +1,4 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 import isSafeNumber from '../core/utils/isSafeNumber';
 import isDefined from '../core/utils/isDefined';
@@ -30,20 +30,17 @@ function createImpulseResponse({time, decay, reverse, buffer}) {
 }
 
 class Reverb extends AbstractEffect {
-    constructor({time = 1, decay = 5, reverse = false} = {}) {
-        super();
+    constructor({time = 1, decay = 5, reverse = false, wet = 1, dry = 1} = {}) {
+        super(sono.context.createConvolver());
+
+        this._convolver = this._node;
 
         this._length = 0;
         this._impulseResponse = null;
-
-        this._convolver = this.context.createConvolver();
-
-        this._in.connect(this._convolver);
-        this._in.connect(this._out);
-        this._convolver.connect(this._out);
-
         this._opts = {};
 
+        this.wet = wet;
+        this.dry = dry;
         this.update({time, decay, reverse});
     }
 

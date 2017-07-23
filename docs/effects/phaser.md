@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/phaser.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/phaser.html)
+
 Creates a sweeping filter effect
 
 ```javascript

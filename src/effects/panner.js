@@ -1,4 +1,4 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractDirectEffect from './abstract-direct-effect';
 import sono from '../core/sono';
 import isSafeNumber from '../core/utils/isSafeNumber';
 import isDefined from '../core/utils/isDefined';
@@ -96,8 +96,17 @@ function setNodePosition(nodeOrListener, vec) {
     vecPool.dispose(vec);
 }
 
-class Panner extends AbstractEffect {
-    constructor({panningModel, distanceModel, refDistance, maxDistance, rolloffFactor, coneInnerAngle, coneOuterAngle, coneOuterGain} = {}) {
+class Panner extends AbstractDirectEffect {
+    constructor({
+        panningModel,
+        distanceModel,
+        refDistance,
+        maxDistance,
+        rolloffFactor,
+        coneInnerAngle,
+        coneOuterAngle,
+        coneOuterGain
+    } = {}) {
         super(sono.context.createPanner());
 
         // Default for stereo is 'HRTF' can also be 'equalpower'

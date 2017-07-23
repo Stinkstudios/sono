@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/reverb.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/reverb.html)
+
 ```javascript
 import reverb from 'sono/effects/reverb';
 

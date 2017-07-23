@@ -1,23 +1,22 @@
 'use strict';
 
 (function () {
-    var _window = window;
-    var sono = _window.sono;
-    var dat = _window.dat;
-    var THREE = _window.THREE;
-    var Boid = _window.Boid;
+    var _window = window,
+        baseURL = _window.baseURL,
+        sono = _window.sono,
+        dat = _window.dat,
+        THREE = _window.THREE,
+        Boid = _window.Boid;
 
 
     sono.log();
 
     var container = document.querySelector('[data-container]');
-    var width = 960;
-    var height = 540;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
     var bgColor = 0x000020;
     var volume = 0.4;
     var size = 2000;
-    var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
-    var baseURL = local ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
 
     var sounds = ['pulsar_1', 'pulsar_2', 'pulsar_3', 'pulsar_4'].map(function (name) {
         return '' + baseURL + name;
@@ -232,9 +231,9 @@
 
         for (var i = 0; i < things.length; i++) {
             var thing = things[i];
-            var boid = thing.boid;
-            var mesh = thing.mesh;
-            var sound = thing.sound;
+            var boid = thing.boid,
+                mesh = thing.mesh,
+                sound = thing.sound;
 
             mesh.rotation.x += 0.5 * delta;
             mesh.rotation.y += 0.2 * delta;
