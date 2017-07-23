@@ -4102,7 +4102,7 @@ var AbstractEffect = function () {
 
         this._node = node;
         this._nodeOut = nodeOut || node;
-        this._enabled = false;
+        this._enabled;
 
         this._in = this.context.createGain();
         this._out = this.context.createGain();
@@ -4124,13 +4124,14 @@ var AbstractEffect = function () {
         this._enabled = b;
 
         this._in.disconnect();
-        this._in.connect(this._dry);
 
         if (b) {
+            this._in.connect(this._dry);
             this._in.connect(this._node);
             this._nodeOut.connect(this._wet);
         } else {
             this._nodeOut.disconnect();
+            this._in.connect(this._out);
         }
     };
 
@@ -4370,8 +4371,13 @@ var Convolver = function (_AbstractEffect) {
             return this;
         }
 
-        if (file.isURL(impulse) || file.isArrayBuffer(impulse)) {
+        if (file.isArrayBuffer(impulse)) {
             this._load(impulse);
+            return this;
+        }
+
+        if (file.isURL(file.getSupportedFile(impulse))) {
+            this._load(file.getSupportedFile(impulse));
         }
 
         return this;
@@ -4411,7 +4417,7 @@ var Distortion = function (_AbstractEffect) {
             _ref$wet = _ref.wet,
             wet = _ref$wet === undefined ? 1 : _ref$wet,
             _ref$dry = _ref.dry,
-            dry = _ref$dry === undefined ? 1 : _ref$dry;
+            dry = _ref$dry === undefined ? 0 : _ref$dry;
 
         classCallCheck(this, Distortion);
 
@@ -4506,6 +4512,14 @@ var Echo = function (_AbstractEffect) {
         return _this;
     }
 
+    Echo.prototype.enable = function enable(value) {
+        _AbstractEffect.prototype.enable.call(this, value);
+
+        if (this._feedback && value) {
+            this._feedback.connect(this._delay);
+        }
+    };
+
     Echo.prototype.update = function update(options) {
         this.delay = options.delay;
         this.feedback = options.feedback;
@@ -4592,7 +4606,7 @@ var Filter = function (_AbstractEffect) {
             _ref$wet = _ref.wet,
             wet = _ref$wet === undefined ? 1 : _ref$wet,
             _ref$dry = _ref.dry,
-            dry = _ref$dry === undefined ? 1 : _ref$dry;
+            dry = _ref$dry === undefined ? 0 : _ref$dry;
 
         classCallCheck(this, Filter);
 
@@ -4628,6 +4642,9 @@ var Filter = function (_AbstractEffect) {
         key: 'type',
         get: function get$$1() {
             return this._node.type;
+        },
+        set: function set$$1(value) {
+            this._node.type = value;
         }
     }, {
         key: 'frequency',
@@ -4662,20 +4679,16 @@ var Filter = function (_AbstractEffect) {
             this.q = value;
         }
     }, {
-        key: 'boost',
-        get: function get$$1() {
-            return this.q;
-        },
-        set: function set$$1(value) {
-            this.q = value;
-        }
-    }, {
         key: 'width',
         get: function get$$1() {
-            return this.q;
+            return this._node.frequency.value / this._node.Q.value;
         },
         set: function set$$1(value) {
-            this.q = value;
+            if (value <= 0) {
+                this.q = 0;
+                return;
+            }
+            this.q = this._node.frequency.value / value;
         }
     }, {
         key: 'sharpness',
@@ -4686,12 +4699,20 @@ var Filter = function (_AbstractEffect) {
             this.q = value;
         }
     }, {
-        key: 'gain',
+        key: 'boost',
         get: function get$$1() {
             return this._node.gain.value;
         },
         set: function set$$1(value) {
             this.setSafeParamValue(this._node.gain, value);
+        }
+    }, {
+        key: 'gain',
+        get: function get$$1() {
+            return this.boost;
+        },
+        set: function set$$1(value) {
+            this.boost = value;
         }
     }, {
         key: 'detune',
@@ -4700,6 +4721,11 @@ var Filter = function (_AbstractEffect) {
         },
         set: function set$$1(value) {
             this.setSafeParamValue(this._node.detune, value);
+        }
+    }, {
+        key: 'maxFrequency',
+        get: function get$$1() {
+            return sono$1.context.sampleRate / 2;
         }
     }]);
     return Filter;
@@ -5239,9 +5265,9 @@ var Phaser = function (_AbstractEffect) {
             _ref$gain = _ref.gain,
             gain = _ref$gain === undefined ? 300 : _ref$gain,
             _ref$wet = _ref.wet,
-            wet = _ref$wet === undefined ? 1 : _ref$wet,
+            wet = _ref$wet === undefined ? 0.8 : _ref$wet,
             _ref$dry = _ref.dry,
-            dry = _ref$dry === undefined ? 1 : _ref$dry;
+            dry = _ref$dry === undefined ? 0.8 : _ref$dry;
 
         classCallCheck(this, Phaser);
 
@@ -5278,14 +5304,27 @@ var Phaser = function (_AbstractEffect) {
         _this._lfo.connect(_this._lfoGain);
         _this._lfo.start(0);
 
-        // last.connect(this._feedback);
-        // this._feedback.connect(first);
+        _this._nodeOut.connect(_this._feedback);
+        _this._feedback.connect(_this._node);
 
         _this.wet = wet;
         _this.dry = dry;
         _this.update({ frequency: frequency, gain: gain, feedback: feedback });
         return _this;
     }
+
+    Phaser.prototype.enable = function enable(value) {
+        _AbstractEffect.prototype.enable.call(this, value);
+
+        if (this._feedback) {
+            this._feedback.disconnect();
+        }
+
+        if (value && this._feedback) {
+            this._nodeOut.connect(this._feedback);
+            this._feedback.connect(this._node);
+        }
+    };
 
     Phaser.prototype.update = function update(options) {
         this.frequency = options.frequency;
@@ -5655,9 +5694,7 @@ function waveform() {
             return wave;
         }
 
-        if (!wave || wave.length !== length) {
-            wave = new Float32Array(length);
-        }
+        wave = new Float32Array(length);
 
         if (!audioBuffer) {
             return wave;
@@ -5851,8 +5888,10 @@ function waveformer(config) {
         } else {
 
             var _waveform = getWaveform(wave, width);
-            var _length = Math.min(_waveform.length, width - lineWidth / 2);
+            var maxX = width - lineWidth / 2;
+            var _length = Math.min(_waveform.length, maxX);
             _length = Math.floor(_length * percent);
+            var stepX = maxX / _length;
 
             for (i = 0; i < _length; i++) {
                 var _value = getValue(_waveform[i], i, _length);
@@ -5862,11 +5901,12 @@ function waveformer(config) {
                     ctx.lineTo(x, y);
                 }
 
-                x = originX + i;
+                x = originX + i * stepX;
                 y = originY + height - Math.round(height * _value);
                 y = Math.floor(Math.min(y, originY + height - lineWidth / 2));
 
                 if (style === 'fill') {
+                    x = Math.ceil(x + lineWidth / 2);
                     ctx.moveTo(x, y);
                     ctx.lineTo(x, originY + height);
                 } else {
