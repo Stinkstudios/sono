@@ -16,12 +16,13 @@ body {
   font-family: Helvetica, sans-serif;
   font-size: 16px;
   height: 100%;
+  letter-spacing: 0.05em;
   line-height: 1.5;
   margin: 0;
   width: 100%;
 }
 
-body>div {
+main {
     overflow-x: hidden;
     width: 100%;
 }
@@ -51,6 +52,7 @@ h3 {
 header {
   text-align: center;
   width: 100%;
+  margin: 40px 0 20px;
 }
 
 section {
@@ -58,13 +60,13 @@ section {
 }
 
 pre {
-  padding: 50px 0;
+  margin: 50px 0;
   width: 100%;
 }
 
 @media (--mobile) {
     pre {
-      padding: 0;
+      margin: 20px 0;
     }
 }
 
@@ -87,7 +89,7 @@ code ul {
 }
 
 nav {
-  padding: 40px 0 50px;
+  padding: 0 0 50px;
   text-align: center;
 }
 
@@ -102,4 +104,30 @@ nav a {
 
 .dg select {
     color: black;
+}
+
+header nav {
+    padding: 5px;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+header nav ul {
+    display: flex;
+}
+
+header nav a {
+    font-size: 20px;
+    margin: 0 10px;
+}
+
+@media (--mobile) {
+    header nav {
+        width: 100%;
+    }
+
+    header nav ul {
+        justify-content: center;
+    }
 }

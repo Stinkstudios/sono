@@ -2,6 +2,7 @@
 
 [View source code](../../src/effects/distortion.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/distortion.html)
 
 ```javascript
 import distortion from 'sono/effects/distortion';

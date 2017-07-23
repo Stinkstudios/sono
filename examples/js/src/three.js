@@ -1,16 +1,14 @@
 (function() {
-    const {sono, dat, THREE, Boid} = window;
+    const {baseURL, sono, dat, THREE, Boid} = window;
 
     sono.log();
 
     const container = document.querySelector('[data-container]');
-    const width = 960;
-    const height = 540;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     const bgColor = 0x000020;
     const volume = 0.4;
     const size = 2000;
-    const local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
-    const baseURL = local ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
 
     const sounds = [
         'pulsar_1',
@@ -18,8 +16,8 @@
         'pulsar_3',
         'pulsar_4'
     ]
-    .map(name => `${baseURL}${name}`)
-    .map(path => [`${path}.ogg`, `${path}.mp3`]);
+        .map(name => `${baseURL}${name}`)
+        .map(path => [`${path}.ogg`, `${path}.mp3`]);
 
     const names = [
         'red',

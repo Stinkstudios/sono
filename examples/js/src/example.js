@@ -1,46 +1,47 @@
-'use strict';
+(function() {
 
-(function () {
-    var _window = window,
-        baseURL = _window.baseURL,
-        sono = _window.sono,
-        ui = _window.ui;
-
+    const {baseURL, sono, ui} = window;
 
     sono.log();
 
-    var info = document.querySelector('[data-info]');
-    info.innerHTML = '<li>Audio support: ' + sono.isSupported + '</li>' + '<li>Web Audio support: ' + sono.hasWebAudio + '</li>' + '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' + '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
+    const info = document.querySelector('[data-info]');
+    info.innerHTML = '<li>Audio support: ' + sono.isSupported + '</li>' +
+        '<li>Web Audio support: ' + sono.hasWebAudio + '</li>' +
+        '<li>Touch locked (mobile): ' + sono.isTouchLocked + '</li>' +
+        '<li>Supported extensions: ' + sono.extensions.join(', ') + '</li>';
 
-    var sound = sono.create({
-        src: [baseURL + 'dnb-loop.ogg', baseURL + 'dnb-loop.mp3'],
+    const sound = sono.create({
+        src: [
+            baseURL + 'dnb-loop.ogg',
+            baseURL + 'dnb-loop.mp3'
+        ],
         loop: true
     });
 
-    var panner = sono.effects.add(sono.panner());
+    const panner = sono.effects.add(sono.panner());
 
-    var distortion = sono.effects.add(sono.distortion({
+    const distortion = sono.effects.add(sono.distortion({
         level: 0
     }));
 
-    var echo = sono.effects.add(sono.echo({
+    const echo = sono.effects.add(sono.echo({
         delay: 0,
         feedback: 0.2
     }));
 
-    var flanger = sono.effects.add(sono.flanger({
+    const flanger = sono.effects.add(sono.flanger({
         stereo: true
     }));
     sono.effects.remove(flanger);
 
-    var highpass = sono.effects.add(sono.highpass({
+    const highpass = sono.effects.add(sono.highpass({
         frequency: 20
     }));
 
-    var lowshelf = sono.effects.add(sono.lowshelf({
-        frequency: 80, gain: 0 }));
+    const lowshelf = sono.effects.add(sono.lowshelf({
+        frequency: 80, gain: 0}));
 
-    var reverb = sono.effects.add(sono.reverb({
+    const reverb = sono.effects.add(sono.reverb({
         time: 0.1,
         decay: 2
     }));
@@ -51,7 +52,7 @@
      * players
      */
 
-    var playerTop = ui.createPlayer({
+    const playerTop = ui.createPlayer({
         el: document.querySelector('[data-player-top]'),
         sound: sound,
         analyser: sono.effects.add(sono.analyser({
@@ -61,7 +62,7 @@
         }))
     });
 
-    var player = ui.createPlayer({
+    const player = ui.createPlayer({
         el: document.querySelector('[data-player]'),
         sound: sound,
         analyser: sono.effects.add(sono.analyser({
@@ -75,10 +76,10 @@
      * show minimized player
      */
 
-    window.addEventListener('scroll', function () {
-        var scrollTop = document.documentElement.scrollTop || document.body.scrollTop || window.pageYOffset || 0;
-        var threshold = Math.max(400, Math.min(600, window.innerWidth));
-        var isScrolledDown = scrollTop > threshold;
+    window.addEventListener('scroll', () => {
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop || window.pageYOffset || 0;
+        const threshold = Math.max(400, Math.min(600, window.innerWidth));
+        const isScrolledDown = scrollTop > threshold;
         playerTop.el.classList.toggle('is-active', isScrolledDown);
         player.el.classList.toggle('is-active', !isScrolledDown);
     });
@@ -87,7 +88,7 @@
      * controls
      */
 
-    var controls = document.querySelector('[data-controls]');
+    const controls = document.querySelector('[data-controls]');
 
     ui.createControl({
         el: controls,
@@ -95,7 +96,7 @@
         min: 0,
         max: 1,
         value: 1
-    }, function (value) {
+    }, value => {
         sono.volume = value;
     });
 
@@ -105,7 +106,7 @@
         min: 0,
         max: 1,
         value: 1
-    }, function (value) {
+    }, value => {
         sound.volume = value;
     });
 
@@ -115,7 +116,7 @@
         min: -1,
         max: 1,
         value: 0
-    }, function (value) {
+    }, value => {
         panner.set(value);
     });
 
@@ -125,7 +126,7 @@
         min: 0,
         max: 4,
         value: 1
-    }, function (value) {
+    }, value => {
         sound.playbackRate = value;
     });
 
@@ -133,7 +134,7 @@
         el: controls,
         name: 'Loop',
         value: sound.loop
-    }, function (value) {
+    }, value => {
         console.log('toggle loop:', value);
         sound.loop = value;
     });
@@ -142,7 +143,7 @@
         el: controls,
         name: 'Reverse',
         value: false
-    }, function () {
+    }, () => {
         sono.utils.reverseBuffer(sound.data);
     });
 
@@ -156,7 +157,7 @@
         min: 0,
         max: 1,
         value: 0
-    }, function (value) {
+    }, value => {
         echo.delay = value;
     });
 
@@ -166,7 +167,7 @@
         min: 0.1,
         max: 10,
         value: 0.1
-    }, function (value) {
+    }, value => {
         echo.feedback = value;
     });
 
@@ -178,7 +179,7 @@
         el: document.querySelector('[data-distortion]'),
         name: 'Active',
         value: true
-    }, function (value) {
+    }, value => {
         sono.effects.toggle(distortion, value);
     });
 
@@ -188,7 +189,7 @@
         min: 0,
         max: 2,
         value: 0
-    }, function (value) {
+    }, value => {
         distortion.level = value;
     });
 
@@ -197,8 +198,8 @@
      */
 
     function createWaveformsExample() {
-        var el = document.querySelector('[data-waveforms]');
-        sound.once('ready', function () {
+        const el = document.querySelector('[data-waveforms]');
+        sound.once('ready', function() {
             ui.createWaveform({
                 el: el,
                 sound: sound
@@ -218,7 +219,7 @@
         el: document.querySelector('[data-reverb]'),
         name: 'Active',
         value: true
-    }, function (value) {
+    }, value => {
         sono.effects.toggle(reverb, value);
     });
 
@@ -228,7 +229,7 @@
         min: 0,
         max: 5,
         value: reverb.time
-    }, function (value) {
+    }, value => {
         reverb.time = value;
     });
 
@@ -238,7 +239,7 @@
         min: 0,
         max: 10,
         value: reverb.decay
-    }, function (value) {
+    }, value => {
         reverb.decay = value;
     });
 
@@ -246,7 +247,7 @@
         el: document.querySelector('[data-reverb]'),
         name: 'reverse',
         value: false
-    }, function (value) {
+    }, value => {
         reverb.reverse = value;
     });
 
@@ -258,7 +259,7 @@
         el: document.querySelector('[data-flanger]'),
         name: 'Active',
         value: false
-    }, function (value) {
+    }, value => {
         sono.effects.toggle(flanger, value);
     });
 
@@ -268,7 +269,7 @@
         min: 0.005,
         max: 0.05,
         value: flanger.delay
-    }, function (value) {
+    }, value => {
         flanger.delay = value;
     });
 
@@ -278,7 +279,7 @@
         min: 0.0005,
         max: 0.005,
         value: flanger.gain
-    }, function (value) {
+    }, value => {
         flanger.gain = value;
     });
 
@@ -288,7 +289,7 @@
         min: 0.05,
         max: 5.0,
         value: flanger.frequency
-    }, function (value) {
+    }, value => {
         flanger.frequency = value;
     });
 
@@ -298,7 +299,7 @@
         min: 0.0,
         max: 0.9,
         value: flanger.feedback
-    }, function (value) {
+    }, value => {
         flanger.feedback = value;
     });
 
@@ -306,13 +307,13 @@
      * fade
      */
 
-    var fadeTime = 1;
+    let fadeTime = 1;
 
     ui.createToggle({
         el: document.querySelector('[data-fade]'),
         name: 'Toggle',
         value: false
-    }, function (value) {
+    }, value => {
         sono.fade(value ? 0 : 1, fadeTime);
     });
 
@@ -322,7 +323,7 @@
         min: 0,
         max: 10,
         value: fadeTime
-    }, function (value) {
+    }, value => {
         fadeTime = value;
     });
 
@@ -330,7 +331,7 @@
      * highpass filter
      */
 
-    var maxFreq = sono.context && sono.context.sampleRate / 2 || 0;
+    const maxFreq = (sono.context && sono.context.sampleRate / 2) || 0;
 
     ui.createControl({
         el: document.querySelector('[data-highpass]'),
@@ -339,7 +340,7 @@
         max: maxFreq,
         value: 20,
         places: 0
-    }, function (value) {
+    }, value => {
         highpass.frequency = value;
     });
 
@@ -349,7 +350,7 @@
         min: 0.0001,
         max: 40,
         value: highpass.Q
-    }, function (value) {
+    }, value => {
         highpass.Q = value;
     });
 
@@ -360,7 +361,7 @@
         max: 1000,
         places: 2,
         value: highpass.detune
-    }, function (value) {
+    }, value => {
         highpass.detune = value;
     });
 
@@ -375,7 +376,7 @@
         max: maxFreq,
         value: 80,
         places: 0
-    }, function (value) {
+    }, value => {
         lowshelf.frequency = value;
     });
 
@@ -385,7 +386,7 @@
         min: -40,
         max: 40,
         value: lowshelf.gain
-    }, function (value) {
+    }, value => {
         lowshelf.gain = value;
     });
 
@@ -395,7 +396,7 @@
         min: -1000,
         max: 1000,
         value: lowshelf.detune
-    }, function (value) {
+    }, value => {
         lowshelf.detune = value;
     });
 
@@ -421,4 +422,5 @@
         }
     }
     update();
-})();
+
+}());

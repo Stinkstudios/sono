@@ -88,8 +88,10 @@ sound.play(); // loads on demand
             }
         </script>
         <script src="../dist/sono.js"></script>
+        <script src="js/base-url.js"></script>
         <script src="js/ui.js"></script>
         <script>
+            var baseURL = window.baseURL;
             var sono = window.sono;
             sono.log();
 
@@ -100,7 +102,6 @@ sound.play(); // loads on demand
             var btnUnload = document.querySelector('[data-button-unload]');
             var btnReload = document.querySelector('[data-button-reload]');
             var btnPlay = document.querySelector('[data-button-play]');
-            var baseURL = 'https://ianmcgregor.co/prototypes/audio/';
 
             var sounds = [
                 'dnb-loop',

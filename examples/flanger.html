@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>sono - examples - flanger</title>
+    <link href="css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
+</head>
+
+<body>
+    <section>
+        <header>
+            <h1>flanger</h1>
+        </header>
+
+        <div class="Controls">
+            <div class="Controls" data-controls-a></div>
+            <div class="Controls" data-controls-b></div>
+            <div class="Controls" data-controls-c></div>
+            <div class="Controls Controls--viz" data-controls-d></div>
+        </div>
+
+        <pre><code class="js">
+    import sono from 'sono';
+    import 'sono/effects';
+
+    const sound = sono.create({
+        url: 'hit.mp3',
+        loop: true,
+        effects: [sono.flanger({
+            stereo: true,
+            wet: 1,
+            dry: 1
+        })]
+    });
+        </code></pre>
+
+    </section>
+
+    <script src="js/disable.js"></script>
+    <script src="../dist/sono.js"></script>
+    <script src="js/base-url.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+        var baseURL = window.baseURL;
+        var sono = window.sono;
+        sono.log();
+
+        var sound = sono.create({
+            url: [
+                baseURL + 'ooze.ogg',
+                baseURL + 'ooze.mp3'
+            ],
+            loop: true
+        });
+
+        var effect = sound.effects.add(sono.flanger({
+            stereo: true,
+            dry: 1,
+            wet: 1
+        }));
+
+        var controlsA = document.querySelector('[data-controls-a]');
+        var controlsB = document.querySelector('[data-controls-b]');
+        var controlsC = document.querySelector('[data-controls-c]');
+        var controlsD = document.querySelector('[data-controls-d]');
+
+        ui.createPlayButton({
+            el: controlsA,
+            sound: sound
+        });
+
+        ui.createSelect({
+            el: controlsA,
+            name: 'Select audio',
+            options: [{
+                text: 'ooze',
+                value: 'ooze'
+            }, {
+                text: 'pulsar',
+                value: 'pulsar_2'
+            }, {
+                text: 'music loop',
+                value: 'space-shooter'
+            }, {
+                text: 'dnb loop',
+                value: 'dnb-loop'
+            }]
+        }, function(value) {
+            var playing = sound.playing;
+            sound.load([
+                baseURL + value + '.ogg',
+                baseURL + value + '.mp3'
+            ]);
+            if (playing) {
+                sound.play();
+            }
+        });
+
+        ui.createUpload({
+            el: controlsA,
+            name: 'Upload audio',
+            sound: sound
+        });
+
+        ui.createControl({
+            el: controlsB,
+            name: 'Delay',
+            min: 0.005,
+            max: 0.05,
+            value: effect.delay
+        }, function(value) {
+            effect.delay = value;
+        });
+
+        ui.createControl({
+            el: controlsB,
+            name: 'LFO Gain',
+            min: 0.0005,
+            max: 0.005,
+            value: effect.gain
+        }, function(value) {
+            effect.gain = value;
+        });
+
+        ui.createControl({
+            el: controlsB,
+            name: 'LFO Frequency',
+            min: 0.05,
+            max: 5.0,
+            value: effect.frequency
+        }, function(value) {
+            effect.frequency = value;
+        });
+
+        ui.createControl({
+            el: controlsB,
+            name: 'Feedback',
+            min: 0.0,
+            max: 0.9,
+            value: effect.feedback
+        }, function(value) {
+            effect.feedback = value;
+        });
+
+        ui.createToggle({
+            el: controlsC,
+            name: 'Enable',
+            value: true
+        }, function(value) {
+            effect.enable(value);
+        });
+
+        ui.createFader({
+            el: controlsC,
+            name: 'Wet',
+            min: 0,
+            max: 1,
+            value: effect.wet,
+            places: 3
+        }, function(value) {
+            effect.wet = value;
+        });
+
+        ui.createFader({
+            el: controlsC,
+            name: 'Dry',
+            min: 0,
+            max: 1,
+            value: effect.dry,
+            places: 3
+        }, function(value) {
+            effect.dry = value;
+        });
+
+        ui.createToggle({
+            el: controlsC,
+            name: 'Loop',
+            value: sound.loop
+        }, function(value) {
+            sound.loop = value;
+        });
+
+        sound.once('ready', function() {
+            ui.createWaveform({
+                el: controlsD,
+                sound: sound
+            });
+            ui.createVisualizer({
+                el: controlsD,
+                sound: sound
+            });
+        });
+    </script>
+</body>
+</html>

@@ -41,20 +41,15 @@
 
     </section>
 
-    <script>
-        if (window.location.search.indexOf('nowebaudio') > -1) {
-            window.AudioContext = window.webkitAudioContext = undefined;
-        }
-    </script>
+    <script src="js/disable.js"></script>
     <script src="../dist/sono.js"></script>
+    <script src="js/base-url.js"></script>
     <script src="js/ui.js"></script>
     <script>
+        var baseURL = window.baseURL;
         var sono = window.sono;
         sono.log();
 
-        // var local = /^(?:https?:\/\/)?(?:localhost|192\.168)/.test(window.location.href);
-        // var baseURL = local ? 'audio/other/' : 'https://ianmcgregor.co/prototypes/audio/';
-        var baseURL = 'audio/other/music_loops/';
         var volume = 0.5;
 
         var files = [

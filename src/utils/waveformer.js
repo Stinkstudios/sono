@@ -134,8 +134,10 @@ function waveformer(config) {
         } else {
 
             const waveform = getWaveform(wave, width);
-            let length = Math.min(waveform.length, width - lineWidth / 2);
+            const maxX = width - lineWidth / 2;
+            let length = Math.min(waveform.length, maxX);
             length = Math.floor(length * percent);
+            const stepX = maxX / length;
 
             for (i = 0; i < length; i++) {
                 const value = getValue(waveform[i], i, length);
@@ -145,11 +147,12 @@ function waveformer(config) {
                     ctx.lineTo(x, y);
                 }
 
-                x = originX + i;
+                x = originX + i * stepX;
                 y = originY + height - Math.round(height * value);
                 y = Math.floor(Math.min(y, originY + height - lineWidth / 2));
 
                 if (style === 'fill') {
+                    x = Math.ceil(x + lineWidth / 2);
                     ctx.moveTo(x, y);
                     ctx.lineTo(x, originY + height);
                 } else {

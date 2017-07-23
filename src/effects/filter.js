@@ -1,4 +1,4 @@
-import AbstractEffect from './AbstractEffect';
+import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 import isSafeNumber from '../core/utils/isSafeNumber';
 
@@ -29,11 +29,25 @@ function getFrequency(value) {
 }
 
 class Filter extends AbstractEffect {
-    constructor({type = 'lowpass', frequency = 1000, detune = 0, q = 0, gain = 1, peak = 0, boost = 0, width = 100, sharpness = 0} = {}) {
+    constructor({
+        type = 'lowpass',
+        frequency = 1000,
+        detune = 0,
+        q = 0,
+        gain = 1,
+        peak = 0,
+        boost = 0,
+        width = 100,
+        sharpness = 0,
+        wet = 1,
+        dry = 0
+    } = {}) {
         super(sono.context.createBiquadFilter());
 
         this._node.type = type;
 
+        this.wet = wet;
+        this.dry = dry;
         this.update({frequency, gain, detune, q, peak, boost, width, sharpness});
     }
 
@@ -54,6 +68,10 @@ class Filter extends AbstractEffect {
 
     get type() {
         return this._node.type;
+    }
+
+    set type(value) {
+        this._node.type = value;
     }
 
     get frequency() {
@@ -88,20 +106,16 @@ class Filter extends AbstractEffect {
         this.q = value;
     }
 
-    get boost() {
-        return this.q;
-    }
-
-    set boost(value) {
-        this.q = value;
-    }
-
     get width() {
-        return this.q;
+        return this._node.frequency.value / this._node.Q.value;
     }
 
     set width(value) {
-        this.q = value;
+        if (value <= 0) {
+            this.q = 0;
+            return;
+        }
+        this.q = this._node.frequency.value / value;
     }
 
     get sharpness() {
@@ -112,12 +126,20 @@ class Filter extends AbstractEffect {
         this.q = value;
     }
 
-    get gain() {
+    get boost() {
         return this._node.gain.value;
     }
 
-    set gain(value) {
+    set boost(value) {
         this.setSafeParamValue(this._node.gain, value);
+    }
+
+    get gain() {
+        return this.boost;
+    }
+
+    set gain(value) {
+        this.boost = value;
     }
 
     get detune() {
@@ -126,6 +148,10 @@ class Filter extends AbstractEffect {
 
     set detune(value) {
         this.setSafeParamValue(this._node.detune, value);
+    }
+
+    get maxFrequency() {
+        return sono.context.sampleRate / 2;
     }
 }
 

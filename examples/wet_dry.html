@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>sono - examples - wet / dry</title>
+    <link href="css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/styles/darcula.min.css">
+    <script src="../dist/sono.js"></script>
+</head>
+
+<body>
+    <section>
+        <header>
+            <h2>wet / dry</h2>
+        </header>
+
+
+        <div class="Controls" style="display: block; text-align: center">
+
+            <button class="Button" data-btn="pause">play</button>
+
+            <div class="Controls" data-controls></div>
+
+        </div>
+
+    </section>
+
+    <script src="js/base-url.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        var baseURL = window.baseURL;
+        var sono = window.sono;
+        sono.log();
+
+        var s = sono.create({
+            url: [
+                baseURL + 'ooze.ogg',
+                baseURL + 'ooze.mp3'
+            ],
+            loop: true
+        });
+
+        var effects = {
+            compressor: s.effects.add(sono.compressor({
+                wet: 0
+            })),
+            convolver: s.effects.add(sono.convolver({
+                wet: 0,
+                impulse: [
+                    baseURL + '1a_marble_hall.ogg',
+                    baseURL + '1a_marble_hall.mp3'
+                ]
+            })),
+            distortion: s.effects.add(sono.distortion({
+                wet: 0,
+                dry: 1,
+                level: 1
+            })),
+            echo: s.effects.add(sono.echo({
+                wet: 0,
+                delay: 0.5,
+                feedback: 0.8
+            })),
+            filter: s.effects.add(sono.filter({
+                wet: 0,
+                dry: 1,
+                type: 'lowpass'
+            })),
+            flanger: s.effects.add(sono.flanger({
+                wet: 0,
+                stereo: true
+            })),
+            phaser: s.effects.add(sono.phaser()),
+            reverb: s.effects.add(sono.reverb({
+                wet: 0,
+                time: 5,
+                decay: 8
+            }))
+        };
+
+        var btn = document.querySelector('[data-btn="pause"]');
+
+        btn.addEventListener('click', function() {
+            if (s.playing) {
+                btn.innerText = 'play';
+                s.pause();
+            } else {
+                btn.innerText = 'pause';
+                s.play();
+            }
+        });
+
+        var controls = document.querySelector('[data-controls]');
+
+        Object.keys(effects).map(function(key) {
+            ui.createFader({
+                el: controls,
+                name: key + ' wet',
+                min: 0,
+                max: 1,
+                value: effects[key].wet,
+                places: 3
+            }, function(value) {
+                effects[key].wet = value;
+            });
+
+            ui.createFader({
+                el: controls,
+                name: key + ' dry',
+                min: 0,
+                max: 1,
+                value: effects[key].dry,
+                places: 3
+            }, function(value) {
+                effects[key].dry = value;
+            });
+        });
+
+        // pan.set(1);
+        var counter = 0.01;
+        function update() {
+            window.requestAnimationFrame(update);
+            // s.effects[0].set(0, 0, 0);
+            // console.log(analyser.getWaveform());
+            // console.log(analyser.getFrequencies());
+            // analyser.getPitch(pitch => console.log('pitch:', pitch));
+            // analyser.getAmplitude(amp => console.log('amp:', amp));
+            // pan.set(Math.sin(counter * 8));
+            counter += 0.01;
+        }
+        update();
+    </script>
+</body>
+
+</html>

@@ -15,9 +15,7 @@ function waveform() {
             return wave;
         }
 
-        if (!wave || wave.length !== length) {
-            wave = new Float32Array(length);
-        }
+        wave = new Float32Array(length);
 
         if (!audioBuffer) {
             return wave;

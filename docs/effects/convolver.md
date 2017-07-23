@@ -2,6 +2,8 @@
 
 [View source code](../../src/effects/convolver.js)
 
+[View example](http://stinkstudios.github.io/sono/examples/convolver.html)
+
 Creates a reverb effect by applying the characteristics of one sound to another.
 
 
@@ -16,7 +18,9 @@ import convolver from 'sono/effects/convolver';
 const sound = sono.create({
     url: 'boom.mp3',
     effects: [convolver({
-        impulse: 'large_hall.mp3'
+        impulse: 'large_hall.mp3',
+        wet: 0.5,
+        dry: 0.9
     })]
 });
 sound.play();

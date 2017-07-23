@@ -37,9 +37,7 @@ function microphone(connected, denied, error) {
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({
                 audio: true
-            })
-            .then(onConnect)
-            .catch(onError);
+            }).then(onConnect).catch(onError);
         } else {
             navigator.getUserMedia({
                 audio: true
