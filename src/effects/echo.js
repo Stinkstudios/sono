@@ -16,6 +16,14 @@ class Echo extends AbstractEffect {
         this.update({delay, feedback});
     }
 
+    enable(value) {
+        super.enable(value);
+
+        if (this._feedback && value) {
+            this._feedback.connect(this._delay);
+        }
+    }
+
     update(options) {
         this.delay = options.delay;
         this.feedback = options.feedback;

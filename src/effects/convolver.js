@@ -51,8 +51,13 @@ class Convolver extends AbstractEffect {
             return this;
         }
 
-        if (file.isURL(impulse) || file.isArrayBuffer(impulse)) {
+        if (file.isArrayBuffer(impulse)) {
             this._load(impulse);
+            return this;
+        }
+
+        if (file.isURL(file.getSupportedFile(impulse))) {
+            this._load(file.getSupportedFile(impulse));
         }
 
         return this;

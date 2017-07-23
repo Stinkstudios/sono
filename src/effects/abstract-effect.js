@@ -5,7 +5,7 @@ export default class AbstractEffect {
     constructor(node = null, nodeOut = null, enabled = true) {
         this._node = node;
         this._nodeOut = nodeOut || node;
-        this._enabled = false;
+        this._enabled;
 
         this._in = this.context.createGain();
         this._out = this.context.createGain();
@@ -27,13 +27,14 @@ export default class AbstractEffect {
         this._enabled = b;
 
         this._in.disconnect();
-        this._in.connect(this._dry);
 
         if (b) {
+            this._in.connect(this._dry);
             this._in.connect(this._node);
             this._nodeOut.connect(this._wet);
         } else {
             this._nodeOut.disconnect();
+            this._in.connect(this._out);
         }
     }
 

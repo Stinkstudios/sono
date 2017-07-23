@@ -7,7 +7,7 @@ import sono from '../core/sono';
 // oversample: '4x'
 
 class Distortion extends AbstractEffect {
-    constructor({level = 1, samples = 22050, oversample = 'none', wet = 1, dry = 1} = {}) {
+    constructor({level = 1, samples = 22050, oversample = 'none', wet = 1, dry = 0} = {}) {
         super(sono.context.createWaveShaper(), null, false);
 
         this._node.oversample = oversample || 'none';

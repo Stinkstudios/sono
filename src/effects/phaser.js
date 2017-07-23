@@ -2,7 +2,7 @@ import AbstractEffect from './abstract-effect';
 import sono from '../core/sono';
 
 class Phaser extends AbstractEffect {
-    constructor({stages = 8, feedback = 0.5, frequency = 0.5, gain = 300, wet = 1, dry = 1} = {}) {
+    constructor({stages = 8, feedback = 0.5, frequency = 0.5, gain = 300, wet = 0.8, dry = 0.8} = {}) {
         stages = stages || 8;
 
         const filters = [];
@@ -36,12 +36,25 @@ class Phaser extends AbstractEffect {
         this._lfo.connect(this._lfoGain);
         this._lfo.start(0);
 
-        // last.connect(this._feedback);
-        // this._feedback.connect(first);
+        this._nodeOut.connect(this._feedback);
+        this._feedback.connect(this._node);
 
         this.wet = wet;
         this.dry = dry;
         this.update({frequency, gain, feedback});
+    }
+
+    enable(value) {
+        super.enable(value);
+
+        if (this._feedback) {
+            this._feedback.disconnect();
+        }
+
+        if (value && this._feedback) {
+            this._nodeOut.connect(this._feedback);
+            this._feedback.connect(this._node);
+        }
     }
 
     update(options) {

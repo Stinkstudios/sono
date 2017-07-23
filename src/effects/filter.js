@@ -40,7 +40,7 @@ class Filter extends AbstractEffect {
         width = 100,
         sharpness = 0,
         wet = 1,
-        dry = 1
+        dry = 0
     } = {}) {
         super(sono.context.createBiquadFilter());
 
@@ -68,6 +68,10 @@ class Filter extends AbstractEffect {
 
     get type() {
         return this._node.type;
+    }
+
+    set type(value) {
+        this._node.type = value;
     }
 
     get frequency() {
@@ -102,20 +106,16 @@ class Filter extends AbstractEffect {
         this.q = value;
     }
 
-    get boost() {
-        return this.q;
-    }
-
-    set boost(value) {
-        this.q = value;
-    }
-
     get width() {
-        return this.q;
+        return this._node.frequency.value / this._node.Q.value;
     }
 
     set width(value) {
-        this.q = value;
+        if (value <= 0) {
+            this.q = 0;
+            return;
+        }
+        this.q = this._node.frequency.value / value;
     }
 
     get sharpness() {
@@ -126,12 +126,20 @@ class Filter extends AbstractEffect {
         this.q = value;
     }
 
-    get gain() {
+    get boost() {
         return this._node.gain.value;
     }
 
-    set gain(value) {
+    set boost(value) {
         this.setSafeParamValue(this._node.gain, value);
+    }
+
+    get gain() {
+        return this.boost;
+    }
+
+    set gain(value) {
+        this.boost = value;
     }
 
     get detune() {
@@ -140,6 +148,10 @@ class Filter extends AbstractEffect {
 
     set detune(value) {
         this.setSafeParamValue(this._node.detune, value);
+    }
+
+    get maxFrequency() {
+        return sono.context.sampleRate / 2;
     }
 }
 
