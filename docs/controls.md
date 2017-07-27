@@ -2,6 +2,14 @@
 
 [View source code](../src/core/sono.js)
 
+## Play in background
+
+By default sono will pause and resume all audio when the page is hidden. This feature can be turned off by setting the `playInBackground` property:
+
+```javascript
+sono.playInBackground = true;
+```
+
 ## Master volume
 
 ```javascript
