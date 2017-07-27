@@ -11,7 +11,7 @@ import SoundGroup from './utils/sound-group';
 import touchLock from './utils/touchLock';
 import utils from './utils/utils';
 
-const VERSION = '2.1.0';
+const VERSION = '2.1.1';
 const bus = new Group(context, context.destination);
 
 /*
@@ -226,7 +226,7 @@ function onShown() {
     }
 }
 
-pageVisibility(onHidden, onShown);
+const pageVis = pageVisibility(onHidden, onShown);
 
 function register(name, fn, attachTo = Effects.prototype) {
     attachTo[name] = fn;
@@ -281,6 +281,16 @@ const sono = {
     },
     get isTouchLocked() {
         return isTouchLocked;
+    },
+    get playInBackground() {
+        return !pageVis.enabled;
+    },
+    set playInBackground(value) {
+        pageVis.enabled = !value;
+
+        if (!value) {
+            onShown();
+        }
     },
     get sounds() {
         return bus.sounds.slice(0);
