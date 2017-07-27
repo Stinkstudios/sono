@@ -24,6 +24,10 @@ describe('sono API', () => {
         it('should have log func', () => {
             expect(sono.log).to.be.a('function');
         });
+
+        it('should have log playInBackground getter/setter', () => {
+            expect(sono.playInBackground).to.be.a('boolean');
+        });
     });
 
     describe('create', () => {

@@ -1772,6 +1772,7 @@ function log(api) {
 }
 
 function pageVisibility(onHidden, onShown) {
+    var enabled = false;
     var hidden = null;
     var visibilityChange = null;
 
@@ -1797,9 +1798,28 @@ function pageVisibility(onHidden, onShown) {
         }
     }
 
-    if (typeof visibilityChange !== 'undefined') {
-        document.addEventListener(visibilityChange, onChange, false);
+    function enable(value) {
+        enabled = value;
+
+        if (enabled) {
+            document.addEventListener(visibilityChange, onChange, false);
+        } else {
+            document.removeEventListener(visibilityChange, onChange);
+        }
     }
+
+    if (typeof visibilityChange !== 'undefined') {
+        enable(true);
+    }
+
+    return {
+        get enabled() {
+            return enabled;
+        },
+        set enabled(value) {
+            enable(value);
+        }
+    };
 }
 
 function BufferSource(buffer, context, endedCallback) {
@@ -3508,13 +3528,15 @@ var _effects2;
 var _fx;
 var _fx2;
 var _isTouchLocked;
+var _playInBackground;
+var _playInBackground2;
 var _sounds;
 var _volume;
 var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.1.0';
+var VERSION = '2.1.1';
 var bus = new Group(context$1, context$1.destination);
 
 /*
@@ -3746,7 +3768,7 @@ function onShown() {
     }
 }
 
-pageVisibility(onHidden, onShown);
+var pageVis = pageVisibility(onHidden, onShown);
 
 function register(name, fn) {
     var attachTo = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : Effects.prototype;
@@ -3801,6 +3823,14 @@ var sono$1 = (_sono = {
     this.effects = value;
 }, _isTouchLocked = 'isTouchLocked', _mutatorMap[_isTouchLocked] = _mutatorMap[_isTouchLocked] || {}, _mutatorMap[_isTouchLocked].get = function () {
     return isTouchLocked;
+}, _playInBackground = 'playInBackground', _mutatorMap[_playInBackground] = _mutatorMap[_playInBackground] || {}, _mutatorMap[_playInBackground].get = function () {
+    return !pageVis.enabled;
+}, _playInBackground2 = 'playInBackground', _mutatorMap[_playInBackground2] = _mutatorMap[_playInBackground2] || {}, _mutatorMap[_playInBackground2].set = function (value) {
+    pageVis.enabled = !value;
+
+    if (!value) {
+        onShown();
+    }
 }, _sounds = 'sounds', _mutatorMap[_sounds] = _mutatorMap[_sounds] || {}, _mutatorMap[_sounds].get = function () {
     return bus.sounds.slice(0);
 }, _volume = 'volume', _mutatorMap[_volume] = _mutatorMap[_volume] || {}, _mutatorMap[_volume].get = function () {
