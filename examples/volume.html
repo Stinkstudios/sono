@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>sono - examples - volume</title>
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="../dist/sono.js"></script>
+</head>
+
+<body>
+    <section>
+        <header>
+            <h2>volume</h2>
+        </header>
+
+
+        <div class="Controls">
+
+            <output>0.00</output>
+
+            <div class="Controls">
+                <button class="Button" data-btn="pause">pause</button>
+            </div>
+            <div class="Controls">
+                <button class="Button" data-btn="fade-up">fade up</button>
+                <button class="Button" data-btn="fade-down">fade down</button>
+            </div>
+            <div class="Controls">
+                <button class="Button" data-btn="minus">&ndash;</button>
+                <button class="Button" data-btn="plus">+</button>
+            </div>
+            <div class="Controls">
+                <button class="Button" data-btn="zero">0</button>
+                <button class="Button" data-btn="one">1</button>
+            </div>
+            <div class="Controls" data-controls></div>
+
+        </div>
+
+    </section>
+
+    <script src="js/disable.js"></script>
+    <script src="../dist/sono.js"></script>
+    <script src="js/base-url.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.10.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+        var sono = window.sono;
+        sono.log();
+
+        var baseURL = 'audio/';
+
+        var sound = sono.create({
+            url: baseURL + 'ooze.mp3',
+            loop: true
+        });
+        sound.play();
+
+        function updateVolume() {
+            output.innerText = sound.volume.toFixed(2)
+            fader.setValue(sound.volume);
+        }
+
+        document.querySelector('[data-btn="pause"]').addEventListener('click', function() {
+            if (sound.playing) {
+                document.querySelector('[data-btn="pause"]').innerText = 'play';
+                sound.pause();
+            } else {
+                document.querySelector('[data-btn="pause"]').innerText = 'pause';
+                sound.play();
+            }
+        });
+
+        document.querySelector('[data-btn="fade-up"]').addEventListener('click', function() {
+            sound.fade(1, 3);
+        });
+
+        document.querySelector('[data-btn="fade-down"]').addEventListener('click', function() {
+            sound.fade(0, 3);
+        });
+
+        document.querySelector('[data-btn="minus"]').addEventListener('click', function() {
+            sound.volume -= 0.1;
+        });
+
+        document.querySelector('[data-btn="plus"]').addEventListener('click', function() {
+            sound.volume += 0.1;
+        });
+
+        document.querySelector('[data-btn="zero"]').addEventListener('click', function() {
+            sound.volume = 0;
+        });
+
+        document.querySelector('[data-btn="one"]').addEventListener('click', function() {
+            sound.volume = 1;
+        });
+
+        var controls = document.querySelector('[data-controls]');
+        var output = document.querySelector('output');
+
+        var fader = ui.createFader({
+            el: controls,
+            name: 'Volume',
+            min: 0,
+            max: 1,
+            value: sound.volume,
+            places: 3
+        }, function(value) {
+            sound.volume = value;
+        });
+
+        function update() {
+            window.requestAnimationFrame(update);
+            updateVolume();
+        }
+        update();
+    </script>
+</body>
+
+</html>
