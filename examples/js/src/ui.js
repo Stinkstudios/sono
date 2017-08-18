@@ -550,7 +550,7 @@
         el.addEventListener('touchstart', onDown);
         mouseLeftWindow(onUp);
 
-        return {destroy};
+        return {setValue, destroy};
     }
 
     function createPlayButton(options) {

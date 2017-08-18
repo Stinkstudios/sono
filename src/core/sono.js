@@ -11,7 +11,7 @@ import SoundGroup from './utils/sound-group';
 import touchLock from './utils/touchLock';
 import utils from './utils/utils';
 
-const VERSION = '2.1.1';
+const VERSION = '2.1.2';
 const bus = new Group(context, context.destination);
 
 /*
