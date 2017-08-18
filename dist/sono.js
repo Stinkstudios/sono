@@ -2017,6 +2017,8 @@ function BufferSource(buffer, context, endedCallback) {
     return Object.freeze(api);
 }
 
+var firefox = navigator && /Firefox/i.test(navigator.userAgent);
+
 var offlineCtx = void 0;
 /*
 In contrast with a standard AudioContext, an OfflineAudioContext doesn't render
@@ -2957,6 +2959,7 @@ var Sound = function (_Emitter) {
         _this._config = config;
 
         _this._data = null;
+        _this._fadeTimeout = null;
         _this._isTouchLocked = false;
         _this._loader = null;
         _this._loop = false;
@@ -3085,17 +3088,36 @@ var Sound = function (_Emitter) {
 
         var param = this._gain.gain;
 
-        if (this._context && !this._context.isFake) {
+        if (this._context && !this._context.isFake && !firefox) {
             var time = this._context.currentTime;
             param.cancelScheduledValues(time);
             param.setValueAtTime(param.value, time);
             param.linearRampToValueAtTime(volume, time + duration);
-        } else if (typeof this._source.fade === 'function') {
-            this._source.fade(volume, duration);
-            param.value = volume;
+        } else {
+            this._fadePolyfill(volume, duration);
         }
 
         this.emit('fade', this, volume);
+
+        return this;
+    };
+
+    Sound.prototype._fadePolyfill = function _fadePolyfill(toVolume, duration) {
+        var _this3 = this;
+
+        var ramp = function ramp(value, step) {
+            _this3._fadeTimeout = window.setTimeout(function () {
+                _this3.volume = _this3.volume + (value - _this3.volume) * 0.2;
+                if (Math.abs(_this3.volume - value) > 0.05) {
+                    ramp(value, step);
+                    return;
+                }
+                _this3.volume = value;
+            }, step * 1000);
+        };
+
+        window.clearTimeout(this._fadeTimeout);
+        ramp(toVolume, duration / 10);
 
         return this;
     };
@@ -3138,14 +3160,14 @@ var Sound = function (_Emitter) {
     };
 
     Sound.prototype.waveform = function waveform(length) {
-        var _this3 = this;
+        var _this4 = this;
 
         if (!this._wave) {
             this._wave = utils.waveform();
         }
         if (!this._data) {
             this.once('ready', function () {
-                return _this3._wave(_this3._data, length);
+                return _this4._wave(_this4._data, length);
             });
         }
         return this._wave(this._data, length);
@@ -3370,13 +3392,17 @@ var Sound = function (_Emitter) {
                 return;
             }
 
+            window.clearTimeout(this._fadeTimeout);
+
             value = Math.min(Math.max(value, 0), 1);
 
             var param = this._gain.gain;
             var time = this._context.currentTime;
             param.cancelScheduledValues(time);
             param.value = value;
-            param.setValueAtTime(value, time);
+            if (!firefox) {
+                param.setValueAtTime(value, time);
+            }
 
             if (this._source && this._source.hasOwnProperty('volume')) {
                 this._source.volume = value;
@@ -3536,7 +3562,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.1.1';
+var VERSION = '2.1.2';
 var bus = new Group(context$1, context$1.destination);
 
 /*

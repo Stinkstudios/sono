@@ -3,6 +3,7 @@ import BufferSource from './source/buffer-source';
 import Effects from './effects';
 import Emitter from './utils/emitter';
 import file from './utils/file';
+import firefox from './utils/firefox';
 import utils from './utils/utils';
 import isSafeNumber from './utils/isSafeNumber';
 import Loader from './utils/loader';
@@ -24,6 +25,7 @@ export default class Sound extends Emitter {
         this._config = config;
 
         this._data = null;
+        this._fadeTimeout = null;
         this._isTouchLocked = false;
         this._loader = null;
         this._loop = false;
@@ -142,17 +144,34 @@ export default class Sound extends Emitter {
 
         const param = this._gain.gain;
 
-        if (this._context && !this._context.isFake) {
+        if (this._context && !this._context.isFake && !firefox) {
             const time = this._context.currentTime;
             param.cancelScheduledValues(time);
             param.setValueAtTime(param.value, time);
             param.linearRampToValueAtTime(volume, time + duration);
-        } else if (typeof this._source.fade === 'function') {
-            this._source.fade(volume, duration);
-            param.value = volume;
+        } else {
+            this._fadePolyfill(volume, duration);
         }
 
         this.emit('fade', this, volume);
+
+        return this;
+    }
+
+    _fadePolyfill(toVolume, duration) {
+        const ramp = (value, step) => {
+            this._fadeTimeout = window.setTimeout(() => {
+                this.volume = this.volume + (value - this.volume) * 0.2;
+                if (Math.abs(this.volume - value) > 0.05) {
+                    ramp(value, step);
+                    return;
+                }
+                this.volume = value;
+            }, step * 1000);
+        };
+
+        window.clearTimeout(this._fadeTimeout);
+        ramp(toVolume, duration / 10);
 
         return this;
     }
@@ -365,13 +384,17 @@ export default class Sound extends Emitter {
             return;
         }
 
+        window.clearTimeout(this._fadeTimeout);
+
         value = Math.min(Math.max(value, 0), 1);
 
         const param = this._gain.gain;
         const time = this._context.currentTime;
         param.cancelScheduledValues(time);
         param.value = value;
-        param.setValueAtTime(value, time);
+        if (!firefox) {
+            param.setValueAtTime(value, time);
+        }
 
         if (this._source && this._source.hasOwnProperty('volume')) {
             this._source.volume = value;
