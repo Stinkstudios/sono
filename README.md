@@ -1,5 +1,7 @@
 # sono
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/Stinkstudios/sono.svg)](https://greenkeeper.io/)
+
 [![NPM version](https://badge.fury.io/js/sono.svg)](http://badge.fury.io/js/sono) [![Build Status](https://travis-ci.org/Stinkstudios/sono.svg?branch=master)](https://travis-ci.org/Stinkstudios/sono)
 
 A simple yet powerful JavaScript library for working with Web Audio
