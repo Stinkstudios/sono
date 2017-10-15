@@ -1,16 +1,15 @@
 export default function MediaSource(el, context, onEnded) {
     const api = {};
-    let ended = false,
-        endedCallback = onEnded,
-        delayTimeout,
-        fadeTimeout,
-        loop = false,
-        paused = false,
-        playbackRate = 1,
-        playing = false,
-        sourceNode = null,
-        groupVolume = 1,
-        volume = 1;
+    let ended = false;
+    let endedCallback = onEnded;
+    let delayTimeout = null;
+    let loop = false;
+    let paused = false;
+    let playbackRate = 1;
+    let playing = false;
+    let sourceNode = null;
+    let groupVolume = 1;
+    let volume = 1;
 
     function createSourceNode() {
         if (!sourceNode && context) {
@@ -134,32 +133,6 @@ export default function MediaSource(el, context, onEnded) {
     }
 
     /*
-     * Fade for no webaudio
-     */
-
-    function fade(toVolume, duration) {
-        if (context && !context.isFake) {
-            return api;
-        }
-
-        function ramp(value, step) {
-            fadeTimeout = window.setTimeout(() => {
-                api.volume = api.volume + (value - api.volume) * 0.2;
-                if (Math.abs(api.volume - value) > 0.05) {
-                    ramp(value, step);
-                    return;
-                }
-                api.volume = value;
-            }, step * 1000);
-        }
-
-        window.clearTimeout(fadeTimeout);
-        ramp(toVolume, duration / 10);
-
-        return api;
-    }
-
-    /*
      * Destroy
      */
 
@@ -189,9 +162,6 @@ export default function MediaSource(el, context, onEnded) {
         },
         load: {
             value: load
-        },
-        fade: {
-            value: fade
         },
         destroy: {
             value: destroy
@@ -260,7 +230,6 @@ export default function MediaSource(el, context, onEnded) {
                 return volume;
             },
             set: function(value) {
-                window.clearTimeout(fadeTimeout);
                 volume = value;
                 if (el) {
                     el.volume = volume * groupVolume;

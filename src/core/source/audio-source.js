@@ -76,13 +76,6 @@ export default function AudioSource(Type, data, context, onEnded) {
         source.load(url);
     }
 
-    function fade(volume, duration) {
-        if (typeof source.fade === 'function') {
-            source.fade(volume, duration);
-            clones.forEach(src => src.fade(volume, duration));
-        }
-    }
-
     function destroy() {
         source.destroy();
         while (clones.length) {
@@ -110,9 +103,6 @@ export default function AudioSource(Type, data, context, onEnded) {
         },
         load: {
             value: load
-        },
-        fade: {
-            value: fade
         },
         destroy: {
             value: destroy
