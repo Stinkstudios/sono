@@ -2162,7 +2162,7 @@ function AudioSource(Type, data, context, onEnded) {
     }
 
     function onSourceEnded(src) {
-        if (clones.length) {
+        if (src !== source && clones.length) {
             var index = clones.indexOf(src);
             clones.splice(index, 1);
             disposeSource(src);
@@ -3525,7 +3525,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.1.3';
+var VERSION = '2.1.4';
 var bus = new Group(context$1, context$1.destination);
 
 /*
