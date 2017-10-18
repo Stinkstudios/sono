@@ -19,7 +19,7 @@ export default function AudioSource(Type, data, context, onEnded) {
     }
 
     function onSourceEnded(src) {
-        if (clones.length) {
+        if (src !== source && clones.length) {
             const index = clones.indexOf(src);
             clones.splice(index, 1);
             disposeSource(src);
