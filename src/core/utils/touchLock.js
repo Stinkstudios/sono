@@ -22,11 +22,17 @@ export default function touchLock(context, callback) {
         callback();
     }
 
+    function addListeners() {
+        document.body.addEventListener('touchstart', unlock, false);
+        document.body.addEventListener('touchend', unlock, false);
+    }
+
     if (locked) {
-        document.addEventListener('DOMContentLoaded', () => {
-            document.body.addEventListener('touchstart', unlock, false);
-            document.body.addEventListener('touchend', unlock, false);
-        });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', addListeners);
+        } else {
+            addListeners();
+        }
     }
 
     return locked;
