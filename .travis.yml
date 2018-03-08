@@ -7,9 +7,7 @@ cache:
   directories:
   - node_modules
 addons:
-  apt:
-    packages:
-      - google-chrome-stable
+  chrome: stable
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
