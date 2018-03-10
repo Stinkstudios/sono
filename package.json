@@ -13,7 +13,7 @@
   "main": "core/sono.js",
   "scripts": {
     "prepublish": "npm run lib",
-    "test": "eslint 'src/**/*.js' && mocha 'test/bundle-nodejs.spec.js' && karma start --single-run --browsers Chrome && WA=no karma start --single-run --browsers Chrome",
+    "test": "eslint 'src/**/*.js' && karma start --single-run --browsers Chrome && WA=no karma start --single-run --browsers Chrome",
     "build": "NODE_ENV=production rollup -c && rollup -c && npm run lib",
     "start": "rollup -c -w",
     "start:test": "rollup -c -w | karma start",
