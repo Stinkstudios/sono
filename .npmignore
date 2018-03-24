@@ -2,6 +2,12 @@
 /examples/
 /labs/
 /test/
+/.babelrc
+/.eslintrc
+/.editorconfig
+/.gitattributes
+/.travis.yml
+/bower.json
 /index.html
 /index.js
 /karma.conf.js

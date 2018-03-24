@@ -1,6 +1,6 @@
 {
   "name": "sono",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "A simple yet powerful JavaScript library for working with Web Audio",
   "keywords": [
     "WebAudio",
@@ -12,9 +12,9 @@
   ],
   "main": "core/sono.js",
   "scripts": {
-    "postinstall": "babel src --out-dir ./",
+    "prepublish": "npm run lib",
     "test": "eslint 'src/**/*.js' && karma start --single-run --browsers Chrome && WA=no karma start --single-run --browsers Chrome",
-    "build": "NODE_ENV=production rollup -c && rollup -c",
+    "build": "NODE_ENV=production rollup -c && rollup -c && npm run lib",
     "start": "rollup -c -w",
     "start:test": "rollup -c -w | karma start",
     "lint": "eslint 'src/**/*.js'; exit 0",
