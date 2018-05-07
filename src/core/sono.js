@@ -19,6 +19,7 @@ const VERSION = '2.1.5';
 
 function initContext() {
     sono.context = createContext();
+    sono.context.isInitialized = true;
     sono.hasWebAudio = !sono.context.isFake;
     sono.bus = new Group(sono.context, sono.context.destination);
     sono.effects = sono.bus.effects;
@@ -37,6 +38,14 @@ function initContext() {
 }
 
 /*
+* Get the context
+*/
+
+function getContext() {
+    return sono.context.isInitialized ? sono.context : initContext();
+}
+
+/*
 * Get Sound by id
 */
 
@@ -49,7 +58,7 @@ function get(id) {
 */
 
 function group(sounds) {
-    const soundGroup = new SoundGroup(sono.context || initContext(), sono.bus.gain);
+    const soundGroup = new SoundGroup(sono.getContext(), sono.bus.gain);
     if (sounds) {
         sounds.forEach((sound) => soundGroup.add(sound));
     }
@@ -62,9 +71,10 @@ function group(sounds) {
 
 function add(config) {
     const src = file.getSupportedFile(config.src || config.url || config.data || config);
+    const context = sono.getContext();
     const sound = new Sound(Object.assign({}, config || {}, {
         src,
-        context: sono.context || initContext(),
+        context,
         destination: sono.bus.gain
     }));
     sound.isTouchLocked = isTouchLocked;
@@ -261,7 +271,7 @@ function register(name, fn, attachTo = Effects.prototype) {
 
 const sono = {
     canPlay: file.canPlay,
-    context: null,
+    context: {},
     create,
     createGroup: group,
     createSound: create,
@@ -272,6 +282,7 @@ const sono = {
     file,
     getOfflineContext: utils.getOfflineContext,
     get,
+    getContext,
     getSound: get,
     group,
     init: initContext,
