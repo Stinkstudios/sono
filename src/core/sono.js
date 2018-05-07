@@ -164,6 +164,11 @@ function fade(volume, duration) {
     return sono;
 }
 
+function playAll(delay, offset) {
+    sono.bus.play(delay, offset);
+    return sono;
+}
+
 function pauseAll() {
     bus.pause();
     return sono;
@@ -260,6 +265,7 @@ const sono = {
     pause,
     pauseAll,
     play,
+    playAll,
     register,
     resumeAll,
     stop,
