@@ -1,5 +1,5 @@
-import context from '../core/context';
 import isSafeNumber from '../core/utils/isSafeNumber';
+import sono from '../core/sono';
 
 export default class AbstractEffect {
     constructor(node = null, nodeOut = null, enabled = true) {
@@ -7,10 +7,10 @@ export default class AbstractEffect {
         this._nodeOut = nodeOut || node;
         this._enabled;
 
-        this._in = this.context.createGain();
-        this._out = this.context.createGain();
-        this._wet = this.context.createGain();
-        this._dry = this.context.createGain();
+        this._in = sono.context.createGain();
+        this._out = sono.context.createGain();
+        this._wet = sono.context.createGain();
+        this._dry = sono.context.createGain();
 
         this._in.connect(this._dry);
         this._wet.connect(this._out);
@@ -72,10 +72,6 @@ export default class AbstractEffect {
 
     update() {
         throw new Error('update must be overridden');
-    }
-
-    get context() {
-        return context;
     }
 
     get numberOfInputs() {

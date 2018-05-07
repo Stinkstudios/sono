@@ -1,4 +1,3 @@
-import context from './context';
 import BufferSource from './source/buffer-source';
 import Effects from './effects';
 import Emitter from './utils/emitter';

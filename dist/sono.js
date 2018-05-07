@@ -513,30 +513,32 @@ var desiredSampleRate = 44100;
 
 var Ctx = window.AudioContext || window.webkitAudioContext || FakeContext;
 
-var context = new Ctx();
+function createContext() {
+    var context = new Ctx();
 
-if (!context) {
-    context = new FakeContext();
+    if (!context) {
+        context = new FakeContext();
+    }
+
+    // Check if hack is necessary. Only occurs in iOS6+ devices
+    // and only when you first boot the iPhone, or play a audio/video
+    // with a different sample rate
+    // https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
+    if (iOS && context.sampleRate !== desiredSampleRate) {
+        dummy(context);
+        context.close(); // dispose old context
+        context = new Ctx();
+    }
+
+    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+    if (context.state === 'suspended' && typeof context.resume === 'function') {
+        window.setTimeout(function () {
+            return context.resume();
+        }, 1000);
+    }
+
+    return context;
 }
-
-// Check if hack is necessary. Only occurs in iOS6+ devices
-// and only when you first boot the iPhone, or play a audio/video
-// with a different sample rate
-// https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
-if (iOS && context.sampleRate !== desiredSampleRate) {
-    dummy(context);
-    context.close(); // dispose old context
-    context = new Ctx();
-}
-
-// Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
-if (context.state === 'suspended' && typeof context.resume === 'function') {
-    window.setTimeout(function () {
-        return context.resume();
-    }, 1000);
-}
-
-var context$1 = context;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
@@ -578,16 +580,7 @@ var createClass = function () {
   };
 }();
 
-var defineEnumerableProperties = function (obj, descs) {
-  for (var key in descs) {
-    var desc = descs[key];
-    desc.configurable = desc.enumerable = true;
-    if ("value" in desc) desc.writable = true;
-    Object.defineProperty(obj, key, desc);
-  }
 
-  return obj;
-};
 
 
 
@@ -2065,11 +2058,11 @@ function cloneBuffer(buffer) {
     var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
     var length = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : buffer.length;
 
-    if (!context$1 || context$1.isFake) {
+    if (!sono$1.context || sono$1.context.isFake) {
         return buffer;
     }
     var numChannels = buffer.numberOfChannels;
-    var cloned = context$1.createBuffer(numChannels, length, buffer.sampleRate);
+    var cloned = sono$1.context.createBuffer(numChannels, length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i).slice(offset, offset + length));
     }
@@ -2093,16 +2086,16 @@ function reverseBuffer(buffer) {
  */
 
 function ramp(param, fromValue, toValue, duration, linear) {
-    if (context$1.isFake) {
+    if (sono$1.context.isFake) {
         return;
     }
 
-    param.setValueAtTime(fromValue, context$1.currentTime);
+    param.setValueAtTime(fromValue, sono$1.context.currentTime);
 
     if (linear) {
-        param.linearRampToValueAtTime(toValue, context$1.currentTime + duration);
+        param.linearRampToValueAtTime(toValue, sono$1.context.currentTime + duration);
     } else {
-        param.exponentialRampToValueAtTime(toValue, context$1.currentTime + duration);
+        param.exponentialRampToValueAtTime(toValue, sono$1.context.currentTime + duration);
     }
 }
 
@@ -2111,14 +2104,14 @@ function ramp(param, fromValue, toValue, duration, linear) {
  */
 
 function getFrequency(value) {
-    if (context$1.isFake) {
+    if (sono$1.context.isFake) {
         return 0;
     }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     var minValue = 40;
-    var maxValue = context$1.sampleRate / 2;
+    var maxValue = sono$1.context.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -2926,7 +2919,7 @@ var Sound = function (_Emitter) {
 
         _this.id = config.id || null;
 
-        _this._context = config.context || context$1;
+        _this._context = config.context || context;
         _this._destination = config.destination || _this._context.destination;
         _this._effects = new Effects(_this._context);
         _this._gain = _this._context.createGain();
@@ -3529,28 +3522,39 @@ function touchLock(context, callback) {
     return locked;
 }
 
-var _effects;
-var _effects2;
-var _fx;
-var _fx2;
-var _isTouchLocked;
-var _playInBackground;
-var _playInBackground2;
-var _sounds;
-var _volume;
-var _volume2;
-var _sono;
-var _mutatorMap;
-
 var VERSION = '2.1.5';
-var bus = new Group(context$1, context$1.destination);
+
+/*
+* Initialize the context
+*/
+
+function initContext() {
+    sono$1.context = createContext();
+    sono$1.hasWebAudio = !sono$1.context.isFake;
+    sono$1.bus = new Group(sono$1.context, sono$1.context.destination);
+    sono$1.effects = sono$1.bus.effects;
+    sono$1.gain = sono$1.bus.gain;
+
+    // Mobile touch lock
+    isTouchLocked = touchLock(sono$1.context, function () {
+        isTouchLocked = false;
+        sono$1.bus.sounds.forEach(function (sound) {
+            return sound.isTouchLocked = false;
+        });
+    });
+
+    // Page visibility events
+    sono$1.pageVis = pageVisibility(onHidden, onShown);
+
+    return sono$1.context;
+}
 
 /*
 * Get Sound by id
 */
 
-function get$$1(id) {
-    return bus.find(id);
+function get(id) {
+    return sono$1.bus.find(id);
 }
 
 /*
@@ -3558,7 +3562,7 @@ function get$$1(id) {
 */
 
 function group(sounds) {
-    var soundGroup = new SoundGroup(context$1, bus.gain);
+    var soundGroup = new SoundGroup(sono$1.context, sono$1.bus.gain);
     if (sounds) {
         sounds.forEach(function (sound) {
             return soundGroup.add(sound);
@@ -3575,8 +3579,8 @@ function add(config) {
     var src = file.getSupportedFile(config.src || config.url || config.data || config);
     var sound = new Sound(Object.assign({}, config || {}, {
         src: src,
-        context: context$1,
-        destination: bus.gain
+        context: sono$1.context,
+        destination: sono$1.bus.gain
     }));
     sound.isTouchLocked = isTouchLocked;
     if (config) {
@@ -3585,7 +3589,7 @@ function add(config) {
         sound.volume = config.volume;
         sound.effects = config.effects || [];
     }
-    bus.add(sound);
+    sono$1.bus.add(sound);
     return sound;
 }
 
@@ -3674,14 +3678,14 @@ function create(config) {
 */
 
 function destroy(soundOrId) {
-    bus.find(soundOrId, function (sound) {
+    sono$1.bus.find(soundOrId, function (sound) {
         return sound.destroy();
     });
     return sono$1;
 }
 
 function destroyAll() {
-    bus.destroy();
+    sono$1.bus.destroy();
     return sono$1;
 }
 
@@ -3690,17 +3694,17 @@ function destroyAll() {
 */
 
 function mute() {
-    bus.mute();
+    sono$1.bus.mute();
     return sono$1;
 }
 
 function unMute() {
-    bus.unMute();
+    sono$1.bus.unMute();
     return sono$1;
 }
 
 function fade(volume, duration) {
-    bus.fade(volume, duration);
+    sono$1.bus.fade(volume, duration);
     return sono$1;
 }
 
@@ -3710,36 +3714,36 @@ function playAll(delay, offset) {
 }
 
 function pauseAll() {
-    bus.pause();
+    sono$1.bus.pause();
     return sono$1;
 }
 
 function resumeAll() {
-    bus.resume();
+    sono$1.bus.resume();
     return sono$1;
 }
 
 function stopAll() {
-    bus.stop();
+    sono$1.bus.stop();
     return sono$1;
 }
 
 function play(id, delay, offset) {
-    bus.find(id, function (sound) {
+    sono$1.bus.find(id, function (sound) {
         return sound.play(delay, offset);
     });
     return sono$1;
 }
 
 function pause(id) {
-    bus.find(id, function (sound) {
+    sono$1.bus.find(id, function (sound) {
         return sound.pause();
     });
     return sono$1;
 }
 
 function stop(id) {
-    bus.find(id, function (sound) {
+    sono$1.bus.find(id, function (sound) {
         return sound.stop();
     });
     return sono$1;
@@ -3749,12 +3753,9 @@ function stop(id) {
 * Mobile touch lock
 */
 
-var isTouchLocked = touchLock(context$1, function () {
-    isTouchLocked = false;
-    bus.sounds.forEach(function (sound) {
-        return sound.isTouchLocked = false;
-    });
-});
+var isTouchLocked = function isTouchLocked() {
+    return false;
+};
 
 /*
 * Page visibility events
@@ -3764,7 +3765,7 @@ var pageHiddenPaused = [];
 
 // pause currently playing sounds and store refs
 function onHidden() {
-    bus.sounds.forEach(function (sound) {
+    sono$1.bus.sounds.forEach(function (sound) {
         if (sound.playing) {
             sound.pause();
             pageHiddenPaused.push(sound);
@@ -3779,8 +3780,6 @@ function onShown() {
     }
 }
 
-var pageVis = pageVisibility(onHidden, onShown);
-
 function register(name, fn) {
     var attachTo = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : Effects.prototype;
 
@@ -3790,24 +3789,24 @@ function register(name, fn) {
     return fn;
 }
 
-var sono$1 = (_sono = {
+var sono$1 = {
     canPlay: file.canPlay,
-    context: context$1,
+    context: null,
     create: create,
     createGroup: group,
     createSound: create,
     destroyAll: destroyAll,
     destroy: destroy,
-    effects: bus.effects,
     extensions: file.extensions,
     fade: fade,
     file: file,
-    gain: bus.gain,
     getOfflineContext: utils.getOfflineContext,
-    get: get$$1,
-    getSound: get$$1,
+    get: get,
+    getSound: get,
     group: group,
-    hasWebAudio: !context$1.isFake,
+    init: initContext,
+    initAudioContext: initContext,
+    initContext: initContext,
     isSupported: file.extensions.length > 0,
     load: load,
     log: function log$$1() {
@@ -3824,36 +3823,48 @@ var sono$1 = (_sono = {
     stopAll: stopAll,
     unMute: unMute,
     utils: utils,
-    VERSION: VERSION
-}, _effects = 'effects', _mutatorMap = {}, _mutatorMap[_effects] = _mutatorMap[_effects] || {}, _mutatorMap[_effects].get = function () {
-    return bus.effects;
-}, _effects2 = 'effects', _mutatorMap[_effects2] = _mutatorMap[_effects2] || {}, _mutatorMap[_effects2].set = function (value) {
-    bus.effects.removeAll().add(value);
-}, _fx = 'fx', _mutatorMap[_fx] = _mutatorMap[_fx] || {}, _mutatorMap[_fx].get = function () {
-    return this.effects;
-}, _fx2 = 'fx', _mutatorMap[_fx2] = _mutatorMap[_fx2] || {}, _mutatorMap[_fx2].set = function (value) {
-    this.effects = value;
-}, _isTouchLocked = 'isTouchLocked', _mutatorMap[_isTouchLocked] = _mutatorMap[_isTouchLocked] || {}, _mutatorMap[_isTouchLocked].get = function () {
-    return isTouchLocked;
-}, _playInBackground = 'playInBackground', _mutatorMap[_playInBackground] = _mutatorMap[_playInBackground] || {}, _mutatorMap[_playInBackground].get = function () {
-    return !pageVis.enabled;
-}, _playInBackground2 = 'playInBackground', _mutatorMap[_playInBackground2] = _mutatorMap[_playInBackground2] || {}, _mutatorMap[_playInBackground2].set = function (value) {
-    pageVis.enabled = !value;
+    VERSION: VERSION,
+    get effects() {
+        return sono$1.bus.effects;
+    },
+    set effects(value) {
+        sono$1.bus.effects.removeAll().add(value);
+    },
+    get fx() {
+        return this.effects;
+    },
+    set fx(value) {
+        this.effects = value;
+    },
+    get isTouchLocked() {
+        return isTouchLocked;
+    },
+    get playInBackground() {
+        return !sono$1.pageVis.enabled;
+    },
+    set playInBackground(value) {
+        sono$1.pageVis.enabled = !value;
 
-    if (!value) {
-        onShown();
+        if (!value) {
+            onShown();
+        }
+    },
+    get sounds() {
+        return sono$1.bus.sounds.slice(0);
+    },
+    get volume() {
+        return sono$1.bus.volume;
+    },
+    set volume(value) {
+        sono$1.bus.volume = value;
+    },
+    // expose for unit testing
+    __test: {
+        Effects: Effects,
+        Group: Group,
+        Sound: Sound
     }
-}, _sounds = 'sounds', _mutatorMap[_sounds] = _mutatorMap[_sounds] || {}, _mutatorMap[_sounds].get = function () {
-    return bus.sounds.slice(0);
-}, _volume = 'volume', _mutatorMap[_volume] = _mutatorMap[_volume] || {}, _mutatorMap[_volume].get = function () {
-    return bus.volume;
-}, _volume2 = 'volume', _mutatorMap[_volume2] = _mutatorMap[_volume2] || {}, _mutatorMap[_volume2].set = function (value) {
-    bus.volume = value;
-}, _sono.__test = {
-    Effects: Effects,
-    Group: Group,
-    Sound: Sound
-}, defineEnumerableProperties(_sono, _mutatorMap), _sono);
+};
 
 var AbstractDirectEffect = function () {
     function AbstractDirectEffect(node) {
@@ -3879,11 +3890,6 @@ var AbstractDirectEffect = function () {
     };
 
     createClass(AbstractDirectEffect, [{
-        key: 'context',
-        get: function get$$1() {
-            return context$1;
-        }
-    }, {
         key: 'numberOfInputs',
         get: function get$$1() {
             return 1;
@@ -4146,10 +4152,10 @@ var AbstractEffect = function () {
         this._nodeOut = nodeOut || node;
         this._enabled;
 
-        this._in = this.context.createGain();
-        this._out = this.context.createGain();
-        this._wet = this.context.createGain();
-        this._dry = this.context.createGain();
+        this._in = sono$1.context.createGain();
+        this._out = sono$1.context.createGain();
+        this._wet = sono$1.context.createGain();
+        this._dry = sono$1.context.createGain();
 
         this._in.connect(this._dry);
         this._wet.connect(this._out);
@@ -4216,11 +4222,6 @@ var AbstractEffect = function () {
         },
         set: function set$$1(value) {
             this.setSafeParamValue(this._dry.gain, value);
-        }
-    }, {
-        key: 'context',
-        get: function get$$1() {
-            return context$1;
         }
     }, {
         key: 'numberOfInputs',

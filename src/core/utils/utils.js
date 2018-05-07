@@ -1,4 +1,4 @@
-import context from '../context';
+import sono from '../sono';
 
 let offlineCtx;
 /*
@@ -27,11 +27,11 @@ function getOfflineContext(numOfChannels, length, sampleRate) {
  */
 
 function cloneBuffer(buffer, offset = 0, length = buffer.length) {
-    if (!context || context.isFake) {
+    if (!sono.context || sono.context.isFake) {
         return buffer;
     }
     const numChannels = buffer.numberOfChannels;
-    const cloned = context.createBuffer(numChannels, length, buffer.sampleRate);
+    const cloned = sono.context.createBuffer(numChannels, length, buffer.sampleRate);
     for (let i = 0; i < numChannels; i++) {
         cloned.getChannelData(i)
             .set(buffer.getChannelData(i).slice(offset, offset + length));
@@ -56,16 +56,16 @@ function reverseBuffer(buffer) {
  */
 
 function ramp(param, fromValue, toValue, duration, linear) {
-    if (context.isFake) {
+    if (sono.context.isFake) {
         return;
     }
 
-    param.setValueAtTime(fromValue, context.currentTime);
+    param.setValueAtTime(fromValue, sono.context.currentTime);
 
     if (linear) {
-        param.linearRampToValueAtTime(toValue, context.currentTime + duration);
+        param.linearRampToValueAtTime(toValue, sono.context.currentTime + duration);
     } else {
-        param.exponentialRampToValueAtTime(toValue, context.currentTime + duration);
+        param.exponentialRampToValueAtTime(toValue, sono.context.currentTime + duration);
     }
 }
 
@@ -74,14 +74,14 @@ function ramp(param, fromValue, toValue, duration, linear) {
  */
 
 function getFrequency(value) {
-    if (context.isFake) {
+    if (sono.context.isFake) {
         return 0;
     }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     const minValue = 40;
-    const maxValue = context.sampleRate / 2;
+    const maxValue = sono.context.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     const numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
