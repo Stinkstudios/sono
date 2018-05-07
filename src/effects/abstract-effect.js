@@ -7,10 +7,12 @@ export default class AbstractEffect {
         this._nodeOut = nodeOut || node;
         this._enabled;
 
-        this._in = sono.context.createGain();
-        this._out = sono.context.createGain();
-        this._wet = sono.context.createGain();
-        this._dry = sono.context.createGain();
+        const context = sono.getContext();
+
+        this._in = context.createGain();
+        this._out = context.createGain();
+        this._wet = context.createGain();
+        this._dry = context.createGain();
 
         this._in.connect(this._dry);
         this._wet.connect(this._out);

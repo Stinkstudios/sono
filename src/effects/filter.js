@@ -13,13 +13,13 @@ function safeOption(...args) {
     return value;
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
-// For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
-// The greater the value is, the greater is the peak
-const minFrequency = 40;
-const maxFrequency = sono.context.sampleRate / 2;
-
 function getFrequency(value) {
+    // https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
+    // For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
+    // The greater the value is, the greater is the peak
+    const minFrequency = 40;
+    const maxFrequency = sono.getContext().sampleRate / 2;
+
     // Logarithm (base 2) to compute how many octaves fall in the range.
     const numberOfOctaves = Math.log(maxFrequency / minFrequency) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -42,7 +42,7 @@ class Filter extends AbstractEffect {
         wet = 1,
         dry = 0
     } = {}) {
-        super(sono.context.createBiquadFilter());
+        super(sono.getContext().createBiquadFilter());
 
         this._node.type = type;
 
@@ -151,7 +151,7 @@ class Filter extends AbstractEffect {
     }
 
     get maxFrequency() {
-        return sono.context.sampleRate / 2;
+        return sono.getContext().sampleRate / 2;
     }
 }
 

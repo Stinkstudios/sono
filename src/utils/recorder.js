@@ -10,8 +10,9 @@ function recorder(passThrough = false) {
     let isRecording = false;
     let soundOb = null;
 
-    const input = sono.context.createGain();
-    const output = sono.context.createGain();
+    const context = sono.getContext();
+    const input = context.createGain();
+    const output = context.createGain();
     output.gain.value = passThrough ? 1 : 0;
 
     const node = {
@@ -37,10 +38,10 @@ function recorder(passThrough = false) {
 
     function getBuffer() {
         if (!buffersL.length) {
-            return sono.context.createBuffer(2, bufferLength, sono.context.sampleRate);
+            return context.createBuffer(2, bufferLength, context.sampleRate);
         }
         const recordingLength = buffersL.length * bufferLength;
-        const buffer = sono.context.createBuffer(2, recordingLength, sono.context.sampleRate);
+        const buffer = context.createBuffer(2, recordingLength, context.sampleRate);
         buffer.getChannelData(0)
             .set(mergeBuffers(buffersL, recordingLength));
         buffer.getChannelData(1)
@@ -59,11 +60,11 @@ function recorder(passThrough = false) {
     function createScriptProcessor() {
         destroyScriptProcessor();
 
-        script = sono.context.createScriptProcessor(bufferLength, 2, 2);
+        script = context.createScriptProcessor(bufferLength, 2, 2);
         input.connect(script);
         script.connect(output);
-        script.connect(sono.context.destination);
-        // output.connect(sono.context.destination);
+        script.connect(context.destination);
+        // output.connect(context.destination);
 
 
         script.onaudioprocess = function(event) {
@@ -92,7 +93,7 @@ function recorder(passThrough = false) {
             createScriptProcessor();
             buffersL.length = 0;
             buffersR.length = 0;
-            startedAt = sono.context.currentTime;
+            startedAt = context.currentTime;
             stoppedAt = 0;
             soundOb = sound;
             sound.effects.add(node);
@@ -101,7 +102,7 @@ function recorder(passThrough = false) {
         stop() {
             soundOb.effects.remove(node);
             soundOb = null;
-            stoppedAt = sono.context.currentTime;
+            stoppedAt = context.currentTime;
             isRecording = false;
             destroyScriptProcessor();
             return getBuffer();
@@ -110,7 +111,7 @@ function recorder(passThrough = false) {
             if (!isRecording) {
                 return stoppedAt - startedAt;
             }
-            return sono.context.currentTime - startedAt;
+            return context.currentTime - startedAt;
         },
         get isRecording() {
             return isRecording;

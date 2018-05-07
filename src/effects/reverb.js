@@ -4,7 +4,8 @@ import isSafeNumber from '../core/utils/isSafeNumber';
 import isDefined from '../core/utils/isDefined';
 
 function createImpulseResponse({time, decay, reverse, buffer}) {
-    const rate = sono.context.sampleRate;
+    const context = sono.getContext();
+    const rate = context.sampleRate;
     const length = Math.floor(rate * time);
 
     let impulseResponse;
@@ -12,7 +13,7 @@ function createImpulseResponse({time, decay, reverse, buffer}) {
     if (buffer && buffer.length === length) {
         impulseResponse = buffer;
     } else {
-        impulseResponse = sono.context.createBuffer(2, length, rate);
+        impulseResponse = context.createBuffer(2, length, rate);
     }
 
     const left = impulseResponse.getChannelData(0);
@@ -31,7 +32,7 @@ function createImpulseResponse({time, decay, reverse, buffer}) {
 
 class Reverb extends AbstractEffect {
     constructor({time = 1, decay = 5, reverse = false, wet = 1, dry = 1} = {}) {
-        super(sono.context.createConvolver());
+        super(sono.getContext().createConvolver());
 
         this._convolver = this._node;
 

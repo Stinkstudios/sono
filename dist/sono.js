@@ -3960,7 +3960,7 @@ var Analyser = function (_AbstractDirectEffect) {
 
         classCallCheck(this, Analyser);
 
-        var _this = possibleConstructorReturn(this, _AbstractDirectEffect.call(this, sono$1.context.createAnalyser()));
+        var _this = possibleConstructorReturn(this, _AbstractDirectEffect.call(this, sono$1.getContext().createAnalyser()));
 
         _this._useFloats = !!useFloats;
         _this._waveform = null;
@@ -4043,7 +4043,7 @@ var Analyser = function (_AbstractDirectEffect) {
         var f = new Float32Array(this._node.fftSize);
         f.set(this.getWaveform(true));
         this._pitchWorker.postMessage({
-            sampleRate: sono$1.context.sampleRate,
+            sampleRate: sono$1.getContext().sampleRate,
             b: f.buffer
         }, [f.buffer]);
     };
@@ -4163,10 +4163,12 @@ var AbstractEffect = function () {
         this._nodeOut = nodeOut || node;
         this._enabled;
 
-        this._in = sono$1.context.createGain();
-        this._out = sono$1.context.createGain();
-        this._wet = sono$1.context.createGain();
-        this._dry = sono$1.context.createGain();
+        var context = sono$1.getContext();
+
+        this._in = context.createGain();
+        this._out = context.createGain();
+        this._wet = context.createGain();
+        this._dry = context.createGain();
 
         this._in.connect(this._dry);
         this._wet.connect(this._out);
@@ -4285,7 +4287,7 @@ var Compressor = function (_AbstractEffect) {
 
         classCallCheck(this, Compressor);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDynamicsCompressor()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createDynamicsCompressor()));
 
         _this.wet = wet;
         _this.dry = dry;
@@ -4367,7 +4369,7 @@ var Convolver = function (_AbstractEffect) {
 
         classCallCheck(this, Convolver);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createConvolver(), null, false));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createConvolver(), null, false));
 
         _this._loader = null;
 
@@ -4380,14 +4382,16 @@ var Convolver = function (_AbstractEffect) {
     Convolver.prototype._load = function _load(src) {
         var _this2 = this;
 
-        if (sono$1.context.isFake) {
+        var context = sono$1.getContext();
+
+        if (context.isFake) {
             return;
         }
         if (this._loader) {
             this._loader.destroy();
         }
         this._loader = new Loader(src);
-        this._loader.audioContext = sono$1.context;
+        this._loader.audioContext = context;
         this._loader.once('complete', function (impulse) {
             return _this2.update({ impulse: impulse });
         });
@@ -4475,7 +4479,7 @@ var Distortion = function (_AbstractEffect) {
 
         classCallCheck(this, Distortion);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createWaveShaper(), null, false));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createWaveShaper(), null, false));
 
         _this._node.oversample = oversample || 'none';
 
@@ -4552,7 +4556,7 @@ var Echo = function (_AbstractEffect) {
 
         classCallCheck(this, Echo);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDelay(), sono$1.context.createGain()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createDelay(), sono$1.getContext().createGain()));
 
         _this._delay = _this._node;
         _this._feedback = _this._nodeOut;
@@ -4619,13 +4623,13 @@ function safeOption() {
     return value;
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
-// For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
-// The greater the value is, the greater is the peak
-var minFrequency = 40;
-var maxFrequency = sono$1.context.sampleRate / 2;
-
 function getFrequency$1(value) {
+    // https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
+    // For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
+    // The greater the value is, the greater is the peak
+    var minFrequency = 40;
+    var maxFrequency = sono$1.getContext().sampleRate / 2;
+
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxFrequency / minFrequency) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -4664,7 +4668,7 @@ var Filter = function (_AbstractEffect) {
 
         classCallCheck(this, Filter);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createBiquadFilter()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createBiquadFilter()));
 
         _this._node.type = type;
 
@@ -4779,7 +4783,7 @@ var Filter = function (_AbstractEffect) {
     }, {
         key: 'maxFrequency',
         get: function get$$1() {
-            return sono$1.context.sampleRate / 2;
+            return sono$1.getContext().sampleRate / 2;
         }
     }]);
     return Filter;
@@ -4884,12 +4888,14 @@ var MonoFlanger = function (_AbstractEffect) {
 
         classCallCheck(this, MonoFlanger);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDelay()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createDelay()));
+
+        var context = sono$1.getContext();
 
         _this._delay = _this._node;
-        _this._feedback = sono$1.context.createGain();
-        _this._lfo = sono$1.context.createOscillator();
-        _this._gain = sono$1.context.createGain();
+        _this._feedback = context.createGain();
+        _this._lfo = context.createOscillator();
+        _this._gain = context.createGain();
         _this._lfo.type = 'sine';
 
         _this._delay.connect(_this._feedback);
@@ -4972,17 +4978,19 @@ var StereoFlanger = function (_AbstractEffect2) {
 
         classCallCheck(this, StereoFlanger);
 
-        var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this, sono$1.context.createChannelSplitter(2), sono$1.context.createChannelMerger(2)));
+        var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this, sono$1.getContext().createChannelSplitter(2), sono$1.getContext().createChannelMerger(2)));
+
+        var context = sono$1.getContext();
 
         _this2._splitter = _this2._node;
         _this2._merger = _this2._nodeOut;
-        _this2._feedbackL = sono$1.context.createGain();
-        _this2._feedbackR = sono$1.context.createGain();
-        _this2._lfo = sono$1.context.createOscillator();
-        _this2._lfoGainL = sono$1.context.createGain();
-        _this2._lfoGainR = sono$1.context.createGain();
-        _this2._delayL = sono$1.context.createDelay();
-        _this2._delayR = sono$1.context.createDelay();
+        _this2._feedbackL = context.createGain();
+        _this2._feedbackR = context.createGain();
+        _this2._lfo = context.createOscillator();
+        _this2._lfoGainL = context.createGain();
+        _this2._lfoGainR = context.createGain();
+        _this2._delayL = context.createDelay();
+        _this2._delayR = context.createDelay();
 
         _this2._lfo.type = 'sine';
 
@@ -5325,11 +5333,13 @@ var Phaser = function (_AbstractEffect) {
 
         classCallCheck(this, Phaser);
 
+        var context = sono$1.getContext();
+
         stages = stages || 8;
 
         var filters = [];
         for (var i = 0; i < stages; i++) {
-            filters.push(sono$1.context.createBiquadFilter());
+            filters.push(context.createBiquadFilter());
         }
 
         var first = filters[0];
@@ -5338,9 +5348,9 @@ var Phaser = function (_AbstractEffect) {
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, first, last));
 
         _this._stages = stages;
-        _this._feedback = sono$1.context.createGain();
-        _this._lfo = sono$1.context.createOscillator();
-        _this._lfoGain = sono$1.context.createGain();
+        _this._feedback = context.createGain();
+        _this._lfo = context.createOscillator();
+        _this._lfoGain = context.createGain();
         _this._lfo.type = 'sine';
 
         for (var _i = 0; _i < filters.length; _i++) {
@@ -5429,7 +5439,8 @@ function createImpulseResponse(_ref) {
         reverse = _ref.reverse,
         buffer = _ref.buffer;
 
-    var rate = sono$1.context.sampleRate;
+    var context = sono$1.getContext();
+    var rate = context.sampleRate;
     var length = Math.floor(rate * time);
 
     var impulseResponse = void 0;
@@ -5437,7 +5448,7 @@ function createImpulseResponse(_ref) {
     if (buffer && buffer.length === length) {
         impulseResponse = buffer;
     } else {
-        impulseResponse = sono$1.context.createBuffer(2, length, rate);
+        impulseResponse = context.createBuffer(2, length, rate);
     }
 
     var left = impulseResponse.getChannelData(0);
@@ -5473,7 +5484,7 @@ var Reverb = function (_AbstractEffect) {
 
         classCallCheck(this, Reverb);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createConvolver()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createConvolver()));
 
         _this._convolver = _this._node;
 
@@ -5620,8 +5631,9 @@ function recorder() {
     var isRecording = false;
     var soundOb = null;
 
-    var input = sono$1.context.createGain();
-    var output = sono$1.context.createGain();
+    var context = sono$1.getContext();
+    var input = context.createGain();
+    var output = context.createGain();
     output.gain.value = passThrough ? 1 : 0;
 
     var node = {
@@ -5651,10 +5663,10 @@ function recorder() {
 
     function getBuffer() {
         if (!buffersL.length) {
-            return sono$1.context.createBuffer(2, bufferLength, sono$1.context.sampleRate);
+            return context.createBuffer(2, bufferLength, context.sampleRate);
         }
         var recordingLength = buffersL.length * bufferLength;
-        var buffer = sono$1.context.createBuffer(2, recordingLength, sono$1.context.sampleRate);
+        var buffer = context.createBuffer(2, recordingLength, context.sampleRate);
         buffer.getChannelData(0).set(mergeBuffers(buffersL, recordingLength));
         buffer.getChannelData(1).set(mergeBuffers(buffersR, recordingLength));
         return buffer;
@@ -5671,11 +5683,11 @@ function recorder() {
     function createScriptProcessor() {
         destroyScriptProcessor();
 
-        script = sono$1.context.createScriptProcessor(bufferLength, 2, 2);
+        script = context.createScriptProcessor(bufferLength, 2, 2);
         input.connect(script);
         script.connect(output);
-        script.connect(sono$1.context.destination);
-        // output.connect(sono.context.destination);
+        script.connect(context.destination);
+        // output.connect(context.destination);
 
 
         script.onaudioprocess = function (event) {
@@ -5704,7 +5716,7 @@ function recorder() {
             createScriptProcessor();
             buffersL.length = 0;
             buffersR.length = 0;
-            startedAt = sono$1.context.currentTime;
+            startedAt = context.currentTime;
             stoppedAt = 0;
             soundOb = sound;
             sound.effects.add(node);
@@ -5713,7 +5725,7 @@ function recorder() {
         stop: function stop() {
             soundOb.effects.remove(node);
             soundOb = null;
-            stoppedAt = sono$1.context.currentTime;
+            stoppedAt = context.currentTime;
             isRecording = false;
             destroyScriptProcessor();
             return getBuffer();
@@ -5722,7 +5734,7 @@ function recorder() {
             if (!isRecording) {
                 return stoppedAt - startedAt;
             }
-            return sono$1.context.currentTime - startedAt;
+            return context.currentTime - startedAt;
         },
 
         get isRecording() {

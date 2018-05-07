@@ -3,11 +3,13 @@ import sono from '../core/sono';
 
 class Phaser extends AbstractEffect {
     constructor({stages = 8, feedback = 0.5, frequency = 0.5, gain = 300, wet = 0.8, dry = 0.8} = {}) {
+        const context = sono.getContext();
+
         stages = stages || 8;
 
         const filters = [];
         for (let i = 0; i < stages; i++) {
-            filters.push(sono.context.createBiquadFilter());
+            filters.push(context.createBiquadFilter());
         }
 
         const first = filters[0];
@@ -16,9 +18,9 @@ class Phaser extends AbstractEffect {
         super(first, last);
 
         this._stages = stages;
-        this._feedback = sono.context.createGain();
-        this._lfo = sono.context.createOscillator();
-        this._lfoGain = sono.context.createGain();
+        this._feedback = context.createGain();
+        this._lfo = context.createOscillator();
+        this._lfoGain = context.createGain();
         this._lfo.type = 'sine';
 
         for (let i = 0; i < filters.length; i++) {
