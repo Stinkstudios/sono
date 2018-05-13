@@ -23,7 +23,7 @@ export default function SoundGroup(context, destination) {
         return group;
     };
 
-    const remove = group.rmeove;
+    const remove = group.remove;
     group.remove = function(soundOrId) {
         remove(soundOrId);
         getSource();
