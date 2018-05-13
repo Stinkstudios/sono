@@ -1,5 +1,5 @@
 import 'core-js/fn/object/assign';
-import context from './context';
+import createContext from './utils/createContext';
 import Effects from './effects';
 import file from './utils/file';
 import Group from './group';
@@ -12,14 +12,45 @@ import touchLock from './utils/touchLock';
 import utils from './utils/utils';
 
 const VERSION = '2.1.5';
-const bus = new Group(context, context.destination);
+
+/*
+* Initialize the context
+*/
+
+function initContext() {
+    sono.context = createContext();
+    sono.context.isInitialized = true;
+    sono.hasWebAudio = !sono.context.isFake;
+    sono.bus = new Group(sono.context, sono.context.destination);
+    sono.effects = sono.bus.effects;
+    sono.gain = sono.bus.gain;
+
+    // Mobile touch lock
+    isTouchLocked = touchLock(sono.context, () => {
+        isTouchLocked = false;
+        sono.bus.sounds.forEach(sound => (sound.isTouchLocked = false));
+    });
+
+    // Page visibility events
+    sono.pageVis = pageVisibility(onHidden, onShown);
+
+    return sono.context;
+}
+
+/*
+* Get the context
+*/
+
+function getContext() {
+    return sono.context.isInitialized ? sono.context : initContext();
+}
 
 /*
 * Get Sound by id
 */
 
 function get(id) {
-    return bus.find(id);
+    return sono.bus.find(id);
 }
 
 /*
@@ -27,7 +58,7 @@ function get(id) {
 */
 
 function group(sounds) {
-    const soundGroup = new SoundGroup(context, bus.gain);
+    const soundGroup = new SoundGroup(sono.getContext(), sono.bus.gain);
     if (sounds) {
         sounds.forEach((sound) => soundGroup.add(sound));
     }
@@ -40,10 +71,11 @@ function group(sounds) {
 
 function add(config) {
     const src = file.getSupportedFile(config.src || config.url || config.data || config);
+    const context = sono.getContext();
     const sound = new Sound(Object.assign({}, config || {}, {
         src,
         context,
-        destination: bus.gain
+        destination: sono.bus.gain
     }));
     sound.isTouchLocked = isTouchLocked;
     if (config) {
@@ -52,7 +84,7 @@ function add(config) {
         sound.volume = config.volume;
         sound.effects = config.effects || [];
     }
-    bus.add(sound);
+    sono.bus.add(sound);
     return sound;
 }
 
@@ -136,12 +168,12 @@ function create(config) {
 */
 
 function destroy(soundOrId) {
-    bus.find(soundOrId, (sound) => sound.destroy());
+    sono.bus.find(soundOrId, (sound) => sound.destroy());
     return sono;
 }
 
 function destroyAll() {
-    bus.destroy();
+    sono.bus.destroy();
     return sono;
 }
 
@@ -150,47 +182,52 @@ function destroyAll() {
 */
 
 function mute() {
-    bus.mute();
+    sono.bus.mute();
     return sono;
 }
 
 function unMute() {
-    bus.unMute();
+    sono.bus.unMute();
     return sono;
 }
 
 function fade(volume, duration) {
-    bus.fade(volume, duration);
+    sono.bus.fade(volume, duration);
+    return sono;
+}
+
+function playAll(delay, offset) {
+    sono.bus.play(delay, offset);
     return sono;
 }
 
 function pauseAll() {
-    bus.pause();
+    sono.bus.pause();
     return sono;
 }
 
 function resumeAll() {
-    bus.resume();
+    sono.bus.resume();
     return sono;
 }
 
 function stopAll() {
-    bus.stop();
+    sono.bus.stop();
     return sono;
 }
 
 function play(id, delay, offset) {
-    bus.find(id, (sound) => sound.play(delay, offset));
+    sono.bus.find(id, (sound) => sound.play(delay, offset));
     return sono;
 }
 
 function pause(id) {
-    bus.find(id, (sound) => sound.pause());
+    sono.bus.find(id, (sound) => sound.pause());
     return sono;
 }
 
 function stop(id) {
-    bus.find(id, (sound) => sound.stop());
+    sono.bus.find(id, (sound) => sound.stop());
     return sono;
 }
 
@@ -198,10 +235,9 @@ function stop(id) {
 * Mobile touch lock
 */
 
-let isTouchLocked = touchLock(context, () => {
-    isTouchLocked = false;
-    bus.sounds.forEach(sound => (sound.isTouchLocked = false));
-});
+let isTouchLocked = () => {
+    return false;
+};
 
 /*
 * Page visibility events
@@ -211,7 +247,7 @@ const pageHiddenPaused = [];
 
 // pause currently playing sounds and store refs
 function onHidden() {
-    bus.sounds.forEach(sound => {
+    sono.bus.sounds.forEach(sound => {
         if (sound.playing) {
             sound.pause();
             pageHiddenPaused.push(sound);
@@ -226,8 +262,6 @@ function onShown() {
     }
 }
 
-const pageVis = pageVisibility(onHidden, onShown);
-
 function register(name, fn, attachTo = Effects.prototype) {
     attachTo[name] = fn;
     sono[name] = fn;
@@ -237,22 +271,23 @@ function register(name, fn, attachTo = Effects.prototype) {
 
 const sono = {
     canPlay: file.canPlay,
-    context,
+    context: {},
     create,
     createGroup: group,
     createSound: create,
     destroyAll,
     destroy,
-    effects: bus.effects,
     extensions: file.extensions,
     fade,
     file,
-    gain: bus.gain,
     getOfflineContext: utils.getOfflineContext,
     get,
+    getContext,
     getSound: get,
     group,
-    hasWebAudio: !context.isFake,
+    init: initContext,
+    initAudioContext: initContext,
+    initContext,
     isSupported: file.extensions.length > 0,
     load,
     log: () => log(sono),
@@ -260,6 +295,7 @@ const sono = {
     pause,
     pauseAll,
     play,
+    playAll,
     register,
     resumeAll,
     stop,
@@ -268,10 +304,10 @@ const sono = {
     utils,
     VERSION,
     get effects() {
-        return bus.effects;
+        return sono.bus.effects;
     },
     set effects(value) {
-        bus.effects.removeAll().add(value);
+        sono.bus.effects.removeAll().add(value);
     },
     get fx() {
         return this.effects;
@@ -283,23 +319,23 @@ const sono = {
         return isTouchLocked;
     },
     get playInBackground() {
-        return !pageVis.enabled;
+        return !sono.pageVis.enabled;
     },
     set playInBackground(value) {
-        pageVis.enabled = !value;
+        sono.pageVis.enabled = !value;
 
         if (!value) {
             onShown();
         }
     },
     get sounds() {
-        return bus.sounds.slice(0);
+        return sono.bus.sounds.slice(0);
     },
     get volume() {
-        return bus.volume;
+        return sono.bus.volume;
     },
     set volume(value) {
-        bus.volume = value;
+        sono.bus.volume = value;
     },
     // expose for unit testing
     __test: {
@@ -307,7 +343,6 @@ const sono = {
         Group,
         Sound
     }
-
 };
 
 export default sono;

@@ -3,12 +3,14 @@ import sono from '../core/sono';
 
 class MonoFlanger extends AbstractEffect {
     constructor({delay = 0.005, feedback = 0.5, frequency = 0.002, gain = 0.25, wet = 1, dry = 1} = {}) {
-        super(sono.context.createDelay());
+        super(sono.getContext().createDelay());
+
+        const context = sono.getContext();
 
         this._delay = this._node;
-        this._feedback = sono.context.createGain();
-        this._lfo = sono.context.createOscillator();
-        this._gain = sono.context.createGain();
+        this._feedback = context.createGain();
+        this._lfo = context.createOscillator();
+        this._gain = context.createGain();
         this._lfo.type = 'sine';
 
         this._delay.connect(this._feedback);
@@ -67,17 +69,19 @@ sono.register('monoFlanger', opts => new MonoFlanger(opts));
 
 class StereoFlanger extends AbstractEffect {
     constructor({delay = 0.003, feedback = 0.5, frequency = 0.5, gain = 0.005, wet = 1, dry = 1} = {}) {
-        super(sono.context.createChannelSplitter(2), sono.context.createChannelMerger(2));
+        super(sono.getContext().createChannelSplitter(2), sono.getContext().createChannelMerger(2));
+
+        const context = sono.getContext();
 
         this._splitter = this._node;
         this._merger = this._nodeOut;
-        this._feedbackL = sono.context.createGain();
-        this._feedbackR = sono.context.createGain();
-        this._lfo = sono.context.createOscillator();
-        this._lfoGainL = sono.context.createGain();
-        this._lfoGainR = sono.context.createGain();
-        this._delayL = sono.context.createDelay();
-        this._delayR = sono.context.createDelay();
+        this._feedbackL = context.createGain();
+        this._feedbackR = context.createGain();
+        this._lfo = context.createOscillator();
+        this._lfoGainL = context.createGain();
+        this._lfoGainR = context.createGain();
+        this._delayL = context.createDelay();
+        this._delayR = context.createDelay();
 
         this._lfo.type = 'sine';
 

@@ -1,5 +1,3 @@
-import context from '../core/context';
-
 export default class AbstractDirectEffect {
     constructor(node) {
         this._node = this._in = this._out = node;
@@ -15,10 +13,6 @@ export default class AbstractDirectEffect {
 
     update() {
         throw new Error('update must be overridden');
-    }
-
-    get context() {
-        return context;
     }
 
     get numberOfInputs() {

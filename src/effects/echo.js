@@ -3,7 +3,7 @@ import sono from '../core/sono';
 
 class Echo extends AbstractEffect {
     constructor({delay = 0.5, feedback = 0.5, wet = 1, dry = 1} = {}) {
-        super(sono.context.createDelay(), sono.context.createGain());
+        super(sono.getContext().createDelay(), sono.getContext().createGain());
 
         this._delay = this._node;
         this._feedback = this._nodeOut;

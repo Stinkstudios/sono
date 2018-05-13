@@ -11,71 +11,74 @@ function createCommonjsModule(fn, module) {
 var _global = createCommonjsModule(function (module) {
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
 var global = module.exports = typeof window != 'undefined' && window.Math == Math
-  ? window : typeof self != 'undefined' && self.Math == Math ? self : Function('return this')();
-if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
+  ? window : typeof self != 'undefined' && self.Math == Math ? self
+  // eslint-disable-next-line no-new-func
+  : Function('return this')();
+if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 });
 
 var _core = createCommonjsModule(function (module) {
-var core = module.exports = {version: '2.4.0'};
-if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
+var core = module.exports = { version: '2.5.5' };
+if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 });
 
-var _isObject = function(it){
+var _isObject = function (it) {
   return typeof it === 'object' ? it !== null : typeof it === 'function';
 };
 
-var _anObject = function(it){
-  if(!_isObject(it))throw TypeError(it + ' is not an object!');
+var _anObject = function (it) {
+  if (!_isObject(it)) throw TypeError(it + ' is not an object!');
   return it;
 };
 
-var _fails = function(exec){
+var _fails = function (exec) {
   try {
     return !!exec();
-  } catch(e){
+  } catch (e) {
     return true;
   }
 };
 
 // Thank's IE8 for his funny defineProperty
-var _descriptors = !_fails(function(){
-  return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
+var _descriptors = !_fails(function () {
+  return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
 });
 
 var document$1 = _global.document;
+// typeof document.createElement is 'object' in old IE
 var is = _isObject(document$1) && _isObject(document$1.createElement);
-var _domCreate = function(it){
+var _domCreate = function (it) {
   return is ? document$1.createElement(it) : {};
 };
 
-var _ie8DomDefine = !_descriptors && !_fails(function(){
-  return Object.defineProperty(_domCreate('div'), 'a', {get: function(){ return 7; }}).a != 7;
+var _ie8DomDefine = !_descriptors && !_fails(function () {
+  return Object.defineProperty(_domCreate('div'), 'a', { get: function () { return 7; } }).a != 7;
 });
 
 // 7.1.1 ToPrimitive(input [, PreferredType])
 
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
-var _toPrimitive = function(it, S){
-  if(!_isObject(it))return it;
+var _toPrimitive = function (it, S) {
+  if (!_isObject(it)) return it;
   var fn, val;
-  if(S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it)))return val;
-  if(typeof (fn = it.valueOf) == 'function' && !_isObject(val = fn.call(it)))return val;
-  if(!S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it)))return val;
+  if (S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it))) return val;
+  if (typeof (fn = it.valueOf) == 'function' && !_isObject(val = fn.call(it))) return val;
+  if (!S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it))) return val;
   throw TypeError("Can't convert object to primitive value");
 };
 
-var dP             = Object.defineProperty;
+var dP = Object.defineProperty;
 
-var f = _descriptors ? Object.defineProperty : function defineProperty(O, P, Attributes){
+var f = _descriptors ? Object.defineProperty : function defineProperty(O, P, Attributes) {
   _anObject(O);
   P = _toPrimitive(P, true);
   _anObject(Attributes);
-  if(_ie8DomDefine)try {
+  if (_ie8DomDefine) try {
     return dP(O, P, Attributes);
-  } catch(e){ /* empty */ }
-  if('get' in Attributes || 'set' in Attributes)throw TypeError('Accessors not supported!');
-  if('value' in Attributes)O[P] = Attributes.value;
+  } catch (e) { /* empty */ }
+  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported!');
+  if ('value' in Attributes) O[P] = Attributes.value;
   return O;
 };
 
@@ -83,105 +86,104 @@ var _objectDp = {
 	f: f
 };
 
-var _propertyDesc = function(bitmap, value){
+var _propertyDesc = function (bitmap, value) {
   return {
-    enumerable  : !(bitmap & 1),
+    enumerable: !(bitmap & 1),
     configurable: !(bitmap & 2),
-    writable    : !(bitmap & 4),
-    value       : value
+    writable: !(bitmap & 4),
+    value: value
   };
 };
 
-var _hide = _descriptors ? function(object, key, value){
+var _hide = _descriptors ? function (object, key, value) {
   return _objectDp.f(object, key, _propertyDesc(1, value));
-} : function(object, key, value){
+} : function (object, key, value) {
   object[key] = value;
   return object;
 };
 
 var hasOwnProperty = {}.hasOwnProperty;
-var _has = function(it, key){
+var _has = function (it, key) {
   return hasOwnProperty.call(it, key);
 };
 
 var id = 0;
 var px = Math.random();
-var _uid = function(key){
+var _uid = function (key) {
   return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
 };
 
 var _redefine = createCommonjsModule(function (module) {
-var SRC       = _uid('src')
-  , TO_STRING = 'toString'
-  , $toString = Function[TO_STRING]
-  , TPL       = ('' + $toString).split(TO_STRING);
+var SRC = _uid('src');
+var TO_STRING = 'toString';
+var $toString = Function[TO_STRING];
+var TPL = ('' + $toString).split(TO_STRING);
 
-_core.inspectSource = function(it){
+_core.inspectSource = function (it) {
   return $toString.call(it);
 };
 
-(module.exports = function(O, key, val, safe){
+(module.exports = function (O, key, val, safe) {
   var isFunction = typeof val == 'function';
-  if(isFunction)_has(val, 'name') || _hide(val, 'name', key);
-  if(O[key] === val)return;
-  if(isFunction)_has(val, SRC) || _hide(val, SRC, O[key] ? '' + O[key] : TPL.join(String(key)));
-  if(O === _global){
+  if (isFunction) _has(val, 'name') || _hide(val, 'name', key);
+  if (O[key] === val) return;
+  if (isFunction) _has(val, SRC) || _hide(val, SRC, O[key] ? '' + O[key] : TPL.join(String(key)));
+  if (O === _global) {
+    O[key] = val;
+  } else if (!safe) {
+    delete O[key];
+    _hide(O, key, val);
+  } else if (O[key]) {
     O[key] = val;
   } else {
-    if(!safe){
-      delete O[key];
-      _hide(O, key, val);
-    } else {
-      if(O[key])O[key] = val;
-      else _hide(O, key, val);
-    }
+    _hide(O, key, val);
   }
 // add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
-})(Function.prototype, TO_STRING, function toString(){
+})(Function.prototype, TO_STRING, function toString() {
   return typeof this == 'function' && this[SRC] || $toString.call(this);
 });
 });
 
-var _aFunction = function(it){
-  if(typeof it != 'function')throw TypeError(it + ' is not a function!');
+var _aFunction = function (it) {
+  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
   return it;
 };
 
 // optional / simple context binding
 
-var _ctx = function(fn, that, length){
+var _ctx = function (fn, that, length) {
   _aFunction(fn);
-  if(that === undefined)return fn;
-  switch(length){
-    case 1: return function(a){
+  if (that === undefined) return fn;
+  switch (length) {
+    case 1: return function (a) {
       return fn.call(that, a);
     };
-    case 2: return function(a, b){
+    case 2: return function (a, b) {
       return fn.call(that, a, b);
     };
-    case 3: return function(a, b, c){
+    case 3: return function (a, b, c) {
       return fn.call(that, a, b, c);
     };
   }
-  return function(/* ...args */){
+  return function (/* ...args */) {
     return fn.apply(that, arguments);
   };
 };
 
 var PROTOTYPE = 'prototype';
 
-var $export = function(type, name, source){
-  var IS_FORCED = type & $export.F
-    , IS_GLOBAL = type & $export.G
-    , IS_STATIC = type & $export.S
-    , IS_PROTO  = type & $export.P
-    , IS_BIND   = type & $export.B
-    , target    = IS_GLOBAL ? _global : IS_STATIC ? _global[name] || (_global[name] = {}) : (_global[name] || {})[PROTOTYPE]
-    , exports   = IS_GLOBAL ? _core : _core[name] || (_core[name] = {})
-    , expProto  = exports[PROTOTYPE] || (exports[PROTOTYPE] = {})
-    , key, own, out, exp;
-  if(IS_GLOBAL)source = name;
-  for(key in source){
+var $export = function (type, name, source) {
+  var IS_FORCED = type & $export.F;
+  var IS_GLOBAL = type & $export.G;
+  var IS_STATIC = type & $export.S;
+  var IS_PROTO = type & $export.P;
+  var IS_BIND = type & $export.B;
+  var target = IS_GLOBAL ? _global : IS_STATIC ? _global[name] || (_global[name] = {}) : (_global[name] || {})[PROTOTYPE];
+  var exports = IS_GLOBAL ? _core : _core[name] || (_core[name] = {});
+  var expProto = exports[PROTOTYPE] || (exports[PROTOTYPE] = {});
+  var key, own, out, exp;
+  if (IS_GLOBAL) source = name;
+  for (key in source) {
     // contains in native
     own = !IS_FORCED && target && target[key] !== undefined;
     // export native or passed
@@ -189,10 +191,10 @@ var $export = function(type, name, source){
     // bind timers to global for call from export context
     exp = IS_BIND && own ? _ctx(out, _global) : IS_PROTO && typeof out == 'function' ? _ctx(Function.call, out) : out;
     // extend global
-    if(target)_redefine(target, key, out, type & $export.U);
+    if (target) _redefine(target, key, out, type & $export.U);
     // export
-    if(exports[key] != out)_hide(exports, key, exp);
-    if(IS_PROTO && expProto[key] != out)expProto[key] = out;
+    if (exports[key] != out) _hide(exports, key, exp);
+    if (IS_PROTO && expProto[key] != out) expProto[key] = out;
   }
 };
 _global.core = _core;
@@ -204,49 +206,52 @@ $export.P = 8;   // proto
 $export.B = 16;  // bind
 $export.W = 32;  // wrap
 $export.U = 64;  // safe
-$export.R = 128; // real proto method for `library` 
+$export.R = 128; // real proto method for `library`
 var _export = $export;
 
 var toString = {}.toString;
 
-var _cof = function(it){
+var _cof = function (it) {
   return toString.call(it).slice(8, -1);
 };
 
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
 
-var _iobject = Object('z').propertyIsEnumerable(0) ? Object : function(it){
+// eslint-disable-next-line no-prototype-builtins
+var _iobject = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
   return _cof(it) == 'String' ? it.split('') : Object(it);
 };
 
 // 7.2.1 RequireObjectCoercible(argument)
-var _defined = function(it){
-  if(it == undefined)throw TypeError("Can't call method on  " + it);
+var _defined = function (it) {
+  if (it == undefined) throw TypeError("Can't call method on  " + it);
   return it;
 };
 
 // to indexed object, toObject with fallback for non-array-like ES3 strings
 
-var _toIobject = function(it){
+
+var _toIobject = function (it) {
   return _iobject(_defined(it));
 };
 
 // 7.1.4 ToInteger
-var ceil  = Math.ceil;
+var ceil = Math.ceil;
 var floor = Math.floor;
-var _toInteger = function(it){
+var _toInteger = function (it) {
   return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
 };
 
 // 7.1.15 ToLength
-var min       = Math.min;
-var _toLength = function(it){
+
+var min = Math.min;
+var _toLength = function (it) {
   return it > 0 ? min(_toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
 };
 
-var max       = Math.max;
-var min$1       = Math.min;
-var _toIndex = function(index, length){
+var max = Math.max;
+var min$1 = Math.min;
+var _toAbsoluteIndex = function (index, length) {
   index = _toInteger(index);
   return index < 0 ? max(index + length, 0) : min$1(index, length);
 };
@@ -254,45 +259,50 @@ var _toIndex = function(index, length){
 // false -> Array#indexOf
 // true  -> Array#includes
 
-var _arrayIncludes = function(IS_INCLUDES){
-  return function($this, el, fromIndex){
-    var O      = _toIobject($this)
-      , length = _toLength(O.length)
-      , index  = _toIndex(fromIndex, length)
-      , value;
+
+
+var _arrayIncludes = function (IS_INCLUDES) {
+  return function ($this, el, fromIndex) {
+    var O = _toIobject($this);
+    var length = _toLength(O.length);
+    var index = _toAbsoluteIndex(fromIndex, length);
+    var value;
     // Array#includes uses SameValueZero equality algorithm
-    if(IS_INCLUDES && el != el)while(length > index){
+    // eslint-disable-next-line no-self-compare
+    if (IS_INCLUDES && el != el) while (length > index) {
       value = O[index++];
-      if(value != value)return true;
-    // Array#toIndex ignores holes, Array#includes - not
-    } else for(;length > index; index++)if(IS_INCLUDES || index in O){
-      if(O[index] === el)return IS_INCLUDES || index || 0;
+      // eslint-disable-next-line no-self-compare
+      if (value != value) return true;
+    // Array#indexOf ignores holes, Array#includes - not
+    } else for (;length > index; index++) if (IS_INCLUDES || index in O) {
+      if (O[index] === el) return IS_INCLUDES || index || 0;
     } return !IS_INCLUDES && -1;
   };
 };
 
 var SHARED = '__core-js_shared__';
-var store  = _global[SHARED] || (_global[SHARED] = {});
-var _shared = function(key){
+var store = _global[SHARED] || (_global[SHARED] = {});
+var _shared = function (key) {
   return store[key] || (store[key] = {});
 };
 
 var shared = _shared('keys');
-var _sharedKey = function(key){
+
+var _sharedKey = function (key) {
   return shared[key] || (shared[key] = _uid(key));
 };
 
 var arrayIndexOf = _arrayIncludes(false);
-var IE_PROTO     = _sharedKey('IE_PROTO');
+var IE_PROTO = _sharedKey('IE_PROTO');
 
-var _objectKeysInternal = function(object, names){
-  var O      = _toIobject(object)
-    , i      = 0
-    , result = []
-    , key;
-  for(key in O)if(key != IE_PROTO)_has(O, key) && result.push(key);
+var _objectKeysInternal = function (object, names) {
+  var O = _toIobject(object);
+  var i = 0;
+  var result = [];
+  var key;
+  for (key in O) if (key != IE_PROTO) _has(O, key) && result.push(key);
   // Don't enum bug & hidden keys
-  while(names.length > i)if(_has(O, key = names[i++])){
+  while (names.length > i) if (_has(O, key = names[i++])) {
     ~arrayIndexOf(result, key) || result.push(key);
   }
   return result;
@@ -306,7 +316,8 @@ var _enumBugKeys = (
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
 
 
-var _objectKeys = Object.keys || function keys(O){
+
+var _objectKeys = Object.keys || function keys(O) {
   return _objectKeysInternal(O, _enumBugKeys);
 };
 
@@ -324,42 +335,48 @@ var _objectPie = {
 
 // 7.1.13 ToObject(argument)
 
-var _toObject = function(it){
+var _toObject = function (it) {
   return Object(_defined(it));
 };
 
 // 19.1.2.1 Object.assign(target, source, ...)
-var $assign  = Object.assign;
+
+
+
+
+
+var $assign = Object.assign;
 
 // should work with symbols and should have deterministic property order (V8 bug)
-var _objectAssign = !$assign || _fails(function(){
-  var A = {}
-    , B = {}
-    , S = Symbol()
-    , K = 'abcdefghijklmnopqrst';
+var _objectAssign = !$assign || _fails(function () {
+  var A = {};
+  var B = {};
+  // eslint-disable-next-line no-undef
+  var S = Symbol();
+  var K = 'abcdefghijklmnopqrst';
   A[S] = 7;
-  K.split('').forEach(function(k){ B[k] = k; });
+  K.split('').forEach(function (k) { B[k] = k; });
   return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
-}) ? function assign(target, source){ // eslint-disable-line no-unused-vars
-  var T     = _toObject(target)
-    , aLen  = arguments.length
-    , index = 1
-    , getSymbols = _objectGops.f
-    , isEnum     = _objectPie.f;
-  while(aLen > index){
-    var S      = _iobject(arguments[index++])
-      , keys   = getSymbols ? _objectKeys(S).concat(getSymbols(S)) : _objectKeys(S)
-      , length = keys.length
-      , j      = 0
-      , key;
-    while(length > j)if(isEnum.call(S, key = keys[j++]))T[key] = S[key];
+}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
+  var T = _toObject(target);
+  var aLen = arguments.length;
+  var index = 1;
+  var getSymbols = _objectGops.f;
+  var isEnum = _objectPie.f;
+  while (aLen > index) {
+    var S = _iobject(arguments[index++]);
+    var keys = getSymbols ? _objectKeys(S).concat(getSymbols(S)) : _objectKeys(S);
+    var length = keys.length;
+    var j = 0;
+    var key;
+    while (length > j) if (isEnum.call(S, key = keys[j++])) T[key] = S[key];
   } return T;
 } : $assign;
 
 // 19.1.3.1 Object.assign(target, source)
 
 
-_export(_export.S + _export.F, 'Object', {assign: _objectAssign});
+_export(_export.S + _export.F, 'Object', { assign: _objectAssign });
 
 function dummy(context) {
     var buffer = context.createBuffer(1, 1, context.sampleRate);
@@ -496,30 +513,32 @@ var desiredSampleRate = 44100;
 
 var Ctx = window.AudioContext || window.webkitAudioContext || FakeContext;
 
-var context = new Ctx();
+function createContext() {
+    var context = new Ctx();
 
-if (!context) {
-    context = new FakeContext();
+    if (!context) {
+        context = new FakeContext();
+    }
+
+    // Check if hack is necessary. Only occurs in iOS6+ devices
+    // and only when you first boot the iPhone, or play a audio/video
+    // with a different sample rate
+    // https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
+    if (iOS && context.sampleRate !== desiredSampleRate) {
+        dummy(context);
+        context.close(); // dispose old context
+        context = new Ctx();
+    }
+
+    // Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
+    if (context.state === 'suspended' && typeof context.resume === 'function') {
+        window.setTimeout(function () {
+            return context.resume();
+        }, 1000);
+    }
+
+    return context;
 }
-
-// Check if hack is necessary. Only occurs in iOS6+ devices
-// and only when you first boot the iPhone, or play a audio/video
-// with a different sample rate
-// https://github.com/Jam3/ios-safe-audio-context/blob/master/index.js
-if (iOS && context.sampleRate !== desiredSampleRate) {
-    dummy(context);
-    context.close(); // dispose old context
-    context = new Ctx();
-}
-
-// Handles bug in Safari 9 OSX where AudioContext instance starts in 'suspended' state
-if (context.state === 'suspended' && typeof context.resume === 'function') {
-    window.setTimeout(function () {
-        return context.resume();
-    }, 1000);
-}
-
-var context$1 = context;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
@@ -561,16 +580,7 @@ var createClass = function () {
   };
 }();
 
-var defineEnumerableProperties = function (obj, descs) {
-  for (var key in descs) {
-    var desc = descs[key];
-    desc.configurable = desc.enumerable = true;
-    if ("value" in desc) desc.writable = true;
-    Object.defineProperty(obj, key, desc);
-  }
 
-  return obj;
-};
 
 
 
@@ -2048,11 +2058,11 @@ function cloneBuffer(buffer) {
     var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
     var length = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : buffer.length;
 
-    if (!context$1 || context$1.isFake) {
+    if (!sono$1.context || sono$1.context.isFake) {
         return buffer;
     }
     var numChannels = buffer.numberOfChannels;
-    var cloned = context$1.createBuffer(numChannels, length, buffer.sampleRate);
+    var cloned = sono$1.context.createBuffer(numChannels, length, buffer.sampleRate);
     for (var i = 0; i < numChannels; i++) {
         cloned.getChannelData(i).set(buffer.getChannelData(i).slice(offset, offset + length));
     }
@@ -2076,16 +2086,16 @@ function reverseBuffer(buffer) {
  */
 
 function ramp(param, fromValue, toValue, duration, linear) {
-    if (context$1.isFake) {
+    if (sono$1.context.isFake) {
         return;
     }
 
-    param.setValueAtTime(fromValue, context$1.currentTime);
+    param.setValueAtTime(fromValue, sono$1.context.currentTime);
 
     if (linear) {
-        param.linearRampToValueAtTime(toValue, context$1.currentTime + duration);
+        param.linearRampToValueAtTime(toValue, sono$1.context.currentTime + duration);
     } else {
-        param.exponentialRampToValueAtTime(toValue, context$1.currentTime + duration);
+        param.exponentialRampToValueAtTime(toValue, sono$1.context.currentTime + duration);
     }
 }
 
@@ -2094,14 +2104,14 @@ function ramp(param, fromValue, toValue, duration, linear) {
  */
 
 function getFrequency(value) {
-    if (context$1.isFake) {
+    if (sono$1.context.isFake) {
         return 0;
     }
     // get frequency by passing number from 0 to 1
     // Clamp the frequency between the minimum value (40 Hz) and half of the
     // sampling rate.
     var minValue = 40;
-    var maxValue = context$1.sampleRate / 2;
+    var maxValue = sono$1.context.sampleRate / 2;
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -2909,7 +2919,7 @@ var Sound = function (_Emitter) {
 
         _this.id = config.id || null;
 
-        _this._context = config.context || context$1;
+        _this._context = config.context || context;
         _this._destination = config.destination || _this._context.destination;
         _this._effects = new Effects(_this._context);
         _this._gain = _this._context.createGain();
@@ -3512,28 +3522,48 @@ function touchLock(context, callback) {
     return locked;
 }
 
-var _effects;
-var _effects2;
-var _fx;
-var _fx2;
-var _isTouchLocked;
-var _playInBackground;
-var _playInBackground2;
-var _sounds;
-var _volume;
-var _volume2;
-var _sono;
-var _mutatorMap;
-
 var VERSION = '2.1.5';
-var bus = new Group(context$1, context$1.destination);
+
+/*
+* Initialize the context
+*/
+
+function initContext() {
+    sono$1.context = createContext();
+    sono$1.context.isInitialized = true;
+    sono$1.hasWebAudio = !sono$1.context.isFake;
+    sono$1.bus = new Group(sono$1.context, sono$1.context.destination);
+    sono$1.effects = sono$1.bus.effects;
+    sono$1.gain = sono$1.bus.gain;
+
+    // Mobile touch lock
+    isTouchLocked = touchLock(sono$1.context, function () {
+        isTouchLocked = false;
+        sono$1.bus.sounds.forEach(function (sound) {
+            return sound.isTouchLocked = false;
+        });
+    });
+
+    // Page visibility events
+    sono$1.pageVis = pageVisibility(onHidden, onShown);
+
+    return sono$1.context;
+}
+
+/*
+* Get the context
+*/
+
+function getContext() {
+    return sono$1.context.isInitialized ? sono$1.context : initContext();
+}
 
 /*
 * Get Sound by id
 */
 
-function get$$1(id) {
-    return bus.find(id);
+function get(id) {
+    return sono$1.bus.find(id);
 }
 
 /*
@@ -3541,7 +3571,7 @@ function get$$1(id) {
 */
 
 function group(sounds) {
-    var soundGroup = new SoundGroup(context$1, bus.gain);
+    var soundGroup = new SoundGroup(sono$1.getContext(), sono$1.bus.gain);
     if (sounds) {
         sounds.forEach(function (sound) {
             return soundGroup.add(sound);
@@ -3556,10 +3586,11 @@ function group(sounds) {
 
 function add(config) {
     var src = file.getSupportedFile(config.src || config.url || config.data || config);
+    var context = sono$1.getContext();
     var sound = new Sound(Object.assign({}, config || {}, {
         src: src,
-        context: context$1,
-        destination: bus.gain
+        context: context,
+        destination: sono$1.bus.gain
     }));
     sound.isTouchLocked = isTouchLocked;
     if (config) {
@@ -3568,7 +3599,7 @@ function add(config) {
         sound.volume = config.volume;
         sound.effects = config.effects || [];
     }
-    bus.add(sound);
+    sono$1.bus.add(sound);
     return sound;
 }
 
@@ -3657,14 +3688,14 @@ function create(config) {
 */
 
 function destroy(soundOrId) {
-    bus.find(soundOrId, function (sound) {
+    sono$1.bus.find(soundOrId, function (sound) {
         return sound.destroy();
     });
     return sono$1;
 }
 
 function destroyAll() {
-    bus.destroy();
+    sono$1.bus.destroy();
     return sono$1;
 }
 
@@ -3673,51 +3704,56 @@ function destroyAll() {
 */
 
 function mute() {
-    bus.mute();
+    sono$1.bus.mute();
     return sono$1;
 }
 
 function unMute() {
-    bus.unMute();
+    sono$1.bus.unMute();
     return sono$1;
 }
 
 function fade(volume, duration) {
-    bus.fade(volume, duration);
+    sono$1.bus.fade(volume, duration);
+    return sono$1;
+}
+
+function playAll(delay, offset) {
+    sono$1.bus.play(delay, offset);
     return sono$1;
 }
 
 function pauseAll() {
-    bus.pause();
+    sono$1.bus.pause();
     return sono$1;
 }
 
 function resumeAll() {
-    bus.resume();
+    sono$1.bus.resume();
     return sono$1;
 }
 
 function stopAll() {
-    bus.stop();
+    sono$1.bus.stop();
     return sono$1;
 }
 
 function play(id, delay, offset) {
-    bus.find(id, function (sound) {
+    sono$1.bus.find(id, function (sound) {
         return sound.play(delay, offset);
     });
     return sono$1;
 }
 
 function pause(id) {
-    bus.find(id, function (sound) {
+    sono$1.bus.find(id, function (sound) {
         return sound.pause();
     });
     return sono$1;
 }
 
 function stop(id) {
-    bus.find(id, function (sound) {
+    sono$1.bus.find(id, function (sound) {
         return sound.stop();
     });
     return sono$1;
@@ -3727,12 +3763,9 @@ function stop(id) {
 * Mobile touch lock
 */
 
-var isTouchLocked = touchLock(context$1, function () {
-    isTouchLocked = false;
-    bus.sounds.forEach(function (sound) {
-        return sound.isTouchLocked = false;
-    });
-});
+var isTouchLocked = function isTouchLocked() {
+    return false;
+};
 
 /*
 * Page visibility events
@@ -3742,7 +3775,7 @@ var pageHiddenPaused = [];
 
 // pause currently playing sounds and store refs
 function onHidden() {
-    bus.sounds.forEach(function (sound) {
+    sono$1.bus.sounds.forEach(function (sound) {
         if (sound.playing) {
             sound.pause();
             pageHiddenPaused.push(sound);
@@ -3757,8 +3790,6 @@ function onShown() {
     }
 }
 
-var pageVis = pageVisibility(onHidden, onShown);
-
 function register(name, fn) {
     var attachTo = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : Effects.prototype;
 
@@ -3768,24 +3799,25 @@ function register(name, fn) {
     return fn;
 }
 
-var sono$1 = (_sono = {
+var sono$1 = {
     canPlay: file.canPlay,
-    context: context$1,
+    context: {},
     create: create,
     createGroup: group,
     createSound: create,
     destroyAll: destroyAll,
     destroy: destroy,
-    effects: bus.effects,
     extensions: file.extensions,
     fade: fade,
     file: file,
-    gain: bus.gain,
     getOfflineContext: utils.getOfflineContext,
-    get: get$$1,
-    getSound: get$$1,
+    get: get,
+    getContext: getContext,
+    getSound: get,
     group: group,
-    hasWebAudio: !context$1.isFake,
+    init: initContext,
+    initAudioContext: initContext,
+    initContext: initContext,
     isSupported: file.extensions.length > 0,
     load: load,
     log: function log$$1() {
@@ -3795,42 +3827,55 @@ var sono$1 = (_sono = {
     pause: pause,
     pauseAll: pauseAll,
     play: play,
+    playAll: playAll,
     register: register,
     resumeAll: resumeAll,
     stop: stop,
     stopAll: stopAll,
     unMute: unMute,
     utils: utils,
-    VERSION: VERSION
-}, _effects = 'effects', _mutatorMap = {}, _mutatorMap[_effects] = _mutatorMap[_effects] || {}, _mutatorMap[_effects].get = function () {
-    return bus.effects;
-}, _effects2 = 'effects', _mutatorMap[_effects2] = _mutatorMap[_effects2] || {}, _mutatorMap[_effects2].set = function (value) {
-    bus.effects.removeAll().add(value);
-}, _fx = 'fx', _mutatorMap[_fx] = _mutatorMap[_fx] || {}, _mutatorMap[_fx].get = function () {
-    return this.effects;
-}, _fx2 = 'fx', _mutatorMap[_fx2] = _mutatorMap[_fx2] || {}, _mutatorMap[_fx2].set = function (value) {
-    this.effects = value;
-}, _isTouchLocked = 'isTouchLocked', _mutatorMap[_isTouchLocked] = _mutatorMap[_isTouchLocked] || {}, _mutatorMap[_isTouchLocked].get = function () {
-    return isTouchLocked;
-}, _playInBackground = 'playInBackground', _mutatorMap[_playInBackground] = _mutatorMap[_playInBackground] || {}, _mutatorMap[_playInBackground].get = function () {
-    return !pageVis.enabled;
-}, _playInBackground2 = 'playInBackground', _mutatorMap[_playInBackground2] = _mutatorMap[_playInBackground2] || {}, _mutatorMap[_playInBackground2].set = function (value) {
-    pageVis.enabled = !value;
+    VERSION: VERSION,
+    get effects() {
+        return sono$1.bus.effects;
+    },
+    set effects(value) {
+        sono$1.bus.effects.removeAll().add(value);
+    },
+    get fx() {
+        return this.effects;
+    },
+    set fx(value) {
+        this.effects = value;
+    },
+    get isTouchLocked() {
+        return isTouchLocked;
+    },
+    get playInBackground() {
+        return !sono$1.pageVis.enabled;
+    },
+    set playInBackground(value) {
+        sono$1.pageVis.enabled = !value;
 
-    if (!value) {
-        onShown();
+        if (!value) {
+            onShown();
+        }
+    },
+    get sounds() {
+        return sono$1.bus.sounds.slice(0);
+    },
+    get volume() {
+        return sono$1.bus.volume;
+    },
+    set volume(value) {
+        sono$1.bus.volume = value;
+    },
+    // expose for unit testing
+    __test: {
+        Effects: Effects,
+        Group: Group,
+        Sound: Sound
     }
-}, _sounds = 'sounds', _mutatorMap[_sounds] = _mutatorMap[_sounds] || {}, _mutatorMap[_sounds].get = function () {
-    return bus.sounds.slice(0);
-}, _volume = 'volume', _mutatorMap[_volume] = _mutatorMap[_volume] || {}, _mutatorMap[_volume].get = function () {
-    return bus.volume;
-}, _volume2 = 'volume', _mutatorMap[_volume2] = _mutatorMap[_volume2] || {}, _mutatorMap[_volume2].set = function (value) {
-    bus.volume = value;
-}, _sono.__test = {
-    Effects: Effects,
-    Group: Group,
-    Sound: Sound
-}, defineEnumerableProperties(_sono, _mutatorMap), _sono);
+};
 
 var AbstractDirectEffect = function () {
     function AbstractDirectEffect(node) {
@@ -3856,11 +3901,6 @@ var AbstractDirectEffect = function () {
     };
 
     createClass(AbstractDirectEffect, [{
-        key: 'context',
-        get: function get$$1() {
-            return context$1;
-        }
-    }, {
         key: 'numberOfInputs',
         get: function get$$1() {
             return 1;
@@ -3920,7 +3960,7 @@ var Analyser = function (_AbstractDirectEffect) {
 
         classCallCheck(this, Analyser);
 
-        var _this = possibleConstructorReturn(this, _AbstractDirectEffect.call(this, sono$1.context.createAnalyser()));
+        var _this = possibleConstructorReturn(this, _AbstractDirectEffect.call(this, sono$1.getContext().createAnalyser()));
 
         _this._useFloats = !!useFloats;
         _this._waveform = null;
@@ -4003,7 +4043,7 @@ var Analyser = function (_AbstractDirectEffect) {
         var f = new Float32Array(this._node.fftSize);
         f.set(this.getWaveform(true));
         this._pitchWorker.postMessage({
-            sampleRate: sono$1.context.sampleRate,
+            sampleRate: sono$1.getContext().sampleRate,
             b: f.buffer
         }, [f.buffer]);
     };
@@ -4123,10 +4163,12 @@ var AbstractEffect = function () {
         this._nodeOut = nodeOut || node;
         this._enabled;
 
-        this._in = this.context.createGain();
-        this._out = this.context.createGain();
-        this._wet = this.context.createGain();
-        this._dry = this.context.createGain();
+        var context = sono$1.getContext();
+
+        this._in = context.createGain();
+        this._out = context.createGain();
+        this._wet = context.createGain();
+        this._dry = context.createGain();
 
         this._in.connect(this._dry);
         this._wet.connect(this._out);
@@ -4195,11 +4237,6 @@ var AbstractEffect = function () {
             this.setSafeParamValue(this._dry.gain, value);
         }
     }, {
-        key: 'context',
-        get: function get$$1() {
-            return context$1;
-        }
-    }, {
         key: 'numberOfInputs',
         get: function get$$1() {
             return 1;
@@ -4250,7 +4287,7 @@ var Compressor = function (_AbstractEffect) {
 
         classCallCheck(this, Compressor);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDynamicsCompressor()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createDynamicsCompressor()));
 
         _this.wet = wet;
         _this.dry = dry;
@@ -4332,7 +4369,7 @@ var Convolver = function (_AbstractEffect) {
 
         classCallCheck(this, Convolver);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createConvolver(), null, false));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createConvolver(), null, false));
 
         _this._loader = null;
 
@@ -4345,14 +4382,16 @@ var Convolver = function (_AbstractEffect) {
     Convolver.prototype._load = function _load(src) {
         var _this2 = this;
 
-        if (sono$1.context.isFake) {
+        var context = sono$1.getContext();
+
+        if (context.isFake) {
             return;
         }
         if (this._loader) {
             this._loader.destroy();
         }
         this._loader = new Loader(src);
-        this._loader.audioContext = sono$1.context;
+        this._loader.audioContext = context;
         this._loader.once('complete', function (impulse) {
             return _this2.update({ impulse: impulse });
         });
@@ -4440,7 +4479,7 @@ var Distortion = function (_AbstractEffect) {
 
         classCallCheck(this, Distortion);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createWaveShaper(), null, false));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createWaveShaper(), null, false));
 
         _this._node.oversample = oversample || 'none';
 
@@ -4517,7 +4556,7 @@ var Echo = function (_AbstractEffect) {
 
         classCallCheck(this, Echo);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDelay(), sono$1.context.createGain()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createDelay(), sono$1.getContext().createGain()));
 
         _this._delay = _this._node;
         _this._feedback = _this._nodeOut;
@@ -4584,13 +4623,13 @@ function safeOption() {
     return value;
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
-// For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
-// The greater the value is, the greater is the peak
-var minFrequency = 40;
-var maxFrequency = sono$1.context.sampleRate / 2;
-
 function getFrequency$1(value) {
+    // https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
+    // For lowpass and highpass Q indicates how peaked the frequency is around the cutoff.
+    // The greater the value is, the greater is the peak
+    var minFrequency = 40;
+    var maxFrequency = sono$1.getContext().sampleRate / 2;
+
     // Logarithm (base 2) to compute how many octaves fall in the range.
     var numberOfOctaves = Math.log(maxFrequency / minFrequency) / Math.LN2;
     // Compute a multiplier from 0 to 1 based on an exponential scale.
@@ -4629,7 +4668,7 @@ var Filter = function (_AbstractEffect) {
 
         classCallCheck(this, Filter);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createBiquadFilter()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createBiquadFilter()));
 
         _this._node.type = type;
 
@@ -4744,7 +4783,7 @@ var Filter = function (_AbstractEffect) {
     }, {
         key: 'maxFrequency',
         get: function get$$1() {
-            return sono$1.context.sampleRate / 2;
+            return sono$1.getContext().sampleRate / 2;
         }
     }]);
     return Filter;
@@ -4849,12 +4888,14 @@ var MonoFlanger = function (_AbstractEffect) {
 
         classCallCheck(this, MonoFlanger);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createDelay()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createDelay()));
+
+        var context = sono$1.getContext();
 
         _this._delay = _this._node;
-        _this._feedback = sono$1.context.createGain();
-        _this._lfo = sono$1.context.createOscillator();
-        _this._gain = sono$1.context.createGain();
+        _this._feedback = context.createGain();
+        _this._lfo = context.createOscillator();
+        _this._gain = context.createGain();
         _this._lfo.type = 'sine';
 
         _this._delay.connect(_this._feedback);
@@ -4937,17 +4978,19 @@ var StereoFlanger = function (_AbstractEffect2) {
 
         classCallCheck(this, StereoFlanger);
 
-        var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this, sono$1.context.createChannelSplitter(2), sono$1.context.createChannelMerger(2)));
+        var _this2 = possibleConstructorReturn(this, _AbstractEffect2.call(this, sono$1.getContext().createChannelSplitter(2), sono$1.getContext().createChannelMerger(2)));
+
+        var context = sono$1.getContext();
 
         _this2._splitter = _this2._node;
         _this2._merger = _this2._nodeOut;
-        _this2._feedbackL = sono$1.context.createGain();
-        _this2._feedbackR = sono$1.context.createGain();
-        _this2._lfo = sono$1.context.createOscillator();
-        _this2._lfoGainL = sono$1.context.createGain();
-        _this2._lfoGainR = sono$1.context.createGain();
-        _this2._delayL = sono$1.context.createDelay();
-        _this2._delayR = sono$1.context.createDelay();
+        _this2._feedbackL = context.createGain();
+        _this2._feedbackR = context.createGain();
+        _this2._lfo = context.createOscillator();
+        _this2._lfoGainL = context.createGain();
+        _this2._lfoGainR = context.createGain();
+        _this2._delayL = context.createDelay();
+        _this2._delayR = context.createDelay();
 
         _this2._lfo.type = 'sine';
 
@@ -5290,11 +5333,13 @@ var Phaser = function (_AbstractEffect) {
 
         classCallCheck(this, Phaser);
 
+        var context = sono$1.getContext();
+
         stages = stages || 8;
 
         var filters = [];
         for (var i = 0; i < stages; i++) {
-            filters.push(sono$1.context.createBiquadFilter());
+            filters.push(context.createBiquadFilter());
         }
 
         var first = filters[0];
@@ -5303,9 +5348,9 @@ var Phaser = function (_AbstractEffect) {
         var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, first, last));
 
         _this._stages = stages;
-        _this._feedback = sono$1.context.createGain();
-        _this._lfo = sono$1.context.createOscillator();
-        _this._lfoGain = sono$1.context.createGain();
+        _this._feedback = context.createGain();
+        _this._lfo = context.createOscillator();
+        _this._lfoGain = context.createGain();
         _this._lfo.type = 'sine';
 
         for (var _i = 0; _i < filters.length; _i++) {
@@ -5394,7 +5439,8 @@ function createImpulseResponse(_ref) {
         reverse = _ref.reverse,
         buffer = _ref.buffer;
 
-    var rate = sono$1.context.sampleRate;
+    var context = sono$1.getContext();
+    var rate = context.sampleRate;
     var length = Math.floor(rate * time);
 
     var impulseResponse = void 0;
@@ -5402,7 +5448,7 @@ function createImpulseResponse(_ref) {
     if (buffer && buffer.length === length) {
         impulseResponse = buffer;
     } else {
-        impulseResponse = sono$1.context.createBuffer(2, length, rate);
+        impulseResponse = context.createBuffer(2, length, rate);
     }
 
     var left = impulseResponse.getChannelData(0);
@@ -5438,7 +5484,7 @@ var Reverb = function (_AbstractEffect) {
 
         classCallCheck(this, Reverb);
 
-        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.context.createConvolver()));
+        var _this = possibleConstructorReturn(this, _AbstractEffect.call(this, sono$1.getContext().createConvolver()));
 
         _this._convolver = _this._node;
 
@@ -5585,8 +5631,9 @@ function recorder() {
     var isRecording = false;
     var soundOb = null;
 
-    var input = sono$1.context.createGain();
-    var output = sono$1.context.createGain();
+    var context = sono$1.getContext();
+    var input = context.createGain();
+    var output = context.createGain();
     output.gain.value = passThrough ? 1 : 0;
 
     var node = {
@@ -5616,10 +5663,10 @@ function recorder() {
 
     function getBuffer() {
         if (!buffersL.length) {
-            return sono$1.context.createBuffer(2, bufferLength, sono$1.context.sampleRate);
+            return context.createBuffer(2, bufferLength, context.sampleRate);
         }
         var recordingLength = buffersL.length * bufferLength;
-        var buffer = sono$1.context.createBuffer(2, recordingLength, sono$1.context.sampleRate);
+        var buffer = context.createBuffer(2, recordingLength, context.sampleRate);
         buffer.getChannelData(0).set(mergeBuffers(buffersL, recordingLength));
         buffer.getChannelData(1).set(mergeBuffers(buffersR, recordingLength));
         return buffer;
@@ -5636,11 +5683,11 @@ function recorder() {
     function createScriptProcessor() {
         destroyScriptProcessor();
 
-        script = sono$1.context.createScriptProcessor(bufferLength, 2, 2);
+        script = context.createScriptProcessor(bufferLength, 2, 2);
         input.connect(script);
         script.connect(output);
-        script.connect(sono$1.context.destination);
-        // output.connect(sono.context.destination);
+        script.connect(context.destination);
+        // output.connect(context.destination);
 
 
         script.onaudioprocess = function (event) {
@@ -5669,7 +5716,7 @@ function recorder() {
             createScriptProcessor();
             buffersL.length = 0;
             buffersR.length = 0;
-            startedAt = sono$1.context.currentTime;
+            startedAt = context.currentTime;
             stoppedAt = 0;
             soundOb = sound;
             sound.effects.add(node);
@@ -5678,7 +5725,7 @@ function recorder() {
         stop: function stop() {
             soundOb.effects.remove(node);
             soundOb = null;
-            stoppedAt = sono$1.context.currentTime;
+            stoppedAt = context.currentTime;
             isRecording = false;
             destroyScriptProcessor();
             return getBuffer();
@@ -5687,7 +5734,7 @@ function recorder() {
             if (!isRecording) {
                 return stoppedAt - startedAt;
             }
-            return sono$1.context.currentTime - startedAt;
+            return context.currentTime - startedAt;
         },
 
         get isRecording() {

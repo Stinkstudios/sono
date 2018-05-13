@@ -17,7 +17,7 @@ function centsOffFromPitch(frequency, note) {
 
 class Analyser extends AbstractDirectEffect {
     constructor({fftSize = 2048, minDecibels = -100, maxDecibels = -30, smoothing = 0.9, useFloats = false} = {}) {
-        super(sono.context.createAnalyser());
+        super(sono.getContext().createAnalyser());
 
         this._useFloats = !!useFloats;
         this._waveform = null;
@@ -95,7 +95,7 @@ class Analyser extends AbstractDirectEffect {
         const f = new Float32Array(this._node.fftSize);
         f.set(this.getWaveform(true));
         this._pitchWorker.postMessage({
-            sampleRate: sono.context.sampleRate,
+            sampleRate: sono.getContext().sampleRate,
             b: f.buffer
         }, [f.buffer]);
     }

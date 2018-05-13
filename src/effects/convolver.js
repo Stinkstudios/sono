@@ -6,7 +6,7 @@ import Sound from '../core/sound';
 
 class Convolver extends AbstractEffect {
     constructor({impulse, wet = 1, dry = 1} = {}) {
-        super(sono.context.createConvolver(), null, false);
+        super(sono.getContext().createConvolver(), null, false);
 
         this._loader = null;
 
@@ -16,14 +16,16 @@ class Convolver extends AbstractEffect {
     }
 
     _load(src) {
-        if (sono.context.isFake) {
+        const context = sono.getContext();
+
+        if (context.isFake) {
             return;
         }
         if (this._loader) {
             this._loader.destroy();
         }
         this._loader = new Loader(src);
-        this._loader.audioContext = sono.context;
+        this._loader.audioContext = context;
         this._loader.once('complete', impulse => this.update({impulse}));
         this._loader.once('error', error => console.error(error));
         this._loader.start();
