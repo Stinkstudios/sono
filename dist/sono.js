@@ -3405,7 +3405,7 @@ function SoundGroup(context, destination) {
         return group;
     };
 
-    var remove = group.rmeove;
+    var remove = group.remove;
     group.remove = function (soundOrId) {
         remove(soundOrId);
         getSource();
@@ -3525,7 +3525,7 @@ var _volume2;
 var _sono;
 var _mutatorMap;
 
-var VERSION = '2.1.5';
+var VERSION = '2.1.6';
 var bus = new Group(context$1, context$1.destination);
 
 /*
